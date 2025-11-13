@@ -27,16 +27,23 @@ export async function GET() {
       createdAt: l.createdAt,
       images: l.images,
       owner: l.owner,
-      // pour l’instant, on ne gère pas les favoris ici
       isFavorite: false,
     }));
 
     return NextResponse.json({ listings: data });
   } catch (err) {
     console.error("Error in GET /api/listings", err);
+
+    // 🔍 TEMPORAIRE: on expose le détail pour debug
+    const message =
+      err instanceof Error ? err.message : String(err ?? "Unknown error");
+
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      {
+        error: "Internal server error",
+        detail: message,
+      },
+      { status: 500 },
     );
   }
 }
