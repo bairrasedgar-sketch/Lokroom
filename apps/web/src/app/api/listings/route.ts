@@ -6,19 +6,37 @@ export async function GET() {
     const listings = await prisma.listing.findMany({
       orderBy: { createdAt: "desc" },
       include: {
-        images: { select: { id: true, url: true } },
+        images: {
+          select: { id: true, url: true },
+        },
         owner: {
           select: { id: true, name: true, email: true },
         },
       },
     });
 
-    return NextResponse.json({ listings });
-  } catch (error: unknown) {
-    console.error("Error in GET /api/listings", error);
+    const data = listings.map((l) => ({
+      id: l.id,
+      title: l.title,
+      description: l.description,
+      price: l.price,
+      currency: l.currency,
+      country: l.country,
+      province: l.province,
+      city: l.city,
+      createdAt: l.createdAt,
+      images: l.images,
+      owner: l.owner,
+      // pour l’instant, on ne gère pas les favoris ici
+      isFavorite: false,
+    }));
+
+    return NextResponse.json({ listings: data });
+  } catch (err) {
+    console.error("Error in GET /api/listings", err);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
