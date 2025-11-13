@@ -1,10 +1,24 @@
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
 
 export async function GET() {
-  // Route de test ultra simple : aucune BDD, aucun NextAuth
-  return NextResponse.json({
-    ok: true,
-    listings: [],
-    message: "Test route /api/listings OK",
-  });
+  try {
+    const listings = await prisma.listing.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        images: { select: { id: true, url: true } },
+        owner: {
+          select: { id: true, name: true, email: true },
+        },
+      },
+    });
+
+    return NextResponse.json({ listings });
+  } catch (error: unknown) {
+    console.error("Error in GET /api/listings", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
 }
