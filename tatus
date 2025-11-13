@@ -1,0 +1,56 @@
+[33mcommit 57979d61d1272c1b42e4cb9952fce539de5adcaa[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mbackup/login-broken[m[33m)[m
+Author: bairrasedgar-sketch <bairras.edgar@gmail.com>
+Date:   Fri Oct 3 04:11:07 2025 +0200
+
+    chore: initial commit root repo
+
+ apps/web/.eslintrc.cjs                             |   23 [32m+[m
+ apps/web/.eslintrc.json                            |    3 [32m+[m
+ apps/web/README.md                                 |    4 [32m+[m
+ apps/web/dev.js                                    |    4 [32m+[m[31m-[m
+ apps/web/eslint.config.ts                          |   49 [32m+[m
+ apps/web/middleware.ts                             |   59 [31m-[m
+ apps/web/middleware.ts.off                         |    8 [32m+[m
+ apps/web/next-env.d.ts                             |    2 [32m+[m[31m-[m
+ apps/web/next.config.mjs                           |   45 [32m+[m[31m-[m
+ apps/web/package-lock.json                         | 9232 [32m+++++++++++++[m[31m-------[m
+ apps/web/package.json                              |   29 [32m+[m[31m-[m
+ apps/web/prisma/schema.prisma                      |   32 [32m+[m[31m-[m
+ apps/web/src/app/api/auth/[...nextauth]/route.ts   |   49 [32m+[m[31m-[m
+ apps/web/src/app/api/health/route.ts               |    8 [32m+[m[31m-[m
+ apps/web/src/app/api/listings/[id]/images/route.ts |   32 [32m+[m
+ apps/web/src/app/api/listings/[id]/route.ts        |  110 [32m+[m
+ apps/web/src/app/api/listings/route.ts             |   84 [32m+[m
+ apps/web/src/app/api/profile/avatar/route.ts       |   31 [32m+[m
+ apps/web/src/app/api/profile/route.ts              |   36 [32m+[m
+ .../src/app/api/upload/presign-listing/route.ts    |   51 [32m+[m
+ apps/web/src/app/globals.css                       |    4 [32m+[m[31m-[m
+ apps/web/src/app/layout.tsx                        |   30 [32m+[m[31m-[m
+ apps/web/src/app/listings/[id]/edit/page.tsx       |   39 [32m+[m
+ apps/web/src/app/listings/[id]/loading.tsx         |   20 [32m+[m
+ apps/web/src/app/listings/[id]/not-found.tsx       |   15 [32m+[m
+ apps/web/src/app/listings/[id]/page.tsx            |  120 [32m+[m
+ apps/web/src/app/listings/loading.tsx              |   22 [32m+[m
+ apps/web/src/app/listings/new/page.tsx             |  209 [32m+[m
+ apps/web/src/app/listings/page.tsx                 |   80 [32m+[m
+ apps/web/src/app/login/login-form.tsx              |   73 [32m+[m
+ apps/web/src/app/login/page.tsx                    |   84 [32m+[m[31m-[m
+ apps/web/src/app/page.tsx                          |   20 [32m+[m[31m-[m
+ apps/web/src/app/profile/page.tsx                  |  285 [32m+[m[31m-[m
+ apps/web/src/components/DeleteListingButton.tsx    |   37 [32m+[m
+ apps/web/src/components/EditListingForm.tsx        |  147 [32m+[m
+ apps/web/src/components/ListingImagesManager.tsx   |  143 [32m+[m
+ apps/web/src/components/navbar.tsx                 |   41 [32m+[m
+ apps/web/src/components/providers.tsx              |   17 [32m+[m
+ apps/web/src/components/toaster-client.tsx         |    8 [32m+[m
+ apps/web/src/components/user-avatar.tsx            |   61 [32m+[m
+ apps/web/src/lib/auth.ts                           |   12 [32m+[m[31m-[m
+ apps/web/src/lib/db.ts                             |   14 [32m+[m[31m-[m
+ apps/web/src/lib/next-auth.d.ts                    |   10 [32m+[m[31m-[m
+ apps/web/src/lib/s3.ts                             |   15 [32m+[m
+ apps/web/src/middleware.ts                         |   52 [32m+[m
+ apps/web/tailwind.config.ts                        |   13 [32m+[m[31m-[m
+ apps/web/tsconfig.json                             |   21 [32m+[m[31m-[m
+ package (2).zip => lokroom.zip                     |  Bin [31m181548401[m -> [32m204227959[m bytes
+ package-lock.zip                                   |  Bin [31m181520200[m -> [32m199635255[m bytes
+ 49 files changed, 7788 insertions(+), 3695 deletions(-)
