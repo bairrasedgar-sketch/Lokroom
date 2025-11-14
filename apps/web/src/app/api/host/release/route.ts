@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -42,7 +40,7 @@ export async function POST(req: Request) {
   if (!host?.stripeAccountId) {
     return NextResponse.json(
       { error: "missing_connect_account" },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -156,8 +154,8 @@ export async function POST(req: Request) {
 
       remaining -= want;
       results.push({ currency: currencyKey, amountCents: want, transferId });
-    } catch (_e) {
-      // on loguera plus tard si besoin, pour l'instant on évite l'erreur eslint
+    } catch (e) {
+      console.error("Stripe transfer failed", e);
       errors.push({
         currency: currencyKey,
         reason: "stripe_transfer_failed",
