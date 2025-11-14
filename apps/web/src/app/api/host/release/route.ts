@@ -154,8 +154,8 @@ export async function POST(req: Request) {
 
       remaining -= want;
       results.push({ currency: currencyKey, amountCents: want, transferId });
-    } catch (e) {
-      console.error("Stripe transfer failed", e);
+    } catch {
+      // pas de variable capturée → pas d’erreur "unused"
       errors.push({
         currency: currencyKey,
         reason: "stripe_transfer_failed",
