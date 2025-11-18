@@ -31,14 +31,12 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<"idle" | "saved" | "error">("idle");
 
-  // Avatar
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarStatus, setAvatarStatus] = useState<
     "idle" | "presigning" | "uploading" | "saving" | "done" | "error"
   >("idle");
 
-  // Chargement profil
   useEffect(() => {
     (async () => {
       const res = await fetch("/api/profile", { cache: "no-store" });
@@ -77,7 +75,7 @@ export default function ProfilePage() {
       if (!res.ok) throw new Error("Save failed");
 
       setInitial((prev) =>
-        prev ? { ...prev, name, country, role } : { email, name, country, role },
+        prev ? { ...prev, name, country, role } : { email, name, country, role }
       );
       setStatus("saved");
       toast.success("Profil sauvegardé ✅");
@@ -162,156 +160,165 @@ export default function ProfilePage() {
   }
 
   return (
-    <section className="max-w-2xl mx-auto space-y-6">
-      <h2 className="text-2xl font-semibold">Mon profil</h2>
+    <main className="mx-auto max-w-4xl px-4 pb-12 pt-8">
+      <div className="space-y-6">
+        <header>
+          <h2 className="text-2xl font-semibold sm:text-3xl">Mon profil</h2>
+          <p className="mt-1 text-sm text-gray-600">
+            Email : <span className="font-mono">{email}</span>
+          </p>
+        </header>
 
-      <p className="text-sm text-gray-600">
-        Email : <span className="font-mono">{email}</span>
-      </p>
+        {/* Onboarding Hôte */}
+        <section className="space-y-3 rounded-2xl border border-gray-100 bg-white/80 p-4 shadow-sm sm:p-5">
+          <h3 className="text-base font-semibold">Onboarding hôte</h3>
+          <p className="text-sm text-gray-600">
+            Active ton portefeuille Lok’Room. Tu pourras ensuite retirer vers
+            ton IBAN (UE) ou ton compte bancaire CAD (CA).{" "}
+            <b>*Interac e-Transfer par e-mail n’est pas supporté.</b>
+          </p>
+          <BecomeHostButton />
+          <a
+            href="/api/host/requirements"
+            className="text-sm text-blue-600 underline"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Voir l’état KYC / payouts (JSON)
+          </a>
+        </section>
 
-      {/* Onboarding Hôte */}
-      <div className="rounded border p-4 space-y-2">
-        <h3 className="font-medium">Onboarding hôte</h3>
-        <p className="text-sm text-gray-600">
-          Active ton portefeuille Lok’Room. Tu pourras ensuite retirer vers ton IBAN (UE)
-          ou ton compte bancaire CAD (CA). <b>*Interac e-Transfer par e-mail n’est pas supporté.</b>
-        </p>
-        <BecomeHostButton />
-        <a
-          href="/api/host/requirements"
-          className="text-sm underline text-blue-600"
-          target="_blank"
-          rel="noreferrer"
-        >
-          Voir l’état KYC / payouts (JSON)
-        </a>
-      </div>
+        {/* Portefeuille hôte */}
+        <WalletCard />
 
-      {/* Portefeuille hôte */}
-      <WalletCard />
+        {/* Lien bancaire (dev simple) */}
+        <section className="space-y-4 rounded-2xl border border-gray-100 bg-white/80 p-4 shadow-sm sm:p-5">
+          <h3 className="text-base font-semibold">Compte bancaire (retraits)</h3>
+          <p className="text-sm text-gray-600">
+            Dev simple pour tester : entre un IBAN (UE) <b>ou</b> des infos
+            Canada. En prod, on utilisera Stripe Elements.
+          </p>
 
-      {/* Lien bancaire (dev simple) */}
-      <div className="rounded border p-4 space-y-4">
-        <h3 className="font-medium">Compte bancaire (retraits)</h3>
-        <p className="text-sm text-gray-600">
-          Dev simple pour tester : entre un IBAN (UE) <b>ou</b> des infos Canada.
-          En prod, on utilisera Stripe Elements.
-        </p>
+          <IbanForm />
+          <BankCaForm />
+        </section>
 
-        <IbanForm />
-        <BankCaForm />
-      </div>
+        {/* Avatar */}
+        <section className="space-y-3 rounded-2xl border border-gray-100 bg-white/80 p-4 shadow-sm sm:p-5">
+          <label className="block text-sm font-medium">Avatar</label>
+          <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+            {avatarPreview ? (
+              <img
+                src={avatarPreview}
+                alt="avatar"
+                className="h-16 w-16 rounded-full border object-cover"
+              />
+            ) : (
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-200 text-sm">
+                {email?.[0]?.toUpperCase() ?? "?"}
+              </div>
+            )}
 
-      {/* Avatar */}
-      <div className="space-y-2">
-        <label className="block text-sm font-medium">Avatar</label>
-        <div className="flex items-center gap-4">
-          {avatarPreview ? (
-            <img
-              src={avatarPreview}
-              alt="avatar"
-              className="h-16 w-16 rounded-full object-cover border"
-            />
-          ) : (
-            <div className="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center text-sm">
-              {email?.[0]?.toUpperCase() ?? "?"}
-            </div>
-          )}
+            <div className="flex flex-col gap-2">
+              <input type="file" accept="image/*" onChange={onPickAvatar} />
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={onUploadAvatar}
+                  disabled={
+                    !avatarFile ||
+                    avatarStatus === "presigning" ||
+                    avatarStatus === "uploading" ||
+                    avatarStatus === "saving"
+                  }
+                  className="rounded-full bg-black px-4 py-2 text-xs font-medium text-white disabled:opacity-50 sm:text-sm"
+                >
+                  {avatarStatus === "presigning"
+                    ? "Préparation…"
+                    : avatarStatus === "uploading"
+                    ? "Upload…"
+                    : avatarStatus === "saving"
+                    ? "Enregistrement…"
+                    : "Uploader l’avatar"}
+                </button>
 
-          <div className="flex flex-col gap-2">
-            <input type="file" accept="image/*" onChange={onPickAvatar} />
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={onUploadAvatar}
-                disabled={
-                  !avatarFile ||
-                  avatarStatus === "presigning" ||
-                  avatarStatus === "uploading" ||
-                  avatarStatus === "saving"
-                }
-                className="rounded bg-black text-white px-3 py-2 text-sm disabled:opacity-50"
-              >
-                {avatarStatus === "presigning"
-                  ? "Préparation…"
-                  : avatarStatus === "uploading"
-                  ? "Upload…"
-                  : avatarStatus === "saving"
-                  ? "Enregistrement…"
-                  : "Uploader l’avatar"}
-              </button>
-
-              <button
-                type="button"
-                onClick={onDeleteAvatar}
-                className="rounded border px-3 py-2 text-sm"
-              >
-                Supprimer l’avatar
-              </button>
+                <button
+                  type="button"
+                  onClick={onDeleteAvatar}
+                  className="rounded-full border border-gray-300 px-4 py-2 text-xs font-medium sm:text-sm"
+                >
+                  Supprimer l’avatar
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
+
+        {/* Formulaire profil */}
+        <section className="rounded-2xl border border-gray-100 bg-white/80 p-4 shadow-sm sm:p-5">
+          <form onSubmit={onSave} className="space-y-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium">Nom</label>
+              <input
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
+                value={name}
+                onChange={(e) => setName(e.currentTarget.value)}
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-sm font-medium">Pays</label>
+              <input
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
+                value={country}
+                onChange={(e) => setCountry(e.currentTarget.value)}
+              />
+            </div>
+
+            <div>
+              <label className="mb-1 block text-sm font-medium">Rôle</label>
+              <select
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
+                value={role}
+                onChange={(e) => setRole(e.currentTarget.value as Role)}
+              >
+                <option value="GUEST">GUEST</option>
+                <option value="HOST">HOST</option>
+                <option value="BOTH">BOTH</option>
+              </select>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="submit"
+                disabled={saving || !changed}
+                className="rounded-full bg-black px-5 py-2 text-sm font-medium text-white disabled:opacity-60"
+              >
+                {saving ? "Enregistrement…" : "Enregistrer"}
+              </button>
+
+              {status === "saved" && (
+                <span className="text-sm text-green-700">
+                  Sauvegardé ✓
+                </span>
+              )}
+              {status === "error" && (
+                <span className="text-sm text-red-600">
+                  Erreur lors de l’enregistrement
+                </span>
+              )}
+            </div>
+          </form>
+        </section>
       </div>
-
-      {/* Formulaire profil */}
-      <form onSubmit={onSave} className="space-y-4">
-        <div>
-          <label className="block text-sm mb-1">Nom</label>
-          <input
-            className="w-full rounded-md border px-3 py-2"
-            value={name}
-            onChange={(e) => setName(e.currentTarget.value)}
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm mb-1">Pays</label>
-          <input
-            className="w-full rounded-md border px-3 py-2"
-            value={country}
-            onChange={(e) => setCountry(e.currentTarget.value)}
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm mb-1">Rôle</label>
-          <select
-            className="w-full rounded-md border px-3 py-2"
-            value={role}
-            onChange={(e) => setRole(e.currentTarget.value as Role)}
-          >
-            <option value="GUEST">GUEST</option>
-            <option value="HOST">HOST</option>
-            <option value="BOTH">BOTH</option>
-          </select>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            type="submit"
-            disabled={saving || !changed}
-            className="rounded-md bg-black text-white px-4 py-2 text-sm disabled:opacity-60"
-          >
-            {saving ? "Enregistrement…" : "Save"}
-          </button>
-
-          {status === "saved" && (
-            <span className="text-sm text-green-700">Sauvegardé ✓</span>
-          )}
-          {status === "error" && (
-            <span className="text-sm text-red-600">
-              Erreur lors de l’enregistrement
-            </span>
-          )}
-        </div>
-      </form>
-    </section>
+    </main>
   );
 }
 
 /* ===========================
    Carte Portefeuille + Retrait
    =========================== */
+
 function WalletCard() {
   const [loading, setLoading] = useState(true);
   const [withdrawing, setWithdrawing] = useState(false);
@@ -350,11 +357,17 @@ function WalletCard() {
 
       const released = j?.released ?? 0;
       if (released > 0) {
-        setMsg(`✅ Virement déclenché (${released} transfert${released > 1 ? "s" : ""}).`);
+        setMsg(
+          `✅ Virement déclenché (${released} transfert${
+            released > 1 ? "s" : ""
+          }).`
+        );
       } else {
         const reason =
           j?.skipped?.[0]?.reason ??
-          (balanceCents <= 0 ? "Aucun fonds disponible" : "Solde plateforme insuffisant");
+          (balanceCents <= 0
+            ? "Aucun fonds disponible"
+            : "Solde plateforme insuffisant");
         setMsg(`ℹ️ ${reason}`);
       }
       await load();
@@ -368,46 +381,52 @@ function WalletCard() {
   const balance = (balanceCents / 100).toFixed(2);
 
   return (
-    <div className="rounded border p-4 space-y-3">
+    <section className="space-y-3 rounded-2xl border border-gray-100 bg-white/80 p-4 shadow-sm sm:p-5">
       <div className="text-sm text-gray-600">Mon portefeuille</div>
-      <div className="text-2xl font-semibold">{loading ? "…" : `${balance} €`}</div>
+      <div className="text-2xl font-semibold">
+        {loading ? "…" : `${balance} €`}
+      </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"
           onClick={withdraw}
           disabled={withdrawing}
-          className="rounded bg-black text-white px-4 py-2 text-sm disabled:opacity-60"
+          className="rounded-full bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
         >
           {withdrawing ? "Traitement…" : "Retirer mes fonds"}
         </button>
         <button
           type="button"
           onClick={load}
-          className="rounded border px-3 py-2 text-sm"
+          className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium"
         >
           Rafraîchir
         </button>
-        {msg && <span className="text-sm">{msg}</span>}
+        {msg && <span className="text-sm text-gray-700">{msg}</span>}
       </div>
 
       <div className="pt-2">
-        <div className="text-xs text-gray-500 mb-1">Derniers mouvements</div>
+        <div className="mb-1 text-xs text-gray-500">Derniers mouvements</div>
         <ul className="space-y-1 text-sm">
           {ledger.map((l) => (
             <li key={l.id} className="flex justify-between">
-              <span className="truncate max-w-[60%]">{l.reason}</span>
-              <span className={l.deltaCents >= 0 ? "text-green-700" : "text-red-700"}>
+              <span className="max-w-[60%] truncate">{l.reason}</span>
+              <span
+                className={
+                  l.deltaCents >= 0 ? "text-green-700" : "text-red-700"
+                }
+              >
                 {(l.deltaCents / 100).toFixed(2)} €
               </span>
             </li>
           ))}
           {(!ledger || ledger.length === 0) && (
-            <li className="text-gray-500 text-xs">Aucun mouvement</li>
+            <li className="text-xs text-gray-500">Aucun mouvement</li>
           )}
         </ul>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -442,16 +461,16 @@ function IbanForm() {
   return (
     <div className="space-y-2">
       <div className="text-sm font-medium">IBAN (UE)</div>
-      <div className="flex gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row">
         <input
           placeholder="FR76 3000 6000 0112 3456 7890 189"
-          className="w-full rounded-md border px-3 py-2"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
           value={iban}
           onChange={(e) => setIban(e.currentTarget.value)}
         />
         <input
           placeholder="Titulaire (optionnel)"
-          className="w-full rounded-md border px-3 py-2"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
           value={holder}
           onChange={(e) => setHolder(e.currentTarget.value)}
         />
@@ -459,7 +478,7 @@ function IbanForm() {
       <button
         type="button"
         onClick={linkIban}
-        className="rounded bg-black text-white px-3 py-2 text-sm"
+        className="rounded-full bg-black px-4 py-2 text-sm font-medium text-white"
       >
         Lier cet IBAN
       </button>
@@ -481,8 +500,8 @@ function BankCaForm() {
           country: "CA",
           currency: "cad",
           accountHolderName: holder || undefined,
-          routingNumber: routing,   // ex test : 000000000
-          accountNumber: account,   // ex test : 000123456789
+          routingNumber: routing,
+          accountNumber: account,
         }),
       });
       const j = await res.json();
@@ -495,23 +514,25 @@ function BankCaForm() {
 
   return (
     <div className="space-y-2">
-      <div className="text-sm font-medium">Canada (routing + account)</div>
-      <div className="flex gap-2">
+      <div className="text-sm font-medium">
+        Canada (routing + account)
+      </div>
+      <div className="flex flex-col gap-2 sm:flex-row">
         <input
           placeholder="Routing (ex test: 000000000)"
-          className="w-full rounded-md border px-3 py-2"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
           value={routing}
           onChange={(e) => setRouting(e.currentTarget.value)}
         />
         <input
           placeholder="Account (ex test: 000123456789)"
-          className="w-full rounded-md border px-3 py-2"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
           value={account}
           onChange={(e) => setAccount(e.currentTarget.value)}
         />
         <input
           placeholder="Titulaire (optionnel)"
-          className="w-full rounded-md border px-3 py-2"
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
           value={holder}
           onChange={(e) => setHolder(e.currentTarget.value)}
         />
@@ -519,7 +540,7 @@ function BankCaForm() {
       <button
         type="button"
         onClick={linkCa}
-        className="rounded bg-black text-white px-3 py-2 text-sm"
+        className="rounded-full bg-black px-4 py-2 text-sm font-medium text-white"
       >
         Lier ce compte CA
       </button>
