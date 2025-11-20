@@ -3,21 +3,13 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import type { Session } from "next-auth";
 
-/**
- * Récupère la session courante ou `null`.
- * À utiliser dans les Server Components (RSC) ou routes.
- */
 export async function getCurrentSession(): Promise<Session | null> {
   const session = await getServerSession(authOptions);
   return session;
 }
 
 /**
- * Helper pour exiger qu'un utilisateur soit connecté.
- * À utiliser dans des routes si tu veux factoriser un peu.
- *
- * Exemple :
- *   const { session } = await requireAuth();
+ * Exige simplement que l'utilisateur soit connecté.
  */
 export async function requireAuth() {
   const session = await getServerSession(authOptions);
@@ -28,9 +20,9 @@ export async function requireAuth() {
 }
 
 /**
- * Helper pour exiger un hôte (host) :
+ * Exige un hôte :
  * - role HOST ou BOTH
- * - ou isHost = true (payoutsEnabled / hostProfile ok)
+ * - ou isHost = true (Stripe / hostProfile OK)
  */
 export async function requireHost() {
   const session = await getServerSession(authOptions);
@@ -38,11 +30,32 @@ export async function requireHost() {
     throw new Error("UNAUTHORIZED");
   }
 
-  const { role, isHost } = session.user as any;
+  const user = session.user as any;
+  const role = user.role as string | undefined;
+  const isHost = Boolean(user.isHost);
 
   const isHostRole = role === "HOST" || role === "BOTH";
   if (!isHostRole && !isHost) {
     throw new Error("FORBIDDEN_HOST_ONLY");
+  }
+
+  return { session };
+}
+
+/**
+ * Exige un admin (pour plus tard si tu fais un /admin).
+ */
+export async function requireAdmin() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
+    throw new Error("UNAUTHORIZED");
+  }
+
+  const user = session.user as any;
+  const role = user.role as string | undefined;
+
+  if (role !== "ADMIN") {
+    throw new Error("FORBIDDEN_ADMIN_ONLY");
   }
 
   return { session };

@@ -7,6 +7,42 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role { 
+  GUEST
+  HOST
+  BOTH
+  ADMIN
+}
+
+enum Currency {
+  EUR
+  CAD
+}
+
+enum ProvinceCA {
+  AB
+  BC
+  ON
+  QC
+  NB
+  NS
+  NL
+  PE
+}
+
+/// Provider de carte / autocomplétion d’adresse (Google Places, Mapbox, etc.)
+enum MapProvider {
+  GOOGLE
+  MAPBOX
+  OTHER
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -23,8 +59,7 @@ model User {
   sessions  Session[]
   Listing   Listing[]
   favorites Favorite[]
-
-  bookings Booking[]
+  bookings  Booking[]
 
   hostProfile  HostProfile?
   wallet       Wallet?
@@ -38,12 +73,6 @@ model UserProfile {
   avatarUrl   String?
   ratingAvg   Float  @default(0)
   ratingCount Int    @default(0)
-}
-
-enum Role {
-  HOST
-  GUEST
-  BOTH
 }
 
 model Account {
@@ -82,29 +111,6 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-enum Currency {
-  EUR
-  CAD
-}
-
-enum ProvinceCA {
-  AB
-  BC
-  ON
-  QC
-  NB
-  NS
-  NL
-  PE
-}
-
-/// Provider de carte / autocomplétion d’adresse (Google Places, Mapbox, etc.)
-enum MapProvider {
-  GOOGLE
-  MAPBOX
-  OTHER
-}
-
 model Listing {
   id          String     @id @default(cuid())
   title       String
@@ -123,23 +129,23 @@ model Listing {
   /// Adresse exacte de l’espace (jamais affichée publiquement)
   addressFull String     @default("")
 
-  /// Ligne d’adresse principale (numéro + rue) si tu veux la stocker séparément
+  /// Ligne d’adresse principale (numéro + rue)
   addressLine1 String?   
 
-  /// Code postal (utile pour filtres, mails, etc.)
+  /// Code postal
   postalCode  String?
 
-  /// ID du lieu renvoyé par le provider (Google Place ID, etc.)
+  /// ID du lieu renvoyé par le provider
   mapPlaceId  String?
 
-  /// Provider utilisé (Google, Mapbox, …)
+  /// Provider utilisé
   mapProvider MapProvider @default(GOOGLE)
 
-  /// Coordonnées exactes (utilisées uniquement après réservation)
+  /// Coordonnées exactes
   lat         Float      @default(0)
   lng         Float      @default(0)
 
-  /// Coordonnées “publiques” approximatives pour la carte (type Airbnb)
+  /// Coordonnées “publiques” (approx)
   latPublic   Float      @default(0)
   lngPublic   Float      @default(0)
 
@@ -178,12 +184,6 @@ model Favorite {
   @@unique([userId, listingId])
   @@index([listingId])
   @@index([userId])
-}
-
-enum BookingStatus {
-  PENDING
-  CONFIRMED
-  CANCELLED
 }
 
 model Booking {

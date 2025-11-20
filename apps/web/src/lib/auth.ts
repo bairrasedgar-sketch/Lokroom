@@ -51,7 +51,7 @@ export const authOptions: NextAuthOptions = {
     /**
      * Toujours exposer dans `session.user` :
      * - id
-     * - role (HOST / GUEST / BOTH)
+     * - role (HOST / GUEST / BOTH / ADMIN)
      * - isHost (booléen pratique côté front)
      *
      * Comme on est en `strategy: "database"`, on lit systématiquement
@@ -83,6 +83,23 @@ export const authOptions: NextAuthOptions = {
         !!dbUser.hostProfile?.payoutsEnabled;
 
       return session;
+    },
+  },
+
+  /**
+   * Events NextAuth : on met à jour lastLoginAt à chaque connexion
+   */
+  events: {
+    async signIn({ user }) {
+      if (!user?.email) return;
+      try {
+        await prisma.user.update({
+          where: { email: user.email },
+          data: { lastLoginAt: new Date() },
+        });
+      } catch {
+        // on ne casse pas le login en cas d'erreur
+      }
     },
   },
 };

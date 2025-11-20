@@ -1,3 +1,4 @@
+// apps/web/src/app/api/host/requirements/route.ts
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,10 @@ export async function GET() {
   });
 
   if (!host?.stripeAccountId) {
-    return NextResponse.json({ error: "Host account missing" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Host account missing" },
+      { status: 404 }
+    );
   }
 
   const acc = await stripe.accounts.retrieve(host.stripeAccountId);
@@ -29,6 +33,14 @@ export async function GET() {
   const eventually_due = acc.requirements?.eventually_due ?? [];
   const past_due = acc.requirements?.past_due ?? [];
   const kycStatus = currently_due.length === 0 ? "complete" : "incomplete";
+
+  // ✅ Si KYC complet → on promeut l'utilisateur en HOST dans la BDD
+  if (kycStatus === "complete") {
+    await prisma.user.update({
+      where: { email: session.user.email },
+      data: { role: "HOST" },
+    });
+  }
 
   return NextResponse.json({
     payoutsEnabled: acc.payouts_enabled === true,

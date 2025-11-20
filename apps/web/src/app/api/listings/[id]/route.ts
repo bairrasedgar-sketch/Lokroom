@@ -3,10 +3,13 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
-export const dynamic = "force-dynamic"; // pas de cache pour cette route
+export const dynamic = "force-dynamic";
 
 // GET /api/listings/[id]
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
+export async function GET(
+  _req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const listing = await prisma.listing.findUnique({
       where: { id: params.id },
@@ -15,7 +18,9 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
         owner: { select: { id: true, name: true, email: true } },
       },
     });
-    if (!listing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (!listing) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
     return NextResponse.json({ listing });
   } catch (e) {
@@ -24,8 +29,11 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   }
 }
 
-// PUT /api/listings/[id]  (update complet)
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+// PUT /api/listings/[id]
+export async function PUT(
+  req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
@@ -36,29 +44,39 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       where: { id: params.id },
       include: { owner: true },
     });
-    if (!listing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (!listing) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
     if (listing.owner.email !== session.user.email) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const body = (await req.json().catch(() => null)) as {
-      title?: string;
-      description?: string;
-      price?: number;
-      currency?: "EUR" | "CAD";
-      country?: string;
-      city?: string | null;
-    } | null;
+    const body = (await req.json().catch(() => null)) as
+      | {
+          title?: string;
+          description?: string;
+          price?: number;
+          currency?: "EUR" | "CAD";
+          country?: string;
+          city?: string; // plus de `null` ici
+          addressFull?: string;
+        }
+      | null;
 
-    if (!body) return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+    if (!body) {
+      return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+    }
 
-    // — mini validation “maison” simple et claire
     const title = String(body.title ?? "").trim();
     const description = String(body.description ?? "").trim();
-    const currency = body.currency === "EUR" || body.currency === "CAD" ? body.currency : null;
+    const currency =
+      body.currency === "EUR" || body.currency === "CAD"
+        ? body.currency
+        : null;
     const country = String(body.country ?? "").trim();
-    const city = body.city === null ? null : String(body.city ?? "").trim();
+    const city = String(body.city ?? "").trim(); // toujours string
+    const addressFull = String(body.addressFull ?? "").trim();
     const priceNum = Number(body.price);
 
     if (
@@ -66,10 +84,22 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       !description ||
       !country ||
       !currency ||
+      !city ||
+      !addressFull ||
       !Number.isFinite(priceNum) ||
-      priceNum < 0
+      priceNum < 2
     ) {
-      return NextResponse.json({ error: "Missing or invalid fields" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing or invalid fields" },
+        { status: 400 }
+      );
+    }
+
+    if (!["France", "Canada"].includes(country)) {
+      return NextResponse.json(
+        { error: "Le pays doit être France ou Canada." },
+        { status: 400 }
+      );
     }
 
     const updated = await prisma.listing.update({
@@ -77,10 +107,11 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       data: {
         title,
         description,
-        price: priceNum,    // Float
-        currency,           // "EUR" | "CAD"
+        price: priceNum,
+        currency,
         country,
         city,
+        addressFull,
       },
       include: {
         images: true,
@@ -95,8 +126,11 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-// DELETE /api/listings/[id] (optionnel mais pratique)
-export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
+// DELETE /api/listings/[id]
+export async function DELETE(
+  _req: Request,
+  { params }: { params: { id: string } }
+) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
@@ -107,7 +141,9 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
       where: { id: params.id },
       include: { owner: true },
     });
-    if (!listing) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (!listing) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
     if (listing.owner.email !== session.user.email) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });

@@ -1,4 +1,3 @@
-// apps/web/src/app/listings/[id]/page.tsx
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
@@ -9,9 +8,9 @@ import FavoriteButton from "@/components/FavoriteButton";
 import { cookies } from "next/headers";
 import { formatMoneyAsync, type Currency } from "@/lib/currency";
 import BookingForm from "@/components/BookingForm";
-import { getOrigin } from "@/lib/origin"; // ✅ pour gérer 3000/3003/etc. ou le domaine prod
+import { getOrigin } from "@/lib/origin";
+import Map from "@/components/Map"; // mini-map localisation
 
-// pas de cache pour éviter les 404 fantômes
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
 
@@ -19,26 +18,24 @@ type Listing = {
   id: string;
   title: string;
   description: string;
-  price: number; // float
-  currency: Currency; // "EUR" | "CAD"
+  price: number;
+  currency: Currency;
   country: string;
   city: string | null;
   createdAt: string;
 
-  // nouveaux champs (on ne les affiche pas encore tous,
-  // mais ça permet de les avoir sous la main)
   addressFull: string;
-  lat: number;
-  lng: number;
-  latPublic: number;
-  lngPublic: number;
+  lat: number | null;
+  lng: number | null;
+  latPublic: number | null;
+  lngPublic: number | null;
 
   images: { id: string; url: string }[];
-  owner: { id: string; name: string | null; email: string | null };
+  owner: { id: string | null; name: string | null; email: string | null };
 };
 
 async function getListing(id: string): Promise<Listing | null> {
-  const origin = getOrigin(); // ✅ reconstruit l’origine (env → headers → fallback localhost)
+  const origin = getOrigin();
   const res = await fetch(`${origin}/api/listings/${id}`, {
     cache: "no-store",
   });
@@ -75,6 +72,16 @@ export default async function ListingDetailPage({
     .filter(Boolean)
     .join(", ");
 
+  // Coords "utiles" : publiques si dispo, sinon privées
+  const lat = listing.latPublic ?? listing.lat;
+  const lng = listing.lngPublic ?? listing.lng;
+
+  const hasCoords =
+    lat != null &&
+    lng != null &&
+    Number.isFinite(lat) &&
+    Number.isFinite(lng);
+
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 pb-12 pt-6">
       {/* Ligne retour + date */}
@@ -95,7 +102,7 @@ export default async function ListingDetailPage({
         <p className="text-sm text-gray-600">{locationLabel}</p>
       </section>
 
-      {/* Galerie dans une grosse carte */}
+      {/* Galerie */}
       <section className="space-y-3">
         <div className="overflow-hidden rounded-3xl border bg-gray-100">
           <ListingGallery images={listing.images ?? []} aspect={4 / 3} />
@@ -108,7 +115,6 @@ export default async function ListingDetailPage({
           </span>
 
           <div className="flex gap-2">
-            {/* Bouton partager (sobre, sans logique pour l’instant) */}
             <button
               type="button"
               className="inline-flex items-center gap-1 rounded-full border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-800 hover:border-black"
@@ -116,13 +122,12 @@ export default async function ListingDetailPage({
               <span>Partager</span>
             </button>
 
-            {/* Bouton favoris existant */}
             <FavoriteButton listingId={listing.id} />
           </div>
         </div>
       </section>
 
-      {/* Corps : deux colonnes comme Airbnb */}
+      {/* Corps : deux colonnes */}
       <section className="flex flex-col gap-8 lg:flex-row lg:items-start">
         {/* Colonne gauche : détails + hôte */}
         <div className="flex-1 space-y-6">
@@ -159,7 +164,7 @@ export default async function ListingDetailPage({
             </p>
           </div>
 
-          {/* Bloc “Ce qu’il faut savoir” simplifié */}
+          {/* Ce qu’il faut savoir */}
           <div className="grid gap-4 border-b pb-4 text-sm sm:grid-cols-3">
             <div className="space-y-1">
               <p className="font-semibold">
@@ -185,7 +190,7 @@ export default async function ListingDetailPage({
             </div>
           </div>
 
-          {/* Infos hôte plus détaillées */}
+          {/* Infos hôte */}
           <aside className="space-y-1">
             <p className="text-sm text-gray-600">Hôte</p>
             <p className="font-medium">
@@ -195,6 +200,31 @@ export default async function ListingDetailPage({
               {listing.owner.email ?? ""}
             </p>
           </aside>
+
+          {/* Localisation approximative avec logo Lok'Room */}
+          {hasCoords && (
+            <section className="mt-4 space-y-2">
+              <h3 className="text-sm font-semibold">
+                Localisation approximative
+              </h3>
+              <p className="text-xs text-gray-500">
+                La position exacte sera communiquée après la réservation.
+              </p>
+              <div className="mt-2 h-64 w-full overflow-hidden rounded-2xl border bg-gray-100">
+                <Map
+                  useLogoIcon
+                  markers={[
+                    {
+                      id: listing.id,
+                      lat: lat as number,
+                      lng: lng as number,
+                      label: priceFormatted,
+                    },
+                  ]}
+                />
+              </div>
+            </section>
+          )}
         </div>
 
         {/* Colonne droite : carte réservation */}
@@ -214,7 +244,6 @@ export default async function ListingDetailPage({
             </div>
           </div>
 
-          {/* BookingForm existant, intégré dans la carte */}
           {!isOwner ? (
             <BookingForm
               listingId={listing.id}
@@ -229,7 +258,7 @@ export default async function ListingDetailPage({
         </aside>
       </section>
 
-      {/* Actions propriétaire (éditer / supprimer) */}
+      {/* Actions propriétaire */}
       {isOwner && (
         <div className="flex gap-3 pt-4">
           <Link

@@ -1,3 +1,4 @@
+// apps/web/src/components/ListingImagesManager.tsx
 "use client";
 
 import { useState } from "react";
@@ -9,7 +10,10 @@ type Props = {
   initialImages: { id: string; url: string }[];
 };
 
-export default function ListingImagesManager({ listingId, initialImages }: Props) {
+export default function ListingImagesManager({
+  listingId,
+  initialImages,
+}: Props) {
   const [images, setImages] = useState(initialImages);
   const [files, setFiles] = useState<FileList | null>(null);
   const [busy, setBusy] = useState(false);
@@ -32,7 +36,6 @@ export default function ListingImagesManager({ listingId, initialImages }: Props
           continue;
         }
 
-        // 1) presign (prefix = listings/<listingId>)
         const presign = await fetch("/api/upload/presign", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -48,7 +51,6 @@ export default function ListingImagesManager({ listingId, initialImages }: Props
           continue;
         }
 
-        // 2) PUT vers R2
         const put = await fetch(presign.uploadUrl, {
           method: "PUT",
           headers: { "Content-Type": f.type },
@@ -59,7 +61,6 @@ export default function ListingImagesManager({ listingId, initialImages }: Props
           continue;
         }
 
-        // 3) Déclare dans la DB
         const save = await fetch(`/api/listings/${listingId}/images`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -88,11 +89,12 @@ export default function ListingImagesManager({ listingId, initialImages }: Props
     if (!confirm("Supprimer cette image ?")) return;
     setBusy(true);
     try {
-      const res = await fetch(`/api/listings/${listingId}/images`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageId }),
-      });
+      const res = await fetch(
+        `/api/listings/${listingId}/images?imageId=${encodeURIComponent(
+          imageId
+        )}`,
+        { method: "DELETE" }
+      );
       if (!res.ok) throw new Error("delete failed");
       setImages((prev) => prev.filter((i) => i.id !== imageId));
       toast.success("Image supprimée ✅");
@@ -120,9 +122,18 @@ export default function ListingImagesManager({ listingId, initialImages }: Props
       {images.length > 0 && (
         <ul className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {images.map((img) => (
-            <li key={img.id} className="relative rounded border overflow-hidden">
+            <li
+              key={img.id}
+              className="relative rounded border overflow-hidden"
+            >
               <div className="relative aspect-[4/3]">
-                <Image src={img.url} alt="" fill className="object-cover" sizes="200px" />
+                <Image
+                  src={img.url}
+                  alt=""
+                  fill
+                  className="object-cover"
+                  sizes="200px"
+                />
               </div>
               <div className="p-2 flex justify-end">
                 <button

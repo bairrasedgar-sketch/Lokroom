@@ -1,8 +1,9 @@
+// apps/web/src/app/api/host/bank/route.ts
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
+import { requireHost } from "@/lib/auth-helpers";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function GET() {
   return NextResponse.json({
@@ -14,22 +15,41 @@ export async function GET() {
 
 export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const { session } = await requireHost();
+
+    const userId = (session.user as any).id as string | undefined;
+
+    // 🚦 Rate limit basique : 20 requêtes / minute par host
+    const rlKey = userId
+      ? `host-bank:${userId}`
+      : `host-bank:ip:${req.headers.get("x-forwarded-for") ?? "unknown"}`;
+
+    const { ok } = await rateLimit(rlKey);
+    if (!ok) {
+      return NextResponse.json(
+        { error: "Too many requests" },
+        { status: 429 }
+      );
     }
 
     const host = await prisma.hostProfile.findFirst({
-      where: { user: { email: session.user.email } },
+      where: { user: { email: session.user.email! } },
       select: { stripeAccountId: true },
     });
 
     if (!host?.stripeAccountId) {
-      return NextResponse.json({ error: "Host account missing" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Host account missing" },
+        { status: 404 }
+      );
     }
 
     const body = await req.json().catch(() => null);
-    if (!body) return NextResponse.json({ error: "Bad JSON" }, { status: 400 });
+    if (!body)
+      return NextResponse.json(
+        { error: "Bad JSON" },
+        { status: 400 }
+      );
 
     const {
       country,
@@ -58,7 +78,11 @@ export async function POST(req: Request) {
         account_holder_name: accountHolderName || undefined,
         account_number: iban.replace(/\s+/g, ""),
       };
-    } else if ((country ?? "").toUpperCase() === "CA" && routingNumber && accountNumber) {
+    } else if (
+      (country ?? "").toUpperCase() === "CA" &&
+      routingNumber &&
+      accountNumber
+    ) {
       external_account = {
         object: "bank_account",
         country: "CA",
@@ -81,9 +105,16 @@ export async function POST(req: Request) {
     return NextResponse.json({
       ok: true,
       payoutsEnabled: updated.payouts_enabled,
-      externalAccountsCount: updated.external_accounts?.data?.length ?? 0,
+      externalAccountsCount:
+        updated.external_accounts?.data?.length ?? 0,
     });
   } catch (e: any) {
+    if (e?.message === "UNAUTHORIZED") {
+      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    }
+    if (e?.message === "FORBIDDEN_HOST_ONLY") {
+      return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    }
     const msg = e?.raw?.message || e?.message || "attach_bank_failed";
     return NextResponse.json({ error: msg }, { status: 500 });
   }

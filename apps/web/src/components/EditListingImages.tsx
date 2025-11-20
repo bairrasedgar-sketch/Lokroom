@@ -85,8 +85,9 @@ export default function EditListingImages({
   function addFiles(incoming: File[]) {
     const imagesOnly = incoming.filter((f) => f.type.startsWith("image/"));
     const tooBig = imagesOnly.filter((f) => f.size > MAX_SIZE_MB * 1024 * 1024);
-    if (tooBig.length)
+    if (tooBig.length) {
       toast.error(`Certaines images dépassent ${MAX_SIZE_MB} Mo`);
+    }
     const ok = imagesOnly.filter(
       (f) => f.size <= MAX_SIZE_MB * 1024 * 1024
     );
@@ -105,7 +106,9 @@ export default function EditListingImages({
   async function deleteImage(imageId: string) {
     if (!confirm("Supprimer cette image ?")) return;
     const res = await fetch(
-      `/api/listings/${listingId}/images/${imageId}`,
+      `/api/listings/${listingId}/images?imageId=${encodeURIComponent(
+        imageId
+      )}`,
       { method: "DELETE" }
     );
     if (!res.ok) {
@@ -134,7 +137,9 @@ export default function EditListingImages({
   };
 
   const saveCrop = useCallback(async () => {
-    if (!cropOpen || cropIndex === null || !cropSrc || !croppedAreaPixels) return;
+    if (!cropOpen || cropIndex === null || !cropSrc || !croppedAreaPixels) {
+      return;
+    }
     try {
       const blob = await getCroppedBlob(
         cropSrc,
@@ -144,7 +149,9 @@ export default function EditListingImages({
       const croppedFile = new File([blob], files[cropIndex].name, {
         type: files[cropIndex].type,
       });
-      setFiles((prev) => prev.map((f, i) => (i === cropIndex ? croppedFile : f)));
+      setFiles((prev) =>
+        prev.map((f, i) => (i === cropIndex ? croppedFile : f))
+      );
       toast.success("Image rognée ✔");
     } catch {
       toast.error("Rognage impossible");
@@ -206,10 +213,11 @@ export default function EditListingImages({
           throw new Error(`Save image échoué (${save.status}). ${body}`);
         }
 
-        // 4) rafraîchir la liste locale
         const j = await save.json().catch(() => null);
         const newImg = j?.image as Img | undefined;
-        if (newImg) setImages((prev) => [newImg, ...prev]);
+        if (newImg) {
+          setImages((prev) => [newImg, ...prev]);
+        }
       }
 
       toast.success("Images ajoutées ✔");
@@ -233,8 +241,15 @@ export default function EditListingImages({
       ) : (
         <div className="flex flex-wrap gap-3">
           {images.map((im) => (
-            <div key={im.id} className="relative h-28 w-36 border rounded overflow-hidden bg-white">
-              <img src={im.url} alt="" className="h-full w-full object-contain" />
+            <div
+              key={im.id}
+              className="relative h-28 w-36 border rounded overflow-hidden bg-white"
+            >
+              <img
+                src={im.url}
+                alt=""
+                className="h-full w-full object-contain"
+              />
               <button
                 type="button"
                 onClick={() => deleteImage(im.id)}
@@ -306,7 +321,9 @@ export default function EditListingImages({
                   className="h-full w-full object-contain"
                   alt=""
                   onLoad={(e) =>
-                    URL.revokeObjectURL((e.target as HTMLImageElement).src)
+                    URL.revokeObjectURL(
+                      (e.target as HTMLImageElement).src
+                    )
                   }
                 />
                 <div className="absolute left-1 top-1 flex gap-1">
@@ -356,7 +373,9 @@ export default function EditListingImages({
                 objectFit="contain"
                 onCropChange={setCrop}
                 onZoomChange={setZoom}
-                onCropComplete={(_, areaPixels) => setCroppedAreaPixels(areaPixels)}
+                onCropComplete={(_, areaPixels) =>
+                  setCroppedAreaPixels(areaPixels)
+                }
               />
             </div>
 
