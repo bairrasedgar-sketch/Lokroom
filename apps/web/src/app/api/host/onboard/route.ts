@@ -1,3 +1,4 @@
+// apps/web/src/app/api/host/onboard/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -29,14 +30,13 @@ export async function POST() {
     // IMPORTANT : on crée un compte **EXPRESS** (pas Custom)
     if (!host.stripeAccountId) {
       const account = await stripe.accounts.create({
-        type: "express",                         // 👈 EXPRESSSS
-        country: "FR",                           // ou "CA" selon ton hôte, FR pour toi
+        type: "express", // 👈 EXPRESS
+        country: "FR",   // ou "CA" selon ton hôte
         email: user.email ?? undefined,
         capabilities: {
           card_payments: { requested: true },
           transfers: { requested: true },
         },
-        // surtout **PAS** de { controller: { requirement_collection: "application" } }
       });
 
       host = await prisma.hostProfile.update({
@@ -56,10 +56,7 @@ export async function POST() {
     return NextResponse.json({ url: accountLinks.url });
   } catch (e: any) {
     console.error("host/onboard error:", e);
-    const msg =
-      e?.raw?.message ||
-      e?.message ||
-      "onboard_failed";
+    const msg = e?.raw?.message || e?.message || "onboard_failed";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

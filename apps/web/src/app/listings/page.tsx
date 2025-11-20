@@ -8,7 +8,9 @@ import { prisma } from "@/lib/db";
 import { formatMoneyAsync, type Currency } from "@/lib/currency";
 import CurrencyNotice from "@/components/CurrencyNotice";
 import ListingFilters from "@/components/ListingFilters";
+import Map from "@/components/Map";
 
+// Type simplifié pour les annonces
 type Listing = {
   id: string;
   title: string;
@@ -19,6 +21,8 @@ type Listing = {
   city: string | null;
   createdAt: Date;
   images: { id: string; url: string }[];
+  latPublic: number;
+  lngPublic: number;
 };
 
 function strIncludes(a: string | null | undefined, b: string) {
@@ -30,6 +34,7 @@ export default async function ListingsPage({
 }: {
   searchParams?: Record<string, string | string[] | undefined>;
 }) {
+  // 1) On lit TOUTES les annonces avec coords publiques
   const listingsFromDb = await prisma.listing.findMany({
     include: {
       images: true,
@@ -48,17 +53,22 @@ export default async function ListingsPage({
     city: l.city,
     createdAt: l.createdAt,
     images: l.images.map((img) => ({ id: img.id, url: img.url })),
+    latPublic: l.latPublic ?? 0,
+    lngPublic: l.lngPublic ?? 0,
   }));
 
   const displayCurrency =
     (cookies().get("currency")?.value as Currency) ?? "EUR";
 
+  // 2) Filtres URL
   const sp = searchParams ?? {};
-  const country = (typeof sp.country === "string" ? sp.country : "").trim();
+  const country =
+    (typeof sp.country === "string" ? sp.country : "").trim();
   const city = (typeof sp.city === "string" ? sp.city : "").trim();
   const min = Number(typeof sp.min === "string" ? sp.min : undefined);
   const max = Number(typeof sp.max === "string" ? sp.max : undefined);
 
+  // 3) Filtrage
   const filtered = listings.filter((l) => {
     if (country && !strIncludes(l.country, country)) return false;
     if (city && !strIncludes(l.city, city)) return false;
@@ -67,6 +77,7 @@ export default async function ListingsPage({
     return true;
   });
 
+  // 4) Formatage prix
   const cards = await Promise.all(
     filtered.map(async (l) => {
       const priceFormatted = await formatMoneyAsync(
@@ -82,52 +93,55 @@ export default async function ListingsPage({
     })
   );
 
+  // 5) Markers pour la map : vraies coords publiques
+  const mapMarkers = cards
+    .filter(
+      (l) =>
+        Number.isFinite(l.latPublic) &&
+        Number.isFinite(l.lngPublic) &&
+        !(l.latPublic === 0 && l.lngPublic === 0)
+    )
+    .slice(0, 80)
+    .map((l) => ({
+      id: l.id,
+      lat: l.latPublic,
+      lng: l.lngPublic,
+      label: l.priceFormatted, // prix dans une bulle
+    }));
+
   return (
-    <main className="mx-auto max-w-6xl px-4 pb-12 pt-8 space-y-6">
-      {/* Header + CTA */}
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold sm:text-3xl">
-            Toutes les annonces
-          </h1>
-          <p className="mt-1 text-sm text-gray-600">
-            Parcours les espaces disponibles. Utilise les filtres pour trouver
-            exactement ce qu&apos;il te faut.
-          </p>
+    <main className="mx-auto flex min-h-[calc(100vh-80px)] max-w-6xl flex-col gap-4 px-4 pb-8 pt-4 lg:flex-row">
+      {/* COLONNE GAUCHE : filtres + liste */}
+      <section className="flex-1 space-y-4 lg:max-w-[55%]">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold">Annonces</h1>
+          <Link
+            href="/listings/new"
+            className="rounded-full bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-900"
+          >
+            + Nouvelle annonce
+          </Link>
         </div>
 
-        <Link
-          href="/listings/new"
-          className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-gray-900"
-        >
-          + Nouvelle annonce
-        </Link>
-      </header>
-
-      {/* Devise + filtres dans un bloc léger */}
-      <section className="space-y-4 rounded-2xl border border-gray-100 bg-white/80 p-4 shadow-sm">
         <CurrencyNotice />
         <ListingFilters />
-      </section>
 
-      {/* Grille d'annonces */}
-      <section className="space-y-3">
         {cards.length === 0 ? (
           <p className="text-sm text-gray-500">
-            Aucune annonce ne correspond aux filtres. Essaie d&apos;élargir ta
-            recherche.
+            Aucune annonce ne correspond aux filtres.
           </p>
         ) : (
-          <ul className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
             {cards.map((l) => {
               const cover = l.images?.[0]?.url ?? null;
+
               return (
                 <li
                   key={l.id}
-                  className="overflow-hidden rounded-2xl border border-gray-100 bg-white/80 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                  className="overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
                 >
                   <Link href={`/listings/${l.id}`} className="block">
-                    <div className="relative aspect-[4/3] bg-[#f5f5f5]">
+                    <div className="relative aspect-[4/3] bg-gray-50">
                       {cover ? (
                         <Image
                           src={cover}
@@ -162,6 +176,16 @@ export default async function ListingsPage({
           </ul>
         )}
       </section>
+
+      {/* COLONNE DROITE : Google Map style Airbnb */}
+      <aside className="sticky top-24 hidden h-[600px] flex-1 lg:block">
+        <div className="relative h-full w-full overflow-hidden rounded-3xl border bg-gray-100">
+          <Map markers={mapMarkers} />
+          <div className="pointer-events-none absolute bottom-4 left-4 rounded-full bg-white/80 px-3 py-1 text-xs text-gray-600 backdrop-blur">
+            Carte Lok&apos;Room (Google Maps)
+          </div>
+        </div>
+      </aside>
     </main>
   );
 }

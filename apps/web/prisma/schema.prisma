@@ -1,4 +1,4 @@
-generator client {
+generator client { 
   provider = "prisma-client-js"
 }
 
@@ -98,15 +98,51 @@ enum ProvinceCA {
   PE
 }
 
+/// Provider de carte / autocomplétion d’adresse (Google Places, Mapbox, etc.)
+enum MapProvider {
+  GOOGLE
+  MAPBOX
+  OTHER
+}
+
 model Listing {
   id          String     @id @default(cuid())
   title       String
   description String
+
+  /// Prix par nuit / par jour (frontend décidera comment l’afficher)
   price       Float
   currency    Currency   @default(EUR)
+
   country     String
   province    ProvinceCA?
-  city        String?
+
+  /// Ville : obligatoire (défaut vide pour anciennes lignes)
+  city        String     @default("")
+
+  /// Adresse exacte de l’espace (jamais affichée publiquement)
+  addressFull String     @default("")
+
+  /// Ligne d’adresse principale (numéro + rue) si tu veux la stocker séparément
+  addressLine1 String?   
+
+  /// Code postal (utile pour filtres, mails, etc.)
+  postalCode  String?
+
+  /// ID du lieu renvoyé par le provider (Google Place ID, etc.)
+  mapPlaceId  String?
+
+  /// Provider utilisé (Google, Mapbox, …)
+  mapProvider MapProvider @default(GOOGLE)
+
+  /// Coordonnées exactes (utilisées uniquement après réservation)
+  lat         Float      @default(0)
+  lng         Float      @default(0)
+
+  /// Coordonnées “publiques” approximatives pour la carte (type Airbnb)
+  latPublic   Float      @default(0)
+  lngPublic   Float      @default(0)
+
   createdAt   DateTime   @default(now())
 
   ownerId String
@@ -118,7 +154,8 @@ model Listing {
 
   @@index([ownerId])
   @@index([createdAt])
-  @@index([country, province])
+  @@index([country, province, city])
+  @@index([mapPlaceId])
 }
 
 model ListingImage {

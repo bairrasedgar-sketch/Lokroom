@@ -5,3 +5,16 @@
 :root {
   color-scheme: light;
 }
+
+/* Bulle de prix sur la carte Google Maps (style Airbnb) */
+.lokroom-map-badge {
+  background: #ffffff;
+  color: #111827;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.35);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  white-space: nowrap;
+}

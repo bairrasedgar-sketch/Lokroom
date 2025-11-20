@@ -1,4 +1,4 @@
-// app/api/listings/route.ts
+// apps/web/src/app/api/listings/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth";
@@ -32,7 +32,10 @@ export async function POST(req: Request) {
 
     const email = session?.user?.email;
     if (!email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     const user = await prisma.user.findUnique({
@@ -40,7 +43,10 @@ export async function POST(req: Request) {
     });
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
     }
 
     const contentType = req.headers.get("content-type") ?? "";
@@ -59,6 +65,11 @@ export async function POST(req: Request) {
         currency: form.get("currency") as string,
         country: form.get("country") as string,
         city: (form.get("city") as string) || null,
+        addressFull: (form.get("addressFull") as string) || "",
+        lat: form.get("lat"),
+        lng: form.get("lng"),
+        latPublic: form.get("latPublic"),
+        lngPublic: form.get("lngPublic"),
       };
     } else {
       return NextResponse.json(
@@ -67,26 +78,65 @@ export async function POST(req: Request) {
       );
     }
 
+    // Validation minimale côté serveur
     if (
       !data.title ||
       !data.description ||
       data.price == null ||
       !data.currency ||
-      !data.country
+      !data.country ||
+      !data.city ||
+      !data.addressFull
     ) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        {
+          error:
+            "Champs requis manquants (titre, description, prix, devise, pays, ville, adresse).",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Optionnel : forcer le pays France / Canada côté serveur
+    if (!["France", "Canada"].includes(data.country)) {
+      return NextResponse.json(
+        { error: "Le pays doit être France ou Canada." },
         { status: 400 }
       );
     }
 
     const priceNumber = Number(data.price);
-    if (Number.isNaN(priceNumber)) {
+    if (!Number.isFinite(priceNumber)) {
       return NextResponse.json(
         { error: "Invalid price" },
         { status: 400 }
       );
     }
+
+    if (priceNumber < 2) {
+      return NextResponse.json(
+        { error: "Le prix minimum est de 2 (EUR ou CAD)." },
+        { status: 400 }
+      );
+    }
+
+    // Parsing des coordonnées éventuelles
+    const lat =
+      data.lat !== undefined && data.lat !== null
+        ? Number(data.lat)
+        : undefined;
+    const lng =
+      data.lng !== undefined && data.lng !== null
+        ? Number(data.lng)
+        : undefined;
+    const latPublic =
+      data.latPublic !== undefined && data.latPublic !== null
+        ? Number(data.latPublic)
+        : undefined;
+    const lngPublic =
+      data.lngPublic !== undefined && data.lngPublic !== null
+        ? Number(data.lngPublic)
+        : undefined;
 
     const listing = await prisma.listing.create({
       data: {
@@ -96,6 +146,16 @@ export async function POST(req: Request) {
         currency: data.currency,
         country: data.country,
         city: data.city,
+        addressFull: data.addressFull,
+        ...(Number.isFinite(lat) && Number.isFinite(lng)
+          ? { lat: lat as number, lng: lng as number }
+          : {}),
+        ...(Number.isFinite(latPublic) && Number.isFinite(lngPublic)
+          ? {
+              latPublic: latPublic as number,
+              lngPublic: lngPublic as number,
+            }
+          : {}),
         ownerId: user.id,
       },
     });

@@ -24,6 +24,15 @@ type Listing = {
   country: string;
   city: string | null;
   createdAt: string;
+
+  // nouveaux champs (on ne les affiche pas encore tous,
+  // mais ça permet de les avoir sous la main)
+  addressFull: string;
+  lat: number;
+  lng: number;
+  latPublic: number;
+  lngPublic: number;
+
   images: { id: string; url: string }[];
   owner: { id: string; name: string | null; email: string | null };
 };
@@ -153,7 +162,9 @@ export default async function ListingDetailPage({
           {/* Bloc “Ce qu’il faut savoir” simplifié */}
           <div className="grid gap-4 border-b pb-4 text-sm sm:grid-cols-3">
             <div className="space-y-1">
-              <p className="font-semibold">Conditions d&apos;annulation</p>
+              <p className="font-semibold">
+                Conditions d&apos;annulation
+              </p>
               <p className="text-xs text-gray-600">
                 L&apos;hôte définit ses propres règles. Vérifie les détails
                 avant de réserver.

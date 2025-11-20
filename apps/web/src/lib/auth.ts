@@ -14,7 +14,6 @@ export const authOptions: NextAuthOptions = {
 
   /**
    * On garde "database" (tu as déjà les tables Session/Account en place).
-   * Les callbacks ci-dessous ajoutent quand même user.id dans session.user.id.
    */
   session: { strategy: "database" },
 
@@ -50,22 +49,39 @@ export const authOptions: NextAuthOptions = {
     },
 
     /**
-     * Toujours exposer l'id dans session.user.id.
-     * - Si token.sub existe (sessions JWT ou 1er cycle), on l’utilise.
-     * - Sinon on récupère via l’email → user.id (sessions Database).
+     * Toujours exposer dans `session.user` :
+     * - id
+     * - role (HOST / GUEST / BOTH)
+     * - isHost (booléen pratique côté front)
+     *
+     * Comme on est en `strategy: "database"`, on lit systématiquement
+     * l'utilisateur en BDD à partir de l'email.
      */
-    async session({ session, token }) {
-      if (session.user) {
-        if (token?.sub) {
-          (session.user as any).id = token.sub;
-        } else if (session.user.email) {
-          const u = await prisma.user.findUnique({
-            where: { email: session.user.email },
-            select: { id: true },
-          });
-          if (u?.id) (session.user as any).id = u.id;
-        }
-      }
+    async session({ session }) {
+      if (!session.user?.email) return session;
+
+      const dbUser = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        select: {
+          id: true,
+          role: true,
+          hostProfile: {
+            select: {
+              payoutsEnabled: true,
+            },
+          },
+        },
+      });
+
+      if (!dbUser) return session;
+
+      (session.user as any).id = dbUser.id;
+      (session.user as any).role = dbUser.role;
+      (session.user as any).isHost =
+        dbUser.role === "HOST" ||
+        dbUser.role === "BOTH" ||
+        !!dbUser.hostProfile?.payoutsEnabled;
+
       return session;
     },
   },
