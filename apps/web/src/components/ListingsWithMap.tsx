@@ -1,4 +1,3 @@
-// apps/web/src/components/ListingsWithMap.tsx
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -43,8 +42,59 @@ type Props = {
 
 type SortOption = "recent" | "price_asc" | "price_desc";
 
+function ListingPreviewCard({ listing, onClose }: { listing: ListingCardFixed; onClose: () => void }) {
+  const cover = listing.images?.[0]?.url ?? null;
+
+  return (
+    <div className="relative w-full max-w-xs overflow-hidden rounded-2xl border bg-white shadow-xl">
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-xs font-bold text-gray-800 shadow"
+        aria-label="Fermer l’aperçu"
+      >
+        ×
+      </button>
+      <Link href={`/listings/${listing.id}`} className="block">
+        <div className="relative h-40 w-full bg-gray-100">
+          {cover ? (
+            <Image
+              src={cover}
+              alt={listing.title}
+              fill
+              className="object-cover"
+              sizes="256px"
+            />
+          ) : (
+            <div className="absolute inset-0 grid place-items-center text-xs text-gray-400">
+              Pas d&apos;image
+            </div>
+          )}
+        </div>
+        <div className="space-y-1 p-3">
+          <h3 className="line-clamp-1 text-sm font-semibold">
+            {listing.title}
+          </h3>
+          <p className="text-[11px] text-gray-500">
+            {listing.city ? `${listing.city}, ` : ""}
+            {listing.country} ·{" "}
+            {new Date(listing.createdAt).toLocaleDateString()}
+          </p>
+          <p className="pt-1 text-sm font-semibold">
+            {listing.priceFormatted}
+          </p>
+          <p className="mt-1 text-[11px] text-gray-500">
+            Cliquer pour voir les détails
+          </p>
+        </div>
+      </Link>
+    </div>
+  );
+}
+
 export default function ListingsWithMap({ cards, mapMarkers }: Props) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showMobileMap, setShowMobileMap] = useState(false);
 
   const router = useRouter();
@@ -87,6 +137,11 @@ export default function ListingsWithMap({ cards, mapMarkers }: Props) {
       block: "center",
     });
   }, [hoveredId]);
+
+  const selectedListing =
+    selectedId ? cards.find((c) => c.id === selectedId) ?? null : null;
+
+  const closePreview = () => setSelectedId(null);
 
   return (
     <>
@@ -220,10 +275,21 @@ export default function ListingsWithMap({ cards, mapMarkers }: Props) {
               markers={mapMarkers}
               hoveredId={hoveredId}
               onMarkerHover={setHoveredId}
+              onMarkerClick={setSelectedId}
             />
             <div className="pointer-events-none absolute bottom-4 left-4 rounded-full bg-white/80 px-3 py-1 text-xs text-gray-600 backdrop-blur">
               Carte Lok&apos;Room (Google Maps) · {sortLabel}
             </div>
+
+            {/* Aperçu Airbnb-like sur desktop */}
+            {selectedListing && (
+              <div className="pointer-events-auto absolute bottom-6 right-6">
+                <ListingPreviewCard
+                  listing={selectedListing}
+                  onClose={closePreview}
+                />
+              </div>
+            )}
           </div>
         </aside>
       </main>
@@ -236,7 +302,9 @@ export default function ListingsWithMap({ cards, mapMarkers }: Props) {
               markers={mapMarkers}
               hoveredId={hoveredId}
               onMarkerHover={setHoveredId}
+              onMarkerClick={setSelectedId}
             />
+
             <button
               type="button"
               onClick={() => setShowMobileMap(false)}
@@ -249,6 +317,16 @@ export default function ListingsWithMap({ cards, mapMarkers }: Props) {
               Carte Lok&apos;Room · {total} annonce
               {total > 1 ? "s" : ""} · {sortLabel}
             </div>
+
+            {/* Aperçu Airbnb-like sur mobile (en bas de la carte) */}
+            {selectedListing && (
+              <div className="pointer-events-auto absolute bottom-16 left-3 right-3">
+                <ListingPreviewCard
+                  listing={selectedListing}
+                  onClose={closePreview}
+                />
+              </div>
+            )}
           </div>
         </div>
       )}

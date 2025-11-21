@@ -23,7 +23,7 @@ type MapProps = {
   /** Callback quand on survole une bulle sur la carte */
   onMarkerHover?: (id: string | null) => void;
 
-  /** Callback quand on clique sur une bulle de prix */
+  /** Callback quand on clique sur une bulle sur la carte (aperçu Airbnb-like) */
   onMarkerClick?: (id: string) => void;
 };
 
@@ -36,8 +36,8 @@ export default function Map({
   onMarkerHover,
   onMarkerClick,
 }: MapProps) {
-  const apiKey =
-    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string | undefined;
+  const apiKey = process.env
+    .NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string | undefined;
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
@@ -202,9 +202,13 @@ export default function Map({
           div.addEventListener("mouseleave", () => onMarkerHover(null));
         }
 
-        // 🖱 Click sur la bulle → pré-view d’annonce
+        // 🖱️ Clic sur la bulle → apercu de l'annonce
         if (onMarkerClick) {
-          div.addEventListener("click", () => onMarkerClick(m.id));
+          div.addEventListener("click", () => {
+            onMarkerClick(m.id);
+            // on peut aussi déclencher le hover pour faire scroller la liste
+            if (onMarkerHover) onMarkerHover(m.id);
+          });
         }
 
         (this as any).div = div;
@@ -247,7 +251,14 @@ export default function Map({
       overlays.forEach((o) => o.setMap(null));
       markersInstances.forEach((m: any) => m.setMap(null));
     };
-  }, [missingApiKey, scriptLoaded, markers, useLogoIcon, onMarkerHover, onMarkerClick]);
+  }, [
+    missingApiKey,
+    scriptLoaded,
+    markers,
+    useLogoIcon,
+    onMarkerHover,
+    onMarkerClick,
+  ]);
 
   // 🎯 Quand on survole une carte dans la liste → recentrer la map sur la bulle
   useEffect(() => {
