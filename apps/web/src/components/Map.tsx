@@ -1,4 +1,3 @@
-// apps/web/src/components/Map.tsx
 "use client";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -23,6 +22,9 @@ type MapProps = {
 
   /** Callback quand on survole une bulle sur la carte */
   onMarkerHover?: (id: string | null) => void;
+
+  /** Callback quand on clique sur une bulle de prix */
+  onMarkerClick?: (id: string) => void;
 };
 
 const DEFAULT_CENTER = { lat: 45.5019, lng: -73.5674 }; // Montréal
@@ -32,9 +34,10 @@ export default function Map({
   useLogoIcon = false,
   hoveredId,
   onMarkerHover,
+  onMarkerClick,
 }: MapProps) {
-  const apiKey = process.env
-    .NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string | undefined;
+  const apiKey =
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string | undefined;
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
@@ -199,6 +202,11 @@ export default function Map({
           div.addEventListener("mouseleave", () => onMarkerHover(null));
         }
 
+        // 🖱 Click sur la bulle → pré-view d’annonce
+        if (onMarkerClick) {
+          div.addEventListener("click", () => onMarkerClick(m.id));
+        }
+
         (this as any).div = div;
 
         const panes = this.getPanes();
@@ -239,7 +247,7 @@ export default function Map({
       overlays.forEach((o) => o.setMap(null));
       markersInstances.forEach((m: any) => m.setMap(null));
     };
-  }, [missingApiKey, scriptLoaded, markers, useLogoIcon, onMarkerHover]);
+  }, [missingApiKey, scriptLoaded, markers, useLogoIcon, onMarkerHover, onMarkerClick]);
 
   // 🎯 Quand on survole une carte dans la liste → recentrer la map sur la bulle
   useEffect(() => {
