@@ -1,4 +1,3 @@
-// apps/web/src/app/listings/page.tsx
 export const dynamic = "force-dynamic";
 
 import { cookies } from "next/headers";
@@ -42,7 +41,7 @@ export default async function ListingsPage({
 }: {
   searchParams?: Record<string, string | string[] | undefined>;
 }) {
-  // 1) On lit TOUTES les annonces
+  // 1) Lire toutes les annonces
   const listingsFromDb = await prisma.listing.findMany({
     include: {
       images: true,
@@ -70,13 +69,17 @@ export default async function ListingsPage({
   const displayCurrency =
     (cookies().get("currency")?.value as Currency) ?? "EUR";
 
-  // 2) Filtres URL (pays, ville, min/max)
+  // 2) Filtres URL (pays, ville, min/max, tri)
   const sp = searchParams ?? {};
   const country =
     (typeof sp.country === "string" ? sp.country : "").trim();
   const city = (typeof sp.city === "string" ? sp.city : "").trim();
   const min = Number(typeof sp.min === "string" ? sp.min : undefined);
   const max = Number(typeof sp.max === "string" ? sp.max : undefined);
+
+  const sortRaw = typeof sp.sort === "string" ? sp.sort : "recent";
+  const sort: "recent" | "price_asc" | "price_desc" =
+    sortRaw === "price_asc" || sortRaw === "price_desc" ? sortRaw : "recent";
 
   // 3) Filtrage
   const filtered = listings.filter((l) => {
@@ -87,9 +90,22 @@ export default async function ListingsPage({
     return true;
   });
 
-  // 4) Formatage prix pour les cartes
+  // 3bis) Tri
+  const sorted = [...filtered]; // <-- corrigé ici : const au lieu de let
+
+  if (sort === "price_asc") {
+    sorted.sort((a, b) => a.price - b.price);
+  } else if (sort === "price_desc") {
+    sorted.sort((a, b) => b.price - a.price);
+  } else {
+    sorted.sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+    );
+  }
+
+  // 4) Formatage prix
   const cards: ListingCard[] = await Promise.all(
-    filtered.map(async (l) => {
+    sorted.map(async (l) => {
       const priceFormatted = await formatMoneyAsync(
         l.price,
         l.currency as Currency,
@@ -99,7 +115,7 @@ export default async function ListingsPage({
     })
   );
 
-  // 5) Markers pour la map (latPublic → fallback lat)
+  // 5) Markers pour la map (avec fallback)
   const mapMarkers: MapMarker[] = cards
     .map((l) => {
       const lat = l.latPublic ?? l.lat;

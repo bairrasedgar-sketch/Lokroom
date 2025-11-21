@@ -1,9 +1,14 @@
 // apps/web/src/components/ListingsWithMap.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import {
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from "next/navigation";
 
 import CurrencyNotice from "@/components/CurrencyNotice";
 import ListingFilters from "@/components/ListingFilters";
@@ -36,93 +41,217 @@ type Props = {
   mapMarkers: MapMarker[];
 };
 
+type SortOption = "recent" | "price_asc" | "price_desc";
+
 export default function ListingsWithMap({ cards, mapMarkers }: Props) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [showMobileMap, setShowMobileMap] = useState(false);
+
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const total = cards.length;
+
+  const sortParam = (searchParams.get("sort") ?? "recent") as SortOption;
+
+  const handleSortChange = (value: SortOption) => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (value === "recent") {
+      params.delete("sort");
+    } else {
+      params.set("sort", value);
+    }
+
+    const query = params.toString();
+    router.push(query ? `${pathname}?${query}` : pathname);
+  };
+
+  const sortLabel = (() => {
+    if (sortParam === "price_asc") return "Prix croissant";
+    if (sortParam === "price_desc") return "Prix décroissant";
+    return "Plus récentes";
+  })();
+
+  // 🔁 Réfs pour chaque carte → scrollIntoView quand on survole depuis la carte
+  const cardRefs = useRef<Record<string, HTMLLIElement | null>>({});
+
+  useEffect(() => {
+    if (!hoveredId) return;
+    const el = cardRefs.current[hoveredId];
+    if (!el) return;
+
+    el.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [hoveredId]);
 
   return (
-    <main className="mx-auto flex min-h-[calc(100vh-80px)] max-w-6xl flex-col gap-4 px-4 pb-8 pt-4 lg:flex-row">
-      {/* COLONNE GAUCHE : filtres + liste */}
-      <section className="flex-1 space-y-4 lg:max-w-[55%]">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Annonces</h1>
-          <Link
-            href="/listings/new"
-            className="rounded-full bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-900"
-          >
-            + Nouvelle annonce
-          </Link>
-        </div>
+    <>
+      <main className="mx-auto flex min-h-[calc(100vh-80px)] max-w-6xl flex-col gap-4 px-4 pb-8 pt-4 lg:flex-row">
+        {/* COLONNE GAUCHE : filtres + liste */}
+        <section className="flex-1 space-y-4 lg:max-w-[55%]">
+          <div className="flex items-center justify-between gap-3">
+            <div className="space-y-1">
+              <h1 className="text-2xl font-semibold">Annonces</h1>
+              <p className="text-xs text-gray-500">
+                {total === 0
+                  ? "Aucune annonce pour ces filtres."
+                  : `${total} annonce${total > 1 ? "s" : ""} trouvée${
+                      total > 1 ? "s" : ""
+                    }`}
+              </p>
+            </div>
 
-        <CurrencyNotice />
-        <ListingFilters />
+            <Link
+              href="/listings/new"
+              className="rounded-full bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-900"
+            >
+              + Nouvelle annonce
+            </Link>
+          </div>
 
-        {cards.length === 0 ? (
-          <p className="text-sm text-gray-500">
-            Aucune annonce ne correspond aux filtres.
-          </p>
-        ) : (
-          <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-            {cards.map((l) => {
-              const cover = l.images?.[0]?.url ?? null;
-              const isHovered = hoveredId === l.id;
+          {/* Barre tri + filtres + bouton carte mobile */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <CurrencyNotice />
 
-              return (
-                <li
-                  key={l.id}
-                  className={`overflow-hidden rounded-2xl border bg-white shadow-sm transition ${
-                    isHovered
-                      ? "ring-2 ring-black shadow-lg"
-                      : "hover:-translate-y-0.5 hover:shadow-lg"
-                  }`}
-                  onMouseEnter={() => setHoveredId(l.id)}
-                  onMouseLeave={() => setHoveredId(null)}
+            <div className="flex items-center gap-2 self-end sm:self-auto">
+              {/* Bouton voir la carte (mobile seulement) */}
+              {mapMarkers.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowMobileMap(true)}
+                  className="inline-flex items-center gap-1 rounded-full border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-black/60 sm:hidden"
                 >
-                  <Link href={`/listings/${l.id}`} className="block">
-                    <div className="relative aspect-[4/3] bg-gray-50">
-                      {cover ? (
-                        <Image
-                          src={cover}
-                          alt={l.title}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 grid place-items-center text-xs text-gray-400">
-                          Pas d&apos;image
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-1 p-3">
-                      <h3 className="line-clamp-1 text-sm font-medium">
-                        {l.title}
-                      </h3>
-                      <p className="text-xs text-gray-500">
-                        {l.city ? `${l.city}, ` : ""}
-                        {l.country} ·{" "}
-                        {new Date(l.createdAt).toLocaleDateString()}
-                      </p>
-                      <p className="pt-1 text-sm font-semibold">
-                        {l.priceFormatted}
-                      </p>
-                    </div>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
+                  <span>Voir la carte</span>
+                </button>
+              )}
 
-      {/* COLONNE DROITE : MAP */}
-      <aside className="sticky top-24 hidden h-[600px] flex-1 lg:block">
-        <div className="relative h-full w-full overflow-hidden rounded-3xl border bg-gray-100">
-          <Map markers={mapMarkers} />
-          <div className="pointer-events-none absolute bottom-4 left-4 rounded-full bg-white/80 px-3 py-1 text-xs text-gray-600 backdrop-blur">
-            Carte Lok&apos;Room (Google Maps)
+              <span className="hidden text-xs text-gray-500 sm:inline">
+                Trier par
+              </span>
+              <select
+                value={sortParam}
+                onChange={(e) =>
+                  handleSortChange(e.target.value as SortOption)
+                }
+                className="rounded-full border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-black/60"
+              >
+                <option value="recent">Plus récentes</option>
+                <option value="price_asc">Prix croissant</option>
+                <option value="price_desc">Prix décroissant</option>
+              </select>
+            </div>
+          </div>
+
+          <ListingFilters />
+
+          {cards.length === 0 ? (
+            <p className="text-sm text-gray-500">
+              Essaie d&apos;ajuster les filtres ou de changer de ville / pays.
+            </p>
+          ) : (
+            <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+              {cards.map((l, index) => {
+                const cover = l.images?.[0]?.url ?? null;
+                const isHovered = hoveredId === l.id;
+
+                // ⭐ Première carte → image LCP prioritaire
+                const priority = index === 0;
+
+                return (
+                  <li
+                    key={l.id}
+                    ref={(el) => {
+                      cardRefs.current[l.id] = el;
+                    }}
+                    className={`overflow-hidden rounded-2xl border bg-white shadow-sm transition ${
+                      isHovered
+                        ? "ring-2 ring-black shadow-lg"
+                        : "hover:-translate-y-0.5 hover:shadow-lg"
+                    }`}
+                    onMouseEnter={() => setHoveredId(l.id)}
+                    onMouseLeave={() => setHoveredId(null)}
+                  >
+                    <Link href={`/listings/${l.id}`} className="block">
+                      <div className="relative aspect-[4/3] bg-gray-50">
+                        {cover ? (
+                          <Image
+                            src={cover}
+                            alt={l.title}
+                            fill
+                            className="object-cover"
+                            priority={priority}
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 grid place-items-center text-xs text-gray-400">
+                            Pas d&apos;image
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-1 p-3">
+                        <h3 className="line-clamp-1 text-sm font-medium">
+                          {l.title}
+                        </h3>
+                        <p className="text-xs text-gray-500">
+                          {l.city ? `${l.city}, ` : ""}
+                          {l.country} ·{" "}
+                          {new Date(l.createdAt).toLocaleDateString()}
+                        </p>
+                        <p className="pt-1 text-sm font-semibold">
+                          {l.priceFormatted}
+                        </p>
+                      </div>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+
+        {/* COLONNE DROITE : MAP (desktop) */}
+        <aside className="sticky top-24 hidden h-[600px] flex-1 lg:block">
+          <div className="relative h-full w-full overflow-hidden rounded-3xl border bg-gray-100">
+            <Map
+              markers={mapMarkers}
+              hoveredId={hoveredId}
+              onMarkerHover={setHoveredId}
+            />
+            <div className="pointer-events-none absolute bottom-4 left-4 rounded-full bg-white/80 px-3 py-1 text-xs text-gray-600 backdrop-blur">
+              Carte Lok&apos;Room (Google Maps) · {sortLabel}
+            </div>
+          </div>
+        </aside>
+      </main>
+
+      {/* OVERLAY CARTE MOBILE PLEIN ÉCRAN */}
+      {showMobileMap && (
+        <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm sm:hidden">
+          <div className="absolute inset-x-3 bottom-3 top-16 overflow-hidden rounded-3xl border bg-gray-100">
+            <Map
+              markers={mapMarkers}
+              hoveredId={hoveredId}
+              onMarkerHover={setHoveredId}
+            />
+            <button
+              type="button"
+              onClick={() => setShowMobileMap(false)}
+              className="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium text-gray-800 shadow"
+            >
+              Fermer la carte
+            </button>
+
+            <div className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-white/85 px-3 py-1 text-[11px] text-gray-700 backdrop-blur">
+              Carte Lok&apos;Room · {total} annonce
+              {total > 1 ? "s" : ""} · {sortLabel}
+            </div>
           </div>
         </div>
-      </aside>
-    </main>
+      )}
+    </>
   );
 }

@@ -17,11 +17,22 @@ type MapProps = {
   markers?: MapMarker[];
   /** Quand true → on utilise le logo Lok'Room comme repère (détail annonce) */
   useLogoIcon?: boolean;
+
+  /** Id de l'annonce survolée dans la liste (pour recentrer / zoomer) */
+  hoveredId?: string | null;
+
+  /** Callback quand on survole une bulle sur la carte */
+  onMarkerHover?: (id: string | null) => void;
 };
 
 const DEFAULT_CENTER = { lat: 45.5019, lng: -73.5674 }; // Montréal
 
-export default function Map({ markers = [], useLogoIcon = false }: MapProps) {
+export default function Map({
+  markers = [],
+  useLogoIcon = false,
+  hoveredId,
+  onMarkerHover,
+}: MapProps) {
   const apiKey = process.env
     .NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string | undefined;
 
@@ -30,6 +41,16 @@ export default function Map({ markers = [], useLogoIcon = false }: MapProps) {
   const [scriptError, setScriptError] = useState<string | null>(null);
 
   const missingApiKey = !apiKey;
+
+  // Référence vers la carte pour pouvoir la recentrer depuis un autre effet
+  const mapRef = useRef<any | null>(null);
+
+  // Référence réactive vers l'id survolé (pour les bulles actives)
+  const hoveredIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    hoveredIdRef.current = hoveredId ?? null;
+  }, [hoveredId]);
 
   // Si on revient sur la page et que Google Maps est déjà chargé
   useEffect(() => {
@@ -103,6 +124,8 @@ export default function Map({ markers = [], useLogoIcon = false }: MapProps) {
       ],
     });
 
+    mapRef.current = map;
+
     // Pour nettoyer les overlays & markers à l'unmount
     const overlays: any[] = [];
     const markersInstances: any[] = [];
@@ -139,7 +162,7 @@ export default function Map({ markers = [], useLogoIcon = false }: MapProps) {
       }
     }
 
-    // --- Markers ---
+    // --- Markers --->
     markers.forEach((m: MapMarker) => {
       if (!Number.isFinite(m.lat) || !Number.isFinite(m.lng)) return;
 
@@ -169,6 +192,13 @@ export default function Map({ markers = [], useLogoIcon = false }: MapProps) {
         const div = document.createElement("div");
         div.className = "lokroom-price-badge";
         div.textContent = labelText;
+
+        // 🔁 Hover sur la bulle → synchro avec la liste
+        if (onMarkerHover) {
+          div.addEventListener("mouseenter", () => onMarkerHover(m.id));
+          div.addEventListener("mouseleave", () => onMarkerHover(null));
+        }
+
         (this as any).div = div;
 
         const panes = this.getPanes();
@@ -183,6 +213,14 @@ export default function Map({ markers = [], useLogoIcon = false }: MapProps) {
 
         div.style.left = `${point.x}px`;
         div.style.top = `${point.y}px`;
+
+        // 💡 Mise à jour du style "actif" en fonction du hoveredId courant
+        const currentHovered = hoveredIdRef.current;
+        if (currentHovered && currentHovered === m.id) {
+          div.classList.add("lokroom-price-badge--active");
+        } else {
+          div.classList.remove("lokroom-price-badge--active");
+        }
       };
 
       overlay.onRemove = function () {
@@ -201,7 +239,26 @@ export default function Map({ markers = [], useLogoIcon = false }: MapProps) {
       overlays.forEach((o) => o.setMap(null));
       markersInstances.forEach((m: any) => m.setMap(null));
     };
-  }, [missingApiKey, scriptLoaded, markers, useLogoIcon]);
+  }, [missingApiKey, scriptLoaded, markers, useLogoIcon, onMarkerHover]);
+
+  // 🎯 Quand on survole une carte dans la liste → recentrer la map sur la bulle
+  useEffect(() => {
+    if (!hoveredId || !mapRef.current) return;
+
+    const markerData = markers.find((m) => m.id === hoveredId);
+    if (!markerData) return;
+
+    const { lat, lng } = markerData;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+    const map = mapRef.current;
+    map.panTo({ lat, lng });
+
+    const currentZoom = map.getZoom();
+    if (!currentZoom || currentZoom < 13) {
+      map.setZoom(13);
+    }
+  }, [hoveredId, markers]);
 
   if (scriptError) {
     return (

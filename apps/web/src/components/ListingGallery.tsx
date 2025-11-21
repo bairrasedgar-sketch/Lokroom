@@ -1,3 +1,4 @@
+// apps/web/src/components/ListingGallery.tsx
 "use client";
 
 import Image from "next/image";
@@ -69,7 +70,9 @@ export default function ListingGallery({
             fill
             priority
             sizes="(max-width: 768px) 100vw, 768px"
-            className={objectFit === "cover" ? "object-cover" : "object-contain"}
+            className={
+              objectFit === "cover" ? "object-cover" : "object-contain"
+            }
           />
         ) : (
           <div className="absolute inset-0 grid place-items-center text-gray-400">
