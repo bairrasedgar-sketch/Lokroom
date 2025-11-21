@@ -1,3 +1,4 @@
+// apps/web/src/components/ListingsWithMap.tsx
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -42,11 +43,17 @@ type Props = {
 
 type SortOption = "recent" | "price_asc" | "price_desc";
 
-function ListingPreviewCard({ listing, onClose }: { listing: ListingCardFixed; onClose: () => void }) {
+function ListingPreviewCard({
+  listing,
+  onClose,
+}: {
+  listing: ListingCardFixed;
+  onClose: () => void;
+}) {
   const cover = listing.images?.[0]?.url ?? null;
 
   return (
-    <div className="relative w-full max-w-xs overflow-hidden rounded-2xl border bg-white shadow-xl">
+    <div className="relative w-full max-w-xs overflow-hidden rounded-2xl border bg-white shadow-xl text-xs sm:text-sm">
       <button
         type="button"
         onClick={onClose}
@@ -56,7 +63,7 @@ function ListingPreviewCard({ listing, onClose }: { listing: ListingCardFixed; o
         ×
       </button>
       <Link href={`/listings/${listing.id}`} className="block">
-        <div className="relative h-40 w-full bg-gray-100">
+        <div className="relative h-32 w-full bg-gray-100 sm:h-40">
           {cover ? (
             <Image
               src={cover}
@@ -71,19 +78,19 @@ function ListingPreviewCard({ listing, onClose }: { listing: ListingCardFixed; o
             </div>
           )}
         </div>
-        <div className="space-y-1 p-3">
-          <h3 className="line-clamp-1 text-sm font-semibold">
+        <div className="space-y-1 p-2 sm:p-3">
+          <h3 className="line-clamp-1 text-[13px] font-semibold sm:text-sm">
             {listing.title}
           </h3>
-          <p className="text-[11px] text-gray-500">
+          <p className="text-[10px] text-gray-500 sm:text-[11px]">
             {listing.city ? `${listing.city}, ` : ""}
             {listing.country} ·{" "}
             {new Date(listing.createdAt).toLocaleDateString()}
           </p>
-          <p className="pt-1 text-sm font-semibold">
+          <p className="pt-1 text-[12px] font-semibold sm:text-sm">
             {listing.priceFormatted}
           </p>
-          <p className="mt-1 text-[11px] text-gray-500">
+          <p className="mt-1 text-[10px] text-gray-500 sm:text-[11px]">
             Cliquer pour voir les détails
           </p>
         </div>
@@ -318,9 +325,9 @@ export default function ListingsWithMap({ cards, mapMarkers }: Props) {
               {total > 1 ? "s" : ""} · {sortLabel}
             </div>
 
-            {/* Aperçu Airbnb-like sur mobile (en bas de la carte) */}
+            {/* Aperçu Airbnb-like sur mobile (plus petit, centré) */}
             {selectedListing && (
-              <div className="pointer-events-auto absolute bottom-16 left-3 right-3">
+              <div className="pointer-events-auto absolute bottom-14 left-0 right-0 flex justify-center">
                 <ListingPreviewCard
                   listing={selectedListing}
                   onClose={closePreview}

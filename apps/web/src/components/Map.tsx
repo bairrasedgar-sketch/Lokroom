@@ -1,3 +1,4 @@
+// apps/web/src/components/Map.tsx
 "use client";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -196,17 +197,12 @@ export default function Map({
         div.className = "lokroom-price-badge";
         div.textContent = labelText;
 
-        // 🔁 Hover sur la bulle → synchro avec la liste
-        if (onMarkerHover) {
-          div.addEventListener("mouseenter", () => onMarkerHover(m.id));
-          div.addEventListener("mouseleave", () => onMarkerHover(null));
-        }
-
-        // 🖱️ Clic sur la bulle → apercu de l'annonce
+        // ❌ On ne déclenche plus le pan de la carte au simple survol
+        // (l'effet hover visuel est géré par le CSS :hover)
+        // 🔁 On garde le clic pour l'aperçu + scroll vers la carte
         if (onMarkerClick) {
           div.addEventListener("click", () => {
             onMarkerClick(m.id);
-            // on peut aussi déclencher le hover pour faire scroller la liste
             if (onMarkerHover) onMarkerHover(m.id);
           });
         }
@@ -260,7 +256,7 @@ export default function Map({
     onMarkerClick,
   ]);
 
-  // 🎯 Quand on survole une carte dans la liste → recentrer la map sur la bulle
+  // 🎯 Quand on survole une carte dans la liste OU qu'on clique une bulle → recentrer la map
   useEffect(() => {
     if (!hoveredId || !mapRef.current) return;
 
