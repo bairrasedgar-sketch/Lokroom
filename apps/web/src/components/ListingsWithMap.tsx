@@ -43,6 +43,11 @@ type Props = {
 
 type SortOption = "recent" | "price_asc" | "price_desc";
 
+/**
+ * Carte d’aperçu type Airbnb
+ * - Hauteur FIXE sur mobile (h-44) → n’occupe plus tout l’écran
+ * - Un peu plus grande sur desktop (h-56)
+ */
 function ListingPreviewCard({
   listing,
   onClose,
@@ -53,7 +58,8 @@ function ListingPreviewCard({
   const cover = listing.images?.[0]?.url ?? null;
 
   return (
-    <div className="relative w-full max-w-xs overflow-hidden rounded-2xl border bg-white shadow-xl text-xs sm:text-sm">
+    <div className="relative flex h-44 w-full max-w-sm flex-col overflow-hidden rounded-2xl border bg-white text-xs shadow-xl sm:h-56 sm:text-sm">
+      {/* Bouton fermer */}
       <button
         type="button"
         onClick={onClose}
@@ -62,8 +68,10 @@ function ListingPreviewCard({
       >
         ×
       </button>
-      <Link href={`/listings/${listing.id}`} className="block">
-        <div className="relative h-32 w-full bg-gray-100 sm:h-40">
+
+      <Link href={`/listings/${listing.id}`} className="flex flex-1 flex-col">
+        {/* Image : prend ~60% de la hauteur sur mobile */}
+        <div className="relative flex-[1.4] w-full bg-gray-100">
           {cover ? (
             <Image
               src={cover}
@@ -78,21 +86,28 @@ function ListingPreviewCard({
             </div>
           )}
         </div>
-        <div className="space-y-1 p-2 sm:p-3">
-          <h3 className="line-clamp-1 text-[13px] font-semibold sm:text-sm">
-            {listing.title}
-          </h3>
-          <p className="text-[10px] text-gray-500 sm:text-[11px]">
-            {listing.city ? `${listing.city}, ` : ""}
-            {listing.country} ·{" "}
-            {new Date(listing.createdAt).toLocaleDateString()}
-          </p>
-          <p className="pt-1 text-[12px] font-semibold sm:text-sm">
-            {listing.priceFormatted}
-          </p>
-          <p className="mt-1 text-[10px] text-gray-500 sm:text-[11px]">
-            Cliquer pour voir les détails
-          </p>
+
+        {/* Texte : partie basse, compacte */}
+        <div className="flex flex-[1] flex-col justify-between overflow-hidden px-2 py-2 sm:px-3 sm:py-3">
+          <div className="space-y-0.5">
+            <h3 className="line-clamp-1 text-[13px] font-semibold sm:line-clamp-2 sm:text-sm">
+              {listing.title}
+            </h3>
+            <p className="line-clamp-1 text-[10px] text-gray-500 sm:text-[11px]">
+              {listing.city ? `${listing.city}, ` : ""}
+              {listing.country} ·{" "}
+              {new Date(listing.createdAt).toLocaleDateString()}
+            </p>
+          </div>
+
+          <div className="space-y-0.5 pt-1">
+            <p className="text-[12px] font-semibold sm:text-sm">
+              {listing.priceFormatted}
+            </p>
+            <p className="text-[10px] text-gray-500 sm:text-[11px]">
+              Cliquer pour voir les détails
+            </p>
+          </div>
         </div>
       </Link>
     </div>

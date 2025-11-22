@@ -197,8 +197,6 @@ export default function Map({
         div.className = "lokroom-price-badge";
         div.textContent = labelText;
 
-        // ❌ On ne déclenche plus le pan de la carte au simple survol
-        // (l'effet hover visuel est géré par le CSS :hover)
         // 🔁 On garde le clic pour l'aperçu + scroll vers la carte
         if (onMarkerClick) {
           div.addEventListener("click", () => {
@@ -224,10 +222,15 @@ export default function Map({
 
         // 💡 Mise à jour du style "actif" en fonction du hoveredId courant
         const currentHovered = hoveredIdRef.current;
-        if (currentHovered && currentHovered === m.id) {
+        const isActive = currentHovered && currentHovered === m.id;
+
+        if (isActive) {
           div.classList.add("lokroom-price-badge--active");
+          // 👉 cette bulle passe AU-DESSUS des autres
+          div.style.zIndex = "999";
         } else {
           div.classList.remove("lokroom-price-badge--active");
+          div.style.zIndex = "1";
         }
       };
 
@@ -296,7 +299,9 @@ export default function Map({
           }}
           onError={(e) => {
             console.error("Erreur chargement Google Maps", e);
-            setScriptError("Impossible de charger Google Maps (voir console)");
+            setScriptError(
+              "Impossible de charger Google Maps (voir console)"
+            );
           }}
         />
       )}
@@ -313,6 +318,15 @@ export default function Map({
           <code>.env.local</code>
         </div>
       )}
+
+      {/* 🧭 Message UX quand aucune coordonnée / aucun marker */}
+      {!missingApiKey &&
+        scriptLoaded &&
+        markers.length === 0 && (
+          <div className="mt-2 text-center text-[11px] text-gray-500">
+            Localisation non disponible pour cette annonce.
+          </div>
+        )}
     </>
   );
 }

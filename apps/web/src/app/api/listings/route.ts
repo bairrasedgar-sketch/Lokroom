@@ -4,13 +4,61 @@ import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
+/**
+ * Vérification "propre" des coordonnées côté serveur.
+ * - Vérifie les bornes lat/lng
+ * - Petit garde-fou France / Canada (évite une annonce France placée au Canada).
+ */
+function assertValidCoordinates(options: {
+  country?: string | null;
+  lat?: number | null | undefined;
+  lng?: number | null | undefined;
+}) {
+  const { country, lat, lng } = options;
+
+  // Pas de coordonnées → on laisse passer
+  if (lat == null || lng == null) return;
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    throw new Error("Coordonnées géographiques invalides.");
+  }
+
+  // 1. Bornes globales
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    throw new Error("Coordonnées géographiques invalides.");
+  }
+
+  // 2. Garde-fou simple France / Canada (rien de parfait, juste éviter l’absurde)
+  const isRoughlyFrance =
+    lat >= 41 && lat <= 51.5 && lng >= -5.5 && lng <= 9.8;
+
+  const isRoughlyCanada =
+    lat >= 41 && lat <= 84 && lng >= -141 && lng <= -52;
+
+  if (country === "France" && isRoughlyCanada && !isRoughlyFrance) {
+    throw new Error(
+      "Les coordonnées semblent être au Canada alors que le pays est 'France'."
+    );
+  }
+
+  if (country === "Canada" && isRoughlyFrance && !isRoughlyCanada) {
+    throw new Error(
+      "Les coordonnées semblent être en France alors que le pays est 'Canada'."
+    );
+  }
+}
+
 // GET /api/listings  → liste toutes les annonces
 export async function GET() {
   try {
     const listings = await prisma.listing.findMany({
       include: {
-        images: true,
         owner: true,
+        images: {
+          orderBy: {
+            position: "asc", // 👈 images triées dans l’ordre
+          } as any,
+        },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -70,6 +118,7 @@ export async function POST(req: Request) {
         lng: form.get("lng"),
         latPublic: form.get("latPublic"),
         lngPublic: form.get("lngPublic"),
+        // en multipart on ne gère pas les images ici (elles sont uploadées séparément)
       };
     } else {
       return NextResponse.json(
@@ -138,6 +187,33 @@ export async function POST(req: Request) {
         ? Number(data.lngPublic)
         : undefined;
 
+    // ✅ Validation "propre" des coords (brutes et publiques)
+    try {
+      assertValidCoordinates({
+        country: data.country,
+        lat,
+        lng,
+      });
+      assertValidCoordinates({
+        country: data.country,
+        lat: latPublic,
+        lng: lngPublic,
+      });
+    } catch (coordError: any) {
+      return NextResponse.json(
+        { error: coordError?.message ?? "Coordonnées invalides." },
+        { status: 400 }
+      );
+    }
+
+    // 👇 Récupération éventuelle des images (JSON seulement)
+    // On attend un tableau de strings : images: ["url1", "url2", ...]
+    const images: string[] = Array.isArray(data.images)
+      ? data.images.filter(
+          (u: unknown) => typeof u === "string" && u.trim().length > 0
+        )
+      : [];
+
     const listing = await prisma.listing.create({
       data: {
         title: data.title,
@@ -157,6 +233,24 @@ export async function POST(req: Request) {
             }
           : {}),
         ownerId: user.id,
+
+        // ✅ Création des images avec isCover + position
+        ...(images.length
+          ? {
+              images: {
+                create: images.map((url, index) => ({
+                  url,
+                  position: index,
+                  isCover: index === 0,
+                })),
+              },
+            }
+          : {}),
+      },
+      include: {
+        images: {
+          orderBy: { position: "asc" } as any,
+        },
       },
     });
 

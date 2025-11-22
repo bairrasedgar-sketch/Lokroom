@@ -170,7 +170,15 @@ model ListingImage {
   listingId String
   listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
 
+  /// Image de couverture de l’annonce ?
+  isCover   Boolean @default(false)
+
+  /// Ordre d’affichage des images (0, 1, 2, …)
+  position  Int     @default(0)
+
   @@index([listingId])
+  @@index([listingId, position])
+  @@index([listingId, isCover])
 }
 
 model Favorite {

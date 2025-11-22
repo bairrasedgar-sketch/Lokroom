@@ -9,11 +9,18 @@ import {
 } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMemo, useState, useCallback, useEffect } from "react";
+import {
+  useMemo,
+  useState,
+  useCallback,
+  useEffect,
+  type DragEvent,
+} from "react";
 import Cropper from "react-easy-crop";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Script from "next/script";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 // ---------- Config upload ----------
 const MAX_FILES = 10;
@@ -28,14 +35,8 @@ const schema = z.object({
     .min(2, "Prix minimum 2 (EUR ou CAD)")
     .refine(Number.isFinite, "Prix requis"),
   currency: z.enum(["EUR", "CAD"]),
-
-  // UNIQUEMENT France ou Canada
   country: z.enum(["France", "Canada"]),
-
-  // Ville obligatoire (suggestion FR/CA via Google Places)
   city: z.string().min(1, "Ville requise"),
-
-  // Adresse exacte obligatoire
   addressFull: z.string().min(5, "Adresse exacte requise"),
 });
 type FormValues = z.infer<typeof schema>;
@@ -93,6 +94,18 @@ const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as
   | string
   | undefined;
 
+// ---------- Type pour les images locales ----------
+type LocalImage = {
+  id: string;
+  file: File;
+  previewUrl: string;
+};
+
+const createId = () =>
+  typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
 // ---------- Autocomplete des villes FR/CA ----------
 type CityAutocompleteProps = {
   value: string;
@@ -109,7 +122,6 @@ function CityAutocomplete({
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // sync externe → interne
   useEffect(() => {
     setInput(value || "");
   }, [value]);
@@ -134,17 +146,13 @@ function CityAutocomplete({
       {
         input,
         types: ["(cities)"],
-        // On limite aux villes France + Canada
         componentRestrictions: { country: ["fr", "ca"] },
       },
       (preds: any[], status: string) => {
         if (!active) return;
         setLoading(false);
 
-        if (
-          !preds ||
-          status !== g.maps.places.PlacesServiceStatus.OK
-        ) {
+        if (!preds || status !== g.maps.places.PlacesServiceStatus.OK) {
           setSuggestions([]);
           return;
         }
@@ -183,7 +191,7 @@ function CityAutocomplete({
               key={s}
               className="cursor-pointer px-3 py-1 hover:bg-gray-100"
               onMouseDown={(e) => {
-                e.preventDefault(); // évite la perte de focus avant le click
+                e.preventDefault();
                 onChange(s);
                 setInput(s);
                 setSuggestions([]);
@@ -201,7 +209,7 @@ function CityAutocomplete({
 export default function NewListingPage() {
   const router = useRouter();
 
-  const [files, setFiles] = useState<File[]>([]);
+  const [images, setImages] = useState<LocalImage[]>([]);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
@@ -223,6 +231,15 @@ export default function NewListingPage() {
     lngPublic: number;
   } | null>(null);
 
+  // auto-animate pour le panneau d’images (même vibe que l’édition)
+  const [filesParent] = useAutoAnimate<HTMLDivElement>({
+    duration: 450,
+    easing: "cubic-bezier(0.22, 0.61, 0.36, 1)",
+  });
+
+  // index de la vignette qu’on est en train de drag
+  const [dragFileIndex, setDragFileIndex] = useState<number | null>(null);
+
   const resolver = zodResolver(schema) as Resolver<FormValues>;
 
   const {
@@ -236,13 +253,13 @@ export default function NewListingPage() {
     defaultValues: {
       price: 0,
       currency: "EUR",
-      country: "France", // par défaut France
+      country: "France",
       city: "",
       addressFull: "",
     },
   });
 
-  // --- Fix : si Google Maps est déjà chargé (navigation client), on active directement mapsReady
+  // Google déjà chargé ?
   useEffect(() => {
     if (typeof window === "undefined") return;
     const g = (window as any).google;
@@ -251,7 +268,7 @@ export default function NewListingPage() {
     }
   }, []);
 
-  // --- Auto-sélection devise depuis cookie ---
+  // devise depuis cookie
   useEffect(() => {
     const m = document.cookie.match(/(?:^|;\s*)currency=([^;]+)/);
     const cookieCurrency = (m?.[1] as "EUR" | "CAD" | undefined) || "EUR";
@@ -261,7 +278,7 @@ export default function NewListingPage() {
     });
   }, [setValue]);
 
-  // --- Google Places Autocomplete sur l'adresse exacte ---
+  // Autocomplete adresse exacte
   useEffect(() => {
     if (!mapsReady) return;
     if (typeof window === "undefined") return;
@@ -309,6 +326,7 @@ export default function NewListingPage() {
     };
   }, [mapsReady, setValue]);
 
+  // --------- gestion fichiers ----------
   function addFiles(incoming: File[]) {
     const imagesOnly = incoming.filter((f) => f.type.startsWith("image/"));
     const tooBig = imagesOnly.filter(
@@ -320,22 +338,40 @@ export default function NewListingPage() {
       (f) => f.size <= MAX_SIZE_MB * 1024 * 1024
     );
 
-    const merged = [...files, ...ok].slice(0, MAX_FILES);
-    if (merged.length < files.length + ok.length) {
-      toast.message(`Limite de ${MAX_FILES} images atteinte`);
-    }
-    setFiles(merged);
-  }
-  function removeAt(index: number) {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
-  }
-  function clearAll() {
-    if (!files.length) return;
-    if (!confirm("Retirer toutes les images sélectionnées ?")) return;
-    setFiles([]);
+    const mapped: LocalImage[] = ok.map((file) => ({
+      id: createId(),
+      file,
+      previewUrl: URL.createObjectURL(file),
+    }));
+
+    setImages((prev) => {
+      const merged = [...prev, ...mapped].slice(0, MAX_FILES);
+      if (merged.length < prev.length + mapped.length) {
+        toast.message(`Limite de ${MAX_FILES} images atteinte`);
+      }
+      return merged;
+    });
   }
 
-  function onDrop(e: React.DragEvent) {
+  function removeAt(index: number) {
+    setImages((prev) => {
+      const copy = [...prev];
+      const removed = copy.splice(index, 1)[0];
+      if (removed) {
+        URL.revokeObjectURL(removed.previewUrl);
+      }
+      return copy;
+    });
+  }
+
+  function clearAll() {
+    if (!images.length) return;
+    if (!confirm("Retirer toutes les images sélectionnées ?")) return;
+    images.forEach((img) => URL.revokeObjectURL(img.previewUrl));
+    setImages([]);
+  }
+
+  function onDrop(e: DragEvent<HTMLDivElement>) {
     e.preventDefault();
     setDragOver(false);
     addFiles(Array.from(e.dataTransfer.files || []));
@@ -344,20 +380,20 @@ export default function NewListingPage() {
   const totalSizeMb = useMemo(
     () =>
       (
-        files.reduce((acc, f) => acc + f.size, 0) /
+        images.reduce((acc, img) => acc + img.file.size, 0) /
         (1024 * 1024)
       ).toFixed(1),
-    [files]
+    [images]
   );
 
   const openCropper = async (index: number) => {
-    const f = files[index];
-    if (!f) return;
+    const img = images[index];
+    if (!img) return;
     setCropIndex(index);
     setCrop({ x: 0, y: 0 });
     setZoom(1);
     setCroppedAreaPixels(null);
-    setCropSrc(URL.createObjectURL(f));
+    setCropSrc(img.previewUrl);
     setCropOpen(true);
   };
 
@@ -365,35 +401,107 @@ export default function NewListingPage() {
     if (!cropOpen || cropIndex === null || !cropSrc || !croppedAreaPixels)
       return;
     try {
+      const current = images[cropIndex];
+      if (!current) return;
+
       const blob = await getCroppedBlob(
         cropSrc,
         croppedAreaPixels,
-        files[cropIndex].type || "image/jpeg"
+        current.file.type || "image/jpeg"
       );
-      const croppedFile = new File([blob], files[cropIndex].name, {
-        type: files[cropIndex].type,
+      const croppedFile = new File([blob], current.file.name, {
+        type: current.file.type,
       });
-      setFiles((prev) =>
-        prev.map((f, i) => (i === cropIndex ? croppedFile : f))
+      const newPreviewUrl = URL.createObjectURL(croppedFile);
+
+      setImages((prev) =>
+        prev.map((img, i) => {
+          if (i !== cropIndex) return img;
+          // on libère l’ancienne URL
+          URL.revokeObjectURL(img.previewUrl);
+          return {
+            ...img,
+            file: croppedFile,
+            previewUrl: newPreviewUrl,
+          };
+        })
       );
       toast.success("Image rognée ✔");
     } catch {
       toast.error("Rognage impossible");
     } finally {
-      URL.revokeObjectURL(cropSrc!);
       setCropOpen(false);
       setCropSrc(null);
       setCropIndex(null);
+      setCroppedAreaPixels(null);
     }
-  }, [cropOpen, cropIndex, cropSrc, croppedAreaPixels, files]);
+  }, [cropOpen, cropIndex, cropSrc, croppedAreaPixels, images]);
 
+  // passe une image en couverture = la mettre en index 0
+  function makeCover(index: number) {
+    setImages((prev) => {
+      if (index <= 0 || index >= prev.length) return prev;
+      const copy = [...prev];
+      const [img] = copy.splice(index, 1);
+      copy.unshift(img);
+      return copy;
+    });
+  }
+
+  // ---- drag & drop des vignettes (même logique que EditListingImages pour files) ----
+  const handleFileDragStart = (
+    e: DragEvent<HTMLDivElement>,
+    index: number
+  ) => {
+    setDragFileIndex(index);
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = "move";
+      const target = e.currentTarget;
+      e.dataTransfer.setDragImage(
+        target,
+        target.clientWidth / 2,
+        target.clientHeight / 2
+      );
+    }
+  };
+
+  const handleFileDrop = (index: number) => {
+    if (dragFileIndex === null || dragFileIndex === index) {
+      setDragFileIndex(null);
+      return;
+    }
+
+    setImages((prev) => {
+      if (
+        dragFileIndex === null ||
+        dragFileIndex < 0 ||
+        dragFileIndex >= prev.length ||
+        index < 0 ||
+        index >= prev.length
+      ) {
+        return prev;
+      }
+      const copy = [...prev];
+      const [moved] = copy.splice(dragFileIndex, 1);
+      if (!moved) return prev;
+      copy.splice(index, 0, moved);
+      return copy;
+    });
+
+    setDragFileIndex(null);
+  };
+
+  const handleFileDragEnd = () => {
+    setDragFileIndex(null);
+  };
+
+  // --------- submit ----------
   const onValid: SubmitHandler<FormValues> = async (values) => {
-    // Garde-fous front
     if (values.price < 2) {
       toast.error("Le prix minimum est de 2 (EUR ou CAD).");
       return;
     }
-    if (files.length < 3) {
+    if (images.length < 3) {
       toast.error("Ajoute au moins 3 photos (minimum 3).");
       return;
     }
@@ -429,9 +537,12 @@ export default function NewListingPage() {
       const listingId: string | undefined = data?.listing?.id;
       if (!listingId) throw new Error("ID annonce manquant après création.");
 
-      if (files.length) setUploading(true);
+      if (images.length) setUploading(true);
 
-      for (const file of files) {
+      // On envoie les images dans l'ordre du tableau `images`
+      for (const img of images) {
+        const file = img.file;
+
         const p = await fetch("/api/upload/presign-listing", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -449,9 +560,7 @@ export default function NewListingPage() {
         }
         const presign = await jsonOrThrow(p);
         if (!presign?.uploadUrl || !presign?.publicUrl) {
-          throw new Error(
-            "Réponse presign invalide (uploadUrl/publicUrl)."
-          );
+          throw new Error("Réponse presign invalide (uploadUrl/publicUrl).");
         }
 
         const put = await fetch(presign.uploadUrl, {
@@ -478,7 +587,9 @@ export default function NewListingPage() {
       }
 
       toast.success("Annonce créée ✅");
-      setFiles([]);
+      // clean previews
+      images.forEach((img) => URL.revokeObjectURL(img.previewUrl));
+      setImages([]);
       router.push(`/listings/${listingId}`);
       router.refresh();
     } catch (e) {
@@ -494,7 +605,15 @@ export default function NewListingPage() {
 
   return (
     <>
-      {/* Script Google Maps pour l'autocomplete (adresse + villes) */}
+      {/* 🔧 Override auto-animate : uniquement le déplacement (pas de fade) */}
+      <style jsx global>{`
+        [data-auto-animate] > * {
+          transition-property: transform !important;
+          transition-duration: 450ms !important;
+          transition-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1) !important;
+        }
+      `}</style>
+
       {apiKey && (
         <Script
           src={`https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`}
@@ -507,27 +626,28 @@ export default function NewListingPage() {
         />
       )}
 
-      <section className="max-w-2xl mx-auto space-y-6">
+      <section className="mx-auto max-w-3xl space-y-6">
         <h1 className="text-2xl font-semibold">Nouvelle annonce</h1>
 
         {/* uploader */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           <div className="flex items-center justify-between">
             <label className="block text-sm font-medium">
-              Images (max {MAX_FILES}) · {files.length} sélectionnée(s)
-              {files.length ? ` · ${totalSizeMb} Mo` : ""}
+              Images (max {MAX_FILES}) · {images.length} sélectionnée(s)
+              {images.length ? ` · ${totalSizeMb} Mo` : ""}
             </label>
             <button
               type="button"
               onClick={clearAll}
               className="text-xs underline disabled:opacity-50"
-              disabled={!files.length}
+              disabled={!images.length}
               title="Retirer toutes les images sélectionnées"
             >
               Retirer tout
             </button>
           </div>
 
+          {/* dropzone */}
           <div
             onDragOver={(e) => {
               e.preventDefault();
@@ -535,7 +655,7 @@ export default function NewListingPage() {
             }}
             onDragLeave={() => setDragOver(false)}
             onDrop={onDrop}
-            className={`rounded border border-dashed p-4 text-center text-sm transition ${
+            className={`rounded-md border border-dashed p-4 text-center text-sm transition ${
               dragOver ? "bg-gray-100" : "bg-gray-50"
             }`}
           >
@@ -547,59 +667,101 @@ export default function NewListingPage() {
                 type="file"
                 accept="image/*"
                 multiple
-                onChange={(e) =>
-                  addFiles(Array.from(e.target.files || []))
-                }
+                onChange={(e) => addFiles(Array.from(e.target.files || []))}
                 className="hidden"
               />
             </label>
             <div className="mt-2 text-xs text-gray-500">
-              Formats image uniquement. Taille max {MAX_SIZE_MB} Mo /
-              image.
+              Formats image uniquement. Taille max {MAX_SIZE_MB} Mo / image.
             </div>
           </div>
 
-          {files.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {files.map((f, i) => (
-                <div
-                  key={`${f.name}-${i}`}
-                  className="relative h-24 w-32 overflow-hidden rounded border bg-white p-1"
-                >
-                  <img
-                    src={URL.createObjectURL(f)}
-                    className="h-full w-full object-contain"
-                    alt=""
-                    onLoad={(e) =>
-                      URL.revokeObjectURL(
-                        (e.target as HTMLImageElement).src
-                      )
-                    }
-                  />
-                  <div className="absolute left-1 top-1 flex gap-1">
-                    <button
-                      type="button"
-                      onClick={() => openCropper(i)}
-                      className="rounded bg-white/90 px-1 text-xs shadow"
-                      title="Rogner"
+          {/* panneau d’images clair */}
+          {images.length > 0 && (
+            <div className="mt-2 rounded-2xl bg-gray-100 px-4 py-4 text-sm text-gray-900 shadow-sm ring-1 ring-gray-200">
+              <p className="mb-3 text-xs text-gray-700 sm:text-sm">
+                👉{" "}
+                <span className="font-semibold">La première image</span>{" "}
+                (tout à gauche) est utilisée comme{" "}
+                <span className="font-semibold">photo de couverture</span>. Tu
+                peux cliquer sur{" "}
+                <span className="font-semibold">“Mettre en couverture”</span> ou{" "}
+                <span className="font-semibold">glisser les vignettes</span> pour
+                changer l’ordre.
+              </p>
+
+              <div ref={filesParent} className="flex flex-wrap gap-3">
+                {images.map((img, i) => {
+                  const isCover = i === 0;
+                  const isDragging = i === dragFileIndex;
+                  return (
+                    <div
+                      key={img.id}
+                      className={`group relative h-28 w-36 cursor-grab overflow-hidden rounded-lg border bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-md ${
+                        isDragging
+                          ? "ring-2 ring-black/60 scale-[1.02]"
+                          : "border-gray-200"
+                      }`}
+                      draggable
+                      onDragStart={(e) => handleFileDragStart(e, i)}
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={() => handleFileDrop(i)}
+                      onDragEnd={handleFileDragEnd}
                     >
-                      Rogner
-                    </button>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeAt(i)}
-                    className="absolute right-1 top-1 rounded bg-white/90 px-1 text-xs shadow"
-                    title="Retirer"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
+                      <img
+                        src={img.previewUrl}
+                        className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03]"
+                        alt=""
+                      />
+
+                      {/* bouton Rogner */}
+                      <div className="absolute left-1 top-1 flex gap-1">
+                        <button
+                          type="button"
+                          onClick={() => openCropper(i)}
+                          className="rounded bg-black/75 px-1 text-[11px] text-white shadow"
+                          title="Rogner"
+                        >
+                          Rogner
+                        </button>
+                      </div>
+
+                      {/* Couverture / Mettre en couverture */}
+                      <div className="absolute inset-x-0 bottom-0 flex justify-center pb-1">
+                        {isCover ? (
+                          <span className="pointer-events-none inline-flex rounded-full bg-black/85 px-2 py-0.5 text-[11px] font-medium text-white shadow">
+                            Couverture
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => makeCover(i)}
+                            className="inline-flex rounded-full bg-black/75 px-2 py-0.5 text-[11px] text-white shadow transition hover:bg-black"
+                            title="Mettre en couverture"
+                          >
+                            Mettre en couverture
+                          </button>
+                        )}
+                      </div>
+
+                      {/* close */}
+                      <button
+                        type="button"
+                        onClick={() => removeAt(i)}
+                        className="absolute right-1 top-1 rounded-full bg-black/80 px-1 text-xs text-white shadow transition hover:bg-black"
+                        title="Retirer"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
 
+        {/* Formulaire texte */}
         <form onSubmit={handleSubmit(onValid)} className="space-y-4">
           <div>
             <label htmlFor="title" className="mb-1 block text-sm">
@@ -611,9 +773,7 @@ export default function NewListingPage() {
               {...register("title")}
             />
             {errors.title && (
-              <p className="text-sm text-red-600">
-                {errors.title.message}
-              </p>
+              <p className="text-sm text-red-600">{errors.title.message}</p>
             )}
           </div>
 
@@ -713,7 +873,6 @@ export default function NewListingPage() {
             </div>
           </div>
 
-          {/* Adresse exacte obligatoire + autocomplete */}
           <div>
             <label htmlFor="addressFull" className="mb-1 block text-sm">
               Adresse exacte de l’espace *
@@ -730,10 +889,10 @@ export default function NewListingPage() {
               </p>
             )}
             <p className="mt-1 text-xs text-gray-500">
-              Commence à taper et choisis une adresse proposée. Cette
-              adresse sert à positionner le logement mais ne sera pas
-              affichée telle quelle (seule une position approximative est
-              montrée sur la carte).
+              Commence à taper et choisis une adresse proposée. Cette adresse
+              sert à positionner le logement mais ne sera pas affichée telle
+              quelle (seule une position approximative est montrée sur la
+              carte).
             </p>
             {geo && (
               <p className="mt-1 text-xs text-gray-400">
@@ -750,9 +909,7 @@ export default function NewListingPage() {
               disabled={isSubmitting || uploading}
               className="rounded bg-black px-4 py-2 text-sm text-white disabled:opacity-60"
             >
-              {isSubmitting || uploading
-                ? "Création & upload…"
-                : "Créer"}
+              {isSubmitting || uploading ? "Création & upload…" : "Créer"}
             </button>
             <button
               type="button"
@@ -764,6 +921,7 @@ export default function NewListingPage() {
           </div>
         </form>
 
+        {/* modale crop */}
         {cropOpen && cropSrc && (
           <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
             <div className="w-full max-w-2xl rounded bg-white p-4 shadow-lg">
