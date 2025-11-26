@@ -6,6 +6,8 @@ import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 import { getOrigin } from "@/lib/origin";
 
+export const dynamic = "force-dynamic";
+
 export async function POST() {
   try {
     const session = await getServerSession(authOptions);
@@ -17,25 +19,34 @@ export async function POST() {
       where: { email: session.user.email },
       select: { id: true, email: true },
     });
+
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     // Récupère/Crée le hostProfile
-    let host = await prisma.hostProfile.findUnique({ where: { userId: user.id } });
+    let host = await prisma.hostProfile.findUnique({
+      where: { userId: user.id },
+    });
+
     if (!host) {
-      host = await prisma.hostProfile.create({ data: { userId: user.id } });
+      host = await prisma.hostProfile.create({
+        data: { userId: user.id },
+      });
     }
 
-    // IMPORTANT : on crée un compte **EXPRESS** (pas Custom)
+    // IMPORTANT : compte EXPRESS (pas Custom)
     if (!host.stripeAccountId) {
       const account = await stripe.accounts.create({
-        type: "express", // 👈 EXPRESS
-        country: "FR",   // ou "CA" selon ton hôte
+        type: "express",
+        country: "FR", // TODO: rendre dynamique FR/CA plus tard
         email: user.email ?? undefined,
         capabilities: {
           card_payments: { requested: true },
           transfers: { requested: true },
+        },
+        metadata: {
+          lokroomUserId: user.id,
         },
       });
 
@@ -46,6 +57,7 @@ export async function POST() {
     }
 
     const origin = getOrigin();
+
     const accountLinks = await stripe.accountLinks.create({
       account: host.stripeAccountId!,
       refresh_url: `${origin}/profile`,
@@ -53,7 +65,10 @@ export async function POST() {
       type: "account_onboarding",
     });
 
-    return NextResponse.json({ url: accountLinks.url });
+    return NextResponse.json({
+      url: accountLinks.url,
+      stripeAccountId: host.stripeAccountId,
+    });
   } catch (e: any) {
     console.error("host/onboard error:", e);
     const msg = e?.raw?.message || e?.message || "onboard_failed";

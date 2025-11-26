@@ -1,138 +1,388 @@
+// apps/web/src/app/listings/page.tsx
+import Image from "next/image";
+import Link from "next/link";
+import { cookies } from "next/headers";
+import { getServerSession } from "next-auth";
+
+import { authOptions } from "@/lib/auth";
+import { formatMoneyAsync, type Currency } from "@/lib/currency";
+import { getOrigin } from "@/lib/origin";
+import Map, { type MapMarker } from "@/components/Map";
+import FiltersBar from "@/components/listings/FiltersBar";
+
+export const revalidate = 0;
 export const dynamic = "force-dynamic";
 
-import { cookies } from "next/headers";
-import { prisma } from "@/lib/db";
-import { formatMoneyAsync, type Currency } from "@/lib/currency";
-import ListingsWithMap from "@/components/ListingsWithMap";
+type ReviewSummary = {
+  count: number;
+  avgRating: number | null;
+};
 
-type ListingDb = {
+type ListingItem = {
   id: string;
   title: string;
   description: string;
   price: number;
-  currency: string;
+  currency: Currency;
   country: string;
   city: string | null;
-  createdAt: Date;
-  images: { id: string; url: string }[];
   latPublic: number | null;
   lngPublic: number | null;
-  lat: number | null;
-  lng: number | null;
+  createdAt: string;
+  owner: {
+    id: string;
+    name: string | null;
+  };
+  images: { id: string; url: string }[];
+  reviewSummary: ReviewSummary;
 };
 
-type ListingCard = ListingDb & {
-  priceFormatted: string;
+type SearchResponse = {
+  page: number;
+  pageSize: number;
+  total: number;
+  pageCount: number;
+  items: ListingItem[];
 };
 
-type MapMarker = {
-  id: string;
-  lat: number;
-  lng: number;
-  label: string;
+type SearchParams = {
+  q?: string;
+  country?: string;
+  province?: string;
+  city?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  minRating?: string;
+  hasPhoto?: string;
+  sort?: string;
+  page?: string;
+  pageSize?: string;
+  [key: string]: string | string[] | undefined;
 };
 
-function strIncludes(a: string | null | undefined, b: string) {
-  return (a ?? "").toLowerCase().includes(b.toLowerCase());
+function buildQuery(searchParams?: SearchParams): string {
+  const url = new URL("http://dummy");
+  if (!searchParams) return "";
+
+  for (const [key, value] of Object.entries(searchParams)) {
+    if (value == null) continue;
+    if (Array.isArray(value)) {
+      for (const v of value) {
+        if (v != null && v !== "") {
+          url.searchParams.append(key, v);
+        }
+      }
+    } else {
+      if (value !== "") {
+        url.searchParams.set(key, value);
+      }
+    }
+  }
+  return url.searchParams.toString();
+}
+
+async function searchListings(
+  searchParams?: SearchParams,
+): Promise<SearchResponse> {
+  const origin = getOrigin();
+  const qs = buildQuery(searchParams);
+  const url = qs
+    ? `${origin}/api/listings/search?${qs}`
+    : `${origin}/api/listings/search`;
+
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) {
+    return {
+      page: 1,
+      pageSize: 20,
+      total: 0,
+      pageCount: 0,
+      items: [],
+    };
+  }
+  const data = (await res.json()) as SearchResponse;
+  return data;
+}
+
+// Utilitaire pour la pagination
+function withUpdatedParam(
+  searchParams: SearchParams | undefined,
+  key: string,
+  value: string | null,
+): string {
+  const params = new URLSearchParams();
+
+  if (searchParams) {
+    for (const [k, v] of Object.entries(searchParams)) {
+      if (Array.isArray(v)) {
+        for (const vv of v) {
+          if (vv != null) params.append(k, vv);
+        }
+      } else if (v != null) {
+        params.set(k, v);
+      }
+    }
+  }
+
+  if (value === null) {
+    params.delete(key);
+  } else {
+    params.set(key, value);
+  }
+
+  return params.toString();
 }
 
 export default async function ListingsPage({
   searchParams,
 }: {
-  searchParams?: Record<string, string | string[] | undefined>;
+  searchParams?: SearchParams;
 }) {
-  // 1) Lire toutes les annonces
-  const listingsFromDb = await prisma.listing.findMany({
-    include: {
-      images: true,
-      owner: true,
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
-  const listings: ListingDb[] = listingsFromDb.map((l) => ({
-    id: l.id,
-    title: l.title,
-    description: l.description,
-    price: l.price,
-    currency: l.currency,
-    country: l.country,
-    city: l.city,
-    createdAt: l.createdAt,
-    images: l.images.map((img) => ({ id: img.id, url: img.url })),
-    latPublic: l.latPublic,
-    lngPublic: l.lngPublic,
-    lat: l.lat,
-    lng: l.lng,
-  }));
-
+  const session = await getServerSession(authOptions);
   const displayCurrency =
     (cookies().get("currency")?.value as Currency) ?? "EUR";
 
-  // 2) Filtres URL (pays, ville, min/max, tri)
-  const sp = searchParams ?? {};
-  const country =
-    (typeof sp.country === "string" ? sp.country : "").trim();
-  const city = (typeof sp.city === "string" ? sp.city : "").trim();
-  const min = Number(typeof sp.min === "string" ? sp.min : undefined);
-  const max = Number(typeof sp.max === "string" ? sp.max : undefined);
+  const {
+    items: listings,
+    page,
+    total,
+    pageCount,
+  } = await searchListings(searchParams);
 
-  const sortRaw = typeof sp.sort === "string" ? sp.sort : "recent";
-  const sort: "recent" | "price_asc" | "price_desc" =
-    sortRaw === "price_asc" || sortRaw === "price_desc" ? sortRaw : "recent";
+  const q = (searchParams?.q as string) ?? "";
+  const country = (searchParams?.country as string) ?? "";
+  const city = (searchParams?.city as string) ?? "";
+  const minPrice = (searchParams?.minPrice as string) ?? "";
+  const maxPrice = (searchParams?.maxPrice as string) ?? "";
+  const minRating = (searchParams?.minRating as string) ?? "";
+  const sort = (searchParams?.sort as string) ?? "newest";
+  const hasPhoto = searchParams?.hasPhoto === "1";
 
-  // 3) Filtrage
-  const filtered = listings.filter((l) => {
-    if (country && !strIncludes(l.country, country)) return false;
-    if (city && !strIncludes(l.city, city)) return false;
-    if (Number.isFinite(min) && l.price < min) return false;
-    if (Number.isFinite(max) && l.price > max) return false;
-    return true;
-  });
-
-  // 3bis) Tri
-  const sorted = [...filtered]; // <-- corrigé ici : const au lieu de let
-
-  if (sort === "price_asc") {
-    sorted.sort((a, b) => a.price - b.price);
-  } else if (sort === "price_desc") {
-    sorted.sort((a, b) => b.price - a.price);
-  } else {
-    sorted.sort(
-      (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
-    );
-  }
-
-  // 4) Formatage prix
-  const cards: ListingCard[] = await Promise.all(
-    sorted.map(async (l) => {
-      const priceFormatted = await formatMoneyAsync(
-        l.price,
-        l.currency as Currency,
-        displayCurrency
+  // Pré-formatage des prix
+  const listingsWithPrice = await Promise.all(
+    listings.map(async (listing) => {
+      const priceLabel = await formatMoneyAsync(
+        listing.price,
+        listing.currency,
+        displayCurrency,
       );
-      return { ...l, priceFormatted };
-    })
+      return { listing, priceLabel };
+    }),
   );
 
-  // 5) Markers pour la map (avec fallback)
-  const mapMarkers: MapMarker[] = cards
-    .map((l) => {
-      const lat = l.latPublic ?? l.lat;
-      const lng = l.lngPublic ?? l.lng;
+  // Markers pour la carte
+  const markers: MapMarker[] = listingsWithPrice
+    .filter(
+      ({ listing }) =>
+        listing.latPublic != null && listing.lngPublic != null,
+    )
+    .map(({ listing, priceLabel }) => ({
+      id: listing.id,
+      lat: listing.latPublic as number,
+      lng: listing.lngPublic as number,
+      label: priceLabel,
+      title: listing.title,
+      city: listing.city,
+      country: listing.country,
+      createdAt: listing.createdAt,
+      priceFormatted: priceLabel,
+      imageUrl: listing.images?.[0]?.url ?? null,
+    }));
 
-      if (lat == null || lng == null) return null;
-      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  return (
+    <main className="mx-auto max-w-6xl space-y-6 px-4 pb-12 pt-6">
+      <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold sm:text-3xl">
+            Trouver un espace
+          </h1>
+          <p className="text-sm text-gray-600">
+            Salles, bureaux, parkings, coworking, et plus – filtrés pour toi.
+          </p>
+        </div>
 
-      return {
-        id: l.id,
-        lat,
-        lng,
-        label: l.priceFormatted,
-      };
-    })
-    .filter((m): m is MapMarker => m !== null)
-    .slice(0, 80);
+        <div className="text-xs text-gray-500">
+          {session ? (
+            <span>Connecté en tant que {session.user?.email}</span>
+          ) : (
+            <span>Connecte-toi pour réserver plus rapidement.</span>
+          )}
+        </div>
+      </header>
 
-  return <ListingsWithMap cards={cards} mapMarkers={mapMarkers} />;
+      {/* 🔍 Barre de recherche + Filtres (client) */}
+      <FiltersBar
+        q={q}
+        country={country}
+        city={city}
+        minPrice={minPrice}
+        maxPrice={maxPrice}
+        minRating={minRating}
+        sort={sort}
+        hasPhoto={hasPhoto}
+      />
+
+      {/* Résumé + pagination */}
+      <section className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
+        <p className="text-xs text-gray-600">
+          {total === 0
+            ? "Aucune annonce ne correspond à ces critères."
+            : total === 1
+            ? "1 annonce trouvée."
+            : `${total} annonces trouvées.`}
+        </p>
+
+        {pageCount > 1 && (
+          <div className="flex items-center gap-2 text-xs text-gray-600">
+            <span>
+              Page {page} / {pageCount}
+            </span>
+
+            <div className="flex gap-1">
+              {page > 1 && (
+                <Link
+                  href={`/listings?${withUpdatedParam(
+                    searchParams,
+                    "page",
+                    String(page - 1),
+                  )}`}
+                  className="rounded-full border border-gray-300 px-2 py-1 hover:border-black"
+                >
+                  Précédent
+                </Link>
+              )}
+
+              {page < pageCount && (
+                <Link
+                  href={`/listings?${withUpdatedParam(
+                    searchParams,
+                    "page",
+                    String(page + 1),
+                  )}`}
+                  className="rounded-full border border-gray-300 px-2 py-1 hover:border-black"
+                >
+                  Suivant
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
+      </section>
+
+      {/* Liste + Carte */}
+      {listingsWithPrice.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
+          Essaie d&apos;élargir un peu tes filtres (prix, ville, note…).
+        </div>
+      ) : (
+        <>
+          <section className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.1fr)] lg:items-start">
+            {/* Colonne gauche : annonces */}
+            <div className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                {listingsWithPrice.map(({ listing, priceLabel }) => {
+                  const cover = listing.images?.[0]?.url;
+                  const rev = listing.reviewSummary;
+
+                  const locationLabel = [
+                    listing.city ?? undefined,
+                    listing.country ?? undefined,
+                  ]
+                    .filter(Boolean)
+                    .join(", ");
+
+                  return (
+                    <Link
+                      key={listing.id}
+                      href={`/listings/${listing.id}`}
+                      className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-black hover:shadow-md"
+                    >
+                      <div className="relative h-40 w-full bg-gray-100">
+                        {cover ? (
+                          <Image
+                            src={cover}
+                            alt={listing.title}
+                            fill
+                            className="object-cover transition group-hover:scale-[1.02]"
+                            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 grid place-items-center text-xs text-gray-400">
+                            Pas d&apos;image
+                          </div>
+                        )}
+
+                        {rev.count > 0 && rev.avgRating != null && (
+                          <div className="absolute right-2 top-2 rounded-full bg-black/80 px-2 py-0.5 text-[10px] font-medium text-white">
+                            {rev.avgRating.toFixed(1)} ★ ({rev.count})
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex flex-1 flex-col gap-2 p-3">
+                        <div className="space-y-1">
+                          <p className="line-clamp-1 text-sm font-semibold text-gray-900">
+                            {listing.title}
+                          </p>
+                          <p className="line-clamp-2 text-xs text-gray-600">
+                            {listing.description}
+                          </p>
+                        </div>
+
+                        <div className="mt-auto flex items-end justify-between gap-2 pt-2">
+                          <div className="space-y-1">
+                            <p className="text-sm font-semibold text-gray-900">
+                              {priceLabel}
+                              <span className="text-xs font-normal text-gray-600">
+                                {" "}
+                                / nuit
+                              </span>
+                            </p>
+                            <p className="text-[11px] text-gray-500">
+                              {locationLabel || "Localisation non précisée"}
+                            </p>
+                          </div>
+
+                          <div className="flex flex-col items-end text-[11px] text-gray-500">
+                            <span>
+                              Hôte :{" "}
+                              {listing.owner.name ?? "Utilisateur Lok'Room"}
+                            </span>
+                            <span>
+                              Publié le{" "}
+                              {new Date(
+                                listing.createdAt,
+                              ).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Colonne droite : carte (desktop, map fixe) */}
+            <aside className="hidden lg:block">
+              <div className="sticky top-20 h-[520px] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                <div className="relative h-full w-full">
+                  <Map markers={markers} panOnHover={false} />
+                </div>
+              </div>
+            </aside>
+          </section>
+
+          {/* Carte mobile */}
+          <section className="lg:hidden">
+            <div className="mt-2 h-80 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+              <div className="relative h-full w-full">
+                <Map markers={markers} panOnHover={false} />
+              </div>
+            </div>
+          </section>
+        </>
+      )}
+    </main>
+  );
 }

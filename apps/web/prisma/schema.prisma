@@ -1,4 +1,5 @@
-generator client { 
+// apps/web/prisma/schema.prisma
+generator client {
   provider = "prisma-client-js"
 }
 
@@ -7,7 +8,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role { 
+enum Role {
   GUEST
   HOST
   BOTH
@@ -43,15 +44,56 @@ enum BookingStatus {
   CANCELLED
 }
 
+/// Catégorie d’espace (Lok'Room : logements, bureaux, parkings, studios, etc.)
+enum ListingType {
+  ROOM
+  STUDIO
+  APARTMENT
+  HOUSE
+  OFFICE
+  COWORKING
+  MEETING_ROOM
+  PARKING
+  GARAGE
+  STORAGE
+  EVENT_SPACE
+  RECORDING_STUDIO
+  OTHER
+}
+
+/// Mode de tarification de l’espace
+enum PricingMode {
+  HOURLY
+  DAILY
+  BOTH
+}
+
+/// Raison d’un blocage dans le calendrier
+enum CalendarBlockReason {
+  BOOKING
+  MANUAL_BLOCK
+  MAINTENANCE
+}
+
+/// Catégorie d’amenity (wifi, parking, clim, etc.)
+enum AmenityCategory {
+  GENERAL
+  BUSINESS
+  PARKING
+  ACCESSIBILITY
+  OUTDOOR
+  MEDIA
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
   name          String?
   emailVerified DateTime?
 
-  role        Role      @default(GUEST)
+  role        Role         @default(GUEST)
   country     String?
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime     @default(now())
   lastLoginAt DateTime?
   profile     UserProfile?
 
@@ -59,24 +101,51 @@ model User {
   sessions  Session[]
   Listing   Listing[]
   favorites Favorite[]
-  bookings  Booking[]
+
+  /// Réservations où l'user est le voyageur (guest)
+  bookings Booking[] @relation("BookingGuest")
+
+  /// Réservations annulées par cet user (guest ou host)
+  cancelledBookings Booking[] @relation("BookingCancelledBy")
+
+  /// Avis écrits par cet utilisateur
+  reviewsWritten Review[] @relation("ReviewAuthor")
+
+  /// Avis reçus par cet utilisateur (en tant qu’hôte ou guest)
+  reviewsReceived Review[] @relation("ReviewTarget")
 
   hostProfile  HostProfile?
   wallet       Wallet?
   WalletLedger WalletLedger[]
+
+  /// Messagerie
+  messages      Message[]
+  conversations ConversationParticipant[]
 }
 
 model UserProfile {
-  id          String @id @default(cuid())
-  user        User   @relation(fields: [userId], references: [id])
-  userId      String @unique
+  id          String  @id @default(cuid())
+  user        User    @relation(fields: [userId], references: [id])
+  userId      String  @unique
   avatarUrl   String?
-  ratingAvg   Float  @default(0)
-  ratingCount Int    @default(0)
+  ratingAvg   Float   @default(0)
+  ratingCount Int     @default(0)
+
+  /// Champs supplémentaires pour pré-remplir Stripe / profil Lok'Room
+  firstName    String?
+  lastName     String?
+  birthDate    DateTime?
+  phone        String?
+  addressLine1 String?
+  addressLine2 String?
+  city         String?
+  postalCode   String?
+  country      String?
+  province     String?
 }
 
 model Account {
-  id                String @id @default(cuid())
+  id                String  @id @default(cuid())
   userId            String
   type              String
   provider          String
@@ -112,51 +181,86 @@ model VerificationToken {
 }
 
 model Listing {
-  id          String     @id @default(cuid())
+  id          String @id @default(cuid())
   title       String
   description String
 
-  /// Prix par nuit / par jour (frontend décidera comment l’afficher)
-  price       Float
-  currency    Currency   @default(EUR)
+  /// Type d’espace (chambre, bureau, parking, studio, etc.)
+  type ListingType @default(OTHER)
 
-  country     String
-  province    ProvinceCA?
+  /// Mode de tarification (à l’heure, à la journée, ou les deux)
+  pricingMode PricingMode @default(DAILY)
+
+  /// Prix par nuit / par jour (frontend décidera comment l’afficher)
+  price    Float
+  currency Currency @default(EUR)
+
+  /// Prix à l’heure (optionnel, si l’espace est louable à l’heure)
+  hourlyPrice Float?
+
+  /// Capacité de l’espace (nombre de personnes max)
+  maxGuests Int?
+
+  /// Réservation instantanée possible ?
+  isInstantBook Boolean @default(false)
+
+  /// Contraintes de durée pour les réservations à l’heure
+  minDurationHours Int?
+  maxDurationHours Int?
+
+  /// Contraintes de durée pour les réservations à la journée / nuitée
+  minNights Int?
+  maxNights Int?
+
+  country  String
+  province ProvinceCA?
 
   /// Ville : obligatoire (défaut vide pour anciennes lignes)
-  city        String     @default("")
+  city String @default("")
 
   /// Adresse exacte de l’espace (jamais affichée publiquement)
-  addressFull String     @default("")
+  addressFull String @default("")
 
   /// Ligne d’adresse principale (numéro + rue)
-  addressLine1 String?   
+  addressLine1 String?
 
   /// Code postal
-  postalCode  String?
+  postalCode String?
 
   /// ID du lieu renvoyé par le provider
-  mapPlaceId  String?
+  mapPlaceId String?
 
   /// Provider utilisé
   mapProvider MapProvider @default(GOOGLE)
 
   /// Coordonnées exactes
-  lat         Float      @default(0)
-  lng         Float      @default(0)
+  lat Float @default(0)
+  lng Float @default(0)
 
   /// Coordonnées “publiques” (approx)
-  latPublic   Float      @default(0)
-  lngPublic   Float      @default(0)
+  latPublic Float @default(0)
+  lngPublic Float @default(0)
 
-  createdAt   DateTime   @default(now())
+  createdAt DateTime @default(now())
 
   ownerId String
-  owner   User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
   images    ListingImage[]
   favorites Favorite[]
   bookings  Booking[]
+
+  /// Avis associés à cette annonce
+  reviews Review[]
+
+  /// Commodités / équipements
+  amenities ListingAmenity[]
+
+  /// Blocages calendrier (bookings + blocages manuels)
+  calendar CalendarBlock[]
+
+  /// Conversations liées à cette annonce
+  conversations Conversation[]
 
   @@index([ownerId])
   @@index([createdAt])
@@ -171,10 +275,14 @@ model ListingImage {
   listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
 
   /// Image de couverture de l’annonce ?
-  isCover   Boolean @default(false)
+  isCover Boolean @default(false)
 
   /// Ordre d’affichage des images (0, 1, 2, …)
-  position  Int     @default(0)
+  position Int @default(0)
+
+  /// Dimensions de l’image (optionnel, utile pour optimisation / thumbnails)
+  width  Int?
+  height Int?
 
   @@index([listingId])
   @@index([listingId, position])
@@ -200,20 +308,92 @@ model Booking {
   listingId String
   listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
 
+  /// Voyageur (guest)
   guestId String
-  guest   User   @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  guest   User   @relation("BookingGuest", fields: [guestId], references: [id])
 
+  /// Mode de tarification utilisé pour cette réservation (heure ou jour)
+  pricingMode PricingMode
+
+  /// Pour les réservations à la journée / nuitée
   startDate DateTime
   endDate   DateTime
 
+  /// Pour les réservations à l’heure :
+  /// heures de début/fin en minutes depuis minuit (dans le fuseau du listing)
+  /// ex : 9h30 -> 570 ; 13h00 -> 780
+  startTimeMinutes Int?
+  endTimeMinutes   Int?
+  timezone         String? // ex: "America/Montreal"
+
+  /// Prix de base de la réservation (hors frais Lok'Room), dans la devise de l’annonce
   totalPrice Float
   currency   Currency
-  status     BookingStatus @default(PENDING)
+
+  status BookingStatus @default(PENDING)
+
+  /// Stripe PaymentIntent (rempli au moment de la création)
+  stripePaymentIntentId String?
+
+  /// Charge principale (remplie via webhook payment_intent.succeeded)
+  stripeChargeId String?
+
+  /// Infos d’annulation / refund
+  cancelledAt       DateTime?
+  cancelledByUserId String?
+  cancelledByUser   User?     @relation("BookingCancelledBy", fields: [cancelledByUserId], references: [id])
+
+  /// Montant total remboursé au client (en cents, toutes devises confondues)
+  refundAmountCents Int?
+
+  /// Détail des frais Lok’Room (snapshot en cents au moment de la création)
+  hostFeeCents           Int @default(0) // commission prise sur l’hôte
+  guestFeeCents          Int @default(0) // commission prise sur le guest
+  taxOnGuestFeeCents     Int @default(0) // taxes collectées sur la part guest
+  stripeFeeEstimateCents Int @default(0) // estimation des frais Stripe sur ce paiement
+  platformNetCents       Int @default(0) // marge nette estimée (hostFee + guestFee + taxGuest - stripe)
+
+  /// Avis liés à cette réservation (guest et/ou host)
+  reviews Review[]
+
+  /// Blocages de calendrier liés à cette réservation
+  calendarBlocks CalendarBlock[]
 
   createdAt DateTime @default(now())
 
   @@index([listingId, startDate, endDate])
   @@index([guestId, createdAt])
+  @@index([stripePaymentIntentId])
+}
+
+model Review {
+  id String @id @default(cuid())
+
+  bookingId String
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  /// Auteur de l’avis (guest OU host)
+  authorId String
+  author   User   @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+
+  /// Utilisateur visé par l’avis (souvent l’hôte, parfois le guest)
+  targetUserId String
+  targetUser   User   @relation("ReviewTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+
+  /// Note 1–5
+  rating Int
+
+  /// Commentaire libre
+  comment   String?
+  createdAt DateTime @default(now())
+
+  /// Un même user ne peut laisser qu’un avis par booking
+  @@unique([bookingId, authorId])
+  @@index([listingId])
+  @@index([targetUserId])
 }
 
 model HostProfile {
@@ -221,9 +401,29 @@ model HostProfile {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // Stripe / payouts
   stripeAccountId String?
   kycStatus       String  @default("incomplete")
   payoutsEnabled  Boolean @default(false)
+
+  // 🎨 Personnalisation & identité host
+  bio       String?  @db.Text
+  avatarUrl String?
+  languages String[] @default([])
+
+  /// "moins_une_heure" | "quelques_heures" | "un_jour"
+  responseTimeCategory String?
+
+  verifiedPhone Boolean @default(false)
+  verifiedEmail Boolean @default(false)
+  superhost     Boolean @default(false)
+
+  // Liens externes
+  instagram String?
+  website   String?
+
+  /// Années d'expérience comme hôte
+  experienceYears Int?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -253,4 +453,95 @@ model WalletLedger {
   createdAt  DateTime @default(now())
 
   @@index([hostId, createdAt])
+}
+
+// ======================================================================
+// AMENITIES (commodités / équipements)
+// ======================================================================
+
+model Amenity {
+  id       String          @id @default(cuid())
+  slug     String          @unique // "wifi", "parking", "climatisation"
+  label    String // "Wifi", "Stationnement gratuit"
+  category AmenityCategory @default(GENERAL)
+
+  listings ListingAmenity[]
+}
+
+model ListingAmenity {
+  listingId String
+  amenityId String
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  amenity Amenity @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([listingId, amenityId])
+}
+
+// ======================================================================
+// CALENDRIER – blocages (bookings + blocages manuels)
+// ======================================================================
+
+model CalendarBlock {
+  id        String  @id @default(cuid())
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  start  DateTime
+  end    DateTime
+  reason CalendarBlockReason @default(MANUAL_BLOCK)
+
+  bookingId String?
+  booking   Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([listingId, start, end])
+}
+
+// ======================================================================
+// MESSAGERIE – conversations & messages
+// ======================================================================
+
+model Conversation {
+  id        String   @id @default(cuid())
+  listingId String?
+  listing   Listing? @relation(fields: [listingId], references: [id], onDelete: SetNull)
+
+  participants ConversationParticipant[]
+  messages     Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ConversationParticipant {
+  conversationId String
+  userId         String
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  lastReadAt DateTime?
+
+  @@id([conversationId, userId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  senderId String
+  sender   User   @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  body String
+
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+
+  @@index([conversationId])
+  @@index([senderId])
 }

@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Providers from "@/components/providers";
+import { UserTopBar } from "@/components/UserTopBar"; // ⬅️ On l’ajoute
 
 export const metadata: Metadata = {
   title: "Lok’Room",
@@ -22,9 +23,9 @@ export const metadata: Metadata = {
         url: "/favicon.ico",
       },
     ],
-    apple: "/apple-touch-icon.png", // iOS home screen icon
+    apple: "/apple-touch-icon.png",
   },
-  manifest: "/site.webmanifest", // tells browsers where your manifest is
+  manifest: "/site.webmanifest",
 };
 
 export default function RootLayout({
@@ -35,7 +36,14 @@ export default function RootLayout({
   return (
     <html lang="fr" className="h-full">
       <body className="min-h-screen bg-gradient-to-b from-[#f9fafb] via-white to-[#f3f4f6] text-gray-900 antialiased">
-        <Providers>{children}</Providers>
+        <Providers>
+          
+          {/* ✅ Barre Airbnb (3 barres, avatar, mode hôte) */}
+          <UserTopBar />
+
+          {/* Le reste du site */}
+          {children}
+        </Providers>
       </body>
     </html>
   );

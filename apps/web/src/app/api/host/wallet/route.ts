@@ -13,6 +13,7 @@ export async function GET() {
       where: { user: { email: session.user.email! } },
       select: { userId: true },
     });
+
     if (!host) {
       return NextResponse.json({ balanceCents: 0, ledger: [] });
     }
@@ -26,7 +27,12 @@ export async function GET() {
       where: { hostId: host.userId },
       orderBy: { createdAt: "desc" },
       take: 20,
-      select: { id: true, deltaCents: true, reason: true, createdAt: true },
+      select: {
+        id: true,
+        deltaCents: true,
+        reason: true,
+        createdAt: true,
+      },
     });
 
     return NextResponse.json({

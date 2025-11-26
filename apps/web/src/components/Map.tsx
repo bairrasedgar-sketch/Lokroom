@@ -1,16 +1,25 @@
-// apps/web/src/components/Map.tsx
 "use client";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
+import Link from "next/link";
+import Image from "next/image";
 
 export type MapMarker = {
   id: string;
   lat: number;
   lng: number;
   label?: string; // ex: "120 €"
+
+  // Infos optionnelles pour l’aperçu façon Airbnb
+  title?: string;
+  city?: string | null;
+  country?: string;
+  createdAt?: string | Date;
+  priceFormatted?: string;
+  imageUrl?: string | null;
 };
 
 type MapProps = {
@@ -24,8 +33,11 @@ type MapProps = {
   /** Callback quand on survole une bulle sur la carte */
   onMarkerHover?: (id: string | null) => void;
 
-  /** Callback quand on clique sur une bulle sur la carte (aperçu Airbnb-like) */
+  /** Callback quand on clique sur une bulle sur la carte (aperçu externe Airbnb-like) */
   onMarkerClick?: (id: string) => void;
+
+  /** Est-ce qu'on déplace la carte quand hoveredId change ? */
+  panOnHover?: boolean;
 };
 
 const DEFAULT_CENTER = { lat: 45.5019, lng: -73.5674 }; // Montréal
@@ -36,6 +48,7 @@ export default function Map({
   hoveredId,
   onMarkerHover,
   onMarkerClick,
+  panOnHover = true,
 }: MapProps) {
   const apiKey = process.env
     .NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string | undefined;
@@ -51,10 +64,26 @@ export default function Map({
 
   // Référence réactive vers l'id survolé (pour les bulles actives)
   const hoveredIdRef = useRef<string | null>(null);
+  const overlaysRef = useRef<any[]>([]);
+
+  // Sélection interne pour l’aperçu intégré (si aucun onMarkerClick externe)
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
     hoveredIdRef.current = hoveredId ?? null;
+
+    // 🔁 force un redraw des overlays pour mettre à jour la classe active
+    overlaysRef.current.forEach((ov) => {
+      if (typeof ov.draw === "function") {
+        ov.draw();
+      }
+    });
   }, [hoveredId]);
+
+  // Reset sélection si les markers changent (ex: changement de filtres)
+  useEffect(() => {
+    setSelectedId(null);
+  }, [markers]);
 
   // Si on revient sur la page et que Google Maps est déjà chargé
   useEffect(() => {
@@ -76,7 +105,7 @@ export default function Map({
         mapCtor: g?.maps?.Map,
       });
       setScriptError(
-        "Google Maps n'a pas pu s'initialiser correctement (voir console)."
+        "Google Maps n'a pas pu s'initialiser correctement (voir console).",
       );
       return;
     }
@@ -93,7 +122,10 @@ export default function Map({
       mapTypeId: "roadmap",
       disableDefaultUI: true,
       zoomControl: true,
+      // ✅ scroll pour zoom quand la souris est sur la carte
       gestureHandling: "greedy",
+      scrollwheel: true,
+      clickableIcons: false, // désactive les popups de POI (parcs, restos, etc.)
       styles: [
         {
           featureType: "all",
@@ -166,7 +198,7 @@ export default function Map({
       }
     }
 
-    // --- Markers --->
+    // --- Markers --->    
     markers.forEach((m: MapMarker) => {
       if (!Number.isFinite(m.lat) || !Number.isFinite(m.lng)) return;
 
@@ -197,13 +229,25 @@ export default function Map({
         div.className = "lokroom-price-badge";
         div.textContent = labelText;
 
-        // 🔁 On garde le clic pour l'aperçu + scroll vers la carte
-        if (onMarkerClick) {
-          div.addEventListener("click", () => {
+        // clic → apercu (interne si pas de handler externe) + highlight
+        div.addEventListener("click", (event) => {
+          event.stopPropagation(); // empêche le clic de remonter à la carte / POI
+
+          if (onMarkerClick) {
             onMarkerClick(m.id);
-            if (onMarkerHover) onMarkerHover(m.id);
-          });
-        }
+          } else {
+            setSelectedId(m.id);
+          }
+          if (onMarkerHover) onMarkerHover(m.id);
+        });
+
+        div.addEventListener("mouseenter", () => {
+          if (onMarkerHover) onMarkerHover(m.id);
+        });
+
+        div.addEventListener("mouseleave", () => {
+          if (onMarkerHover) onMarkerHover(null);
+        });
 
         (this as any).div = div;
 
@@ -213,10 +257,13 @@ export default function Map({
 
       overlay.draw = function () {
         const projection = this.getProjection();
+        if (!projection) return; // sécurité
+
         const point = projection.fromLatLngToDivPixel(position);
         const div = (this as any).div as HTMLDivElement | null;
         if (!div || !point) return;
 
+        div.style.position = "absolute";
         div.style.left = `${point.x}px`;
         div.style.top = `${point.y}px`;
 
@@ -245,10 +292,13 @@ export default function Map({
       overlays.push(overlay);
     });
 
+    overlaysRef.current = overlays;
+
     // Cleanup
     return () => {
       overlays.forEach((o) => o.setMap(null));
       markersInstances.forEach((m: any) => m.setMap(null));
+      overlaysRef.current = [];
     };
   }, [
     missingApiKey,
@@ -259,8 +309,10 @@ export default function Map({
     onMarkerClick,
   ]);
 
-  // 🎯 Quand on survole une carte dans la liste OU qu'on clique une bulle → recentrer la map
+  // 🎯 Quand on survole une carte dans la liste OU qu'on clique une bulle
+  // → recentrer la map (optionnel)
   useEffect(() => {
+    if (!panOnHover) return; // pour /listings : pas de déplacement au survol
     if (!hoveredId || !mapRef.current) return;
 
     const markerData = markers.find((m) => m.id === hoveredId);
@@ -276,7 +328,7 @@ export default function Map({
     if (!currentZoom || currentZoom < 13) {
       map.setZoom(13);
     }
-  }, [hoveredId, markers]);
+  }, [hoveredId, markers, panOnHover]);
 
   if (scriptError) {
     return (
@@ -286,11 +338,19 @@ export default function Map({
     );
   }
 
+  // 👉 Aperçu interne seulement si :
+  // - on n’est PAS en mode logo (détail annonce)
+  // - il n’y a PAS de onMarkerClick externe (cas ListingsWithMap)
+  const hasExternalClickHandler = !!onMarkerClick;
+  const selectedMarker =
+    !useLogoIcon && !hasExternalClickHandler && selectedId
+      ? markers.find((m) => m.id === selectedId) ?? null
+      : null;
+
   return (
     <>
       {!missingApiKey && (
         <Script
-          // pas de "marker" dans libraries → pas de problème d'ID de carte
           src={`https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`}
           strategy="afterInteractive"
           onLoad={() => {
@@ -300,17 +360,76 @@ export default function Map({
           onError={(e) => {
             console.error("Erreur chargement Google Maps", e);
             setScriptError(
-              "Impossible de charger Google Maps (voir console)"
+              "Impossible de charger Google Maps (voir console)",
             );
           }}
         />
       )}
 
       <div
-        ref={containerRef}
-        className="h-full w-full rounded-3xl"
+        className="relative h-full w-full rounded-3xl"
         style={{ minHeight: 360 }}
-      />
+      >
+        <div ref={containerRef} className="h-full w-full rounded-3xl" />
+
+        {/* Aperçu intégré façon Airbnb (desktop & mobile) */}
+        {selectedMarker && (
+          <div className="pointer-events-auto absolute bottom-4 right-4 z-[1000] w-72 max-w-full overflow-hidden rounded-2xl border bg-white text-xs shadow-xl sm:w-80">
+            <button
+              type="button"
+              onClick={() => setSelectedId(null)}
+              className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-xs font-bold text-gray-800 shadow"
+              aria-label="Fermer l’aperçu"
+            >
+              ×
+            </button>
+
+            <Link href={`/listings/${selectedMarker.id}`} className="block">
+              <div className="relative h-32 w-full bg-gray-100 sm:h-36">
+                {selectedMarker.imageUrl ? (
+                  <Image
+                    src={selectedMarker.imageUrl}
+                    alt={selectedMarker.title ?? "Annonce Lok'Room"}
+                    fill
+                    className="object-cover"
+                    sizes="320px"
+                  />
+                ) : (
+                  <div className="absolute inset-0 grid place-items-center text-[11px] text-gray-400">
+                    Pas d&apos;image
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-1 px-3 pb-3 pt-2">
+                <p className="line-clamp-1 text-[13px] font-semibold text-gray-900">
+                  {selectedMarker.title ?? "Annonce Lok'Room"}
+                </p>
+
+                <p className="text-[11px] text-gray-500">
+                  {selectedMarker.city ? `${selectedMarker.city}, ` : ""}
+                  {selectedMarker.country}
+                  {selectedMarker.createdAt && (
+                    <>
+                      {" · "}
+                      {new Date(
+                        selectedMarker.createdAt,
+                      ).toLocaleDateString()}
+                    </>
+                  )}
+                </p>
+
+                <p className="pt-1 text-[13px] font-semibold text-gray-900">
+                  {selectedMarker.priceFormatted ?? selectedMarker.label ?? ""}
+                </p>
+                <p className="text-[11px] text-gray-500">
+                  Cliquer pour voir les détails
+                </p>
+              </div>
+            </Link>
+          </div>
+        )}
+      </div>
 
       {missingApiKey && (
         <div className="flex h-full items-center justify-center text-xs text-red-500">
@@ -319,14 +438,11 @@ export default function Map({
         </div>
       )}
 
-      {/* 🧭 Message UX quand aucune coordonnée / aucun marker */}
-      {!missingApiKey &&
-        scriptLoaded &&
-        markers.length === 0 && (
-          <div className="mt-2 text-center text-[11px] text-gray-500">
-            Localisation non disponible pour cette annonce.
-          </div>
-        )}
+      {!missingApiKey && scriptLoaded && markers.length === 0 && (
+        <div className="mt-2 text-center text-[11px] text-gray-500">
+          Localisation non disponible pour ces annonces.
+        </div>
+      )}
     </>
   );
 }

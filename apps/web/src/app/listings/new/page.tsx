@@ -21,6 +21,10 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Script from "next/script";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import {
+  getCroppedImage,
+  type PixelCrop,
+} from "@/lib/cropImage";
 
 // ---------- Config upload ----------
 const MAX_FILES = 10;
@@ -54,42 +58,6 @@ async function jsonOrThrow(res: Response) {
   }
 }
 
-async function getCroppedBlob(
-  imageSrc: string,
-  pixelCrop: { x: number; y: number; width: number; height: number },
-  mime: string
-): Promise<Blob> {
-  const img = document.createElement("img");
-  img.src = imageSrc;
-  await new Promise((ok, err) => {
-    img.onload = () => ok(null);
-    img.onerror = err;
-  });
-
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Canvas non supporté");
-
-  canvas.width = pixelCrop.width;
-  canvas.height = pixelCrop.height;
-
-  ctx.drawImage(
-    img,
-    pixelCrop.x,
-    pixelCrop.y,
-    pixelCrop.width,
-    pixelCrop.height,
-    0,
-    0,
-    pixelCrop.width,
-    pixelCrop.height
-  );
-
-  return await new Promise<Blob>((resolve) =>
-    canvas.toBlob((b) => resolve(b as Blob), mime, 0.92)
-  );
-}
-
 const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as
   | string
   | undefined;
@@ -99,6 +67,8 @@ type LocalImage = {
   id: string;
   file: File;
   previewUrl: string;
+  width?: number;
+  height?: number;
 };
 
 const createId = () =>
@@ -219,9 +189,7 @@ export default function NewListingPage() {
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] =
-    useState<{ x: number; y: number; width: number; height: number } | null>(
-      null
-    );
+    useState<PixelCrop | null>(null);
 
   const [mapsReady, setMapsReady] = useState(false);
   const [geo, setGeo] = useState<{
@@ -231,13 +199,12 @@ export default function NewListingPage() {
     lngPublic: number;
   } | null>(null);
 
-  // auto-animate pour le panneau d’images (même vibe que l’édition)
+  // auto-animate pour le panneau d’images
   const [filesParent] = useAutoAnimate<HTMLDivElement>({
     duration: 450,
     easing: "cubic-bezier(0.22, 0.61, 0.36, 1)",
   });
 
-  // index de la vignette qu’on est en train de drag
   const [dragFileIndex, setDragFileIndex] = useState<number | null>(null);
 
   const resolver = zodResolver(schema) as Resolver<FormValues>;
@@ -342,6 +309,8 @@ export default function NewListingPage() {
       id: createId(),
       file,
       previewUrl: URL.createObjectURL(file),
+      width: undefined,
+      height: undefined,
     }));
 
     setImages((prev) => {
@@ -404,11 +373,17 @@ export default function NewListingPage() {
       const current = images[cropIndex];
       if (!current) return;
 
-      const blob = await getCroppedBlob(
+      const { blob, width, height } = await getCroppedImage(
         cropSrc,
-        croppedAreaPixels,
-        current.file.type || "image/jpeg"
+        croppedAreaPixels as PixelCrop,
+        current.file.type || "image/jpeg",
+        {
+          maxWidth: 2560,
+          maxHeight: 2560,
+          quality: 0.92,
+        }
       );
+
       const croppedFile = new File([blob], current.file.name, {
         type: current.file.type,
       });
@@ -417,12 +392,13 @@ export default function NewListingPage() {
       setImages((prev) =>
         prev.map((img, i) => {
           if (i !== cropIndex) return img;
-          // on libère l’ancienne URL
           URL.revokeObjectURL(img.previewUrl);
           return {
             ...img,
             file: croppedFile,
             previewUrl: newPreviewUrl,
+            width,
+            height,
           };
         })
       );
@@ -448,7 +424,7 @@ export default function NewListingPage() {
     });
   }
 
-  // ---- drag & drop des vignettes (même logique que EditListingImages pour files) ----
+  // ---- drag & drop des vignettes ----
   const handleFileDragStart = (
     e: DragEvent<HTMLDivElement>,
     index: number
@@ -550,6 +526,7 @@ export default function NewListingPage() {
             listingId,
             filename: file.name,
             contentType: file.type || "application/octet-stream",
+            fileSize: file.size,
           }),
         });
         if (!p.ok) {
@@ -575,10 +552,21 @@ export default function NewListingPage() {
           throw new Error(`Upload R2 échoué (${put.status}). ${body}`);
         }
 
+        const saveBody: any = {
+          url: presign.publicUrl,
+        };
+        if (
+          typeof img.width === "number" &&
+          typeof img.height === "number"
+        ) {
+          saveBody.width = img.width;
+          saveBody.height = img.height;
+        }
+
         const save = await fetch(`/api/listings/${listingId}/images`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: presign.publicUrl }),
+          body: JSON.stringify(saveBody),
         });
         if (!save.ok) {
           const body = await save.text().catch(() => "");
@@ -587,7 +575,6 @@ export default function NewListingPage() {
       }
 
       toast.success("Annonce créée ✅");
-      // clean previews
       images.forEach((img) => URL.revokeObjectURL(img.previewUrl));
       setImages([]);
       router.push(`/listings/${listingId}`);
@@ -676,7 +663,7 @@ export default function NewListingPage() {
             </div>
           </div>
 
-          {/* panneau d’images clair */}
+          {/* panneau d’images */}
           {images.length > 0 && (
             <div className="mt-2 rounded-2xl bg-gray-100 px-4 py-4 text-sm text-gray-900 shadow-sm ring-1 ring-gray-200">
               <p className="mb-3 text-xs text-gray-700 sm:text-sm">
@@ -921,53 +908,73 @@ export default function NewListingPage() {
           </div>
         </form>
 
-        {/* modale crop */}
+        {/* modale crop pleine page blanche */}
         {cropOpen && cropSrc && (
-          <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
-            <div className="w-full max-w-2xl rounded bg-white p-4 shadow-lg">
-              <h3 className="mb-2 font-medium">Rogner l’image</h3>
-              <div className="relative h-[55vh] w-full bg-gray-100">
-                <Cropper
-                  image={cropSrc}
-                  crop={crop}
-                  zoom={zoom}
-                  aspect={4 / 3}
-                  objectFit="contain"
-                  onCropChange={setCrop}
-                  onZoomChange={setZoom}
-                  onCropComplete={(_, areaPixels) =>
-                    setCroppedAreaPixels(areaPixels)
-                  }
-                />
-              </div>
+          <div className="fixed inset-0 z-50 bg-white">
+            <div className="flex h-full w-full flex-col items-center justify-center px-4">
+              <div className="w-full max-w-4xl rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl sm:p-6">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-semibold">Rogner l’image</h3>
+                    <p className="mt-0.5 text-xs text-gray-500">
+                      Clique-déplace pour recadrer, utilise le slider pour
+                      zoomer.
+                    </p>
+                  </div>
+                </div>
 
-              <div className="mt-3 flex items-center justify-between">
-                <input
-                  type="range"
-                  min={1}
-                  max={3}
-                  step={0.1}
-                  value={zoom}
-                  onChange={(e) => setZoom(Number(e.target.value))}
-                  className="w-40"
-                />
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      setCropOpen(false);
-                      setCropSrc(null);
-                      setCropIndex(null);
-                    }}
-                    className="rounded border px-3 py-1.5 text-sm"
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    className="rounded bg-black px-3 py-1.5 text-sm text-white"
-                    onClick={saveCrop}
-                  >
-                    Enregistrer
-                  </button>
+                <div className="relative mx-auto w-full max-h-[70vh] overflow-hidden rounded-xl bg-white">
+                  <div className="relative aspect-[4/3] w-full">
+                    <Cropper
+                      image={cropSrc}
+                      crop={crop}
+                      zoom={zoom}
+                      aspect={4 / 3}
+                      cropShape="rect"
+                      showGrid={false}
+                      objectFit="contain"
+                      onCropChange={setCrop}
+                      onZoomChange={setZoom}
+                      onCropComplete={(_, areaPixels) =>
+                        setCroppedAreaPixels(areaPixels as PixelCrop)
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3 sm:w-1/2">
+                    <span className="text-xs text-gray-500">Zoom</span>
+                    <input
+                      type="range"
+                      min={1}
+                      max={3}
+                      step={0.1}
+                      value={zoom}
+                      onChange={(e) => setZoom(Number(e.target.value))}
+                      className="h-1 w-full cursor-pointer"
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => {
+                        setCropOpen(false);
+                        setCropSrc(null);
+                        setCropIndex(null);
+                        setCroppedAreaPixels(null);
+                      }}
+                      className="rounded-md border px-3 py-1.5 text-sm"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      className="rounded-md bg-black px-3 py-1.5 text-sm font-medium text-white"
+                      onClick={saveCrop}
+                    >
+                      Enregistrer
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

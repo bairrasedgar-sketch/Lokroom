@@ -28,7 +28,7 @@ export async function POST(req: Request) {
     if (!ok) {
       return NextResponse.json(
         { error: "Too many requests" },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
@@ -40,16 +40,17 @@ export async function POST(req: Request) {
     if (!host?.stripeAccountId) {
       return NextResponse.json(
         { error: "Host account missing" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
     const body = await req.json().catch(() => null);
-    if (!body)
+    if (!body) {
       return NextResponse.json(
         { error: "Bad JSON" },
-        { status: 400 }
+        { status: 400 },
       );
+    }
 
     const {
       country,
@@ -71,6 +72,7 @@ export async function POST(req: Request) {
     let external_account: any;
 
     if (iban && /^[A-Z]{2}/i.test(iban)) {
+      // IBAN (UE)
       external_account = {
         object: "bank_account",
         country: (country ?? "FR").toUpperCase(),
@@ -83,6 +85,7 @@ export async function POST(req: Request) {
       routingNumber &&
       accountNumber
     ) {
+      // Canada: routing + account
       external_account = {
         object: "bank_account",
         country: "CA",
@@ -94,7 +97,7 @@ export async function POST(req: Request) {
     } else {
       return NextResponse.json(
         { error: "Missing/invalid bank fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -102,11 +105,23 @@ export async function POST(req: Request) {
       external_account,
     });
 
+    const currently_due = updated.requirements?.currently_due ?? [];
+    const kycStatus =
+      currently_due.length === 0 ? "complete" : "incomplete";
+    const payoutsEnabled = updated.payouts_enabled === true;
+
+    await prisma.hostProfile.updateMany({
+      where: { stripeAccountId: host.stripeAccountId },
+      data: {
+        kycStatus,
+        payoutsEnabled,
+      },
+    });
+
     return NextResponse.json({
       ok: true,
-      payoutsEnabled: updated.payouts_enabled,
-      externalAccountsCount:
-        updated.external_accounts?.data?.length ?? 0,
+      payoutsEnabled,
+      externalAccountsCount: updated.external_accounts?.data?.length ?? 0,
     });
   } catch (e: any) {
     if (e?.message === "UNAUTHORIZED") {

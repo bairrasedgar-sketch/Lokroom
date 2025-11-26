@@ -22,19 +22,34 @@ export async function GET() {
   if (!host?.stripeAccountId) {
     return NextResponse.json(
       { error: "Host account missing" },
-      { status: 404 }
+      { status: 404 },
     );
   }
 
   const acc = await stripe.accounts.retrieve(host.stripeAccountId);
 
-  // ✅ KYC “live” depuis Stripe (pas notre champ local)
+  // KYC “live” depuis Stripe
   const currently_due = acc.requirements?.currently_due ?? [];
   const eventually_due = acc.requirements?.eventually_due ?? [];
   const past_due = acc.requirements?.past_due ?? [];
-  const kycStatus = currently_due.length === 0 ? "complete" : "incomplete";
 
-  // ✅ Si KYC complet → on promeut l'utilisateur en HOST dans la BDD
+  const kycStatus =
+    currently_due.length === 0 && past_due.length === 0
+      ? "complete"
+      : "incomplete";
+
+  const payoutsEnabled = acc.payouts_enabled === true;
+
+  // Sync HostProfile (optionnel mais propre)
+  await prisma.hostProfile.updateMany({
+    where: { stripeAccountId: host.stripeAccountId },
+    data: {
+      kycStatus,
+      payoutsEnabled,
+    },
+  });
+
+  // Si KYC complet → promeut l'utilisateur en HOST
   if (kycStatus === "complete") {
     await prisma.user.update({
       where: { email: session.user.email },
@@ -43,7 +58,7 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    payoutsEnabled: acc.payouts_enabled === true,
+    payoutsEnabled,
     kycStatus,
     requirements: { currently_due, eventually_due, past_due },
   });

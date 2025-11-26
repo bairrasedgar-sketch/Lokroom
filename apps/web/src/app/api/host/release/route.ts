@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     if (!ok) {
       return NextResponse.json(
         { error: "Too many payout attempts" },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
     if (!host?.stripeAccountId) {
       return NextResponse.json(
         { error: "missing_connect_account" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 

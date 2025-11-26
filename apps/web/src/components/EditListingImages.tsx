@@ -1,3 +1,4 @@
+// apps/web/src/components/EditListingImages.tsx
 "use client";
 
 import {
@@ -9,6 +10,10 @@ import {
 import Cropper from "react-easy-crop";
 import { toast } from "sonner";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
+import {
+  getCroppedImage,
+  type PixelCrop,
+} from "@/lib/cropImage";
 
 type Img = { id: string; url: string };
 
@@ -19,41 +24,6 @@ async function jsonOrThrow(res: Response) {
   } catch {
     throw new Error(`Réponse non-JSON (${res.status}). ${txt.slice(0, 140)}`);
   }
-}
-
-async function getCroppedBlob(
-  imageSrc: string,
-  pixelCrop: { x: number; y: number; width: number; height: number },
-  mime: string
-): Promise<Blob> {
-  const img = document.createElement("img");
-  img.src = imageSrc;
-  await new Promise((ok, err) => {
-    img.onload = () => ok(null);
-    img.onerror = err;
-  });
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("Canvas non supporté");
-
-  canvas.width = pixelCrop.width;
-  canvas.height = pixelCrop.height;
-
-  ctx.drawImage(
-    img,
-    pixelCrop.x,
-    pixelCrop.y,
-    pixelCrop.width,
-    pixelCrop.height,
-    0,
-    0,
-    pixelCrop.width,
-    pixelCrop.height
-  );
-
-  return await new Promise<Blob>((resolve) =>
-    canvas.toBlob((b) => resolve(b as Blob), mime, 0.92)
-  );
 }
 
 const MAX_FILES = 10;
@@ -71,7 +41,7 @@ export default function EditListingImages({
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  // auto-animate pour les panneaux
+  // auto-animate
   const [existingParent] = useAutoAnimate<HTMLDivElement>({
     duration: 450,
     easing: "cubic-bezier(0.22, 0.61, 0.36, 1)",
@@ -81,10 +51,8 @@ export default function EditListingImages({
     easing: "cubic-bezier(0.22, 0.61, 0.36, 1)",
   });
 
-  // Drag & drop pour images existantes (BDD)
   const [dragExistingIndex, setDragExistingIndex] =
     useState<number | null>(null);
-  // Drag & drop pour nouvelles images (files)
   const [dragFileIndex, setDragFileIndex] = useState<number | null>(null);
 
   // Crop modal state
@@ -94,9 +62,7 @@ export default function EditListingImages({
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] =
-    useState<{ x: number; y: number; width: number; height: number } | null>(
-      null
-    );
+    useState<PixelCrop | null>(null);
 
   const totalSizeMb = useMemo(
     () => (files.reduce((a, f) => a + f.size, 0) / (1024 * 1024)).toFixed(1),
@@ -162,13 +128,22 @@ export default function EditListingImages({
       return;
     }
     try {
-      const blob = await getCroppedBlob(
+      const file = files[cropIndex];
+      if (!file) return;
+
+      const { blob } = await getCroppedImage(
         cropSrc,
-        croppedAreaPixels,
-        files[cropIndex].type || "image/jpeg"
+        croppedAreaPixels as PixelCrop,
+        file.type || "image/jpeg",
+        {
+          maxWidth: 2560,
+          maxHeight: 2560,
+          quality: 0.92,
+        }
       );
-      const croppedFile = new File([blob], files[cropIndex].name, {
-        type: files[cropIndex].type,
+
+      const croppedFile = new File([blob], file.name, {
+        type: file.type,
       });
       setFiles((prev) =>
         prev.map((f, i) => (i === cropIndex ? croppedFile : f))
@@ -181,10 +156,11 @@ export default function EditListingImages({
       setCropOpen(false);
       setCropSrc(null);
       setCropIndex(null);
+      setCroppedAreaPixels(null);
     }
   }, [cropOpen, cropIndex, cropSrc, croppedAreaPixels, files]);
 
-  // 👉 Mettre une image en couverture côté BDD (images existantes)
+  // couverture BDD
   async function setCover(imageId: string) {
     try {
       const newOrder = [...images];
@@ -211,7 +187,7 @@ export default function EditListingImages({
     }
   }
 
-  // 👉 Mettre une image en couverture *avant upload* (files)
+  // couverture avant upload
   function makeCover(index: number) {
     setFiles((prev) => {
       if (index <= 0 || index >= prev.length) return prev;
@@ -222,7 +198,7 @@ export default function EditListingImages({
     });
   }
 
-  // --- Drag & drop EXISTING images (BDD) : réordonnancement au DROP ---
+  // Drag existing
   const handleExistingDragStart = (
     e: DragEvent<HTMLDivElement>,
     index: number
@@ -290,7 +266,7 @@ export default function EditListingImages({
     setDragExistingIndex(null);
   };
 
-  // --- Drag & drop FILES (avant upload) : réordonnancement au DROP ---
+  // Drag files
   const handleFileDragStart = (e: DragEvent<HTMLDivElement>, index: number) => {
     setDragFileIndex(index);
     if (e.dataTransfer) {
@@ -338,7 +314,6 @@ export default function EditListingImages({
     if (!files.length) return;
     setUploading(true);
     try {
-      // ⚠️ On envoie les fichiers dans l'ordre du tableau `files`
       for (let idx = 0; idx < files.length; idx++) {
         const file = files[idx];
 
@@ -410,7 +385,7 @@ export default function EditListingImages({
 
   return (
     <section className="space-y-4">
-      {/* même override que sur /listings/new : uniquement déplacement, pas de fade */}
+      {/* même override que sur /listings/new */}
       <style jsx global>{`
         [data-auto-animate] > * {
           transition-property: transform !important;
@@ -421,7 +396,7 @@ export default function EditListingImages({
 
       <h2 className="text-lg font-medium">Images</h2>
 
-      {/* Panneau images existantes (BDD) */}
+      {/* Panneau images existantes */}
       <div className="rounded-2xl bg-gray-100 px-4 py-4 text-sm text-gray-900 shadow-sm ring-1 ring-gray-200">
         <p className="mb-3 text-xs text-gray-700 sm:text-sm">
           👉 <span className="font-semibold">La première image</span>{" "}
@@ -460,7 +435,6 @@ export default function EditListingImages({
                     className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03]"
                   />
 
-                  {/* bouton supprimer */}
                   <button
                     type="button"
                     onClick={() => deleteImage(im.id)}
@@ -470,7 +444,6 @@ export default function EditListingImages({
                     ×
                   </button>
 
-                  {/* badge / bouton couverture */}
                   <div className="absolute inset-x-0 bottom-0 flex justify-center pb-1">
                     {isCover ? (
                       <span className="pointer-events-none inline-flex rounded-full bg-black/85 px-2 py-0.5 text-[11px] font-medium text-white shadow">
@@ -494,7 +467,7 @@ export default function EditListingImages({
         )}
       </div>
 
-      {/* Uploader + crop pour nouvelles images (même style que /listings/new) */}
+      {/* Uploader + crop pour nouvelles images */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <label className="block text-sm font-medium">
@@ -570,7 +543,6 @@ export default function EditListingImages({
                     }
                   />
 
-                  {/* bouton Rogner */}
                   <div className="absolute left-1 top-1 flex gap-1">
                     <button
                       type="button"
@@ -582,7 +554,6 @@ export default function EditListingImages({
                     </button>
                   </div>
 
-                  {/* Couverture / Mettre en couverture */}
                   <div className="absolute inset-x-0 bottom-0 flex justify-center pb-1">
                     {isCover ? (
                       <span className="pointer-events-none inline-flex rounded-full bg-black/85 px-2 py-0.5 text-[11px] font-medium text-white shadow">
@@ -600,7 +571,6 @@ export default function EditListingImages({
                     )}
                   </div>
 
-                  {/* bouton retirer */}
                   <button
                     type="button"
                     onClick={() => removeFileAt(i)}
@@ -625,53 +595,72 @@ export default function EditListingImages({
         </button>
       </div>
 
-      {/* Modale crop */}
+      {/* Modale crop pleine page blanche */}
       {cropOpen && cropSrc && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
-          <div className="w-full max-w-2xl rounded bg-white p-4 shadow-lg">
-            <h3 className="mb-2 font-medium">Rogner l’image</h3>
-            <div className="relative h-[55vh] w-full bg-gray-100">
-              <Cropper
-                image={cropSrc}
-                crop={crop}
-                zoom={zoom}
-                aspect={4 / 3}
-                objectFit="contain"
-                onCropChange={setCrop}
-                onZoomChange={setZoom}
-                onCropComplete={(_, areaPixels) =>
-                  setCroppedAreaPixels(areaPixels)
-                }
-              />
-            </div>
+        <div className="fixed inset-0 z-50 bg-white">
+          <div className="flex h-full w-full flex-col items-center justify-center px-4">
+            <div className="w-full max-w-4xl rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl sm:p-6">
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-base font-semibold">Rogner l’image</h3>
+                  <p className="mt-0.5 text-xs text-gray-500">
+                    Clique-déplace pour recadrer, utilise le slider pour zoomer.
+                  </p>
+                </div>
+              </div>
 
-            <div className="mt-3 flex items-center justify-between">
-              <input
-                type="range"
-                min={1}
-                max={3}
-                step={0.1}
-                value={zoom}
-                onChange={(e) => setZoom(Number(e.target.value))}
-                className="w-40"
-              />
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    setCropOpen(false);
-                    setCropSrc(null);
-                    setCropIndex(null);
-                  }}
-                  className="rounded border px-3 py-1.5 text-sm"
-                >
-                  Annuler
-                </button>
-                <button
-                  className="rounded bg-black px-3 py-1.5 text-sm text-white"
-                  onClick={saveCrop}
-                >
-                  Enregistrer
-                </button>
+              <div className="relative mx-auto w-full max-h-[70vh] overflow-hidden rounded-xl bg-white">
+                <div className="relative aspect-[4/3] w-full">
+                  <Cropper
+                    image={cropSrc}
+                    crop={crop}
+                    zoom={zoom}
+                    aspect={4 / 3}
+                    cropShape="rect"
+                    showGrid={false}
+                    objectFit="contain"
+                    onCropChange={setCrop}
+                    onZoomChange={setZoom}
+                    onCropComplete={(_, areaPixels) =>
+                      setCroppedAreaPixels(areaPixels as PixelCrop)
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3 sm:w-1/2">
+                  <span className="text-xs text-gray-500">Zoom</span>
+                  <input
+                    type="range"
+                    min={1}
+                    max={3}
+                    step={0.1}
+                    value={zoom}
+                    onChange={(e) => setZoom(Number(e.target.value))}
+                    className="h-1 w-full cursor-pointer"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => {
+                      setCropOpen(false);
+                      setCropSrc(null);
+                      setCropIndex(null);
+                      setCroppedAreaPixels(null);
+                    }}
+                    className="rounded-md border px-3 py-1.5 text-sm"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    className="rounded-md bg-black px-3 py-1.5 text-sm font-medium text-white"
+                    onClick={saveCrop}
+                  >
+                    Enregistrer
+                  </button>
+                </div>
               </div>
             </div>
           </div>

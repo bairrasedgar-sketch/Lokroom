@@ -1,3 +1,4 @@
+// apps/web/src/app/listings/[id]/page.tsx
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
@@ -10,6 +11,7 @@ import { formatMoneyAsync, type Currency } from "@/lib/currency";
 import BookingForm from "@/components/BookingForm";
 import { getOrigin } from "@/lib/origin";
 import Map from "@/components/Map"; // mini-map localisation
+import ListingReviews from "@/components/ListingReviews";
 
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
@@ -62,7 +64,7 @@ export default async function ListingDetailPage({
   const priceFormatted = await formatMoneyAsync(
     listing.price,
     listing.currency,
-    displayCurrency
+    displayCurrency,
   );
 
   const locationLabel = [
@@ -225,6 +227,9 @@ export default async function ListingDetailPage({
               </div>
             </section>
           )}
+
+          {/* Avis sur l'annonce */}
+          <ListingReviews listingId={listing.id} />
         </div>
 
         {/* Colonne droite : carte réservation */}

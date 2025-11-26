@@ -12,14 +12,14 @@ import {
 
 import CurrencyNotice from "@/components/CurrencyNotice";
 import ListingFilters from "@/components/ListingFilters";
-import Map from "@/components/Map";
+import Map, { type MapMarker as MapMarkerType } from "@/components/Map";
 
 type ListingCardFixed = {
   id: string;
   title: string;
   country: string;
   city: string | null;
-  createdAt: Date;
+  createdAt: string | Date;
   images: { id: string; url: string }[];
   priceFormatted: string;
 
@@ -29,24 +29,15 @@ type ListingCardFixed = {
   lng: number | null;
 };
 
-type MapMarker = {
-  id: string;
-  lat: number;
-  lng: number;
-  label?: string;
-};
-
 type Props = {
   cards: ListingCardFixed[];
-  mapMarkers: MapMarker[];
+  mapMarkers: MapMarkerType[];
 };
 
 type SortOption = "recent" | "price_asc" | "price_desc";
 
 /**
  * Carte d’aperçu type Airbnb
- * - Hauteur FIXE sur mobile (h-44) → n’occupe plus tout l’écran
- * - Un peu plus grande sur desktop (h-56)
  */
 function ListingPreviewCard({
   listing,
@@ -57,9 +48,13 @@ function ListingPreviewCard({
 }) {
   const cover = listing.images?.[0]?.url ?? null;
 
+  const createdAt =
+    listing.createdAt instanceof Date
+      ? listing.createdAt
+      : new Date(listing.createdAt);
+
   return (
     <div className="relative flex h-44 w-full max-w-sm flex-col overflow-hidden rounded-2xl border bg-white text-xs shadow-xl sm:h-56 sm:text-sm">
-      {/* Bouton fermer */}
       <button
         type="button"
         onClick={onClose}
@@ -70,7 +65,6 @@ function ListingPreviewCard({
       </button>
 
       <Link href={`/listings/${listing.id}`} className="flex flex-1 flex-col">
-        {/* Image : prend ~60% de la hauteur sur mobile */}
         <div className="relative flex-[1.4] w-full bg-gray-100">
           {cover ? (
             <Image
@@ -87,7 +81,6 @@ function ListingPreviewCard({
           )}
         </div>
 
-        {/* Texte : partie basse, compacte */}
         <div className="flex flex-[1] flex-col justify-between overflow-hidden px-2 py-2 sm:px-3 sm:py-3">
           <div className="space-y-0.5">
             <h3 className="line-clamp-1 text-[13px] font-semibold sm:line-clamp-2 sm:text-sm">
@@ -95,8 +88,7 @@ function ListingPreviewCard({
             </h3>
             <p className="line-clamp-1 text-[10px] text-gray-500 sm:text-[11px]">
               {listing.city ? `${listing.city}, ` : ""}
-              {listing.country} ·{" "}
-              {new Date(listing.createdAt).toLocaleDateString()}
+              {listing.country} · {createdAt.toLocaleDateString()}
             </p>
           </div>
 
@@ -195,7 +187,6 @@ export default function ListingsWithMap({ cards, mapMarkers }: Props) {
             <CurrencyNotice />
 
             <div className="flex items-center gap-2 self-end sm:self-auto">
-              {/* Bouton voir la carte (mobile seulement) */}
               {mapMarkers.length > 0 && (
                 <button
                   type="button"
@@ -235,7 +226,11 @@ export default function ListingsWithMap({ cards, mapMarkers }: Props) {
                 const cover = l.images?.[0]?.url ?? null;
                 const isHovered = hoveredId === l.id;
 
-                // ⭐ Première carte → image LCP prioritaire
+                const createdAt =
+                  l.createdAt instanceof Date
+                    ? l.createdAt
+                    : new Date(l.createdAt);
+
                 const priority = index === 0;
 
                 return (
@@ -275,8 +270,7 @@ export default function ListingsWithMap({ cards, mapMarkers }: Props) {
                         </h3>
                         <p className="text-xs text-gray-500">
                           {l.city ? `${l.city}, ` : ""}
-                          {l.country} ·{" "}
-                          {new Date(l.createdAt).toLocaleDateString()}
+                          {l.country} · {createdAt.toLocaleDateString()}
                         </p>
                         <p className="pt-1 text-sm font-semibold">
                           {l.priceFormatted}
@@ -297,7 +291,10 @@ export default function ListingsWithMap({ cards, mapMarkers }: Props) {
               markers={mapMarkers}
               hoveredId={hoveredId}
               onMarkerHover={setHoveredId}
-              onMarkerClick={setSelectedId}
+              onMarkerClick={(id) => {
+                setSelectedId(id);
+                setHoveredId(id); // synchronise la bulle active
+              }}
             />
             <div className="pointer-events-none absolute bottom-4 left-4 rounded-full bg-white/80 px-3 py-1 text-xs text-gray-600 backdrop-blur">
               Carte Lok&apos;Room (Google Maps) · {sortLabel}
@@ -324,7 +321,10 @@ export default function ListingsWithMap({ cards, mapMarkers }: Props) {
               markers={mapMarkers}
               hoveredId={hoveredId}
               onMarkerHover={setHoveredId}
-              onMarkerClick={setSelectedId}
+              onMarkerClick={(id) => {
+                setSelectedId(id);
+                setHoveredId(id);
+              }}
             />
 
             <button
@@ -340,7 +340,7 @@ export default function ListingsWithMap({ cards, mapMarkers }: Props) {
               {total > 1 ? "s" : ""} · {sortLabel}
             </div>
 
-            {/* Aperçu Airbnb-like sur mobile (plus petit, centré) */}
+            {/* Aperçu Airbnb-like sur mobile (centré) */}
             {selectedListing && (
               <div className="pointer-events-auto absolute bottom-14 left-0 right-0 flex justify-center">
                 <ListingPreviewCard

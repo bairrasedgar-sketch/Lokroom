@@ -1,3 +1,4 @@
+// apps/web/src/app/api/listings/[id]/images/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
@@ -22,12 +23,28 @@ export async function POST(
   }
 
   const listingId = params.id;
-  const { url } = (await req.json().catch(() => ({} as any))) as {
+  const { url, width, height } = (await req.json().catch(() => ({} as any))) as {
     url?: string;
+    width?: number;
+    height?: number;
   };
 
   if (!url || typeof url !== "string") {
     return NextResponse.json({ error: "Missing url" }, { status: 400 });
+  }
+
+  // 🔒 Vérifie que l’URL vient bien de ton CDN / R2
+  if (S3_PUBLIC_BASE) {
+    const baseWithSlash = S3_PUBLIC_BASE.endsWith("/")
+      ? S3_PUBLIC_BASE
+      : S3_PUBLIC_BASE + "/";
+
+    if (!url.startsWith(baseWithSlash)) {
+      return NextResponse.json(
+        { error: "Image URL is not allowed." },
+        { status: 400 }
+      );
+    }
   }
 
   const listing = await prisma.listing.findUnique({
@@ -62,6 +79,8 @@ export async function POST(
       listingId,
       position: nextPosition,
       isCover: !existingCover, // si aucune cover -> la première devient couverture
+      width: typeof width === "number" ? Math.round(width) : null,
+      height: typeof height === "number" ? Math.round(height) : null,
     } as any,
   });
 
