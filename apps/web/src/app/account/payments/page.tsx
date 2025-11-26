@@ -1,13 +1,30 @@
 // apps/web/src/app/account/payments/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 type Tab = "payments" | "payouts";
 
+// ✅ Wrapper avec Suspense pour satisfaire Next
 export default function PaymentsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="space-y-4">
+          <div className="h-6 w-40 rounded bg-gray-100" />
+          <div className="h-10 w-64 rounded-full bg-gray-100" />
+          <div className="h-32 rounded-2xl border border-gray-200 bg-white" />
+        </div>
+      }
+    >
+      <PaymentsPageContent />
+    </Suspense>
+  );
+}
+
+function PaymentsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -101,7 +118,7 @@ function PayoutStripeCard() {
       if (!res.ok || !json.url) {
         throw new Error(
           json.error ??
-            "Impossible de démarrer la configuration des versements."
+            "Impossible de démarrer la configuration des versements.",
         );
       }
 
@@ -112,7 +129,7 @@ function PayoutStripeCard() {
       toast.error(
         err instanceof Error
           ? err.message
-          : "Erreur lors de la redirection vers Stripe."
+          : "Erreur lors de la redirection vers Stripe.",
       );
     } finally {
       setLoading(false);

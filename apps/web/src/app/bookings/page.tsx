@@ -1,6 +1,7 @@
+// apps/web/src/app/bookings/page.tsx
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -80,16 +81,16 @@ function formatDateRange(startStr: string, endStr: string) {
   }
 
   if (sameYear) {
-    return `${start.toLocaleDateString("fr-FR", optsShort)} – ${end.toLocaleDateString(
+    return `${start.toLocaleDateString(
       "fr-FR",
       optsShort,
-    )} ${start.getFullYear()}`;
+    )} – ${end.toLocaleDateString("fr-FR", optsShort)} ${start.getFullYear()}`;
   }
 
-  return `${start.toLocaleDateString("fr-FR", optsFull)} – ${end.toLocaleDateString(
+  return `${start.toLocaleDateString(
     "fr-FR",
     optsFull,
-  )}`;
+  )} – ${end.toLocaleDateString("fr-FR", optsFull)}`;
 }
 
 function statusLabel(status: BookingStatus) {
@@ -118,7 +119,40 @@ function statusBadgeClass(status: BookingStatus) {
   }
 }
 
+// ✅ Wrapper avec Suspense pour Next
 export default function BookingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="mx-auto max-w-5xl px-4 py-6 lg:py-8">
+          <header className="mb-6">
+            <div className="h-6 w-48 rounded bg-gray-100" />
+            <div className="mt-2 h-4 w-64 rounded bg-gray-100" />
+          </header>
+          <div className="space-y-3">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="flex animate-pulse gap-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
+              >
+                <div className="h-20 w-24 rounded-xl bg-gray-100" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-1/3 rounded bg-gray-100" />
+                  <div className="h-3 w-1/2 rounded bg-gray-100" />
+                  <div className="h-3 w-1/4 rounded bg-gray-100" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </main>
+      }
+    >
+      <BookingsPageContent />
+    </Suspense>
+  );
+}
+
+function BookingsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -194,10 +228,13 @@ export default function BookingsPage() {
         body: JSON.stringify({ action: "cancel" }),
       });
 
-      const data = (await res.json().catch(() => null)) as { error?: string } | null;
+      const data = (await res.json().catch(() => null)) as
+        | { error?: string }
+        | null;
 
       if (!res.ok) {
-        const msg = data?.error ?? "Impossible d’annuler cette réservation.";
+        const msg =
+          data?.error ?? "Impossible d’annuler cette réservation.";
         toast.error(msg);
         return;
       }
@@ -254,12 +291,11 @@ export default function BookingsPage() {
           "La demande de remboursement a été envoyée. Le statut sera mis à jour sous peu.",
       );
 
-      // On ne force pas forcément CANCELLED tout de suite,
-      // c’est le webhook Stripe qui fait foi, mais on peut marquer
-      // que la réservation est en cours d’annulation.
       setBookings((prev) =>
         prev.map((b) =>
-          b.id === id && b.status === "CONFIRMED" ? { ...b, status: "CANCELLED" } : b,
+          b.id === id && b.status === "CONFIRMED"
+            ? { ...b, status: "CANCELLED" }
+            : b,
         ),
       );
     } catch (err) {
@@ -442,7 +478,9 @@ export default function BookingsPage() {
 
                         <button
                           type="button"
-                          onClick={() => cancelPendingBooking(booking.id)}
+                          onClick={() =>
+                            cancelPendingBooking(booking.id)
+                          }
                           disabled={actionLoadingId === booking.id}
                           className="inline-flex w-full items-center justify-center rounded-full border border-gray-300 bg-white px-4 py-2 text-xs font-medium text-gray-800 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                         >

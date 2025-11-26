@@ -73,7 +73,8 @@ async function computeHostStats(userId: string) {
 }
 
 // GET /api/host/profile
-export async function GET(_req: NextRequest) {
+// ⛏️ _req était défini mais jamais utilisé → on l'enlève
+export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -182,7 +183,8 @@ export async function PUT(req: NextRequest) {
       : null;
 
   // On met à jour le profil host
-  const updated = await prisma.hostProfile.upsert({
+  // ⛏️ 'updated' était assigné mais jamais utilisé → on enlève la variable
+  await prisma.hostProfile.upsert({
     where: { userId: me.id },
     create: {
       userId: me.id,

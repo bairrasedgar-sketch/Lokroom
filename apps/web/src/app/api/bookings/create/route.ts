@@ -100,6 +100,8 @@ export async function POST(req: NextRequest) {
       ownerId: true,
       country: true,
       province: true,
+      // 👇 IMPORTANT : on récupère aussi le pricingMode
+      pricingMode: true,
     },
   });
 
@@ -125,7 +127,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error: "PROVINCE_REQUIRED",
-        details: "Province is required for Canadian listings (QC/ON/BC/AB/NB/NS/NL/PE).",
+        details:
+          "Province is required for Canadian listings (QC/ON/BC/AB/NB/NS/NL/PE).",
       },
       { status: 400 },
     );
@@ -184,6 +187,8 @@ export async function POST(req: NextRequest) {
         totalPrice,
         currency: listing.currency,
         status: "PENDING",
+        // 👇 CHAMP MANQUANT QUI FAISAIT PLANTER LE BUILD
+        pricingMode: listing.pricingMode,
       },
       select: {
         id: true,

@@ -34,11 +34,15 @@ export async function POST() {
       where: { email: session.user.email },
       select: { id: true },
     });
-    if (!hostUser) return NextResponse.json({ error: "user_not_found" }, { status: 404 });
+    if (!hostUser)
+      return NextResponse.json({ error: "user_not_found" }, { status: 404 });
 
     // Guest factice
     const guestEmail = "dev-guest@example.com";
-    let guest = await prisma.user.findUnique({ where: { email: guestEmail }, select: { id: true } });
+    let guest = await prisma.user.findUnique({
+      where: { email: guestEmail },
+      select: { id: true },
+    });
     if (!guest) {
       guest = await prisma.user.create({
         data: { email: guestEmail, name: "Dev Guest" },
@@ -49,7 +53,14 @@ export async function POST() {
     // Listing EUR (100€/nuit) appartenant à l’hôte
     let listing = await prisma.listing.findFirst({
       where: { ownerId: hostUser.id, currency: "EUR" },
-      select: { id: true, price: true, currency: true, ownerId: true },
+      select: {
+        id: true,
+        price: true,
+        currency: true,
+        ownerId: true,
+        // 👇 on récupère aussi le pricingMode
+        pricingMode: true,
+      },
       orderBy: { createdAt: "desc" },
     });
 
@@ -63,15 +74,26 @@ export async function POST() {
           country: "France",
           city: "Paris",
           ownerId: hostUser.id,
+          // si ton modèle Listing a un default sur pricingMode, pas besoin de le mettre ici
+          // sinon tu peux mettre une valeur valide de ton enum, ex :
+          // pricingMode: "PER_NIGHT",
         },
-        select: { id: true, price: true, currency: true, ownerId: true },
+        select: {
+          id: true,
+          price: true,
+          currency: true,
+          ownerId: true,
+          pricingMode: true, // 👈 on le sélectionne aussi ici
+        },
       });
     }
 
     // Période terminée (2 nuits)
     const today = new Date();
-    const start = new Date(today); start.setDate(start.getDate() - 3);
-    const end = new Date(today);   end.setDate(end.getDate() - 1);
+    const start = new Date(today);
+    start.setDate(start.getDate() - 3);
+    const end = new Date(today);
+    end.setDate(end.getDate() - 1);
 
     // Booking CONFIRMED terminée de 200 €
     const booking = await prisma.booking.create({
@@ -83,6 +105,8 @@ export async function POST() {
         totalPrice: 200,
         currency: "EUR",
         status: "CONFIRMED",
+        // 👇 champ obligatoire qui manquait
+        pricingMode: listing.pricingMode,
       },
       select: { id: true },
     });
@@ -109,7 +133,8 @@ export async function POST() {
       ok: true,
       bookingId: booking.id,
       creditedCents: cents,
-      message: "OK : booking terminée (200 €) + wallet crédité (200 €). Lance POST /api/host/release.",
+      message:
+        "OK : booking terminée (200 €) + wallet crédité (200 €). Lance POST /api/host/release.",
     });
   } catch (e) {
     console.error("seed-wallet error:", e);
