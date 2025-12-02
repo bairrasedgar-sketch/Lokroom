@@ -4,8 +4,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-
-type Currency = "EUR" | "CAD";
+import type { Currency } from "@/lib/currency";
 
 type BookingFormProps = {
   listingId: string;

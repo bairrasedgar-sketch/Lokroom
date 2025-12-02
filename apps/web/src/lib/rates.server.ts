@@ -3,7 +3,7 @@ import "server-only";
 
 import { promises as fs } from "fs";
 import path from "path";
-import type { Currency } from "./currency.server"; // ⚠️ vient du fichier currency.server.ts
+import type { Currency } from "./currency"; // ✅ vient maintenant de currency.ts
 
 // ✅ toutes les devises supportées
 const CURRENCIES: Currency[] = ["EUR", "CAD", "USD", "GBP", "CNY"];
@@ -12,11 +12,11 @@ const CURRENCIES: Currency[] = ["EUR", "CAD", "USD", "GBP", "CNY"];
 // ➜ valeurs que tu peux ajuster si tu veux plus/moins agressif
 // USD : marge plus haute car c'est là que tu vois le plus d'écart (6.26€ → 7.27$)
 const FX_MARKUP_PER_TARGET: Partial<Record<Currency, number>> = {
-  EUR: 0,      // pas de marge si on reste en EUR
-  USD: 0.06,   // +6% sur les conversions vers USD
-  CAD: 0.03,   // +3% vers CAD
-  GBP: 0.03,   // +3% vers GBP
-  CNY: 0.03,   // +3% vers CNY
+  EUR: 0, // pas de marge si on reste en EUR
+  USD: 0.06, // +6% sur les conversions vers USD
+  CAD: 0.03, // +3% vers CAD
+  GBP: 0.03, // +3% vers GBP
+  CNY: 0.03, // +3% vers CNY
 };
 
 // marge par défaut si jamais une devise n'est pas dans le map

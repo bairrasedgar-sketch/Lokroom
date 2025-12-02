@@ -2,16 +2,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
+import { cookies } from "next/headers";
+
 import { authOptions } from "@/lib/auth";
 import DeleteListingButton from "@/components/DeleteListingButton";
 import ListingGallery from "@/components/ListingGallery";
 import FavoriteButton from "@/components/FavoriteButton";
-import { cookies } from "next/headers";
-import { formatMoneyAsync, type Currency } from "@/lib/currency";
 import BookingForm from "@/components/BookingForm";
 import { getOrigin } from "@/lib/origin";
 import Map from "@/components/Map"; // mini-map localisation
 import ListingReviews from "@/components/ListingReviews";
+import { formatMoneyAsync, type Currency } from "@/lib/currency";
 
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
@@ -60,7 +61,8 @@ export default async function ListingDetailPage({
     !!session?.user?.email && listing.owner.email === session.user.email;
 
   const displayCurrency =
-    (cookies().get("currency")?.value as Currency) ?? "EUR";
+    (cookies().get("currency")?.value as Currency | undefined) ?? "EUR";
+
   const priceFormatted = await formatMoneyAsync(
     listing.price,
     listing.currency,
@@ -138,7 +140,7 @@ export default async function ListingDetailPage({
             <div>
               <h2 className="text-lg font-semibold">
                 Logement proposé par{" "}
-                {listing.owner.name || "un hôte Lok&apos;Room"}
+                {listing.owner.name || "un hôte Lok'Room"}
               </h2>
               <p className="text-sm text-gray-600">{locationLabel}</p>
             </div>
@@ -149,7 +151,7 @@ export default async function ListingDetailPage({
               </div>
               <div className="space-y-0.5">
                 <p className="font-medium">
-                  {listing.owner.name || "Hôte Lok&apos;Room"}
+                  {listing.owner.name || "Hôte Lok'Room"}
                 </p>
                 <p className="text-[11px] text-gray-500">
                   Répond généralement en quelques heures
@@ -196,7 +198,7 @@ export default async function ListingDetailPage({
           <aside className="space-y-1">
             <p className="text-sm text-gray-600">Hôte</p>
             <p className="font-medium">
-              {listing.owner.name ?? "Utilisateur Lok&apos;Room"}
+              {listing.owner.name ?? "Utilisateur Lok'Room"}
             </p>
             <p className="text-sm text-gray-600">
               {listing.owner.email ?? ""}
