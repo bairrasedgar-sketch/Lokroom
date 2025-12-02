@@ -1,5 +1,5 @@
 // apps/web/src/lib/currency.client.ts
-export type Currency = "EUR" | "CAD" | "USD" | "CNY" | "GBP";
+import type { Currency } from "@prisma/client";
 
 function defaultLocaleFor(currency: Currency): string {
   switch (currency) {
@@ -31,7 +31,7 @@ export function formatMoney(
   }).format(amount);
 }
 
-// ✅ export nécessaire pour currency.ts
+// ✅ utilisé par currency.ts
 export async function convert(
   amount: number,
   from: Currency,

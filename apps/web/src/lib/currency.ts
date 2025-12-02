@@ -3,7 +3,9 @@
 // - formatMoney : synchrone, pas de conversion → même code côté client/serveur
 // - formatMoneyAsync : conversion via module serveur ou client selon l'environnement
 
-export type Currency = "EUR" | "CAD" | "USD" | "CNY" | "GBP";
+import type { Currency as PrismaCurrency } from "@prisma/client";
+
+export type Currency = PrismaCurrency;
 
 function defaultLocaleFor(currency: Currency): string {
   switch (currency) {
@@ -18,7 +20,7 @@ function defaultLocaleFor(currency: Currency): string {
     case "CNY":
       return "zh-CN";
     default:
-      // ✅ valeur de secours pour satisfaire TS et éviter le “rouge”
+      // valeur de secours
       return "en-US";
   }
 }

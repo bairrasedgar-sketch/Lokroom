@@ -17,6 +17,9 @@ enum Role {
 enum Currency {
   EUR
   CAD
+  USD
+  CNY
+  GBP
 }
 
 enum ProvinceCA {
