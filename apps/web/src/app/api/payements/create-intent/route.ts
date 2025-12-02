@@ -3,15 +3,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import type Stripe from "stripe";
 
-
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 import { computeFees, inferRegion } from "@/lib/fees";
+import type { Currency as PrismaCurrency } from "@prisma/client";
+import { fromPrismaCurrency } from "@/lib/currency";
 
 export const dynamic = "force-dynamic";
 
-function mapCurrencyToStripe(currency: "EUR" | "CAD"): "eur" | "cad" {
+function mapCurrencyToStripe(currency: PrismaCurrency): "eur" | "cad" {
   switch (currency) {
     case "EUR":
       return "eur";
@@ -94,16 +95,19 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Currency front (union string) à partir de l'enum Prisma
+  const currency = fromPrismaCurrency(booking.currency);
+
   // Région pour le moteur de fees (FR vs provinces CA)
   const region = inferRegion({
-    currency: booking.currency,
+    currency: currency as any, // cast pour matcher le type attendu dans fees.ts
     country: booking.listing.country,
     provinceCode: booking.listing.province,
   });
 
   const fees = computeFees({
     priceCents,
-    currency: booking.currency,
+    currency: currency as any, // idem ici
     region,
   });
 

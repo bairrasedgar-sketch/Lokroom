@@ -1,11 +1,12 @@
 // apps/web/src/lib/currency.ts
-// Point d'entrée UNIQUE à importer partout.
-// - formatMoney : synchrone, pas de conversion → même code côté client/serveur
-// - formatMoneyAsync : conversion via module serveur ou client selon l'environnement
+// Point d'entrée UNIQUE à importer partout sur le front.
+// - Currency = union de string ("EUR" | "CAD" | ...)
+// - formatMoney : formatage sans conversion
+// - formatMoneyAsync : formatage avec conversion (client/serveur)
 
 import type { Currency as PrismaCurrency } from "@prisma/client";
 
-export type Currency = PrismaCurrency;
+export type Currency = "EUR" | "CAD" | "USD" | "CNY" | "GBP";
 
 function defaultLocaleFor(currency: Currency): string {
   switch (currency) {
@@ -80,4 +81,13 @@ export async function formatMoneyAsync(
 /** Export pratique si tu veux juste formatter sans conversion. */
 export function formatMoneyStatic(amount: number, currency: Currency): string {
   return formatMoney(amount, currency);
+}
+
+/** Helpers pour passer de/vers Prisma si besoin dans l'API/route. */
+export function fromPrismaCurrency(value: PrismaCurrency): Currency {
+  return value as unknown as Currency;
+}
+
+export function toPrismaCurrency(value: Currency): PrismaCurrency {
+  return value as unknown as PrismaCurrency;
 }

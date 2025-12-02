@@ -1,5 +1,5 @@
 // apps/web/src/lib/currency.client.ts
-import type { Currency } from "@prisma/client";
+import type { Currency } from "./currency";
 
 function defaultLocaleFor(currency: Currency): string {
   switch (currency) {

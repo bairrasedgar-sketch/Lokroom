@@ -1,5 +1,5 @@
 // apps/web/src/lib/currency.server.ts
-import type { Currency } from "@prisma/client";
+import type { Currency } from "./currency";
 import { convert as convertRates } from "./rates.server";
 
 function defaultLocaleFor(currency: Currency): string {
