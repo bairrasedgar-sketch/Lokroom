@@ -1,4 +1,3 @@
-// apps/web/src/app/listings/new/page.tsx
 "use client";
 
 import {
@@ -505,10 +504,26 @@ export default function NewListingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+
       if (!res.ok) {
         const j = await res.json().catch(() => null);
+
+        // ⛔️ non connecté
+        if (res.status === 401) {
+          throw new Error("Tu dois être connecté pour créer une annonce.");
+        }
+
+        // ⛔️ pas hôte
+        if (res.status === 403) {
+          throw new Error(
+            j?.error ||
+              "Tu dois avoir un compte hôte Lok'Room pour créer une annonce."
+          );
+        }
+
         throw new Error(j?.error || "Création annonce: erreur serveur");
       }
+
       const data = await res.json();
       const listingId: string | undefined = data?.listing?.id;
       if (!listingId) throw new Error("ID annonce manquant après création.");
@@ -804,7 +819,7 @@ export default function NewListingPage() {
             </div>
 
             <div>
-              <label htmlFor="currency" className="mb-1 block text-sm">
+              <label htmlFor="currency" className="mb-1 block text.sm">
                 Devise
               </label>
               <select

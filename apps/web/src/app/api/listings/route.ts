@@ -1,4 +1,3 @@
-// apps/web/src/app/api/listings/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth";
@@ -94,6 +93,25 @@ export async function POST(req: Request) {
       return NextResponse.json(
         { error: "User not found" },
         { status: 404 }
+      );
+    }
+
+    // 🔐 Nouveau : seuls les hôtes peuvent créer une annonce
+    const role = (user as any).role as string | undefined;
+    const isHostFlag = Boolean((user as any).isHost);
+    const isHost =
+      isHostFlag ||
+      role === "HOST" ||
+      role === "BOTH" ||
+      role === "ADMIN";
+
+    if (!isHost) {
+      return NextResponse.json(
+        {
+          error:
+            "Seuls les hôtes Lok'Room peuvent créer une annonce. Passe en mode hôte pour continuer.",
+        },
+        { status: 403 }
       );
     }
 

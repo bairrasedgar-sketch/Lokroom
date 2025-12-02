@@ -3,7 +3,7 @@
 // - formatMoney : synchrone, pas de conversion → même code côté client/serveur
 // - formatMoneyAsync : conversion via module serveur ou client selon l'environnement
 
-export type Currency = "EUR" | "CAD";
+export type Currency = "EUR" | "CAD" | "USD" | "CNY" | "GBP";
 
 function defaultLocaleFor(currency: Currency): string {
   switch (currency) {
@@ -11,6 +11,12 @@ function defaultLocaleFor(currency: Currency): string {
       return "fr-FR";
     case "CAD":
       return "en-CA";
+    case "USD":
+      return "en-US";
+    case "GBP":
+      return "en-GB";
+    case "CNY":
+      return "zh-CN";
     default:
       // ✅ valeur de secours pour satisfaire TS et éviter le “rouge”
       return "en-US";

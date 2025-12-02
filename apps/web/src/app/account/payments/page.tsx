@@ -7,7 +7,6 @@ import { toast } from "sonner";
 
 type Tab = "payments" | "payouts";
 
-// ✅ Wrapper avec Suspense pour satisfaire Next
 export default function PaymentsPage() {
   return (
     <Suspense
@@ -28,19 +27,21 @@ function PaymentsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const currentTab: Tab = (searchParams.get("tab") as Tab) ?? "payments";
+  // 🔹 on lit paymentsTab (et plus tab)
+  const currentTab: Tab =
+    (searchParams.get("paymentsTab") as Tab) ?? "payments";
 
   function setTab(tab: Tab) {
     const sp = new URLSearchParams(searchParams.toString());
-    sp.set("tab", tab);
-    // On peut nettoyer d’éventuels vieux paramètres (step, etc.)
+    sp.set("paymentsTab", tab);
     sp.delete("step");
-    router.replace(`/account/payments?${sp.toString()}`);
+
+    // 🔹 important : on ne change PAS le pathname, juste la query
+    router.replace(`?${sp.toString()}`, { scroll: false });
   }
 
   return (
     <div className="space-y-6">
-      {/* Titre + tabs Paiements / Versements */}
       <header className="space-y-2">
         <h2 className="text-xl font-semibold">Paiements</h2>
         <p className="text-sm text-gray-600">
@@ -83,8 +84,6 @@ function PaymentsPageContent() {
   );
 }
 
-/* ------------ Onglet PAIEMENTS (historique simple pour l'instant) ----------- */
-
 function PaymentsHistoryPlaceholder() {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-4 text-sm text-gray-700 shadow-sm">
@@ -101,8 +100,6 @@ function PaymentsHistoryPlaceholder() {
     </div>
   );
 }
-
-/* ------------ Onglet VERSEMENTS (Stripe Connect hébergé) ----------- */
 
 function PayoutStripeCard() {
   const [loading, setLoading] = useState(false);
@@ -122,7 +119,6 @@ function PayoutStripeCard() {
         );
       }
 
-      // Redirection vers la page d'onboarding / gestion Stripe
       window.location.href = json.url;
     } catch (err) {
       console.error(err);

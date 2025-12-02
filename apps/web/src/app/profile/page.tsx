@@ -1,9 +1,11 @@
+// apps/web/src/app/profile/page.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
+
 
 type Role = "HOST" | "GUEST" | "BOTH";
 
@@ -66,6 +68,17 @@ export default function ProfilePage() {
   const [name, setName] = useState("");
   const [country, setCountry] = useState("");
 
+  // champs "légaux" / adresse
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [addressLine1, setAddressLine1] = useState("");
+  const [addressLine2, setAddressLine2] = useState("");
+  const [city, setCity] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [profileCountry, setProfileCountry] = useState("");
+  const [province, setProvince] = useState("");
+
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<"idle" | "saved" | "error">("idle");
 
@@ -96,6 +109,18 @@ export default function ProfilePage() {
         setName(user?.name ?? "");
         setCountry(user?.country ?? "");
         setRole((user?.role as Role) ?? "GUEST");
+
+        // champs légaux / adresse
+        setFirstName(user?.profile?.firstName ?? "");
+        setLastName(user?.profile?.lastName ?? "");
+        setPhone(user?.profile?.phone ?? "");
+        setAddressLine1(user?.profile?.addressLine1 ?? "");
+        setAddressLine2(user?.profile?.addressLine2 ?? "");
+        setCity(user?.profile?.city ?? "");
+        setPostalCode(user?.profile?.postalCode ?? "");
+        setProfileCountry(user?.profile?.country ?? "");
+        setProvince(user?.profile?.province ?? "");
+
         if (user?.profile?.avatarUrl) {
           setAvatarPreview(user.profile.avatarUrl);
         }
@@ -129,9 +154,32 @@ export default function ProfilePage() {
     return (
       (initial.name ?? "") !== name ||
       (initial.country ?? "") !== country ||
-      ((initial.role ?? "GUEST") as Role) !== role
+      ((initial.role ?? "GUEST") as Role) !== role ||
+      (initial.profile?.firstName ?? "") !== firstName ||
+      (initial.profile?.lastName ?? "") !== lastName ||
+      (initial.profile?.phone ?? "") !== phone ||
+      (initial.profile?.addressLine1 ?? "") !== addressLine1 ||
+      (initial.profile?.addressLine2 ?? "") !== addressLine2 ||
+      (initial.profile?.city ?? "") !== city ||
+      (initial.profile?.postalCode ?? "") !== postalCode ||
+      (initial.profile?.country ?? "") !== profileCountry ||
+      (initial.profile?.province ?? "") !== province
     );
-  }, [initial, name, country, role]);
+  }, [
+    initial,
+    name,
+    country,
+    role,
+    firstName,
+    lastName,
+    phone,
+    addressLine1,
+    addressLine2,
+    city,
+    postalCode,
+    profileCountry,
+    province,
+  ]);
 
   async function onSave(e: React.FormEvent) {
     e.preventDefault();
@@ -143,16 +191,84 @@ export default function ProfilePage() {
       const res = await fetch("/api/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, country, role }),
+        body: JSON.stringify({
+          name,
+          country,
+          role,
+          firstName,
+          lastName,
+          phone,
+          addressLine1,
+          addressLine2,
+          city,
+          postalCode,
+          profileCountry,
+          province,
+        }),
       });
       if (!res.ok) throw new Error("Save failed");
 
+      // on met à jour le cache local
       setInitial((prev) =>
         prev
-          ? { ...prev, name, country, role }
-          : { email: user?.email ?? "", name, country, role }
+          ? {
+              ...prev,
+              name,
+              country,
+              role,
+              profile: {
+                ...(prev.profile ?? {}),
+                firstName,
+                lastName,
+                phone,
+                addressLine1,
+                addressLine2,
+                city,
+                postalCode,
+                country: profileCountry,
+                province,
+              },
+            }
+          : {
+              email: user?.email ?? "",
+              name,
+              country,
+              role,
+              profile: {
+                firstName,
+                lastName,
+                phone,
+                addressLine1,
+                addressLine2,
+                city,
+                postalCode,
+                country: profileCountry,
+                province,
+              },
+            }
       );
-      setUser((prev) => (prev ? { ...prev, name, country, role } : prev));
+      setUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              name,
+              country,
+              role,
+              profile: {
+                ...(prev.profile ?? {}),
+                firstName,
+                lastName,
+                phone,
+                addressLine1,
+                addressLine2,
+                city,
+                postalCode,
+                country: profileCountry,
+                province,
+              },
+            }
+          : prev
+      );
       setStatus("saved");
       toast.success("Profil sauvegardé ✅");
     } catch {
@@ -346,11 +462,25 @@ export default function ProfilePage() {
               avatarFile={avatarFile}
               avatarStatus={avatarStatus}
               name={name}
-              country={country}
-              role={role}
+              firstName={firstName}
+              lastName={lastName}
+              phone={phone}
+              addressLine1={addressLine1}
+              addressLine2={addressLine2}
+              city={city}
+              postalCode={postalCode}
+              profileCountry={profileCountry}
+              province={province}
               setName={setName}
-              setCountry={setCountry}
-              setRole={setRole}
+              setFirstName={setFirstName}
+              setLastName={setLastName}
+              setPhone={setPhone}
+              setAddressLine1={setAddressLine1}
+              setAddressLine2={setAddressLine2}
+              setCity={setCity}
+              setPostalCode={setPostalCode}
+              setProfileCountry={setProfileCountry}
+              setProvince={setProvince}
               onSave={onSave}
               saving={saving}
               changed={changed}
@@ -393,11 +523,25 @@ type AboutProps = {
   onUploadAvatar: () => Promise<void>;
   onDeleteAvatar: () => Promise<void> | void;
   name: string;
-  country: string;
-  role: Role;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  addressLine1: string;
+  addressLine2: string;
+  city: string;
+  postalCode: string;
+  profileCountry: string;
+  province: string;
   setName: Dispatch<SetStateAction<string>>;
-  setCountry: Dispatch<SetStateAction<string>>;
-  setRole: Dispatch<SetStateAction<Role>>;
+  setFirstName: Dispatch<SetStateAction<string>>;
+  setLastName: Dispatch<SetStateAction<string>>;
+  setPhone: Dispatch<SetStateAction<string>>;
+  setAddressLine1: Dispatch<SetStateAction<string>>;
+  setAddressLine2: Dispatch<SetStateAction<string>>;
+  setCity: Dispatch<SetStateAction<string>>;
+  setPostalCode: Dispatch<SetStateAction<string>>;
+  setProfileCountry: Dispatch<SetStateAction<string>>;
+  setProvince: Dispatch<SetStateAction<string>>;
   onSave: (e: React.FormEvent) => void;
   saving: boolean;
   changed: boolean;
@@ -421,11 +565,25 @@ function AboutSection(props: AboutProps) {
     onUploadAvatar,
     onDeleteAvatar,
     name,
-    country,
-    role,
+    firstName,
+    lastName,
+    phone,
+    addressLine1,
+    addressLine2,
+    city,
+    postalCode,
+    profileCountry,
+    province,
     setName,
-    setCountry,
-    setRole,
+    setFirstName,
+    setLastName,
+    setPhone,
+    setAddressLine1,
+    setAddressLine2,
+    setCity,
+    setPostalCode,
+    setProfileCountry,
+    setProvince,
     onSave,
     saving,
     changed,
@@ -436,6 +594,12 @@ function AboutSection(props: AboutProps) {
 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingPublic, setIsEditingPublic] = useState(false);
+
+  // états d’édition pour chaque ligne "Modifier"
+  const [editingLegalName, setEditingLegalName] = useState(false);
+  const [editingChosenName, setEditingChosenName] = useState(false);
+  const [editingPhone, setEditingPhone] = useState(false);
+  const [editingAddress, setEditingAddress] = useState(false);
 
   // scroll lock quand une des deux bulles est ouverte
   useEffect(() => {
@@ -492,23 +656,24 @@ function AboutSection(props: AboutProps) {
   const interests =
     publicInterests || "Ajoute tes centres d’intérêt principaux.";
 
-  // ⚙️ Infos compte
+  // ⚙️ Infos compte (on utilise les états éditables)
   const legalName =
-    (profile?.firstName || profile?.lastName
-      ? `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim()
-      : fullName) || "Non fourni";
+    (firstName || lastName ? `${firstName} ${lastName}`.trim() : fullName) ||
+    "Non fourni";
 
   const chosenName = name || "Non fourni";
-  const phone = profile?.phone ?? "Non fourni";
+  const phoneDisplay = phone || "Non fourni";
   const accountVerificationNumber = "Non fourni";
   const identityStatus = "Vérifiée"; // placeholder
 
-  const residentialAddress =
-    profile?.addressLine1 || profile?.city || profile?.postalCode
-      ? `${profile?.addressLine1 ?? ""}${
-          profile?.addressLine1 ? ", " : ""
-        }${profile?.postalCode ?? ""} ${profile?.city ?? ""}`.trim()
-      : "Non fourni";
+  const hasResidential =
+    addressLine1 || city || postalCode || profileCountry || province;
+
+  const residentialAddress = hasResidential
+    ? `${addressLine1}${addressLine1 ? ", " : ""}${postalCode} ${city}${
+        profileCountry ? `, ${profileCountry}` : ""
+      }${province ? ` (${province})` : ""}`.trim()
+    : "Non fourni";
 
   const postalAddress =
     residentialAddress !== "Non fourni" ? "Fournie" : "Non fournie";
@@ -516,7 +681,7 @@ function AboutSection(props: AboutProps) {
   const emergencyContact = "Non fourni";
 
   function handleSoon() {
-    toast.info("Bientôt tu pourras modifier cette info ici 🔧");
+    toast.info("Cette modification arrivera bientôt sur Lok’Room.");
   }
 
   // sauvegarde des infos publiques (pour l’instant uniquement front)
@@ -525,7 +690,6 @@ function AboutSection(props: AboutProps) {
     e.preventDefault();
     setSavingPublic(true);
     try {
-      // TODO: brancher au backend plus tard (PATCH /api/profile avec les champs de profil)
       toast.success(
         "Infos publiques mises à jour (sauvegarde serveur à brancher) ✅"
       );
@@ -609,11 +773,7 @@ function AboutSection(props: AboutProps) {
             <div className="flex items-start gap-3">
               <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full bg-gray-100">
                 {/* Briefcase */}
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-5 w-5"
-                  aria-hidden="true"
-                >
+                <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
                   <rect
                     x="4"
                     y="8"
@@ -649,11 +809,7 @@ function AboutSection(props: AboutProps) {
             <div className="flex items-start gap-3">
               <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full bg-gray-100">
                 {/* Globe / avion */}
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-5 w-5"
-                  aria-hidden="true"
-                >
+                <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
                   <circle
                     cx="12"
                     cy="12"
@@ -682,11 +838,7 @@ function AboutSection(props: AboutProps) {
             <div className="flex items-start gap-3">
               <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full bg-gray-100">
                 {/* Bulle de discussion */}
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-5 w-5"
-                  aria-hidden="true"
-                >
+                <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
                   <path
                     d="M5 6h14a2 2 0 0 1 2 2v5.5a2 2 0 0 1-2 2H11l-3.5 3-0.5-3H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"
                     fill="none"
@@ -720,11 +872,7 @@ function AboutSection(props: AboutProps) {
             <div className="flex items-start gap-3">
               <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full bg-gray-100">
                 {/* Bouclier */}
-                <svg
-                  viewBox="0 0 24 24"
-                  className="h-5 w-5"
-                  aria-hidden="true"
-                >
+                <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
                   <path
                     d="M12 4 6 6v6c0 3.5 2.3 5.7 6 8 3.7-2.3 6-4.5 6-8V6l-6-2Z"
                     fill="none"
@@ -785,7 +933,7 @@ function AboutSection(props: AboutProps) {
         </p>
       </section>
 
-      {/* 🔥 MODAL PROFIL (avatar + nom + pays + infos compte) */}
+      {/* 🔥 MODAL PROFIL (avatar + info compte avec petites bulles Modifier) */}
       {isEditingProfile && (
         <div className="fixed inset-0 z-40 flex items-center justify-center">
           {/* Backdrop flouté */}
@@ -794,7 +942,7 @@ function AboutSection(props: AboutProps) {
             onClick={() => setIsEditingProfile(false)}
           />
 
-          {/* Bulle d’édition (scroll uniquement ici) */}
+          {/* Bulle d’édition */}
           <section
             className="relative z-50 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
@@ -877,47 +1025,314 @@ function AboutSection(props: AboutProps) {
               </div>
             </div>
 
-            {/* Email */}
+            {/* Email affiché en haut */}
             <p className="mb-4 text-xs text-gray-500">
               Email : <span className="font-mono">{email}</span>
             </p>
 
-            {/* Formulaire profil simplifié */}
-            <form onSubmit={onSave} className="grid gap-4 md:grid-cols-2">
-              <div className="md:col-span-2">
-                <label className="mb-1 block text-sm font-medium">
-                  Nom affiché
-                </label>
-                <input
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
-                  value={name}
-                  onChange={(e) => setName(e.currentTarget.value)}
-                />
+            {/* 🔽 Informations du compte (chaque ligne modifiable) */}
+            <form onSubmit={onSave}>
+              <h3 className="mb-4 text-base font-semibold">
+                Informations du compte
+              </h3>
+
+              <div className="divide-y divide-gray-100 text-sm">
+                {/* Nom légal */}
+                <div className="py-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-gray-400">
+                        Nom légal
+                      </p>
+                      <p className="font-medium text-gray-800">{legalName}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditingLegalName((prev) => !prev)
+                      }
+                      className="text-sm font-medium text-gray-700 hover:underline"
+                    >
+                      {editingLegalName ? "Annuler" : "Modifier"}
+                    </button>
+                  </div>
+                  {editingLegalName && (
+                    <div className="mt-3 grid gap-2 md:grid-cols-2">
+                      <input
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
+                        value={firstName}
+                        onChange={(e) =>
+                          setFirstName(e.currentTarget.value)
+                        }
+                        placeholder="Prénom sur tes papiers"
+                      />
+                      <input
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
+                        value={lastName}
+                        onChange={(e) =>
+                          setLastName(e.currentTarget.value)
+                        }
+                        placeholder="Nom sur tes papiers"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Nom choisi */}
+                <div className="py-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-gray-400">
+                        Nom choisi
+                      </p>
+                      <p className="font-medium text-gray-800">
+                        {chosenName === "Non fourni"
+                          ? "Non fourni"
+                          : chosenName}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditingChosenName((prev) => !prev)
+                      }
+                      className="text-sm font-medium text-gray-700 hover:underline"
+                    >
+                      {editingChosenName
+                        ? "Annuler"
+                        : chosenName === "Non fourni"
+                        ? "Ajouter"
+                        : "Modifier"}
+                    </button>
+                  </div>
+                  {editingChosenName && (
+                    <div className="mt-3">
+                      <input
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
+                        value={name}
+                        onChange={(e) =>
+                          setName(e.currentTarget.value)
+                        }
+                        placeholder="Nom affiché sur Lok’Room"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Adresse courriel */}
+                <div className="flex items-center justify-between py-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-gray-400">
+                      Adresse courriel
+                    </p>
+                    <p className="font-mono text-gray-800">{email}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSoon}
+                    className="text-sm font-medium text-gray-700 hover:underline"
+                  >
+                    Modifier
+                  </button>
+                </div>
+
+                {/* Numéro de téléphone */}
+                <div className="py-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-gray-400">
+                        Numéro de téléphone
+                      </p>
+                      <p className="text-gray-800">{phoneDisplay}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditingPhone((prev) => !prev)
+                      }
+                      className="text-sm font-medium text-gray-700 hover:underline"
+                    >
+                      {editingPhone
+                        ? "Annuler"
+                        : phoneDisplay === "Non fourni"
+                        ? "Ajouter"
+                        : "Modifier"}
+                    </button>
+                  </div>
+                  {editingPhone && (
+                    <div className="mt-3">
+                      <input
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
+                        value={phone}
+                        onChange={(e) =>
+                          setPhone(e.currentTarget.value)
+                        }
+                        placeholder="+33 6 ..."
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Numéro de vérification du compte */}
+                <div className="flex items-center justify-between py-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-gray-400">
+                      Numéro de vérification du compte
+                    </p>
+                    <p className="text-gray-800">
+                      {accountVerificationNumber}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSoon}
+                    className="text-sm font-medium text-gray-700 hover:underline"
+                  >
+                    Modifier
+                  </button>
+                </div>
+
+                {/* Vérification identité */}
+                <div className="flex items-center justify-between py-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-gray-400">
+                      Vérification de l&apos;identité
+                    </p>
+                    <p className="text-gray-800">{identityStatus}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSoon}
+                    className="text-sm font-medium text-gray-700 hover:underline"
+                  >
+                    Modifier
+                  </button>
+                </div>
+
+                {/* Adresse résidentielle */}
+                <div className="py-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-gray-400">
+                        Adresse résidentielle
+                      </p>
+                      <p className="text-gray-800">
+                        {residentialAddress}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditingAddress((prev) => !prev)
+                      }
+                      className="text-sm font-medium text-gray-700 hover:underline"
+                    >
+                      {editingAddress
+                        ? "Annuler"
+                        : residentialAddress === "Non fourni"
+                        ? "Ajouter"
+                        : "Modifier"}
+                    </button>
+                  </div>
+                  {editingAddress && (
+                    <div className="mt-3 space-y-2">
+                      <input
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
+                        value={addressLine1}
+                        onChange={(e) =>
+                          setAddressLine1(e.currentTarget.value)
+                        }
+                        placeholder="Numéro et rue"
+                      />
+                      <input
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
+                        value={addressLine2}
+                        onChange={(e) =>
+                          setAddressLine2(e.currentTarget.value)
+                        }
+                        placeholder="Complément (appartement, etc.)"
+                      />
+                      <div className="grid gap-2 md:grid-cols-2">
+                        <input
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
+                          value={postalCode}
+                          onChange={(e) =>
+                            setPostalCode(e.currentTarget.value)
+                          }
+                          placeholder="Code postal"
+                        />
+                        <input
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
+                          value={city}
+                          onChange={(e) =>
+                            setCity(e.currentTarget.value)
+                          }
+                          placeholder="Ville"
+                        />
+                      </div>
+                      <div className="grid gap-2 md:grid-cols-2">
+                        <input
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
+                          value={profileCountry}
+                          onChange={(e) =>
+                            setProfileCountry(e.currentTarget.value)
+                          }
+                          placeholder="Pays (France, Canada…)"
+                        />
+                        <input
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
+                          value={province}
+                          onChange={(e) =>
+                            setProvince(e.currentTarget.value)
+                          }
+                          placeholder="Province / Région"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Adresse postale */}
+                <div className="flex items-center justify-between py-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-gray-400">
+                      Adresse postale
+                    </p>
+                    <p className="text-gray-800">{postalAddress}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSoon}
+                    className="text-sm font-medium text-gray-700 hover:underline"
+                  >
+                    {postalAddress === "Non fournie"
+                      ? "Ajouter"
+                      : "Modifier"}
+                  </button>
+                </div>
+
+                {/* Contact d’urgence */}
+                <div className="flex items-center justify-between py-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-gray-400">
+                      Contact en cas d&apos;urgence
+                    </p>
+                    <p className="text-gray-800">{emergencyContact}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSoon}
+                    className="text-sm font-medium text-gray-700 hover:underline"
+                  >
+                    {emergencyContact === "Non fourni"
+                      ? "Ajouter"
+                      : "Modifier"}
+                  </button>
+                </div>
               </div>
 
-              <div>
-                <label className="mb-1 block text-sm font-medium">Pays</label>
-                <input
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
-                  value={country}
-                  onChange={(e) => setCountry(e.currentTarget.value)}
-                />
-              </div>
-
-              <div>
-                <label className="mb-1 block text-sm font-medium">Rôle</label>
-                <select
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
-                  value={role}
-                  onChange={(e) => setRole(e.currentTarget.value as Role)}
-                >
-                  <option value="GUEST">Voyageur</option>
-                  <option value="HOST">Hôte</option>
-                  <option value="BOTH">Les deux</option>
-                </select>
-              </div>
-
-              <div className="md:col-span-2 flex flex-wrap items-center gap-3">
+              {/* Bouton global Enregistrer en bas de la bulle */}
+              <div className="mt-6 flex flex-wrap items-center gap-3">
                 <button
                   type="submit"
                   disabled={saving || !changed}
@@ -927,7 +1342,9 @@ function AboutSection(props: AboutProps) {
                 </button>
 
                 {status === "saved" && (
-                  <span className="text-sm text-green-700">Sauvegardé ✓</span>
+                  <span className="text-sm text-green-700">
+                    Sauvegardé ✓
+                  </span>
                 )}
                 {status === "error" && (
                   <span className="text-sm text-red-600">
@@ -936,173 +1353,6 @@ function AboutSection(props: AboutProps) {
                 )}
               </div>
             </form>
-
-            {/* Ligne de séparation */}
-            <hr className="my-6" />
-
-            {/* Infos du compte dans la bulle */}
-            <h3 className="mb-4 text-base font-semibold">
-              Informations du compte
-            </h3>
-
-            <div className="divide-y divide-gray-100 text-sm">
-              {/* Nom légal */}
-              <div className="flex items-center justify-between py-3">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-gray-400">
-                    Nom légal
-                  </p>
-                  <p className="font-medium text-gray-800">{legalName}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleSoon}
-                  className="text-sm font-medium text-gray-700 hover:underline"
-                >
-                  Modifier
-                </button>
-              </div>
-
-              {/* Nom choisi */}
-              <div className="flex items-center justify-between py-3">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-gray-400">
-                    Nom choisi
-                  </p>
-                  <p className="font-medium text-gray-800">
-                    {chosenName === "Non fourni" ? "Non fourni" : chosenName}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleSoon}
-                  className="text-sm font-medium text-gray-700 hover:underline"
-                >
-                  {chosenName === "Non fourni" ? "Ajouter" : "Modifier"}
-                </button>
-              </div>
-
-              {/* Adresse courriel */}
-              <div className="flex items-center justify-between py-3">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-gray-400">
-                    Adresse courriel
-                  </p>
-                  <p className="font-mono text-gray-800">{email}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleSoon}
-                  className="text-sm font-medium text-gray-700 hover:underline"
-                >
-                  Modifier
-                </button>
-              </div>
-
-              {/* Numéro de téléphone */}
-              <div className="flex items-center justify-between py-3">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-gray-400">
-                    Numéro de téléphone
-                  </p>
-                  <p className="text-gray-800">{phone}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleSoon}
-                  className="text-sm font-medium text-gray-700 hover:underline"
-                >
-                  {phone === "Non fourni" ? "Ajouter" : "Modifier"}
-                </button>
-              </div>
-
-              {/* Numéro de vérification du compte */}
-              <div className="flex items-center justify-between py-3">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-gray-400">
-                    Numéro de vérification du compte
-                  </p>
-                  <p className="text-gray-800">{accountVerificationNumber}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleSoon}
-                  className="text-sm font-medium text-gray-700 hover:underline"
-                >
-                  Modifier
-                </button>
-              </div>
-
-              {/* Vérification identité */}
-              <div className="flex items-center justify-between py-3">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-gray-400">
-                    Vérification de l&apos;identité
-                  </p>
-                  <p className="text-gray-800">{identityStatus}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleSoon}
-                  className="text-sm font-medium text-gray-700 hover:underline"
-                >
-                  Modifier
-                </button>
-              </div>
-
-              {/* Adresse résidentielle */}
-              <div className="flex items-center justify-between py-3">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-gray-400">
-                    Adresse résidentielle
-                  </p>
-                  <p className="text-gray-800">{residentialAddress}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleSoon}
-                  className="text-sm font-medium text-gray-700 hover:underline"
-                >
-                  {residentialAddress === "Non fourni"
-                    ? "Ajouter"
-                    : "Modifier"}
-                </button>
-              </div>
-
-              {/* Adresse postale */}
-              <div className="flex items-center justify-between py-3">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-gray-400">
-                    Adresse postale
-                  </p>
-                  <p className="text-gray-800">{postalAddress}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleSoon}
-                  className="text-sm font-medium text-gray-700 hover:underline"
-                >
-                  {postalAddress === "Non fournie" ? "Ajouter" : "Modifier"}
-                </button>
-              </div>
-
-              {/* Contact d’urgence */}
-              <div className="flex items-center justify-between py-3">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-gray-400">
-                    Contact en cas d&apos;urgence
-                  </p>
-                  <p className="text-gray-800">{emergencyContact}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleSoon}
-                  className="text-sm font-medium text-gray-700 hover:underline"
-                >
-                  {emergencyContact === "Non fourni" ? "Ajouter" : "Modifier"}
-                </button>
-              </div>
-            </div>
           </section>
         </div>
       )}

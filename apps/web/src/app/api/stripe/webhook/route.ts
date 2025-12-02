@@ -4,6 +4,7 @@ import type Stripe from "stripe";
 
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/db";
+import type { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -35,10 +36,10 @@ export async function POST(req: Request) {
   }
 
   try {
+    // ==========================================================
+    // 1) Switch principal : paiements / remboursements / account
+    // ==========================================================
     switch (event.type) {
-      // ------------------------------------
-      // 💳 PAYMENT INTENT SUCCEEDED
-      // ------------------------------------
       case "payment_intent.succeeded": {
         const pi = event.data.object as Stripe.PaymentIntent & {
           charges?: { data: Stripe.Charge[] };
@@ -49,7 +50,6 @@ export async function POST(req: Request) {
         const hostUserId = md.hostUserId;
 
         if (!bookingId || !hostUserId) {
-          // pas assez d’infos → on ignore l’event
           break;
         }
 
@@ -80,9 +80,9 @@ export async function POST(req: Request) {
 
           const latestCharge =
             pi.charges?.data?.[pi.charges.data.length - 1] ?? null;
-          const stripeChargeId = latestCharge?.id ?? booking.stripeChargeId ?? null;
+          const stripeChargeId =
+            latestCharge?.id ?? booking.stripeChargeId ?? null;
 
-          // idempotent : si déjà confirmé → on met juste à jour les IDs
           if (alreadyConfirmed) {
             await tx.booking.update({
               where: { id: bookingId },
@@ -150,16 +150,11 @@ export async function POST(req: Request) {
         break;
       }
 
-      // ------------------------------------
-      // ♻️ CHARGE REFUNDED
-      // ------------------------------------
       case "charge.refunded": {
         const charge = event.data.object as Stripe.Charge;
 
         const piIdRaw = charge.payment_intent;
-        if (!piIdRaw) {
-          break;
-        }
+        if (!piIdRaw) break;
 
         const paymentIntentId =
           typeof piIdRaw === "string" ? piIdRaw : piIdRaw.id;
@@ -267,9 +262,6 @@ export async function POST(req: Request) {
         break;
       }
 
-      // ------------------------------------
-      // 🧾 ACCOUNT / KYC EVENTS
-      // ------------------------------------
       case "account.updated":
       case "account.external_account.created":
       case "account.external_account.updated": {
@@ -284,12 +276,117 @@ export async function POST(req: Request) {
           where: { stripeAccountId: acc.id },
           data: { kycStatus, payoutsEnabled },
         });
+
+        const lokroomUserId =
+          (acc.metadata?.lokroom_user_id as string | undefined) ?? undefined;
+
+        const individual = acc.individual;
+
+        if (lokroomUserId && individual) {
+          const addr = individual.address;
+          const dob = individual.dob;
+
+          let birthDate: Date | null = null;
+          if (dob?.day && dob?.month && dob?.year) {
+            birthDate = new Date(Date.UTC(dob.year, dob.month - 1, dob.day));
+          }
+
+          await prisma.user.update({
+            where: { id: lokroomUserId },
+            data: {
+              country: addr?.country ?? acc.country ?? null,
+              profile: {
+                upsert: {
+                  create: {
+                    firstName: individual.first_name ?? null,
+                    lastName: individual.last_name ?? null,
+                    phone: individual.phone ?? null,
+                    birthDate,
+                    addressLine1: addr?.line1 ?? null,
+                    addressLine2: addr?.line2 ?? null,
+                    city: addr?.city ?? null,
+                    postalCode: addr?.postal_code ?? null,
+                    country: addr?.country ?? acc.country ?? null,
+                    province: addr?.state ?? null,
+                  },
+                  update: {
+                    firstName: individual.first_name ?? undefined,
+                    lastName: individual.last_name ?? undefined,
+                    phone: individual.phone ?? undefined,
+                    birthDate: birthDate ?? undefined,
+                    addressLine1: addr?.line1 ?? undefined,
+                    addressLine2: addr?.line2 ?? undefined,
+                    city: addr?.city ?? undefined,
+                    postalCode: addr?.postal_code ?? undefined,
+                    country:
+                      (addr?.country ?? acc.country) ?? undefined,
+                    province: addr?.state ?? undefined,
+                  },
+                },
+              },
+            },
+          });
+        }
+
         break;
       }
 
       default:
-        // on ignore les autres events
         break;
+    }
+
+    // ==========================================================
+    // 2) Stripe Identity – on sort du switch pour éviter les bugs TS
+    // ==========================================================
+    if (
+      event.type === ("identity.verification_session.updated" as any)
+    ) {
+      const vs = (event as any)
+        .data.object as Stripe.Identity.VerificationSession;
+
+      const lokroomUserId =
+        (vs.metadata?.lokroom_user_id as string | undefined) ?? undefined;
+
+      let where: Prisma.UserWhereInput;
+
+      if (lokroomUserId) {
+        where = { id: lokroomUserId };
+      } else {
+        where = { identityStripeSessionId: vs.id ?? undefined } as any;
+      }
+
+      let newStatus:
+        | "UNVERIFIED"
+        | "PENDING"
+        | "VERIFIED"
+        | "REJECTED" = "PENDING";
+      let verifiedAt: Date | null = null;
+
+      switch (vs.status) {
+        case "verified":
+          newStatus = "VERIFIED";
+          verifiedAt = new Date(
+            ((vs.created ?? Math.floor(Date.now() / 1000)) as number) * 1000
+          );
+          break;
+        case "canceled":
+          newStatus = "REJECTED";
+          break;
+        case "processing":
+        case "requires_input":
+        default:
+          newStatus = "PENDING";
+          break;
+      }
+
+      // On cast prisma.user en any pour éviter les conflits de types
+      await (prisma.user as any).updateMany({
+        where,
+        data: {
+          identityStatus: newStatus,
+          identityLastVerifiedAt: verifiedAt ?? undefined,
+        },
+      });
     }
 
     return NextResponse.json({ received: true });

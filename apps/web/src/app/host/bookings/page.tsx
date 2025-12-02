@@ -36,7 +36,6 @@ type ApiResponse = {
 export default function HostBookingsPage() {
   const [data, setData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
-
   // Filtres UI
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState<string>("");

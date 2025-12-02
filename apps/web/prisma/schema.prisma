@@ -1,4 +1,3 @@
-// apps/web/prisma/schema.prisma
 generator client {
   provider = "prisma-client-js"
 }
@@ -85,6 +84,14 @@ enum AmenityCategory {
   MEDIA
 }
 
+/// Statut de vérification d'identité Stripe Identity
+enum IdentityVerificationStatus {
+  UNVERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
@@ -96,6 +103,11 @@ model User {
   createdAt   DateTime     @default(now())
   lastLoginAt DateTime?
   profile     UserProfile?
+
+  /// Vérification d'identité Stripe Identity (Lok'Room)
+  identityStatus          IdentityVerificationStatus @default(UNVERIFIED)
+  identityLastVerifiedAt  DateTime?
+  identityStripeSessionId String?
 
   accounts  Account[]
   sessions  Session[]
@@ -119,8 +131,9 @@ model User {
   WalletLedger WalletLedger[]
 
   /// Messagerie
-  messages      Message[]
-  conversations ConversationParticipant[]
+  messages           Message[]
+  hostConversations  Conversation[] @relation("HostConversations")
+  guestConversations Conversation[] @relation("GuestConversations")
 }
 
 model UserProfile {
@@ -359,6 +372,9 @@ model Booking {
   /// Blocages de calendrier liés à cette réservation
   calendarBlocks CalendarBlock[]
 
+  /// Conversations liées à cette réservation
+  conversations Conversation[] @relation("BookingConversations")
+
   createdAt DateTime @default(now())
 
   @@index([listingId, startDate, endDate])
@@ -507,41 +523,40 @@ model CalendarBlock {
 
 model Conversation {
   id        String   @id @default(cuid())
-  listingId String?
-  listing   Listing? @relation(fields: [listingId], references: [id], onDelete: SetNull)
-
-  participants ConversationParticipant[]
-  messages     Message[]
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-}
 
-model ConversationParticipant {
-  conversationId String
-  userId         String
+  /// participants
+  hostId  String
+  guestId String
+  host    User   @relation("HostConversations", fields: [hostId], references: [id])
+  guest   User   @relation("GuestConversations", fields: [guestId], references: [id])
 
-  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// contexte
+  listingId     String?
+  listing       Listing? @relation(fields: [listingId], references: [id])
+  reservationId String?
+  booking       Booking? @relation("BookingConversations", fields: [reservationId], references: [id])
 
-  lastReadAt DateTime?
+  /// messages
+  messages Message[]
 
-  @@id([conversationId, userId])
+  @@index([hostId])
+  @@index([guestId])
+  @@index([reservationId])
 }
 
 model Message {
-  id             String       @id @default(cuid())
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   senderId String
-  sender   User   @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  sender   User   @relation(fields: [senderId], references: [id])
 
-  body String
+  content String
 
-  createdAt DateTime  @default(now())
-  readAt    DateTime?
-
-  @@index([conversationId])
-  @@index([senderId])
+  @@index([conversationId, createdAt])
 }

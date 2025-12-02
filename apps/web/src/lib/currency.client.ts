@@ -1,5 +1,5 @@
 // apps/web/src/lib/currency.client.ts
-export type Currency = "EUR" | "CAD";
+export type Currency = "EUR" | "CAD" | "USD" | "CNY" | "GBP";
 
 function defaultLocaleFor(currency: Currency): string {
   switch (currency) {
@@ -7,12 +7,22 @@ function defaultLocaleFor(currency: Currency): string {
       return "fr-FR";
     case "CAD":
       return "en-CA";
+    case "USD":
+      return "en-US";
+    case "GBP":
+      return "en-GB";
+    case "CNY":
+      return "zh-CN";
     default:
       return "en-US";
   }
 }
 
-export function formatMoney(amount: number, currency: Currency, locale?: string): string {
+export function formatMoney(
+  amount: number,
+  currency: Currency,
+  locale?: string
+): string {
   const loc = locale || defaultLocaleFor(currency);
   return new Intl.NumberFormat(loc, {
     style: "currency",

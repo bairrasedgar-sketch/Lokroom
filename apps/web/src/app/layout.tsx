@@ -1,8 +1,25 @@
-// apps/web/src/app/layout.tsx
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import "./globals.css";
 import Providers from "@/components/providers";
-import { UserTopBar } from "@/components/UserTopBar"; // ⬅️ On l’ajoute
+import Navbar from "@/components/navbar";
+
+const SUPPORTED_LOCALES = ["fr", "en", "es", "de", "it", "pt", "zh"] as const;
+type LocaleCode = (typeof SUPPORTED_LOCALES)[number];
+
+function getInitialLocale(): LocaleCode {
+  const store = cookies();
+  const fromCookie = store.get("locale")?.value;
+
+  if (
+    fromCookie &&
+    SUPPORTED_LOCALES.includes(fromCookie as LocaleCode)
+  ) {
+    return fromCookie as LocaleCode;
+  }
+
+  return "fr";
+}
 
 export const metadata: Metadata = {
   title: "Lok’Room",
@@ -33,15 +50,17 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const locale = getInitialLocale();
+
   return (
-    <html lang="fr" className="h-full">
+    <html
+      lang={locale}
+      data-locale={locale}
+      className="h-full"
+    >
       <body className="min-h-screen bg-gradient-to-b from-[#f9fafb] via-white to-[#f3f4f6] text-gray-900 antialiased">
         <Providers>
-          
-          {/* ✅ Barre Airbnb (3 barres, avatar, mode hôte) */}
-          <UserTopBar />
-
-          {/* Le reste du site */}
+          <Navbar />
           {children}
         </Providers>
       </body>

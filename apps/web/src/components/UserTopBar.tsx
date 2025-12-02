@@ -1,9 +1,9 @@
 // apps/web/src/components/UserTopBar.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 
 type Mode = "guest" | "host";
@@ -11,8 +11,11 @@ type Mode = "guest" | "host";
 export function UserTopBar() {
   const { data: session } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
+
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<Mode>("guest");
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
   const userInitial =
     session?.user?.name?.[0]?.toUpperCase() ??
@@ -23,6 +26,25 @@ export function UserTopBar() {
     setMode((m) => (m === "guest" ? "host" : "guest"));
     // plus tard : appeler une route /api/user/mode pour sauver le mode
   }
+
+  // 🔒 Ferme le menu dès que la route change (ex: /favorites -> /account)
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  // 🔒 Ferme le menu si on clique en dehors
+  useEffect(() => {
+    if (!open) return;
+
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
 
   return (
     <div className="pointer-events-none fixed inset-x-0 top-0 z-40 flex justify-end px-6 pt-4">
@@ -44,8 +66,8 @@ export function UserTopBar() {
           {userInitial}
         </button>
 
-        {/* 3 barres */}
-        <div className="relative">
+        {/* 3 barres + menu */}
+        <div className="relative" ref={menuRef}>
           <button
             onClick={() => setOpen((v) => !v)}
             className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 shadow-sm"
@@ -58,21 +80,63 @@ export function UserTopBar() {
             </span>
           </button>
 
-          {/* Menu déroulant comme Airbnb */}
           {open && (
             <div className="absolute right-0 mt-3 w-64 rounded-2xl border border-gray-200 bg-white py-2 text-sm shadow-lg">
-              <MenuLink href="/profile" label="Profil" bold />
-              <MenuLink href="/favorites" label="Favoris" />
-              <MenuLink href="/trips" label="Voyages" />
-              <MenuLink href="/messages" label="Messages" />
+              <MenuLink
+                href="/profile"
+                label="Profil"
+                bold
+                onClick={() => setOpen(false)}
+              />
+              <MenuLink
+                href="/favorites"
+                label="Favoris"
+                onClick={() => setOpen(false)}
+              />
+              <MenuLink
+                href="/trips"
+                label="Voyages"
+                onClick={() => setOpen(false)}
+              />
+              {/* 🔗 Messagerie Lok'Room */}
+              <MenuLink
+                href="/messages"
+                label="Messages"
+                onClick={() => setOpen(false)}
+              />
+
               <div className="my-2 border-t border-gray-200" />
-              <MenuLink href="/account" label="Paramètres du compte" />
-              <MenuLink href="/account/payments" label="Paiements" />
-              <MenuLink href="/account/payouts" label="Versements" />
-              <MenuLink href="/account/taxes" label="Taxes" />
+
+              <MenuLink
+                href="/account"
+                label="Paramètres du compte"
+                onClick={() => setOpen(false)}
+              />
+              <MenuLink
+                href="/account?tab=payments"
+                label="Paiements"
+                onClick={() => setOpen(false)}
+              />
+              {/* On reste dans /account, avec un param pour activer l’onglet Versements */}
+              <MenuLink
+                href="/account?tab=payments&view=payouts"
+                label="Versements"
+                onClick={() => setOpen(false)}
+              />
+              <MenuLink
+                href="/account?tab=taxes"
+                label="Taxes"
+                onClick={() => setOpen(false)}
+              />
+
               <div className="my-2 border-t border-gray-200" />
-              <MenuLink href="/help" label="Centre d'aide" />
-              {/* Plus tard : bouton Se déconnecter etc. */}
+
+              <MenuLink
+                href="/help"
+                label="Centre d'aide"
+                onClick={() => setOpen(false)}
+              />
+              {/* Plus tard : bouton Se déconnecter, etc. */}
             </div>
           )}
         </div>
@@ -85,14 +149,17 @@ function MenuLink({
   href,
   label,
   bold,
+  onClick,
 }: {
   href: string;
   label: string;
   bold?: boolean;
+  onClick?: () => void;
 }) {
   return (
     <Link
       href={href}
+      onClick={onClick}
       className={`block px-4 py-2 hover:bg-gray-100 ${
         bold ? "font-semibold text-gray-900" : "text-gray-700"
       }`}

@@ -3,25 +3,38 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import type { Currency } from "@/lib/currency";
+
+const SUPPORTED: Currency[] = ["EUR", "CAD", "USD", "CNY", "GBP"];
 
 export default function CurrencyNotice() {
   const router = useRouter();
   const [visible, setVisible] = useState(false);
-  const [detected, setDetected] = useState<"EUR" | "CAD">("EUR");
+  const [detected, setDetected] = useState<Currency>("EUR");
 
   useEffect(() => {
     // déjà masqué ?
     if (localStorage.getItem("currency-notice-dismissed") === "1") return;
+
     const m = document.cookie.match(/(?:^|;\s*)currency=([^;]+)/);
-    const cur = (m?.[1] as "EUR" | "CAD" | undefined) || "EUR";
-    setDetected(cur);
+    const cur = (m?.[1] as Currency | undefined) || "EUR";
+
+    // si jamais le cookie contient une devise non supportée
+    if (!SUPPORTED.includes(cur)) {
+      setDetected("EUR");
+    } else {
+      setDetected(cur);
+    }
+
     setVisible(true);
   }, []);
 
   if (!visible) return null;
 
-  async function setCurrency(next: "EUR" | "CAD") {
-    document.cookie = `currency=${next}; Path=/; Max-Age=${60 * 60 * 24 * 365}`;
+  async function setCurrency(next: Currency) {
+    document.cookie = `currency=${next}; Path=/; Max-Age=${
+      60 * 60 * 24 * 365
+    }`;
     router.refresh();
   }
 
@@ -31,19 +44,20 @@ export default function CurrencyNotice() {
         <div>
           Devise détectée : <b>{detected}</b>. Vous pouvez changer à tout moment.
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setCurrency("EUR")}
-            className="rounded border px-2 py-1"
-          >
-            EUR €
-          </button>
-          <button
-            onClick={() => setCurrency("CAD")}
-            className="rounded border px-2 py-1"
-          >
-            CAD $
-          </button>
+        <div className="flex flex-wrap gap-2">
+          {SUPPORTED.map((cur) => (
+            <button
+              key={cur}
+              onClick={() => setCurrency(cur)}
+              className="rounded border px-2 py-1"
+            >
+              {cur === "EUR" && "EUR €"}
+              {cur === "CAD" && "CAD $"}
+              {cur === "USD" && "USD $"}
+              {cur === "GBP" && "GBP £"}
+              {cur === "CNY" && "CNY ¥"}
+            </button>
+          ))}
           <button
             onClick={() => {
               localStorage.setItem("currency-notice-dismissed", "1");

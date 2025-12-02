@@ -2,137 +2,755 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import CurrencySwitcher from "./CurrencySwitcher";
-import LanguageSwitcher from "./LanguageSwitcher";
+import { useEffect, useState, FormEvent } from "react";
+import Image from "next/image";
+import { signIn, useSession } from "next-auth/react";
+import { UserMenu } from "./layout/UserMenu";
+
+type LocaleOption = {
+  code: string;
+  label: string;
+};
+
+type CurrencyOption = {
+  code: string;
+  label: string;
+  symbol: string;
+};
+
+const LOCALES: LocaleOption[] = [
+  { code: "fr", label: "Français" },
+  { code: "en", label: "Anglais" },
+  { code: "es", label: "Espagnol" },
+  { code: "de", label: "Allemand" },
+  { code: "it", label: "Italien" },
+  { code: "pt", label: "Portugais" },
+  { code: "zh", label: "Chinois" },
+];
+
+type LocaleCode = (typeof LOCALES)[number]["code"];
+
+const CURRENCIES: CurrencyOption[] = [
+  { code: "EUR", label: "Euro", symbol: "€" },
+  { code: "USD", label: "Dollar américain", symbol: "$" },
+  { code: "CAD", label: "Dollar canadien", symbol: "$" },
+  { code: "CNY", label: "Yuan chinois", symbol: "¥" },
+  { code: "GBP", label: "Livre", symbol: "£" },
+];
+
+type NavTexts = {
+  navListings: string;
+  navBookings: string;
+  navProfile: string;
+  hostMode: string;
+  travelerMode: string;
+  becomeHost: string;
+  loginCta: string;
+
+  modalTitle: string;
+  modalLanguage: string;
+  modalCurrency: string;
+
+  authTitle: string;
+  authWelcome: string;
+  phoneCountryLabel: string;
+  phoneNumberLabel: string;
+  phoneHint: string;
+  phoneContinue: string;
+  or: string;
+  continueGoogle: string;
+  continueApple: string;
+  continueEmail: string;
+  continueFacebook: string;
+  authLegal: string;
+};
+
+const NAV_TEXTS: Record<LocaleCode, NavTexts> = {
+  fr: {
+    navListings: "Annonces",
+    navBookings: "Réservations",
+    navProfile: "Profil",
+    hostMode: "Mode hôte",
+    travelerMode: "Passer en mode voyageur",
+    becomeHost: "Devenir hôte Lok’Room",
+    loginCta: "Connexion / Inscription",
+    modalTitle: "Langues et devises Lok’Room",
+    modalLanguage: "Langue",
+    modalCurrency: "Devise",
+    authTitle: "Connexion ou inscription",
+    authWelcome: "Bienvenue sur Lok’Room",
+    phoneCountryLabel: "Pays/région",
+    phoneNumberLabel: "Numéro de téléphone",
+    phoneHint:
+      "On pourra t’appeler ou t’envoyer un SMS pour confirmer ton numéro. Des frais de messagerie et de données peuvent s’appliquer.",
+    phoneContinue: "Continuer",
+    or: "ou",
+    continueGoogle: "Continuer avec Google",
+    continueApple: "Continuer avec Apple",
+    continueEmail: "Continuer avec l’adresse e-mail",
+    continueFacebook: "Continuer avec Facebook",
+    authLegal:
+      "En continuant, tu confirmes que tu as lu et accepté les Conditions générales et la Politique de confidentialité de Lok’Room.",
+  },
+  en: {
+    navListings: "Listings",
+    navBookings: "Trips",
+    navProfile: "Profile",
+    hostMode: "Host mode",
+    travelerMode: "Switch to guest mode",
+    becomeHost: "Become a Lok’Room host",
+    loginCta: "Log in / Sign up",
+    modalTitle: "Lok’Room languages & currencies",
+    modalLanguage: "Language",
+    modalCurrency: "Currency",
+    authTitle: "Log in or sign up",
+    authWelcome: "Welcome to Lok’Room",
+    phoneCountryLabel: "Country/region",
+    phoneNumberLabel: "Phone number",
+    phoneHint:
+      "We may call or text you to confirm your number. Message and data rates may apply.",
+    phoneContinue: "Continue",
+    or: "or",
+    continueGoogle: "Continue with Google",
+    continueApple: "Continue with Apple",
+    continueEmail: "Continue with e-mail",
+    continueFacebook: "Continue with Facebook",
+    authLegal:
+      "By continuing, you confirm that you’ve read and accepted Lok’Room’s Terms and Privacy Policy.",
+  },
+  es: undefined as any,
+  de: undefined as any,
+  it: undefined as any,
+  pt: undefined as any,
+  zh: undefined as any,
+};
+
+// Pour les langues autres que fr/en, on réutilise l’anglais par défaut
+(["es", "de", "it", "pt", "zh"] as LocaleCode[]).forEach((code) => {
+  NAV_TEXTS[code] = NAV_TEXTS.en;
+});
+
+type CookieNoticeTexts = {
+  display: string;
+  close: string;
+};
+
+const COOKIE_NOTICE_TEXTS: Record<LocaleCode, CookieNoticeTexts> = {
+  fr: { display: "Affichage", close: "Fermer" },
+  en: { display: "Display", close: "Close" },
+  es: { display: "Visualización", close: "Cerrar" },
+  de: { display: "Anzeige", close: "Schließen" },
+  it: { display: "Visualizzazione", close: "Chiudi" },
+  pt: { display: "Exibição", close: "Fechar" },
+  zh: { display: "显示", close: "关闭" },
+};
+
+/**
+ * 🔁 VERSION MODIFIÉE
+ * - lit d'abord le cookie `locale`
+ * - puis, seulement si rien, utilise <html lang> / data-locale
+ */
+function getClientLocale(): LocaleCode {
+  if (typeof document === "undefined") return "fr";
+
+  const allowed = ["fr", "en", "es", "de", "it", "pt", "zh"];
+
+  // 1️⃣ priorité au cookie
+  const mLoc = document.cookie.match(/(?:^|;\s*)locale=([^;]+)/);
+  if (mLoc?.[1] && allowed.includes(mLoc[1])) {
+    return mLoc[1] as LocaleCode;
+  }
+
+  // 2️⃣ fallback sur les attributs du <html>
+  const fromHtml =
+    document.documentElement.getAttribute("data-locale") ||
+    document.documentElement.lang;
+
+  if (fromHtml && allowed.includes(fromHtml)) {
+    return fromHtml as LocaleCode;
+  }
+
+  // 3️⃣ fallback final
+  return "fr";
+}
+
+type SessionUser = {
+  role?: "HOST" | "GUEST" | "BOTH";
+  isHost?: boolean;
+};
 
 export default function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [hostLoading, setHostLoading] = useState(false);
+
+  const [localeModalOpen, setLocaleModalOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  const [currentLocale, setCurrentLocale] = useState<LocaleCode>("fr");
+  const [currentCurrency, setCurrentCurrency] = useState<string>("EUR");
+
+  const { data: session, status } = useSession();
+  const typedUser = session?.user as SessionUser | undefined;
+
+  const isLoggedIn = status === "authenticated";
+  const userRole = typedUser?.role ?? "GUEST";
+
+  const isHost =
+    typedUser?.isHost || userRole === "HOST" || userRole === "BOTH";
+
+  const isOnHostArea = pathname?.startsWith("/host") ?? false;
 
   // Fermer le menu mobile quand on change de page
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
 
+  // Initialise locale + currency à partir du DOM / cookies
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+
+    const initialLocale = getClientLocale();
+    setCurrentLocale(initialLocale);
+
+    const mCur = document.cookie.match(/(?:^|;\s*)currency=([^;]+)/);
+    if (mCur?.[1]) {
+      setCurrentCurrency(mCur[1]);
+    }
+  }, []);
+
+  const t = NAV_TEXTS[currentLocale] ?? NAV_TEXTS.fr;
+
+  function setLocale(code: LocaleCode) {
+    setCurrentLocale(code);
+    if (typeof document !== "undefined") {
+      document.cookie = `locale=${code}; path=/; max-age=31536000`;
+      document.documentElement.lang = code;
+      document.documentElement.setAttribute("data-locale", code);
+      window.location.reload();
+    }
+    setLocaleModalOpen(false);
+  }
+
+  function setCurrency(code: string) {
+    setCurrentCurrency(code);
+    if (typeof document !== "undefined") {
+      document.cookie = `currency=${code}; path=/; max-age=31536000`;
+      window.location.reload();
+    }
+    setLocaleModalOpen(false);
+  }
+
+  async function handleBecomeHost() {
+    if (hostLoading) return;
+    setHostLoading(true);
+    try {
+      const res = await fetch("/api/host/onboard", { method: "POST" });
+
+      const text = await res.text();
+      let data: unknown = null;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        // pas du JSON
+      }
+
+      if (!res.ok) {
+        const parsed = data as { error?: string } | null;
+        const msg = parsed?.error || text || `HTTP ${res.status}`;
+        throw new Error(msg);
+      }
+
+      const parsed = data as { url?: string } | null;
+      const url = parsed?.url;
+
+      if (!url) {
+        throw new Error("Stripe onboarding URL manquante dans la réponse.");
+      }
+
+      window.location.href = url;
+    } catch (err) {
+      alert(
+        err instanceof Error
+          ? err.message
+          : "Erreur inconnue lors de l'onboarding hôte",
+      );
+    } finally {
+      setHostLoading(false);
+    }
+  }
+
+  function handlePhoneSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    alert("La connexion par téléphone sera bientôt disponible sur Lok’Room.");
+  }
+
   return (
-    <header className="border-b bg-white">
-      {/* Barre principale */}
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-        <Link href="/" className="font-semibold text-lg">
-          Lokroom
-        </Link>
-
-        {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-4">
-          <Link
-            href="/listings"
-            className={pathname?.startsWith("/listings") ? "underline" : ""}
-          >
-            Annonces
-          </Link>
-          <Link
-            href="/bookings"
-            className={pathname === "/bookings" ? "underline" : ""}
-          >
-            Réservations
-          </Link>
-          <Link
-            href="/profile"
-            className={pathname === "/profile" ? "underline" : ""}
-          >
-            Profil
+    <>
+      <header className="border-b bg-white">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+          <Link href="/" className="font-semibold text-lg">
+            Lokroom
           </Link>
 
-          {/* Switchers alignés */}
-          <div className="flex items-center gap-2">
-            <LanguageSwitcher />
-            <CurrencySwitcher />
-          </div>
-        </nav>
-
-        {/* Bouton burger (mobile) */}
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          aria-label="Ouvrir le menu"
-          aria-expanded={open ? "true" : "false"}
-          className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded hover:bg-gray-100"
-        >
-          <span className="sr-only">Menu</span>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" strokeWidth="2" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Panneau mobile */}
-      {open && (
-        <div className="md:hidden border-t bg-white">
-          <nav className="mx-auto flex max-w-5xl flex-col gap-2 px-4 py-3">
+          {/* Desktop nav */}
+          <nav className="hidden items-center gap-4 md:flex">
             <Link
               href="/listings"
-              className={`py-1 ${pathname?.startsWith("/listings") ? "underline" : ""}`}
+              className={pathname?.startsWith("/listings") ? "underline" : ""}
             >
-              Annonces
-            </Link>
-            <Link
-              href="/bookings"
-              className={`py-1 ${pathname === "/bookings" ? "underline" : ""}`}
-            >
-              Réservations
-            </Link>
-            <Link
-              href="/profile"
-              className={`py-1 ${pathname === "/profile" ? "underline" : ""}`}
-            >
-              Profil
+              {t.navListings}
             </Link>
 
-            <div className="mt-2 flex items-center gap-2">
-              <LanguageSwitcher />
-              <CurrencySwitcher />
+            {isLoggedIn && (
+              <>
+                <Link
+                  href="/bookings"
+                  className={pathname === "/bookings" ? "underline" : ""}
+                >
+                  {t.navBookings}
+                </Link>
+                <Link
+                  href="/profile"
+                  className={pathname === "/profile" ? "underline" : ""}
+                >
+                  {t.navProfile}
+                </Link>
+              </>
+            )}
+
+            <div className="ml-4 flex items-center gap-2">
+              {/* Globe langue/devise */}
+              <button
+                type="button"
+                onClick={() => setLocaleModalOpen(true)}
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 bg-white transition hover:bg-gray-100 hover:shadow-md"
+                aria-label="Choisir la langue et la devise"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  className="h-5 w-5 text-gray-700"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M2 12h20" />
+                  <path d="M12 2a15 15 0 0 1 0 20" />
+                  <path d="M12 2a15 15 0 0 0 0 20" />
+                </svg>
+              </button>
+
+              {/* Pas connecté */}
+              {!isLoggedIn && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleBecomeHost}
+                    disabled={hostLoading}
+                    className="inline-flex items-center rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-60"
+                  >
+                    {hostLoading
+                      ? "Redirection vers Stripe…"
+                      : t.becomeHost}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setAuthModalOpen(true)}
+                    className="inline-flex items-center rounded-full bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800"
+                  >
+                    {t.loginCta}
+                  </button>
+                </>
+              )}
+
+              {/* Connecté mais pas hôte */}
+              {isLoggedIn && !isHost && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleBecomeHost}
+                    disabled={hostLoading}
+                    className="inline-flex items-center rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-60"
+                  >
+                    {hostLoading
+                      ? "Redirection vers Stripe…"
+                      : t.becomeHost}
+                  </button>
+
+                  <UserMenu />
+                </>
+              )}
+
+              {/* Connecté + hôte */}
+              {isLoggedIn && isHost && (
+                <>
+                  <Link
+                    href={isOnHostArea ? "/" : "/host"}
+                    className="inline-flex items-center rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-800 transition hover:bg-gray-50"
+                  >
+                    {isOnHostArea ? t.travelerMode : t.hostMode}
+                  </Link>
+
+                  <UserMenu />
+                </>
+              )}
             </div>
           </nav>
+
+          {/* Burger mobile */}
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-label="Ouvrir le menu"
+            aria-expanded={open ? "true" : "false"}
+            className="inline-flex h-9 w-9 items-center justify-center rounded hover:bg-gray-100 md:hidden"
+          >
+            <span className="sr-only">Menu</span>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M3 6h18M3 12h18M3 18h18"
+                stroke="currentColor"
+                strokeWidth="2"
+              />
+            </svg>
+          </button>
+        </div>
+
+        {/* Panneau mobile */}
+        {open && (
+          <div className="border-t bg-white md:hidden">
+            <nav className="mx-auto flex max-w-5xl flex-col gap-2 px-4 py-3">
+              <Link
+                href="/listings"
+                className={`py-1 ${
+                  pathname?.startsWith("/listings") ? "underline" : ""
+                }`}
+              >
+                {t.navListings}
+              </Link>
+
+              {isLoggedIn && (
+                <>
+                  <Link
+                    href="/bookings"
+                    className={`py-1 ${
+                      pathname === "/bookings" ? "underline" : ""
+                    }`}
+                  >
+                    {t.navBookings}
+                  </Link>
+                  <Link
+                    href="/profile"
+                    className={`py-1 ${
+                      pathname === "/profile" ? "underline" : ""
+                    }`}
+                  >
+                    {t.navProfile}
+                  </Link>
+                </>
+              )}
+
+              <div className="mt-2 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setLocaleModalOpen(true)}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 bg-white transition hover:bg-gray-100 hover:shadow-md"
+                  aria-label="Choisir la langue et la devise"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    className="h-5 w-5 text-gray-700"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M2 12h20" />
+                    <path d="M12 2a15 15 0 0 1 0 20" />
+                    <path d="M12 2a15 15 0 0 0 0 20" />
+                  </svg>
+                </button>
+
+                {!isLoggedIn && (
+                  <button
+                    type="button"
+                    onClick={() => setAuthModalOpen(true)}
+                    className="inline-flex flex-1 items-center justify-center rounded-full bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800"
+                  >
+                    {t.loginCta}
+                  </button>
+                )}
+              </div>
+            </nav>
+          </div>
+        )}
+
+        <TopCookieNotice />
+      </header>
+
+      {/* MODAL LANGUE / DEVISE */}
+      {localeModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="max-h-[80vh] w-full max-w-4xl overflow-y-auto rounded-3xl bg-white p-6 shadow-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-xl font-semibold">
+                {t.modalTitle}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setLocaleModalOpen(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100"
+                aria-label="Fermer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="grid gap-8 md:grid-cols-2">
+              {/* Langues */}
+              <div>
+                <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
+                  {t.modalLanguage}
+                </h3>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {LOCALES.map((loc) => (
+                    <button
+                      key={loc.code}
+                      type="button"
+                      onClick={() => setLocale(loc.code as LocaleCode)}
+                      className={`flex flex-col items-start rounded-xl border px-3 py-2 text-left text-sm hover:border-gray-900 hover:bg-gray-50 ${
+                        currentLocale === loc.code
+                          ? "border-gray-900 bg-gray-50"
+                          : "border-gray-200"
+                      }`}
+                    >
+                      <span className="font-medium">{loc.label}</span>
+                      <span className="text-xs uppercase text-gray-500">
+                        {loc.code}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Devises */}
+              <div>
+                <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
+                  {t.modalCurrency}
+                </h3>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {CURRENCIES.map((cur) => (
+                    <button
+                      key={cur.code}
+                      type="button"
+                      onClick={() => setCurrency(cur.code)}
+                      className={`flex flex-col items-start rounded-xl border px-3 py-2 text-left text-sm hover:border-gray-900 hover:bg-gray-50 ${
+                        currentCurrency === cur.code
+                          ? "border-gray-900 bg-gray-50"
+                          : "border-gray-200"
+                      }`}
+                    >
+                      <span className="font-medium">
+                        {cur.label} ({cur.symbol})
+                      </span>
+                      <span className="text-xs uppercase text-gray-500">
+                        {cur.code}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Bandeau d’info (facultatif) */}
-      <TopCookieNotice />
-    </header>
+      {/* MODAL CONNEXION / INSCRIPTION */}
+      {authModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="flex max-h-[90vh] w-full max-w-lg flex-col rounded-3xl bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b px-6 py-4">
+              <button
+                type="button"
+                onClick={() => setAuthModalOpen(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100"
+                aria-label="Fermer"
+              >
+                ✕
+              </button>
+              <h2 className="text-sm font-semibold">
+                {t.authTitle}
+              </h2>
+              <span className="w-8" />
+            </div>
+
+            <div className="auth-scroll flex-1 overflow-y-auto px-6 py-5">
+              <h3 className="mb-4 text-xl font-semibold">
+                {t.authWelcome}
+              </h3>
+
+              <form onSubmit={handlePhoneSubmit} className="space-y-3">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-700">
+                    {t.phoneCountryLabel}
+                  </label>
+                  <select className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-0">
+                    <option>Canada (+1)</option>
+                    <option>France (+33)</option>
+                    <option>États-Unis (+1)</option>
+                    <option>Royaume-Uni (+44)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-700">
+                    {t.phoneNumberLabel}
+                  </label>
+                  <input
+                    type="tel"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-0"
+                    placeholder={t.phoneNumberLabel}
+                  />
+                </div>
+
+                <p className="text-[11px] leading-snug text-gray-500">
+                  {t.phoneHint}
+                </p>
+
+                <button
+                  type="submit"
+                  className="mt-2 w-full rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-black"
+                >
+                  {t.phoneContinue}
+                </button>
+              </form>
+
+              <div className="my-4 flex items-center gap-3">
+                <div className="h-px flex-1 bg-gray-200" />
+                <span className="text-xs text-gray-500">{t.or}</span>
+                <div className="h-px flex-1 bg-gray-200" />
+              </div>
+
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => signIn("google", { callbackUrl: "/" })}
+                  className="flex w-full items-center justify-start gap-3 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium hover:bg-gray-50"
+                >
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white">
+                    <Image
+                      src="/icons/google.svg"
+                      alt="Google"
+                      width={18}
+                      height={18}
+                    />
+                  </span>
+                  <span className="flex-1 text-center">
+                    {t.continueGoogle}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-start gap-3 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium hover:bg-gray-50"
+                >
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-black">
+                    <Image
+                      src="/icons/apple.svg"
+                      alt="Apple"
+                      width={18}
+                      height={18}
+                    />
+                  </span>
+                  <span className="flex-1 text-center">
+                    {t.continueApple}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-start gap-3 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium hover:bg-gray-50"
+                >
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full border border-gray-300 bg-white">
+                    <Image
+                      src="/icons/mail.svg"
+                      alt="E-mail"
+                      width={18}
+                      height={18}
+                    />
+                  </span>
+                  <span className="flex-1 text-center">
+                    {t.continueEmail}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  className="mb-1 flex w-full items-center justify-start gap-3 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium hover:bg-gray-50"
+                >
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#1877F2]">
+                    <Image
+                      src="/icons/facebook.svg"
+                      alt="Facebook"
+                      width={18}
+                      height={18}
+                    />
+                  </span>
+                  <span className="flex-1 text-center">
+                    {t.continueFacebook}
+                  </span>
+                </button>
+              </div>
+
+              <p className="mt-2 text-[11px] leading-snug text-gray-500">
+                {t.authLegal}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
-/** Petit bandeau qui lit les cookies (locale/currency) et affiche “Affichage : EUR • fr”. */
 function TopCookieNotice() {
   const [show, setShow] = useState(true);
-  const [currency, setCurrency] = useState<"EUR" | "CAD">("EUR");
-  const [locale, setLocale] = useState<"fr" | "en">("fr");
+  const [currency, setCurrency] = useState<string>("EUR");
+  const [locale, setLocale] = useState<LocaleCode>("fr");
 
   useEffect(() => {
+    if (typeof document === "undefined") return;
+
     const mCur = document.cookie.match(/(?:^|;\s*)currency=([^;]+)/);
     const mLoc = document.cookie.match(/(?:^|;\s*)locale=([^;]+)/);
-    const c = (mCur?.[1] as "EUR" | "CAD" | undefined) || "EUR";
-    const l = (mLoc?.[1] as "fr" | "en" | undefined) || "fr";
-    setCurrency(c);
-    setLocale(l);
+
+    setCurrency(mCur?.[1] || "EUR");
+
+    const loc = (mLoc?.[1] as LocaleCode | undefined) ?? getClientLocale();
+    setLocale(loc);
   }, []);
 
   if (!show) return null;
+
+  const texts = COOKIE_NOTICE_TEXTS[locale] ?? COOKIE_NOTICE_TEXTS.fr;
 
   return (
     <div className="border-t bg-gray-50">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-2 text-xs text-gray-700">
         <div>
-          Affichage&nbsp;: <strong>{currency}</strong>&nbsp;•&nbsp;<strong>{locale}</strong>
+          {texts.display}&nbsp;:&nbsp;
+          <strong>{currency}</strong>&nbsp;•&nbsp;
+          <strong>{locale.toUpperCase()}</strong>
         </div>
         <button
           type="button"
           onClick={() => setShow(false)}
           className="rounded px-1.5 py-0.5 hover:bg-gray-100"
-          aria-label="Masquer le bandeau"
+          aria-label={texts.close}
         >
-          Fermer
+          {texts.close}
         </button>
       </div>
     </div>
