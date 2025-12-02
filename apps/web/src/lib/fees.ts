@@ -9,9 +9,12 @@
 // - Estimation Stripe configurable via .env
 // - Fonction inferRegion pour convertir pays/province → Region interne
 
+import type { Currency as MoneyCurrency } from "./currency";
+
 // -------------------- Types publics (compat) --------------------
 
-export type Currency = "EUR" | "CAD";
+// On réutilise exactement le même type que dans lib/currency
+export type Currency = MoneyCurrency;
 
 export type RegionFR = "FRANCE";
 export type RegionCA = "AB" | "BC" | "ON" | "QC" | "ATL"; // NB/NS/NL/PE → ATL
@@ -114,7 +117,12 @@ const STRIPE_PCT_CA =
   Number(process.env.NEXT_PUBLIC_STRIPE_PCT_CA ?? 2.9) / 100; // 0.029
 const STRIPE_FIX_CAD = Number(process.env.NEXT_PUBLIC_STRIPE_FIX_CAD ?? 30); // 30 cents
 
-const STRIPE_CONFIG = {
+// Pour l’instant :
+// - EUR → config EU
+// - CAD → config CA
+// - USD / GBP / CNY → on réutilise la config EU (simple, ça évite de tout
+//   reparamétrer maintenant, tu pourras affiner plus tard).
+const STRIPE_CONFIG: Record<Currency, { pct: number; fix: number }> = {
   EUR: {
     pct: STRIPE_PCT_EU,
     fix: STRIPE_FIX_EUR,
@@ -123,30 +131,56 @@ const STRIPE_CONFIG = {
     pct: STRIPE_PCT_CA,
     fix: STRIPE_FIX_CAD,
   },
-} as const;
+  USD: {
+    pct: STRIPE_PCT_EU,
+    fix: STRIPE_FIX_EUR,
+  },
+  GBP: {
+    pct: STRIPE_PCT_EU,
+    fix: STRIPE_FIX_EUR,
+  },
+  CNY: {
+    pct: STRIPE_PCT_EU,
+    fix: STRIPE_FIX_EUR,
+  },
+};
 
 // -------------------- Planchers / plafonds --------------------
 
 // Frais min / max pour éviter des valeurs ridicules.
+// Pour les nouvelles devises, on part sur quelque chose de proche de l’EUR,
+// tu pourras affiner ensuite.
 const HOST_MIN_FEE: Record<Currency, number> = {
   EUR: 30, // 0,30 €
   CAD: 50, // 0,50 $
+  USD: 30,
+  GBP: 30,
+  CNY: 30,
 };
 
 const GUEST_MIN_FEE: Record<Currency, number> = {
   EUR: 50, // 0,50 €
   CAD: 75, // 0,75 $
+  USD: 50,
+  GBP: 50,
+  CNY: 50,
 };
 
 // Plafonds de frais (tu pourras ajuster plus tard si tu veux)
 const HOST_MAX_FEE: Record<Currency, number> = {
   EUR: 2500, // 25 €
   CAD: 3500, // 35 $
+  USD: 2500,
+  GBP: 2500,
+  CNY: 2500,
 };
 
 const GUEST_MAX_FEE: Record<Currency, number> = {
   EUR: 5000, // 50 €
   CAD: 7000, // 70 $
+  USD: 5000,
+  GBP: 5000,
+  CNY: 5000,
 };
 
 // -------------------- Multiplicateurs BookingKind --------------------
@@ -261,7 +295,8 @@ function pickBaseRates(
     return pickRatesFR(priceCents);
   }
 
-  // CAD
+  // Pour l’instant, toutes les autres devises sont traitées comme le Canada
+  // (CAD) au niveau des barèmes. Tu pourras raffiner plus tard.
   return pickRatesCA(priceCents, region as RegionCA);
 }
 
@@ -374,9 +409,7 @@ export function computeFees(input: FeeInput): FeeBreakdown {
  * à partir de la currency + country + provinceCode (enum ou string).
  *
  * - si EUR → FRANCE
- * - si CAD + province AB/BC/ON/QC/NB/NS/NL/PE → mapping direct
- * - si CAD sans province → fallback QC
- * - sinon → FRANCE (par défaut)
+ * - sinon → on applique les règles Canada (AB/BC/ON/QC/ATL) par défaut
  */
 export function inferRegion(params: {
   currency: Currency;
