@@ -1,7 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { createListingSchema, validateRequestBody } from "@/lib/validations";
+
+export const dynamic = "force-dynamic";
 
 /**
  * Vérification "propre" des coordonnées côté serveur.
@@ -27,7 +30,7 @@ function assertValidCoordinates(options: {
     throw new Error("Coordonnées géographiques invalides.");
   }
 
-  // 2. Garde-fou simple France / Canada (rien de parfait, juste éviter l’absurde)
+  // 2. Garde-fou simple France / Canada (rien de parfait, juste éviter l'absurde)
   const isRoughlyFrance =
     lat >= 41 && lat <= 51.5 && lng >= -5.5 && lng <= 9.8;
 
@@ -47,22 +50,64 @@ function assertValidCoordinates(options: {
   }
 }
 
-// GET /api/listings  → liste toutes les annonces
-export async function GET() {
+// GET /api/listings  → liste toutes les annonces avec pagination
+export async function GET(req: NextRequest) {
   try {
-    const listings = await prisma.listing.findMany({
-      include: {
-        owner: true,
-        images: {
-          orderBy: {
-            position: "asc", // 👈 images triées dans l’ordre
-          } as any,
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const searchParams = req.nextUrl.searchParams;
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+    const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get("pageSize") || "20", 10)));
 
-    return NextResponse.json({ listings });
+    const [listings, total] = await Promise.all([
+      prisma.listing.findMany({
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          price: true,
+          hourlyPrice: true,
+          currency: true,
+          country: true,
+          city: true,
+          province: true,
+          type: true,
+          pricingMode: true,
+          latPublic: true,
+          lngPublic: true,
+          createdAt: true,
+          ownerId: true,
+          owner: {
+            select: {
+              id: true,
+              name: true,
+              profile: {
+                select: { avatarUrl: true },
+              },
+            },
+          },
+          images: {
+            orderBy: { position: "asc" },
+            take: 5,
+            select: {
+              id: true,
+              url: true,
+              isCover: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.listing.count(),
+    ]);
+
+    return NextResponse.json({
+      listings,
+      page,
+      pageSize,
+      total,
+      pageCount: total === 0 ? 0 : Math.ceil(total / pageSize),
+    });
   } catch (err) {
     console.error("GET /api/listings error", err);
     return NextResponse.json(
@@ -73,7 +118,7 @@ export async function GET() {
 }
 
 // POST /api/listings → créer une annonce
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -87,6 +132,11 @@ export async function POST(req: Request) {
 
     const user = await prisma.user.findUnique({
       where: { email },
+      select: {
+        id: true,
+        role: true,
+        hostProfile: { select: { id: true } },
+      },
     });
 
     if (!user) {
@@ -96,9 +146,9 @@ export async function POST(req: Request) {
       );
     }
 
-    // 🔐 Nouveau : seuls les hôtes peuvent créer une annonce
-    const role = (user as any).role as string | undefined;
-    const isHostFlag = Boolean((user as any).isHost);
+    // 🔐 Seuls les hôtes peuvent créer une annonce
+    const isHostFlag = !!user.hostProfile;
+    const role = user.role;
     const isHost =
       isHostFlag ||
       role === "HOST" ||
@@ -115,54 +165,16 @@ export async function POST(req: Request) {
       );
     }
 
-    const contentType = req.headers.get("content-type") ?? "";
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let data: any = {};
-
-    if (contentType.includes("application/json")) {
-      data = await req.json();
-    } else if (contentType.includes("multipart/form-data")) {
-      const form = await req.formData();
-      data = {
-        title: form.get("title") as string,
-        description: form.get("description") as string,
-        price: Number(form.get("price")),
-        currency: form.get("currency") as string,
-        country: form.get("country") as string,
-        city: (form.get("city") as string) || null,
-        addressFull: (form.get("addressFull") as string) || "",
-        lat: form.get("lat"),
-        lng: form.get("lng"),
-        latPublic: form.get("latPublic"),
-        lngPublic: form.get("lngPublic"),
-        // en multipart on ne gère pas les images ici (elles sont uploadées séparément)
-      };
-    } else {
+    // Validation Zod du body
+    const validation = await validateRequestBody(req, createListingSchema);
+    if (!validation.success) {
       return NextResponse.json(
-        { error: "Unsupported content-type" },
-        { status: 400 }
+        { error: validation.error },
+        { status: validation.status }
       );
     }
 
-    // Validation minimale côté serveur
-    if (
-      !data.title ||
-      !data.description ||
-      data.price == null ||
-      !data.currency ||
-      !data.country ||
-      !data.city ||
-      !data.addressFull
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "Champs requis manquants (titre, description, prix, devise, pays, ville, adresse).",
-        },
-        { status: 400 }
-      );
-    }
+    const data = validation.data;
 
     // Optionnel : forcer le pays France / Canada côté serveur
     if (!["France", "Canada"].includes(data.country)) {
@@ -172,102 +184,49 @@ export async function POST(req: Request) {
       );
     }
 
-    const priceNumber = Number(data.price);
-    if (!Number.isFinite(priceNumber)) {
-      return NextResponse.json(
-        { error: "Invalid price" },
-        { status: 400 }
-      );
-    }
-
-    if (priceNumber < 2) {
-      return NextResponse.json(
-        { error: "Le prix minimum est de 2 (EUR ou CAD)." },
-        { status: 400 }
-      );
-    }
-
-    // Parsing des coordonnées éventuelles
-    const lat =
-      data.lat !== undefined && data.lat !== null
-        ? Number(data.lat)
-        : undefined;
-    const lng =
-      data.lng !== undefined && data.lng !== null
-        ? Number(data.lng)
-        : undefined;
-    const latPublic =
-      data.latPublic !== undefined && data.latPublic !== null
-        ? Number(data.latPublic)
-        : undefined;
-    const lngPublic =
-      data.lngPublic !== undefined && data.lngPublic !== null
-        ? Number(data.lngPublic)
-        : undefined;
-
     // ✅ Validation "propre" des coords (brutes et publiques)
     try {
       assertValidCoordinates({
         country: data.country,
-        lat,
-        lng,
+        lat: data.lat,
+        lng: data.lng,
       });
       assertValidCoordinates({
         country: data.country,
-        lat: latPublic,
-        lng: lngPublic,
+        lat: data.latPublic,
+        lng: data.lngPublic,
       });
-    } catch (coordError: any) {
+    } catch (coordError: unknown) {
+      const message = coordError instanceof Error ? coordError.message : "Coordonnées invalides.";
       return NextResponse.json(
-        { error: coordError?.message ?? "Coordonnées invalides." },
+        { error: message },
         { status: 400 }
       );
     }
-
-    // 👇 Récupération éventuelle des images (JSON seulement)
-    // On attend un tableau de strings : images: ["url1", "url2", ...]
-    const images: string[] = Array.isArray(data.images)
-      ? data.images.filter(
-          (u: unknown) => typeof u === "string" && u.trim().length > 0
-        )
-      : [];
 
     const listing = await prisma.listing.create({
       data: {
         title: data.title,
         description: data.description,
-        price: priceNumber,
+        price: data.price,
+        hourlyPrice: data.priceHourly,
         currency: data.currency,
         country: data.country,
-        city: data.city,
+        city: data.city ?? undefined,
         addressFull: data.addressFull,
-        ...(Number.isFinite(lat) && Number.isFinite(lng)
-          ? { lat: lat as number, lng: lng as number }
+        type: data.type,
+        pricingMode: data.pricingMode,
+        ...(data.lat != null && data.lng != null
+          ? { lat: data.lat, lng: data.lng }
           : {}),
-        ...(Number.isFinite(latPublic) && Number.isFinite(lngPublic)
-          ? {
-              latPublic: latPublic as number,
-              lngPublic: lngPublic as number,
-            }
+        ...(data.latPublic != null && data.lngPublic != null
+          ? { latPublic: data.latPublic, lngPublic: data.lngPublic }
           : {}),
         ownerId: user.id,
-
-        // ✅ Création des images avec isCover + position
-        ...(images.length
-          ? {
-              images: {
-                create: images.map((url, index) => ({
-                  url,
-                  position: index,
-                  isCover: index === 0,
-                })),
-              },
-            }
-          : {}),
       },
       include: {
         images: {
-          orderBy: { position: "asc" } as any,
+          orderBy: { position: "asc" },
         },
       },
     });

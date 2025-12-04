@@ -1,4 +1,3 @@
-// apps/web/src/app/messages/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -6,18 +5,22 @@ import {
   ChatBubbleLeftRightIcon,
   FunnelIcon,
 } from "@heroicons/react/24/outline";
+import useTranslation from "@/hooks/useTranslation";
 
 type Filter = "all" | "unread" | "trips" | "support";
 
 export default function MessagesPage() {
+  const { dict } = useTranslation();
+  const t = dict.messages;
+
   const [activeFilter, setActiveFilter] = useState<Filter>("all");
   const [selectedConversationId] = useState<string | null>(null);
 
   const filters: { id: Filter; label: string }[] = [
-    { id: "all", label: "Tout" },
-    { id: "unread", label: "Non lus" },
-    { id: "trips", label: "Voyages" },
-    { id: "support", label: "Support Lok'Room" },
+    { id: "all", label: t.all },
+    { id: "unread", label: t.unread },
+    { id: "trips", label: t.trips },
+    { id: "support", label: t.support },
   ];
 
   const hasConversations = false; // plus tard on branchera la vraie liste
@@ -29,11 +32,10 @@ export default function MessagesPage() {
         <header className="flex items-baseline justify-between gap-4">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-gray-900">
-              Messages
+              {t.title}
             </h1>
             <p className="mt-1 text-sm text-gray-500">
-              Retrouve toutes tes conversations Lok&apos;Room : voyageurs, hôtes
-              et support.
+              {t.subtitle}
             </p>
           </div>
         </header>
@@ -48,7 +50,7 @@ export default function MessagesPage() {
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-100">
                   <ChatBubbleLeftRightIcon className="h-4 w-4 text-gray-600" />
                 </span>
-                <span>Messages</span>
+                <span>{t.title}</span>
               </div>
               <button
                 type="button"
@@ -85,10 +87,9 @@ export default function MessagesPage() {
               {!hasConversations ? (
                 <div className="flex h-full items-center justify-center px-4 text-center text-xs text-gray-400">
                   <p>
-                    Aucun message pour ce filtre.
+                    {t.noMessagesFilter}
                     <br />
-                    Tu verras apparaître ici tes conversations avec les hôtes,
-                    les voyageurs et le support Lok&apos;Room.
+                    {t.noMessagesFilterDesc}
                   </p>
                 </div>
               ) : (
@@ -109,12 +110,10 @@ export default function MessagesPage() {
               <div className="flex flex-1 items-center justify-center px-8 py-10 text-center">
                 <div className="max-w-md space-y-2">
                   <p className="text-base font-medium text-gray-900">
-                    Sélectionne une conversation à gauche
+                    {t.selectConversation}
                   </p>
                   <p className="text-sm text-gray-500">
-                    Quand tu cliqueras sur un message, l&apos;historique complet
-                    apparaîtra ici, avec l&apos;envoi de nouveaux messages en
-                    bas.
+                    {t.selectConversationDesc}
                   </p>
                 </div>
               </div>
@@ -124,16 +123,14 @@ export default function MessagesPage() {
           {/* COLONNE DROITE : RÉSUMÉ RÉSERVATION / ANNONCE */}
           <section className="hidden w-[320px] flex-col border-l border-gray-100 px-6 py-5 lg:flex">
             <h2 className="text-sm font-semibold text-gray-900">
-              Résumé de la réservation / de l&apos;annonce
+              {t.bookingSummary}
             </h2>
             <p className="mt-1 text-xs text-gray-500">
-              Quand la messagerie sera connectée aux réservations, tu verras ici
-              les infos principales : logement, dates, montant, état de la
-              réservation, etc.
+              {t.bookingSummaryDesc}
             </p>
 
             <div className="mt-4 rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-4 text-xs text-gray-500">
-              <p className="mb-2 font-medium text-gray-700">Exemple :</p>
+              <p className="mb-2 font-medium text-gray-700">{t.example}</p>
               <p>
                 <span className="font-semibold text-gray-900">
                   Maison vue sur un canap

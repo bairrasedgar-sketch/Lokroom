@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { applyFeesToBooking } from "@/lib/bookingFees";
+import { createBookingSchema, validateRequestBody } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
@@ -53,37 +54,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "USER_NOT_FOUND" }, { status: 404 });
   }
 
-  let body: {
-    listingId?: string;
-    startDate?: string;
-    endDate?: string;
-  };
-
-  try {
-    body = (await req.json()) as typeof body;
-  } catch {
-    return NextResponse.json({ error: "INVALID_JSON" }, { status: 400 });
-  }
-
-  const { listingId, startDate, endDate } = body;
-
-  if (!listingId || !startDate || !endDate) {
+  // Validation Zod du body
+  const validation = await validateRequestBody(req, createBookingSchema);
+  if (!validation.success) {
     return NextResponse.json(
-      { error: "MISSING_FIELDS", details: "listingId, startDate, endDate" },
-      { status: 400 },
+      { error: "VALIDATION_ERROR", details: validation.error },
+      { status: validation.status },
     );
   }
 
+  const { listingId, startDate, endDate } = validation.data;
+
   const start = new Date(startDate);
   const end = new Date(endDate);
-
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-    return NextResponse.json({ error: "INVALID_DATES" }, { status: 400 });
-  }
-
-  if (end <= start) {
-    return NextResponse.json({ error: "END_BEFORE_START" }, { status: 400 });
-  }
 
   const nights = daysDiff(start, end);
   if (nights <= 0) {

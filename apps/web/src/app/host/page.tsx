@@ -1,7 +1,7 @@
-// apps/web/src/app/host/page.tsx
 import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { getServerDictionary } from "@/lib/i18n.server";
 
 export default async function HostPage() {
   const session = await getServerSession(authOptions);
@@ -18,19 +18,17 @@ export default async function HostPage() {
     redirect("/profile");
   }
 
+  const { dict } = getServerDictionary();
+  const t = dict.host;
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 space-y-8">
       {/* En-tête */}
       <header className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">
-          Tableau de bord hôte
-        </h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{t.title}</h1>
         <p className="text-sm text-gray-600">
-          Bienvenue sur ton espace Lok&apos;Room.
-          {" "}
-          <span className="font-medium text-gray-800">
-            {user.email}
-          </span>
+          {t.welcome}{" "}
+          <span className="font-medium text-gray-800">{user.email}</span>
         </p>
       </header>
 
@@ -38,79 +36,65 @@ export default async function HostPage() {
       <section className="grid gap-4 md:grid-cols-3">
         <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
           <p className="text-xs font-medium uppercase text-gray-500">
-            Statut hôte
+            {t.hostStatus}
           </p>
-          <p className="mt-2 text-sm">
-            ✅ Compte hôte actif
-          </p>
-          <p className="mt-1 text-xs text-gray-500">
-            Tu peux créer des annonces et recevoir des réservations.
-          </p>
+          <p className="mt-2 text-sm">{t.hostActive}</p>
+          <p className="mt-1 text-xs text-gray-500">{t.hostActiveDesc}</p>
         </div>
 
         <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
           <p className="text-xs font-medium uppercase text-gray-500">
-            Annonces
+            {t.listingsLabel}
           </p>
           <p className="mt-2 text-2xl font-semibold">—</p>
-          <p className="mt-1 text-xs text-gray-500">
-            On affichera ici le nombre d&apos;annonces actives.
-          </p>
+          <p className="mt-1 text-xs text-gray-500">{t.listingsDesc}</p>
         </div>
 
         <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
           <p className="text-xs font-medium uppercase text-gray-500">
-            Revenus estimés
+            {t.estimatedEarnings}
           </p>
           <p className="mt-2 text-2xl font-semibold">—</p>
-          <p className="mt-1 text-xs text-gray-500">
-            Plus tard : résumé de ton wallet et des paiements.
-          </p>
+          <p className="mt-1 text-xs text-gray-500">{t.estimatedEarningsDesc}</p>
         </div>
       </section>
 
       {/* Actions principales */}
       <section className="grid gap-6 md:grid-cols-2">
         <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-3">
-          <h2 className="text-lg font-semibold">Gérer mes annonces</h2>
-          <p className="text-sm text-gray-600">
-            Crée une nouvelle annonce ou modifie tes espaces existants
-            (logement, bureau, parking…).
-          </p>
+          <h2 className="text-lg font-semibold">{t.manageListings}</h2>
+          <p className="text-sm text-gray-600">{t.manageListingsDesc}</p>
           <div className="flex flex-wrap gap-2 pt-2">
             <a
               href="/listings/new"
               className="rounded-xl bg-black px-4 py-2 text-sm font-semibold text-white hover:bg-gray-900"
             >
-              Créer une annonce
+              {t.createListing}
             </a>
             <a
               href="/listings?mine=1"
               className="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50"
             >
-              Voir mes annonces
+              {t.viewMyListings}
             </a>
           </div>
         </div>
 
         <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-3">
-          <h2 className="text-lg font-semibold">Réservations & revenus</h2>
-          <p className="text-sm text-gray-600">
-            Accède à tes réservations, suis les paiements et déclenche
-            les virements vers ton compte bancaire.
-          </p>
+          <h2 className="text-lg font-semibold">{t.bookingsAndEarnings}</h2>
+          <p className="text-sm text-gray-600">{t.bookingsAndEarningsDesc}</p>
           <div className="flex flex-wrap gap-2 pt-2">
             <a
               href="/reservations?mine=1"
               className="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50"
             >
-              Voir mes réservations
+              {t.viewMyBookings}
             </a>
             <a
               href="/profile"
               className="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50"
             >
-              Gérer mon compte hôte
+              {t.manageHostAccount}
             </a>
           </div>
         </div>
@@ -118,11 +102,11 @@ export default async function HostPage() {
 
       {/* Placeholder futur */}
       <section className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-6 text-sm text-gray-600">
-        Ici on pourra afficher plus tard :
+        {t.futurePlaceholder}
         <ul className="mt-2 list-disc space-y-1 pl-5">
-          <li>La liste de tes prochaines arrivées / départs</li>
-          <li>Les notifications importantes (KYC, compte Stripe, etc.)</li>
-          <li>Un résumé détaillé de ton wallet Lok&apos;Room</li>
+          <li>{t.futurePlaceholderItems.arrivals}</li>
+          <li>{t.futurePlaceholderItems.notifications}</li>
+          <li>{t.futurePlaceholderItems.walletSummary}</li>
         </ul>
       </section>
     </div>

@@ -1,10 +1,10 @@
-// apps/web/src/app/profile/page.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
+import useTranslation from "@/hooks/useTranslation";
 
 
 type Role = "HOST" | "GUEST" | "BOTH";
@@ -59,12 +59,17 @@ type BookingDTO = {
 
 type Tab = "about" | "trips";
 
+type ProfileTranslations = typeof import("@/locales/fr").default.profile;
+
 export default function ProfilePage() {
+  const { dict, locale } = useTranslation();
+  const t = dict.profile;
+
   const [user, setUser] = useState<UserDTO | null>(null);
   const [initial, setInitial] = useState<UserDTO | null>(null);
   const [role, setRole] = useState<Role>("GUEST");
 
-  // pour l’édition simple (nom + pays)
+  // pour l'édition simple (nom + pays)
   const [name, setName] = useState("");
   const [country, setCountry] = useState("");
 
@@ -270,10 +275,10 @@ export default function ProfilePage() {
           : prev
       );
       setStatus("saved");
-      toast.success("Profil sauvegardé ✅");
+      toast.success(t.profileSaved);
     } catch {
       setStatus("error");
-      toast.error("Erreur lors de la sauvegarde du profil");
+      toast.error(t.profileSaveError);
     } finally {
       setSaving(false);
       setTimeout(() => setStatus("idle"), 2000);
@@ -284,11 +289,11 @@ export default function ProfilePage() {
     const f = e.currentTarget.files?.[0] || null;
     if (!f) return;
     if (!f.type.startsWith("image/")) {
-      toast.error("Image uniquement");
+      toast.error(t.imageOnly);
       return;
     }
     if (f.size > 5 * 1024 * 1024) {
-      toast.error("Image trop lourde (max 5 MB)");
+      toast.error(t.imageTooLarge);
       return;
     }
     setAvatarFile(f);
@@ -336,11 +341,11 @@ export default function ProfilePage() {
             }
           : prev
       );
-      toast.success("Avatar mis à jour ✅");
+      toast.success(t.avatarUpdated);
     } catch (e) {
       console.error(e);
       setAvatarStatus("error");
-      toast.error("Échec de l’upload de l’avatar");
+      toast.error(t.avatarUploadFailed);
     }
   }
 
@@ -355,12 +360,12 @@ export default function ProfilePage() {
             ? { ...prev, profile: { ...(prev.profile ?? {}), avatarUrl: null } }
             : prev
         );
-        toast.success("Avatar supprimé ✅");
+        toast.success(t.avatarDeleted);
       } else {
-        toast.error("Impossible de supprimer l’avatar");
+        toast.error(t.avatarDeleteFailed);
       }
     } catch {
-      toast.error("Impossible de supprimer l’avatar");
+      toast.error(t.avatarDeleteFailed);
     }
   }
 
@@ -369,8 +374,8 @@ export default function ProfilePage() {
     if (p?.firstName || p?.lastName) {
       return `${p?.firstName ?? ""} ${p?.lastName ?? ""}`.trim();
     }
-    return user?.name ?? user?.email ?? "Utilisateur Lok'Room";
-  }, [user]);
+    return user?.name ?? user?.email ?? t.defaultUser;
+  }, [user, t.defaultUser]);
 
   const cityLine = useMemo(() => {
     const p = user?.profile;
@@ -379,8 +384,8 @@ export default function ProfilePage() {
         p?.city && p?.country ? ", " : ""
       }${p?.country ?? ""}`;
     }
-    return "Complète ton profil";
-  }, [user]);
+    return t.completeProfile;
+  }, [user, t.completeProfile]);
 
   const memberSinceYear = useMemo(() => {
     if (!user?.createdAt) return null;
@@ -397,7 +402,7 @@ export default function ProfilePage() {
       <div className="flex gap-10">
         {/* Colonne gauche – menu comme Airbnb */}
         <aside className="w-64 shrink-0">
-          <h1 className="mb-6 text-2xl font-semibold">Profil</h1>
+          <h1 className="mb-6 text-2xl font-semibold">{t.title}</h1>
 
           <nav className="space-y-2 text-sm">
             <button
@@ -425,7 +430,7 @@ export default function ProfilePage() {
               </div>
               <div>
                 <div className="text-xs uppercase tracking-wide opacity-70">
-                  À propos de moi
+                  {t.aboutMe}
                 </div>
                 <div className="text-sm font-medium">{fullName}</div>
               </div>
@@ -440,7 +445,7 @@ export default function ProfilePage() {
                   : "text-gray-800 hover:bg-gray-100"
               }`}
             >
-              <span className="text-sm font-medium">Voyages précédents</span>
+              <span className="text-sm font-medium">{t.previousTrips}</span>
             </button>
           </nav>
         </aside>
@@ -449,6 +454,8 @@ export default function ProfilePage() {
         <section className="flex-1 space-y-8">
           {tab === "about" ? (
             <AboutSection
+              t={t}
+              locale={locale}
               email={user?.email ?? ""}
               fullName={fullName}
               cityLine={cityLine}
@@ -489,7 +496,7 @@ export default function ProfilePage() {
               onConsumeProfileEdit={() => setProfileEditRequested(false)}
             />
           ) : (
-            <TripsSection trips={trips} loading={tripsLoading} />
+            <TripsSection t={t} trips={trips} loading={tripsLoading} />
           )}
         </section>
       </div>
@@ -510,6 +517,8 @@ type AboutAvatarStatus =
   | "error";
 
 type AboutProps = {
+  t: ProfileTranslations;
+  locale: string;
   email: string;
   fullName: string;
   cityLine: string;
@@ -552,6 +561,7 @@ type AboutProps = {
 
 function AboutSection(props: AboutProps) {
   const {
+    t,
     email,
     fullName,
     cityLine,
@@ -595,7 +605,7 @@ function AboutSection(props: AboutProps) {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingPublic, setIsEditingPublic] = useState(false);
 
-  // états d’édition pour chaque ligne "Modifier"
+  // états d'édition pour chaque ligne "Modifier"
   const [editingLegalName, setEditingLegalName] = useState(false);
   const [editingChosenName, setEditingChosenName] = useState(false);
   const [editingPhone, setEditingPhone] = useState(false);
@@ -645,26 +655,21 @@ function AboutSection(props: AboutProps) {
     setPublicInterests(profile?.interests ?? "");
   }, [profile]);
 
-  const jobTitle =
-    publicJobTitle || "Ajoute ton travail dans ton profil Lok’Room";
-  const dreamDestination =
-    publicDreamDestination || "Ajoute ta destination de rêve";
-  const languages = publicLanguages || "Ajoute les langues que tu parles";
-  const aboutMe =
-    publicAboutMe ||
-    "Écris quelques lignes sur toi pour inspirer confiance aux hôtes.";
-  const interests =
-    publicInterests || "Ajoute tes centres d’intérêt principaux.";
+  const jobTitle = publicJobTitle || t.addJob;
+  const dreamDestination = publicDreamDestination || t.addDreamDestination;
+  const languages = publicLanguages || t.addLanguages;
+  const aboutMe = publicAboutMe || t.aboutMePlaceholder;
+  const interests = publicInterests || t.addInterests;
 
   // ⚙️ Infos compte (on utilise les états éditables)
   const legalName =
     (firstName || lastName ? `${firstName} ${lastName}`.trim() : fullName) ||
-    "Non fourni";
+    t.notProvided;
 
-  const chosenName = name || "Non fourni";
-  const phoneDisplay = phone || "Non fourni";
-  const accountVerificationNumber = "Non fourni";
-  const identityStatus = "Vérifiée"; // placeholder
+  const chosenName = name || t.notProvided;
+  const phoneDisplay = phone || t.notProvided;
+  const accountVerificationNumber = t.notProvided;
+  const identityStatus = t.verified; // placeholder
 
   const hasResidential =
     addressLine1 || city || postalCode || profileCountry || province;
@@ -673,29 +678,27 @@ function AboutSection(props: AboutProps) {
     ? `${addressLine1}${addressLine1 ? ", " : ""}${postalCode} ${city}${
         profileCountry ? `, ${profileCountry}` : ""
       }${province ? ` (${province})` : ""}`.trim()
-    : "Non fourni";
+    : t.notProvided;
 
   const postalAddress =
-    residentialAddress !== "Non fourni" ? "Fournie" : "Non fournie";
+    residentialAddress !== t.notProvided ? t.provided : t.notProvidedFemale;
 
-  const emergencyContact = "Non fourni";
+  const emergencyContact = t.notProvided;
 
   function handleSoon() {
-    toast.info("Cette modification arrivera bientôt sur Lok’Room.");
+    toast.info(t.comingSoon);
   }
 
-  // sauvegarde des infos publiques (pour l’instant uniquement front)
+  // sauvegarde des infos publiques (pour l'instant uniquement front)
   const [savingPublic, setSavingPublic] = useState(false);
   async function onSavePublic(e: React.FormEvent) {
     e.preventDefault();
     setSavingPublic(true);
     try {
-      toast.success(
-        "Infos publiques mises à jour (sauvegarde serveur à brancher) ✅"
-      );
+      toast.success(t.publicInfoUpdated);
       setIsEditingPublic(false);
     } catch {
-      toast.error("Impossible de mettre à jour les infos publiques");
+      toast.error(t.publicInfoUpdateFailed);
     } finally {
       setSavingPublic(false);
     }
@@ -705,7 +708,7 @@ function AboutSection(props: AboutProps) {
     <>
       {/* Titre seul */}
       <div className="mb-4">
-        <h2 className="text-2xl font-semibold">À propos de moi</h2>
+        <h2 className="text-2xl font-semibold">{t.aboutMe}</h2>
       </div>
 
       {/* Carte principale profil + stats + bouton Modifier le profil */}
@@ -727,13 +730,13 @@ function AboutSection(props: AboutProps) {
           </div>
           <div className="space-y-1">
             <p className="text-xs uppercase tracking-wide text-gray-500">
-              Profil Lok&apos;Room
+              {t.lokroomProfile}
             </p>
             <h3 className="text-xl font-semibold">{fullName}</h3>
             <p className="text-sm text-gray-500">{cityLine}</p>
             <p className="text-xs text-gray-400">
-              Membre Lok&apos;Room
-              {memberSinceYear ? ` depuis ${memberSinceYear}` : ""}
+              {t.lokroomMember}
+              {memberSinceYear ? ` ${t.memberSince.toLowerCase()} ${memberSinceYear}` : ""}
             </p>
           </div>
         </div>
@@ -745,27 +748,27 @@ function AboutSection(props: AboutProps) {
             onClick={() => setIsEditingProfile(true)}
             className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium hover:border-black hover:text-black"
           >
-            Modifier le profil
+            {t.editProfile}
           </button>
 
           <div className="flex gap-10 text-center">
             <div>
               <div className="text-lg font-semibold">{tripsCount}</div>
-              <div className="text-gray-500">Voyages</div>
+              <div className="text-gray-500">{t.tripsCount}</div>
             </div>
             <div>
               <div className="text-lg font-semibold">{reviewsCount}</div>
-              <div className="text-gray-500">Commentaires</div>
+              <div className="text-gray-500">{t.reviewsCount}</div>
             </div>
             <div>
               <div className="text-lg font-semibold">{rating}</div>
-              <div className="text-gray-500">Note moyenne</div>
+              <div className="text-gray-500">{t.averageRating}</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Colonne d’infos "sur moi" avec icônes propres */}
+      {/* Colonne d'infos "sur moi" avec icônes propres */}
       <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
         <div className="grid gap-4 text-sm md:grid-cols-2">
           <div className="space-y-3">
@@ -800,7 +803,7 @@ function AboutSection(props: AboutProps) {
                 </svg>
               </div>
               <p>
-                <span className="font-medium">Mon travail :</span>{" "}
+                <span className="font-medium">{t.myJob} :</span>{" "}
                 <span className="text-gray-700">{jobTitle}</span>
               </p>
             </div>
@@ -829,7 +832,7 @@ function AboutSection(props: AboutProps) {
                 </svg>
               </div>
               <p>
-                <span className="font-medium">Ma destination de rêve :</span>{" "}
+                <span className="font-medium">{t.dreamDestination} :</span>{" "}
                 <span className="text-gray-700">{dreamDestination}</span>
               </p>
             </div>
@@ -863,7 +866,7 @@ function AboutSection(props: AboutProps) {
                 </svg>
               </div>
               <p>
-                <span className="font-medium">Langues :</span>{" "}
+                <span className="font-medium">{t.languagesSpoken} :</span>{" "}
                 <span className="text-gray-700">{languages}</span>
               </p>
             </div>
@@ -891,9 +894,9 @@ function AboutSection(props: AboutProps) {
                 </svg>
               </div>
               <p>
-                <span className="font-medium">Identité vérifiée :</span>{" "}
+                <span className="font-medium">{t.identityVerification} :</span>{" "}
                 <span className="text-gray-700">
-                  {profile ? "Bientôt (via KYC Stripe)" : "Non renseigné"}
+                  {profile ? t.verificationSoon : t.notProvided}
                 </span>
               </p>
             </div>
@@ -901,11 +904,11 @@ function AboutSection(props: AboutProps) {
 
           <div className="space-y-3">
             <div>
-              <p className="mb-1 text-sm font-medium">À propos de moi</p>
+              <p className="mb-1 text-sm font-medium">{t.aboutMeSection}</p>
               <p className="text-gray-700">{aboutMe}</p>
             </div>
             <div>
-              <p className="mb-1 text-sm font-medium">Centres d’intérêt</p>
+              <p className="mb-1 text-sm font-medium">{t.interests}</p>
               <p className="text-gray-700">{interests}</p>
             </div>
           </div>
@@ -918,18 +921,16 @@ function AboutSection(props: AboutProps) {
             onClick={() => setIsEditingPublic(true)}
             className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium hover:border-black hover:text-black"
           >
-            Modifier mes infos publiques
+            {t.editPublicInfo}
           </button>
         </div>
       </section>
 
       {/* Bloc "Commentaires sur moi" */}
       <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h3 className="mb-2 text-base font-semibold">Commentaires sur moi</h3>
+        <h3 className="mb-2 text-base font-semibold">{t.commentsAboutMe}</h3>
         <p className="text-sm text-gray-600">
-          Quand tu auras effectué des réservations sur Lok&apos;Room, les hôtes
-          pourront laisser des commentaires sur toi. Ils apparaîtront ici, un
-          peu comme sur Airbnb (photo de l&apos;hôte, date, texte, etc.).
+          {t.commentsDesc}
         </p>
       </section>
 
@@ -942,21 +943,21 @@ function AboutSection(props: AboutProps) {
             onClick={() => setIsEditingProfile(false)}
           />
 
-          {/* Bulle d’édition */}
+          {/* Bulle d'édition */}
           <section
             className="relative z-50 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-6 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-base font-semibold">
-                Photo de profil & informations
+                {t.photoAndInfo}
               </h3>
               <button
                 type="button"
                 onClick={() => setIsEditingProfile(false)}
                 className="text-sm text-gray-500 hover:text-black"
               >
-                Fermer
+                {t.close}
               </button>
             </div>
 
@@ -980,7 +981,7 @@ function AboutSection(props: AboutProps) {
               <div className="flex flex-col gap-2 text-sm">
                 <div className="flex flex-wrap items-center gap-3">
                   <label className="cursor-pointer rounded-full border border-gray-300 px-4 py-2 text-xs font-medium text-gray-800 hover:border-black hover:bg-gray-50 sm:text-sm">
-                    Choisir un fichier
+                    {t.chooseFile}
                     <input
                       type="file"
                       accept="image/*"
@@ -989,7 +990,7 @@ function AboutSection(props: AboutProps) {
                     />
                   </label>
                   <span className="max-w-[200px] truncate text-xs text-gray-500 sm:max-w-xs">
-                    {avatarFile?.name ?? "Aucun fichier choisi"}
+                    {avatarFile?.name ?? t.noFileChosen}
                   </span>
                 </div>
 
@@ -1006,12 +1007,12 @@ function AboutSection(props: AboutProps) {
                     className="rounded-full bg-black px-4 py-2 text-xs font-medium text-white disabled:opacity-50 sm:text-sm"
                   >
                     {avatarStatus === "presigning"
-                      ? "Préparation…"
+                      ? t.preparing
                       : avatarStatus === "uploading"
-                      ? "Upload…"
+                      ? t.uploading
                       : avatarStatus === "saving"
-                      ? "Enregistrement…"
-                      : "Uploader l’avatar"}
+                      ? t.saving
+                      : t.uploadAvatar}
                   </button>
 
                   <button
@@ -1019,7 +1020,7 @@ function AboutSection(props: AboutProps) {
                     onClick={onDeleteAvatar}
                     className="rounded-full border border-gray-300 px-4 py-2 text-xs font-medium sm:text-sm"
                   >
-                    Supprimer l’avatar
+                    {t.deleteAvatar}
                   </button>
                 </div>
               </div>
@@ -1027,13 +1028,13 @@ function AboutSection(props: AboutProps) {
 
             {/* Email affiché en haut */}
             <p className="mb-4 text-xs text-gray-500">
-              Email : <span className="font-mono">{email}</span>
+              {t.email} : <span className="font-mono">{email}</span>
             </p>
 
             {/* 🔽 Informations du compte (chaque ligne modifiable) */}
             <form onSubmit={onSave}>
               <h3 className="mb-4 text-base font-semibold">
-                Informations du compte
+                {t.accountInfo}
               </h3>
 
               <div className="divide-y divide-gray-100 text-sm">
@@ -1042,7 +1043,7 @@ function AboutSection(props: AboutProps) {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs uppercase tracking-wide text-gray-400">
-                        Nom légal
+                        {t.legalName}
                       </p>
                       <p className="font-medium text-gray-800">{legalName}</p>
                     </div>
@@ -1053,7 +1054,7 @@ function AboutSection(props: AboutProps) {
                       }
                       className="text-sm font-medium text-gray-700 hover:underline"
                     >
-                      {editingLegalName ? "Annuler" : "Modifier"}
+                      {editingLegalName ? t.cancel : t.modify}
                     </button>
                   </div>
                   {editingLegalName && (
@@ -1064,7 +1065,7 @@ function AboutSection(props: AboutProps) {
                         onChange={(e) =>
                           setFirstName(e.currentTarget.value)
                         }
-                        placeholder="Prénom sur tes papiers"
+                        placeholder={t.firstNameOnId}
                       />
                       <input
                         className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
@@ -1072,7 +1073,7 @@ function AboutSection(props: AboutProps) {
                         onChange={(e) =>
                           setLastName(e.currentTarget.value)
                         }
-                        placeholder="Nom sur tes papiers"
+                        placeholder={t.lastNameOnId}
                       />
                     </div>
                   )}
@@ -1083,11 +1084,11 @@ function AboutSection(props: AboutProps) {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs uppercase tracking-wide text-gray-400">
-                        Nom choisi
+                        {t.chosenName}
                       </p>
                       <p className="font-medium text-gray-800">
-                        {chosenName === "Non fourni"
-                          ? "Non fourni"
+                        {chosenName === t.notProvided
+                          ? t.notProvided
                           : chosenName}
                       </p>
                     </div>
@@ -1099,10 +1100,10 @@ function AboutSection(props: AboutProps) {
                       className="text-sm font-medium text-gray-700 hover:underline"
                     >
                       {editingChosenName
-                        ? "Annuler"
-                        : chosenName === "Non fourni"
-                        ? "Ajouter"
-                        : "Modifier"}
+                        ? t.cancel
+                        : chosenName === t.notProvided
+                        ? t.add
+                        : t.modify}
                     </button>
                   </div>
                   {editingChosenName && (
@@ -1113,7 +1114,7 @@ function AboutSection(props: AboutProps) {
                         onChange={(e) =>
                           setName(e.currentTarget.value)
                         }
-                        placeholder="Nom affiché sur Lok’Room"
+                        placeholder={t.displayName}
                       />
                     </div>
                   )}
@@ -1123,7 +1124,7 @@ function AboutSection(props: AboutProps) {
                 <div className="flex items-center justify-between py-3">
                   <div>
                     <p className="text-xs uppercase tracking-wide text-gray-400">
-                      Adresse courriel
+                      {t.emailAddress}
                     </p>
                     <p className="font-mono text-gray-800">{email}</p>
                   </div>
@@ -1132,7 +1133,7 @@ function AboutSection(props: AboutProps) {
                     onClick={handleSoon}
                     className="text-sm font-medium text-gray-700 hover:underline"
                   >
-                    Modifier
+                    {t.modify}
                   </button>
                 </div>
 
@@ -1141,7 +1142,7 @@ function AboutSection(props: AboutProps) {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs uppercase tracking-wide text-gray-400">
-                        Numéro de téléphone
+                        {t.phoneNumber}
                       </p>
                       <p className="text-gray-800">{phoneDisplay}</p>
                     </div>
@@ -1153,10 +1154,10 @@ function AboutSection(props: AboutProps) {
                       className="text-sm font-medium text-gray-700 hover:underline"
                     >
                       {editingPhone
-                        ? "Annuler"
-                        : phoneDisplay === "Non fourni"
-                        ? "Ajouter"
-                        : "Modifier"}
+                        ? t.cancel
+                        : phoneDisplay === t.notProvided
+                        ? t.add
+                        : t.modify}
                     </button>
                   </div>
                   {editingPhone && (
@@ -1167,7 +1168,7 @@ function AboutSection(props: AboutProps) {
                         onChange={(e) =>
                           setPhone(e.currentTarget.value)
                         }
-                        placeholder="+33 6 ..."
+                        placeholder={t.phonePlaceholder}
                       />
                     </div>
                   )}
@@ -1177,7 +1178,7 @@ function AboutSection(props: AboutProps) {
                 <div className="flex items-center justify-between py-3">
                   <div>
                     <p className="text-xs uppercase tracking-wide text-gray-400">
-                      Numéro de vérification du compte
+                      {t.accountVerification}
                     </p>
                     <p className="text-gray-800">
                       {accountVerificationNumber}
@@ -1188,7 +1189,7 @@ function AboutSection(props: AboutProps) {
                     onClick={handleSoon}
                     className="text-sm font-medium text-gray-700 hover:underline"
                   >
-                    Modifier
+                    {t.modify}
                   </button>
                 </div>
 
@@ -1196,7 +1197,7 @@ function AboutSection(props: AboutProps) {
                 <div className="flex items-center justify-between py-3">
                   <div>
                     <p className="text-xs uppercase tracking-wide text-gray-400">
-                      Vérification de l&apos;identité
+                      {t.identityVerificationLabel}
                     </p>
                     <p className="text-gray-800">{identityStatus}</p>
                   </div>
@@ -1205,7 +1206,7 @@ function AboutSection(props: AboutProps) {
                     onClick={handleSoon}
                     className="text-sm font-medium text-gray-700 hover:underline"
                   >
-                    Modifier
+                    {t.modify}
                   </button>
                 </div>
 
@@ -1214,7 +1215,7 @@ function AboutSection(props: AboutProps) {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs uppercase tracking-wide text-gray-400">
-                        Adresse résidentielle
+                        {t.residentialAddress}
                       </p>
                       <p className="text-gray-800">
                         {residentialAddress}
@@ -1228,10 +1229,10 @@ function AboutSection(props: AboutProps) {
                       className="text-sm font-medium text-gray-700 hover:underline"
                     >
                       {editingAddress
-                        ? "Annuler"
-                        : residentialAddress === "Non fourni"
-                        ? "Ajouter"
-                        : "Modifier"}
+                        ? t.cancel
+                        : residentialAddress === t.notProvided
+                        ? t.add
+                        : t.modify}
                     </button>
                   </div>
                   {editingAddress && (
@@ -1242,7 +1243,7 @@ function AboutSection(props: AboutProps) {
                         onChange={(e) =>
                           setAddressLine1(e.currentTarget.value)
                         }
-                        placeholder="Numéro et rue"
+                        placeholder={t.streetNumber}
                       />
                       <input
                         className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
@@ -1250,7 +1251,7 @@ function AboutSection(props: AboutProps) {
                         onChange={(e) =>
                           setAddressLine2(e.currentTarget.value)
                         }
-                        placeholder="Complément (appartement, etc.)"
+                        placeholder={t.addressComplement}
                       />
                       <div className="grid gap-2 md:grid-cols-2">
                         <input
@@ -1259,7 +1260,7 @@ function AboutSection(props: AboutProps) {
                           onChange={(e) =>
                             setPostalCode(e.currentTarget.value)
                           }
-                          placeholder="Code postal"
+                          placeholder={t.postalCode}
                         />
                         <input
                           className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
@@ -1267,7 +1268,7 @@ function AboutSection(props: AboutProps) {
                           onChange={(e) =>
                             setCity(e.currentTarget.value)
                           }
-                          placeholder="Ville"
+                          placeholder={t.city}
                         />
                       </div>
                       <div className="grid gap-2 md:grid-cols-2">
@@ -1277,7 +1278,7 @@ function AboutSection(props: AboutProps) {
                           onChange={(e) =>
                             setProfileCountry(e.currentTarget.value)
                           }
-                          placeholder="Pays (France, Canada…)"
+                          placeholder={t.countryPlaceholder}
                         />
                         <input
                           className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
@@ -1285,7 +1286,7 @@ function AboutSection(props: AboutProps) {
                           onChange={(e) =>
                             setProvince(e.currentTarget.value)
                           }
-                          placeholder="Province / Région"
+                          placeholder={t.provinceRegion}
                         />
                       </div>
                     </div>
@@ -1296,7 +1297,7 @@ function AboutSection(props: AboutProps) {
                 <div className="flex items-center justify-between py-3">
                   <div>
                     <p className="text-xs uppercase tracking-wide text-gray-400">
-                      Adresse postale
+                      {t.postalAddressLabel}
                     </p>
                     <p className="text-gray-800">{postalAddress}</p>
                   </div>
@@ -1305,17 +1306,17 @@ function AboutSection(props: AboutProps) {
                     onClick={handleSoon}
                     className="text-sm font-medium text-gray-700 hover:underline"
                   >
-                    {postalAddress === "Non fournie"
-                      ? "Ajouter"
-                      : "Modifier"}
+                    {postalAddress === t.notProvidedFemale
+                      ? t.add
+                      : t.modify}
                   </button>
                 </div>
 
-                {/* Contact d’urgence */}
+                {/* Contact d'urgence */}
                 <div className="flex items-center justify-between py-3">
                   <div>
                     <p className="text-xs uppercase tracking-wide text-gray-400">
-                      Contact en cas d&apos;urgence
+                      {t.emergencyContact}
                     </p>
                     <p className="text-gray-800">{emergencyContact}</p>
                   </div>
@@ -1324,9 +1325,9 @@ function AboutSection(props: AboutProps) {
                     onClick={handleSoon}
                     className="text-sm font-medium text-gray-700 hover:underline"
                   >
-                    {emergencyContact === "Non fourni"
-                      ? "Ajouter"
-                      : "Modifier"}
+                    {emergencyContact === t.notProvided
+                      ? t.add
+                      : t.modify}
                   </button>
                 </div>
               </div>
@@ -1338,17 +1339,17 @@ function AboutSection(props: AboutProps) {
                   disabled={saving || !changed}
                   className="rounded-full bg-black px-5 py-2 text-sm font-medium text-white disabled:opacity-60"
                 >
-                  {saving ? "Enregistrement…" : "Enregistrer"}
+                  {saving ? t.saving : t.save}
                 </button>
 
                 {status === "saved" && (
                   <span className="text-sm text-green-700">
-                    Sauvegardé ✓
+                    {t.saved}
                   </span>
                 )}
                 {status === "error" && (
                   <span className="text-sm text-red-600">
-                    Erreur lors de l&apos;enregistrement
+                    {t.errorSaving}
                   </span>
                 )}
               </div>
@@ -1357,7 +1358,7 @@ function AboutSection(props: AboutProps) {
         </div>
       )}
 
-      {/* 🔥 MODAL INFOS PUBLIQUES (travail, langues, description, centres d’intérêt) */}
+      {/* 🔥 MODAL INFOS PUBLIQUES (travail, langues, description, centres d'intérêt) */}
       {isEditingPublic && (
         <div className="fixed inset-0 z-40 flex items-center justify-center">
           <div
@@ -1370,31 +1371,31 @@ function AboutSection(props: AboutProps) {
           >
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-base font-semibold">
-                Modifier mes infos publiques
+                {t.editPublicInfoTitle}
               </h3>
               <button
                 type="button"
                 onClick={() => setIsEditingPublic(false)}
                 className="text-sm text-gray-500 hover:text-black"
               >
-                Fermer
+                {t.close}
               </button>
             </div>
 
             <form className="space-y-4 text-sm" onSubmit={onSavePublic}>
               <div>
-                <label className="mb-1 block font-medium">Mon travail</label>
+                <label className="mb-1 block font-medium">{t.myJob}</label>
                 <input
                   className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-black focus:outline-none"
                   value={publicJobTitle}
                   onChange={(e) => setPublicJobTitle(e.currentTarget.value)}
-                  placeholder="Ex : Étudiant en droit"
+                  placeholder={t.jobPlaceholder}
                 />
               </div>
 
               <div>
                 <label className="mb-1 block font-medium">
-                  Ma destination de rêve
+                  {t.dreamDestination}
                 </label>
                 <input
                   className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-black focus:outline-none"
@@ -1402,39 +1403,39 @@ function AboutSection(props: AboutProps) {
                   onChange={(e) =>
                     setPublicDreamDestination(e.currentTarget.value)
                   }
-                  placeholder="Ex : Zanzibar"
+                  placeholder={t.dreamDestinationPlaceholder}
                 />
               </div>
 
               <div>
-                <label className="mb-1 block font-medium">Langues parlées</label>
+                <label className="mb-1 block font-medium">{t.languagesSpoken}</label>
                 <input
                   className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-black focus:outline-none"
                   value={publicLanguages}
                   onChange={(e) => setPublicLanguages(e.currentTarget.value)}
-                  placeholder="Ex : Français, anglais"
+                  placeholder={t.languagesPlaceholder}
                 />
               </div>
 
               <div>
-                <label className="mb-1 block font-medium">À propos de moi</label>
+                <label className="mb-1 block font-medium">{t.aboutMeSection}</label>
                 <textarea
                   className="min-h-[80px] w-full rounded-md border border-gray-300 px-3 py-2 focus:border-black focus:outline-none"
                   value={publicAboutMe}
                   onChange={(e) => setPublicAboutMe(e.currentTarget.value)}
-                  placeholder="Écris quelques lignes sur toi…"
+                  placeholder={t.aboutMeFieldPlaceholder}
                 />
               </div>
 
               <div>
                 <label className="mb-1 block font-medium">
-                  Centres d&apos;intérêt
+                  {t.interests}
                 </label>
                 <textarea
                   className="min-h-[60px] w-full rounded-md border border-gray-300 px-3 py-2 focus:border-black focus:outline-none"
                   value={publicInterests}
                   onChange={(e) => setPublicInterests(e.currentTarget.value)}
-                  placeholder="Ex : voyage, sport, photographie…"
+                  placeholder={t.interestsPlaceholder}
                 />
               </div>
 
@@ -1444,10 +1445,10 @@ function AboutSection(props: AboutProps) {
                   disabled={savingPublic}
                   className="rounded-full bg-black px-5 py-2 text-sm font-medium text-white disabled:opacity-60"
                 >
-                  {savingPublic ? "Enregistrement…" : "Enregistrer"}
+                  {savingPublic ? t.saving : t.save}
                 </button>
                 <p className="text-xs text-gray-500">
-                  Ces infos sont visibles sur ton profil public Lok&apos;Room.
+                  {t.publicInfoNote}
                 </p>
               </div>
             </form>
@@ -1463,16 +1464,18 @@ function AboutSection(props: AboutProps) {
    =========================== */
 
 function TripsSection({
+  t,
   trips,
   loading,
 }: {
+  t: ProfileTranslations;
   trips: BookingDTO[];
   loading: boolean;
 }) {
   if (loading) {
     return (
       <section className="rounded-3xl border border-gray-200 bg-white p-6 text-sm text-gray-600 shadow-sm">
-        Chargement de tes voyages…
+        {t.loadingTrips}
       </section>
     );
   }
@@ -1480,10 +1483,9 @@ function TripsSection({
   if (!trips.length) {
     return (
       <section className="rounded-3xl border border-gray-200 bg-white p-6 text-sm text-gray-600 shadow-sm">
-        <h3 className="mb-2 text-base font-semibold">Voyages précédents</h3>
+        <h3 className="mb-2 text-base font-semibold">{t.previousTrips}</h3>
         <p>
-          Tu n&apos;as pas encore de réservation sur Lok&apos;Room. Dès que tu
-          auras voyagé, tes séjours s&apos;afficheront ici comme sur Airbnb.
+          {t.noTripsYet}
         </p>
       </section>
     );
@@ -1491,7 +1493,7 @@ function TripsSection({
 
   return (
     <section className="space-y-4">
-      <h3 className="text-base font-semibold">Voyages précédents</h3>
+      <h3 className="text-base font-semibold">{t.previousTrips}</h3>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {trips.map((booking) => (
           <article

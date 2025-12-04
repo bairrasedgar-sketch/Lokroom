@@ -3,6 +3,20 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { sendWelcomeEmail } from "@/lib/email";
+import { z } from "zod";
+
+// Schéma de validation Zod pour l'onboarding
+const onboardingSchema = z.object({
+  firstName: z.string().min(1, "Prénom requis").max(100),
+  lastName: z.string().min(1, "Nom requis").max(100),
+  birthDate: z.string().nullable().optional(),
+  phone: z.string().max(30).nullable().optional(),
+  addressLine1: z.string().max(200).nullable().optional(),
+  city: z.string().max(100).nullable().optional(),
+  postalCode: z.string().max(20).nullable().optional(),
+  country: z.string().max(2).nullable().optional(),
+});
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -11,25 +25,104 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
-  const body = await req.json();
-  const firstName = String(body.firstName || "").trim();
-  const lastName = String(body.lastName || "").trim();
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "JSON invalide" }, { status: 400 });
+  }
 
-  if (!firstName || !lastName) {
+  // Validation Zod
+  const validation = onboardingSchema.safeParse(body);
+  if (!validation.success) {
     return NextResponse.json(
-      { error: "Prénom et nom sont obligatoires." },
+      { error: validation.error.errors[0]?.message || "Données invalides" },
       { status: 400 }
     );
   }
 
+  const {
+    firstName,
+    lastName,
+    birthDate,
+    phone,
+    addressLine1,
+    city,
+    postalCode,
+    country,
+  } = validation.data;
+
   const fullName = `${firstName} ${lastName}`.trim();
 
-  await prisma.user.update({
-    where: { email: session.user.email },
-    data: {
-      name: fullName,
-    },
+  // Parse birthDate si fournie
+  let parsedBirthDate: Date | null = null;
+  if (birthDate) {
+    const date = new Date(birthDate);
+    if (!isNaN(date.getTime())) {
+      parsedBirthDate = date;
+    }
+  }
+
+  // Mise à jour utilisateur + profil dans une transaction
+  // On check si c'est un nouvel utilisateur (pas encore de profil)
+  const existingProfile = await prisma.userProfile.findFirst({
+    where: { user: { email: session.user!.email! } },
+    select: { id: true },
   });
+
+  const isNewUser = !existingProfile;
+
+  await prisma.$transaction(async (tx) => {
+    // Mise à jour User
+    await tx.user.update({
+      where: { email: session.user!.email! },
+      data: {
+        name: fullName,
+        country: country || undefined,
+      },
+    });
+
+    // Upsert UserProfile avec les infos complètes
+    const user = await tx.user.findUnique({
+      where: { email: session.user!.email! },
+      select: { id: true },
+    });
+
+    if (user) {
+      await tx.userProfile.upsert({
+        where: { userId: user.id },
+        create: {
+          userId: user.id,
+          firstName,
+          lastName,
+          birthDate: parsedBirthDate,
+          phone: phone || null,
+          addressLine1: addressLine1 || null,
+          city: city || null,
+          postalCode: postalCode || null,
+          country: country || null,
+        },
+        update: {
+          firstName,
+          lastName,
+          birthDate: parsedBirthDate,
+          phone: phone || undefined,
+          addressLine1: addressLine1 || undefined,
+          city: city || undefined,
+          postalCode: postalCode || undefined,
+          country: country || undefined,
+        },
+      });
+    }
+  });
+
+  // Envoyer l'email de bienvenue seulement pour les nouveaux utilisateurs
+  if (isNewUser && session.user.email) {
+    // Fire and forget - on ne bloque pas la réponse
+    sendWelcomeEmail(session.user.email, firstName).catch((error) => {
+      console.error("[Onboarding] Erreur envoi email bienvenue:", error);
+    });
+  }
 
   return NextResponse.json({ ok: true });
 }

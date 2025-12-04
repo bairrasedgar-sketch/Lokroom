@@ -1,9 +1,8 @@
-// apps/web/src/app/host/bookings/page.tsx
-
 "use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import useTranslation from "@/hooks/useTranslation";
 
 type HostBooking = {
   id: string;
@@ -34,6 +33,9 @@ type ApiResponse = {
 };
 
 export default function HostBookingsPage() {
+  const { dict, locale } = useTranslation();
+  const t = dict.host;
+
   const [data, setData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
   // Filtres UI
@@ -63,29 +65,42 @@ export default function HostBookingsPage() {
     fetchBookings();
   }, [page, status, from, to]);
 
+  function getStatusLabel(s: string): string {
+    switch (s) {
+      case "PENDING":
+        return t.statusPending;
+      case "CONFIRMED":
+        return t.statusConfirmed;
+      case "CANCELLED":
+        return t.statusCancelled;
+      default:
+        return s;
+    }
+  }
+
   return (
     <main className="mx-auto max-w-4xl space-y-6 px-4 py-6">
-      <h1 className="text-2xl font-semibold">Réservations de mes annonces</h1>
+      <h1 className="text-2xl font-semibold">{t.receivedBookings}</h1>
 
       {/* 🔍 Filtres */}
       <section className="rounded-xl border bg-white p-4 shadow-sm space-y-4">
         <div className="grid gap-4 sm:grid-cols-4">
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium">Status</label>
+            <label className="text-xs font-medium">{dict.bookings.status ?? "Status"}</label>
             <select
               className="rounded border px-2 py-1 text-sm"
               value={status}
               onChange={(e) => setStatus(e.target.value)}
             >
-              <option value="">Tous</option>
-              <option value="PENDING">En attente</option>
-              <option value="CONFIRMED">Confirmées</option>
-              <option value="CANCELLED">Annulées</option>
+              <option value="">{t.filterAll}</option>
+              <option value="PENDING">{t.filterPending}</option>
+              <option value="CONFIRMED">{t.filterConfirmed}</option>
+              <option value="CANCELLED">{t.filterCancelled}</option>
             </select>
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium">Du</label>
+            <label className="text-xs font-medium">{dict.dates.startDate}</label>
             <input
               type="date"
               className="rounded border px-2 py-1 text-sm"
@@ -95,7 +110,7 @@ export default function HostBookingsPage() {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium">Au</label>
+            <label className="text-xs font-medium">{dict.dates.endDate}</label>
             <input
               type="date"
               className="rounded border px-2 py-1 text-sm"
@@ -108,12 +123,10 @@ export default function HostBookingsPage() {
 
       {/* Liste */}
       <section className="space-y-3">
-        {loading && <p className="text-sm text-gray-600">Chargement…</p>}
+        {loading && <p className="text-sm text-gray-600">{t.loadingBookings}</p>}
 
         {!loading && data?.items.length === 0 && (
-          <p className="text-sm text-gray-500">
-            Aucune réservation pour ces filtres.
-          </p>
+          <p className="text-sm text-gray-500">{t.noBookingsYet}</p>
         )}
 
         {!loading &&
@@ -134,7 +147,7 @@ export default function HostBookingsPage() {
                     />
                   ) : (
                     <div className="grid h-full w-full place-items-center text-xs text-gray-400">
-                      Pas d’image
+                      {dict.listings.noImage}
                     </div>
                   )}
                 </div>
@@ -149,23 +162,22 @@ export default function HostBookingsPage() {
                     </Link>
 
                     <p className="text-xs text-gray-600">
-                      {new Date(b.startDate).toLocaleDateString()} →{" "}
-                      {new Date(b.endDate).toLocaleDateString()}
+                      {new Date(b.startDate).toLocaleDateString(locale)} →{" "}
+                      {new Date(b.endDate).toLocaleDateString(locale)}
                     </p>
 
                     <p className="text-xs text-gray-600">
-                      Client : {b.guest.name ?? b.guest.email ?? "—"}
+                      {t.guest} : {b.guest.name ?? b.guest.email ?? t.unknownGuest}
                     </p>
 
                     <p className="text-xs text-gray-600">
-                      Statut :{" "}
-                      <span className="font-medium">{b.status}</span>
+                      {dict.bookings.status ?? "Status"} :{" "}
+                      <span className="font-medium">{getStatusLabel(b.status)}</span>
                     </p>
                   </div>
 
                   <p className="text-xs text-gray-400">
-                    Créée le{" "}
-                    {new Date(b.createdAt).toLocaleDateString()}
+                    {new Date(b.createdAt).toLocaleDateString(locale)}
                   </p>
                 </div>
               </div>
@@ -181,7 +193,7 @@ export default function HostBookingsPage() {
             className="rounded border px-3 py-1 text-sm disabled:opacity-40"
             onClick={() => setPage((p) => p - 1)}
           >
-            ← Précédent
+            ← {dict.listings.prevPage}
           </button>
 
           <p className="text-xs text-gray-600">
@@ -193,7 +205,7 @@ export default function HostBookingsPage() {
             className="rounded border px-3 py-1 text-sm disabled:opacity-40"
             onClick={() => setPage((p) => p + 1)}
           >
-            Suivant →
+            {dict.listings.nextPage} →
           </button>
         </div>
       )}

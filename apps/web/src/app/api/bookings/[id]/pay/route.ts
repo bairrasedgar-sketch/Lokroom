@@ -22,6 +22,30 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const userId = session.user.id;
     const bookingId = params.id;
 
+    // ─────────────────────────────────────────────────────────────
+    // SÉCURITÉ : Vérification KYC obligatoire avant paiement
+    // ─────────────────────────────────────────────────────────────
+    const currentUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { identityStatus: true },
+    });
+
+    if (!currentUser) {
+      return NextResponse.json({ error: "user_not_found" }, { status: 404 });
+    }
+
+    // L'utilisateur doit avoir vérifié son identité (KYC) pour payer
+    if (currentUser.identityStatus !== "VERIFIED") {
+      return NextResponse.json(
+        {
+          error: "kyc_required",
+          message: "Identity verification is required before making a payment. Please complete KYC verification in your account settings.",
+          identityStatus: currentUser.identityStatus,
+        },
+        { status: 403 }
+      );
+    }
+
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
       include: {

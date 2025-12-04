@@ -9,6 +9,7 @@ import { formatMoneyAsync, type Currency } from "@/lib/currency";
 import { getOrigin } from "@/lib/origin";
 import Map, { type MapMarker } from "@/components/Map";
 import FiltersBar from "@/components/listings/FiltersBar";
+import { getServerDictionary } from "@/lib/i18n.server";
 
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
@@ -82,7 +83,7 @@ function buildQuery(searchParams?: SearchParams): string {
 }
 
 async function searchListings(
-  searchParams?: SearchParams,
+  searchParams?: SearchParams
 ): Promise<SearchResponse> {
   const origin = getOrigin();
   const qs = buildQuery(searchParams);
@@ -108,7 +109,7 @@ async function searchListings(
 function withUpdatedParam(
   searchParams: SearchParams | undefined,
   key: string,
-  value: string | null,
+  value: string | null
 ): string {
   const params = new URLSearchParams();
 
@@ -142,6 +143,10 @@ export default async function ListingsPage({
   const displayCurrency =
     (cookies().get("currency")?.value as Currency) ?? "EUR";
 
+  // 🔤 Traductions depuis le serveur
+  const { dict, locale } = getServerDictionary();
+  const t = dict.listings;
+
   const {
     items: listings,
     page,
@@ -164,17 +169,17 @@ export default async function ListingsPage({
       const priceLabel = await formatMoneyAsync(
         listing.price,
         listing.currency,
-        displayCurrency,
+        displayCurrency
       );
       return { listing, priceLabel };
-    }),
+    })
   );
 
   // Markers pour la carte
   const markers: MapMarker[] = listingsWithPrice
     .filter(
       ({ listing }) =>
-        listing.latPublic != null && listing.lngPublic != null,
+        listing.latPublic != null && listing.lngPublic != null
     )
     .map(({ listing, priceLabel }) => ({
       id: listing.id,
@@ -189,23 +194,28 @@ export default async function ListingsPage({
       imageUrl: listing.images?.[0]?.url ?? null,
     }));
 
+  const resultLabel =
+    total === 0
+      ? t.resultNone
+      : total === 1
+        ? t.resultOne
+        : t.resultMany.replace("{count}", String(total));
+
   return (
     <main className="mx-auto max-w-6xl space-y-6 px-4 pb-12 pt-6">
       <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold sm:text-3xl">
-            Trouver un espace
-          </h1>
-          <p className="text-sm text-gray-600">
-            Salles, bureaux, parkings, coworking, et plus – filtrés pour toi.
-          </p>
+          <h1 className="text-2xl font-semibold sm:text-3xl">{t.title}</h1>
+          <p className="text-sm text-gray-600">{t.subtitle}</p>
         </div>
 
         <div className="text-xs text-gray-500">
           {session ? (
-            <span>Connecté en tant que {session.user?.email}</span>
+            <span>
+              {t.connectedAs} {session.user?.email}
+            </span>
           ) : (
-            <span>Connecte-toi pour réserver plus rapidement.</span>
+            <span>{t.loginHint}</span>
           )}
         </div>
       </header>
@@ -220,17 +230,12 @@ export default async function ListingsPage({
         minRating={minRating}
         sort={sort}
         hasPhoto={hasPhoto}
+        locale={locale}
       />
 
       {/* Résumé + pagination */}
       <section className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
-        <p className="text-xs text-gray-600">
-          {total === 0
-            ? "Aucune annonce ne correspond à ces critères."
-            : total === 1
-            ? "1 annonce trouvée."
-            : `${total} annonces trouvées.`}
-        </p>
+        <p className="text-xs text-gray-600">{resultLabel}</p>
 
         {pageCount > 1 && (
           <div className="flex items-center gap-2 text-xs text-gray-600">
@@ -244,11 +249,11 @@ export default async function ListingsPage({
                   href={`/listings?${withUpdatedParam(
                     searchParams,
                     "page",
-                    String(page - 1),
+                    String(page - 1)
                   )}`}
                   className="rounded-full border border-gray-300 px-2 py-1 hover:border-black"
                 >
-                  Précédent
+                  {t.prevPage}
                 </Link>
               )}
 
@@ -257,11 +262,11 @@ export default async function ListingsPage({
                   href={`/listings?${withUpdatedParam(
                     searchParams,
                     "page",
-                    String(page + 1),
+                    String(page + 1)
                   )}`}
                   className="rounded-full border border-gray-300 px-2 py-1 hover:border-black"
                 >
-                  Suivant
+                  {t.nextPage}
                 </Link>
               )}
             </div>
@@ -272,7 +277,7 @@ export default async function ListingsPage({
       {/* Liste + Carte */}
       {listingsWithPrice.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
-          Essaie d&apos;élargir un peu tes filtres (prix, ville, note…).
+          {t.emptyState}
         </div>
       ) : (
         <>
@@ -308,7 +313,7 @@ export default async function ListingsPage({
                           />
                         ) : (
                           <div className="absolute inset-0 grid place-items-center text-xs text-gray-400">
-                            Pas d&apos;image
+                            {t.noImage}
                           </div>
                         )}
 
@@ -335,24 +340,24 @@ export default async function ListingsPage({
                               {priceLabel}
                               <span className="text-xs font-normal text-gray-600">
                                 {" "}
-                                / nuit
+                                {t.perNight}
                               </span>
                             </p>
                             <p className="text-[11px] text-gray-500">
-                              {locationLabel || "Localisation non précisée"}
+                              {locationLabel || t.noLocation}
                             </p>
                           </div>
 
                           <div className="flex flex-col items-end text-[11px] text-gray-500">
                             <span>
-                              Hôte :{" "}
-                              {listing.owner.name ?? "Utilisateur Lok'Room"}
+                              {t.hostLabel}{" "}
+                              {listing.owner.name ?? t.defaultHostName}
                             </span>
                             <span>
-                              Publié le{" "}
-                              {new Date(
-                                listing.createdAt,
-                              ).toLocaleDateString()}
+                              {t.publishedOnPrefix}{" "}
+                              {new Date(listing.createdAt).toLocaleDateString(
+                                locale
+                              )}
                             </span>
                           </div>
                         </div>

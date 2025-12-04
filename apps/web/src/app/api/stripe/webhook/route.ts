@@ -1,39 +1,171 @@
 // apps/web/src/app/api/stripe/webhook/route.ts
+/**
+ * Webhook Stripe sécurisé avec :
+ * - Vérification de signature
+ * - Idempotence via base de données (protection contre les événements dupliqués)
+ * - Validation des montants contre la base de données
+ * - Logging sécurisé
+ */
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
+import { securityLog } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
+
+// Map d'idempotence en mémoire (fallback si table StripeEvent n'existe pas)
+// NOTE: Une fois la migration Prisma effectuée avec `npx prisma migrate dev`,
+// ce fallback ne sera plus utilisé et l'idempotence sera persistée en BDD.
+const processedEventsMemory = new Map<string, { processedAt: number }>();
+const IDEMPOTENCY_TTL_MS = 24 * 60 * 60 * 1000;
+
+// Nettoyage périodique de la map mémoire
+setInterval(() => {
+  const cutoff = Date.now() - IDEMPOTENCY_TTL_MS;
+  for (const [key, value] of processedEventsMemory.entries()) {
+    if (value.processedAt < cutoff) {
+      processedEventsMemory.delete(key);
+    }
+  }
+}, 60 * 60 * 1000);
+
+/**
+ * Vérifie si un événement a déjà été traité (idempotence)
+ * Essaie d'abord la BDD, puis fallback sur la mémoire
+ */
+async function checkAndMarkEventProcessed(eventId: string, eventType: string): Promise<boolean> {
+  // Essai avec la table StripeEvent si elle existe
+  try {
+    await prisma.stripeEvent.create({
+      data: {
+        id: eventId,
+        type: eventType,
+      },
+    });
+    return false; // Événement pas encore traité
+  } catch (error) {
+    // Vérifier si c'est une violation de contrainte unique (événement déjà traité)
+    if (
+      error instanceof Error &&
+      (error.message.includes("Unique constraint") ||
+       error.message.includes("duplicate key"))
+    ) {
+      return true; // Déjà traité
+    }
+
+    // Si la table n'existe pas, fallback sur la mémoire
+    if (
+      error instanceof Error &&
+      (error.message.includes("does not exist") ||
+       error.message.includes("stripeEvent"))
+    ) {
+      // Fallback: utiliser la Map en mémoire
+      if (processedEventsMemory.has(eventId)) {
+        return true;
+      }
+      processedEventsMemory.set(eventId, { processedAt: Date.now() });
+      return false;
+    }
+
+    // Autre erreur - on continue quand même (mieux traiter deux fois que pas du tout)
+    console.warn("[Webhook] Erreur vérification idempotence:", error);
+    return false;
+  }
+}
+
+/**
+ * Nettoyage périodique des événements anciens (plus de 7 jours)
+ */
+async function cleanupOldEvents(): Promise<void> {
+  // 1% de chance de déclencher le nettoyage à chaque appel
+  if (Math.random() > 0.01) return;
+
+  try {
+    const cutoffDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    await prisma.stripeEvent.deleteMany({
+      where: {
+        processedAt: { lt: cutoffDate },
+      },
+    });
+  } catch {
+    // Ignore les erreurs de nettoyage (table peut ne pas exister)
+  }
+}
+
+/**
+ * Valide que le montant payé correspond au booking
+ */
+async function validatePaymentAmount(
+  bookingId: string,
+  amountPaidCents: number
+): Promise<{ valid: boolean; expectedCents: number; booking: Prisma.BookingGetPayload<{ select: { id: true; totalPrice: true; guestFeeCents: true; currency: true } }> | null }> {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    select: {
+      id: true,
+      totalPrice: true,
+      guestFeeCents: true,
+      currency: true,
+    },
+  });
+
+  if (!booking) {
+    return { valid: false, expectedCents: 0, booking: null };
+  }
+
+  // Le montant attendu = prix total + frais guest
+  const baseCents = Math.round(booking.totalPrice * 100);
+  const guestFeeCents = booking.guestFeeCents ?? 0;
+  const expectedCents = baseCents + guestFeeCents;
+
+  // Tolérance de 1% pour les erreurs d'arrondi
+  const tolerance = Math.max(1, Math.round(expectedCents * 0.01));
+  const valid = Math.abs(amountPaidCents - expectedCents) <= tolerance;
+
+  return { valid, expectedCents, booking };
+}
 
 export async function POST(req: Request) {
   const sig = req.headers.get("stripe-signature");
   const whsec = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!sig || !whsec) {
+    securityLog("security", "webhook_missing_signature");
     return NextResponse.json({ error: "missing_signature" }, { status: 400 });
   }
 
   let event: Stripe.Event;
+  let rawBody: string;
 
   try {
-    const raw = await req.text();
-    event = stripe.webhooks.constructEvent(raw, sig, whsec);
+    rawBody = await req.text();
+    event = stripe.webhooks.constructEvent(rawBody, sig, whsec);
   } catch (e: unknown) {
     const msg =
       e && typeof e === "object" && "message" in e
         ? String((e as { message?: unknown }).message)
         : "unknown_error";
 
-    console.error("Stripe webhook signature error:", msg);
+    securityLog("security", "webhook_invalid_signature", undefined, { error: msg });
 
     return NextResponse.json(
       { error: `invalid_signature: ${msg}` },
       { status: 400 }
     );
   }
+
+  // Vérification d'idempotence via base de données
+  const alreadyProcessed = await checkAndMarkEventProcessed(event.id, event.type);
+  if (alreadyProcessed) {
+    securityLog("info", "webhook_duplicate_event", undefined, { eventId: event.id });
+    return NextResponse.json({ received: true, duplicate: true });
+  }
+
+  // Nettoyage occasionnel des anciens événements
+  void cleanupOldEvents();
 
   try {
     // ==========================================================
@@ -50,7 +182,27 @@ export async function POST(req: Request) {
         const hostUserId = md.hostUserId;
 
         if (!bookingId || !hostUserId) {
+          securityLog("warn", "webhook_missing_metadata", undefined, {
+            eventId: event.id,
+            hasBookingId: !!bookingId,
+            hasHostUserId: !!hostUserId,
+          });
           break;
+        }
+
+        // SÉCURITÉ : Valider le montant payé contre la base de données
+        const validation = await validatePaymentAmount(bookingId, pi.amount);
+        if (!validation.valid) {
+          securityLog("security", "webhook_amount_mismatch", undefined, {
+            eventId: event.id,
+            bookingId,
+            paidCents: pi.amount,
+            expectedCents: validation.expectedCents,
+          });
+          // On ne bloque pas le webhook mais on log l'alerte
+          console.error(
+            `[SECURITY ALERT] Payment amount mismatch for booking ${bookingId}: paid ${pi.amount}, expected ${validation.expectedCents}`
+          );
         }
 
         await prisma.$transaction(async (tx) => {
@@ -71,8 +223,15 @@ export async function POST(req: Request) {
             },
           });
 
-          if (!booking) return;
+          if (!booking) {
+            securityLog("warn", "webhook_booking_not_found", undefined, {
+              eventId: event.id,
+              bookingId,
+            });
+            return;
+          }
 
+          // SÉCURITÉ : Vérification d'idempotence au niveau booking
           const alreadyConfirmed =
             booking.status === "CONFIRMED" &&
             !!booking.stripePaymentIntentId &&
@@ -84,6 +243,11 @@ export async function POST(req: Request) {
             latestCharge?.id ?? booking.stripeChargeId ?? null;
 
           if (alreadyConfirmed) {
+            // Booking déjà confirmée - mise à jour minimale seulement
+            securityLog("info", "webhook_booking_already_confirmed", undefined, {
+              eventId: event.id,
+              bookingId,
+            });
             await tx.booking.update({
               where: { id: bookingId },
               data: {
@@ -94,20 +258,11 @@ export async function POST(req: Request) {
             return;
           }
 
+          // SÉCURITÉ : Utiliser UNIQUEMENT les frais de la base de données
+          // Ne jamais faire confiance aux metadata Stripe pour les montants critiques
           const priceCents = Math.round(booking.totalPrice * 100);
-
-          const hostFeeFromDb = booking.hostFeeCents ?? 0;
-          const hostFeeFromMeta = Number(md.fee_host_cents || "0");
-          const hostFeeCents =
-            hostFeeFromDb > 0 ? hostFeeFromDb : hostFeeFromMeta;
-
+          const hostFeeCents = booking.hostFeeCents ?? 0;
           const payoutToHostCents = Math.max(0, priceCents - hostFeeCents);
-
-          const guestFeeFromMeta = Number(md.fee_guest_cents || "0");
-          const taxGuestFromMeta = Number(md.tax_guest_cents || "0");
-          const stripeEstimateFromMeta = Number(
-            md.stripe_fee_estimate_cents || "0"
-          );
 
           await tx.booking.update({
             where: { id: bookingId },
@@ -115,16 +270,30 @@ export async function POST(req: Request) {
               status: "CONFIRMED",
               stripePaymentIntentId: pi.id,
               stripeChargeId,
-              hostFeeCents: booking.hostFeeCents ?? hostFeeCents,
-              guestFeeCents: booking.guestFeeCents ?? guestFeeFromMeta,
-              taxOnGuestFeeCents:
-                booking.taxOnGuestFeeCents ?? taxGuestFromMeta,
-              stripeFeeEstimateCents:
-                booking.stripeFeeEstimateCents ?? stripeEstimateFromMeta,
+              // Ne pas écraser les frais existants avec les metadata
             },
           });
 
+          // Crédit wallet hôte avec vérification
           if (payoutToHostCents > 0) {
+            // Vérifier qu'on n'a pas déjà crédité pour ce booking
+            const existingCredit = await tx.walletLedger.findFirst({
+              where: {
+                hostId: hostUserId,
+                bookingId,
+                reason: { startsWith: "booking_credit:" },
+              },
+            });
+
+            if (existingCredit) {
+              securityLog("warn", "webhook_duplicate_credit_attempt", undefined, {
+                eventId: event.id,
+                bookingId,
+                hostUserId,
+              });
+              return;
+            }
+
             await tx.wallet.upsert({
               where: { hostId: hostUserId },
               update: {
@@ -143,6 +312,13 @@ export async function POST(req: Request) {
                 reason: `booking_credit:${bookingId}`,
                 bookingId,
               },
+            });
+
+            securityLog("info", "webhook_host_credited", undefined, {
+              eventId: event.id,
+              bookingId,
+              hostUserId,
+              amountCents: payoutToHostCents,
             });
           }
         });
@@ -165,7 +341,13 @@ export async function POST(req: Request) {
         const bookingId = md.bookingId;
         const hostUserId = md.hostUserId;
 
-        if (!bookingId || !hostUserId) break;
+        if (!bookingId || !hostUserId) {
+          securityLog("warn", "refund_missing_metadata", undefined, {
+            eventId: event.id,
+            chargeId: charge.id,
+          });
+          break;
+        }
 
         const refundedTotalCents = charge.amount_refunded ?? 0;
 
@@ -178,10 +360,17 @@ export async function POST(req: Request) {
               refundAmountCents: true,
               status: true,
               cancelledAt: true,
+              hostFeeCents: true, // SÉCURITÉ: Utiliser les frais de la BDD
             },
           });
 
-          if (!booking) return;
+          if (!booking) {
+            securityLog("warn", "refund_booking_not_found", undefined, {
+              eventId: event.id,
+              bookingId,
+            });
+            return;
+          }
 
           const priceCents = Math.round(booking.totalPrice * 100);
           const alreadyRecorded = booking.refundAmountCents ?? 0;
@@ -201,7 +390,8 @@ export async function POST(req: Request) {
             return;
           }
 
-          const hostFeeCents = Number(md.fee_host_cents || "0");
+          // SÉCURITÉ: Utiliser les frais de la BDD, pas des metadata
+          const hostFeeCents = booking.hostFeeCents ?? 0;
           const hostShareCents = Math.max(0, priceCents - hostFeeCents);
 
           const proportionalHostDebit =
@@ -212,35 +402,60 @@ export async function POST(req: Request) {
           let appliedHostDebit = 0;
 
           if (proportionalHostDebit > 0) {
-            const wallet = await tx.wallet.findUnique({
-              where: { hostId: hostUserId },
-              select: { balanceCents: true },
+            // Vérifier qu'on n'a pas déjà débité pour ce refund
+            const existingDebit = await tx.walletLedger.findFirst({
+              where: {
+                hostId: hostUserId,
+                bookingId,
+                reason: { startsWith: "refund_booking:" },
+                deltaCents: { lt: 0 },
+              },
             });
 
-            if (wallet && wallet.balanceCents > 0) {
-              appliedHostDebit = Math.min(
-                wallet.balanceCents,
-                proportionalHostDebit
-              );
+            if (existingDebit) {
+              securityLog("warn", "refund_duplicate_debit_attempt", undefined, {
+                eventId: event.id,
+                bookingId,
+                hostUserId,
+              });
+            } else {
+              const wallet = await tx.wallet.findUnique({
+                where: { hostId: hostUserId },
+                select: { balanceCents: true },
+              });
 
-              if (appliedHostDebit > 0) {
-                await tx.wallet.update({
-                  where: { hostId: hostUserId },
-                  data: {
-                    balanceCents: {
-                      decrement: appliedHostDebit,
+              if (wallet && wallet.balanceCents > 0) {
+                appliedHostDebit = Math.min(
+                  wallet.balanceCents,
+                  proportionalHostDebit
+                );
+
+                if (appliedHostDebit > 0) {
+                  await tx.wallet.update({
+                    where: { hostId: hostUserId },
+                    data: {
+                      balanceCents: {
+                        decrement: appliedHostDebit,
+                      },
                     },
-                  },
-                });
+                  });
 
-                await tx.walletLedger.create({
-                  data: {
-                    hostId: hostUserId,
-                    deltaCents: -appliedHostDebit,
-                    reason: `refund_booking:${bookingId}`,
+                  await tx.walletLedger.create({
+                    data: {
+                      hostId: hostUserId,
+                      deltaCents: -appliedHostDebit,
+                      reason: `refund_booking:${bookingId}`,
+                      bookingId,
+                    },
+                  });
+
+                  securityLog("info", "refund_host_debited", undefined, {
+                    eventId: event.id,
                     bookingId,
-                  },
-                });
+                    hostUserId,
+                    amountCents: appliedHostDebit,
+                  });
+                }
               }
             }
           }
@@ -379,7 +594,6 @@ export async function POST(req: Request) {
           break;
       }
 
-      // On cast prisma.user en any pour éviter les conflits de types
       await (prisma.user as any).updateMany({
         where,
         data: {
@@ -389,8 +603,13 @@ export async function POST(req: Request) {
       });
     }
 
+    // L'événement a déjà été marqué comme traité en début de fonction
     return NextResponse.json({ received: true });
   } catch (e) {
+    securityLog("error", "webhook_processing_error", undefined, {
+      eventId: event?.id,
+      error: e instanceof Error ? e.message : "unknown",
+    });
     console.error("webhook error:", e);
     return NextResponse.json({ error: "webhook_failed" }, { status: 500 });
   }

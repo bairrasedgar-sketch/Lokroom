@@ -3,6 +3,9 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
+import { updateProfileSchema, validateRequestBody } from "@/lib/validations";
+
+export const dynamic = "force-dynamic";
 
 // PATCH /api/profile → met à jour le profil (user + user.profile)
 export async function PATCH(req: Request) {
@@ -11,12 +14,14 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await req.json();
+  // Validation Zod du body
+  const validation = await validateRequestBody(req, updateProfileSchema);
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error }, { status: validation.status });
+  }
 
   const {
     name,
-    country,
-    role,
     firstName,
     lastName,
     phone,
@@ -24,29 +29,18 @@ export async function PATCH(req: Request) {
     addressLine2,
     city,
     postalCode,
-    profileCountry,
+    country,
     province,
-  } = body as {
-    name?: string;
-    country?: string;
-    role?: string;
-    firstName?: string;
-    lastName?: string;
-    phone?: string;
-    addressLine1?: string;
-    addressLine2?: string;
-    city?: string;
-    postalCode?: string;
-    profileCountry?: string;
-    province?: string;
-  };
+  } = validation.data;
+
+  // SÉCURITÉ: On ne permet JAMAIS de modifier le role via cette route
+  // Le changement de role se fait uniquement via des routes spécifiques (become-host, etc.)
 
   const user = await prisma.user.update({
     where: { email: session.user.email },
     data: {
-      name,
-      country,
-      role: role as any,
+      // Mise à jour du nom sur User si fourni
+      ...(name ? { name } : {}),
       profile: {
         upsert: {
           create: {
@@ -57,19 +51,19 @@ export async function PATCH(req: Request) {
             addressLine2: addressLine2 ?? "",
             city: city ?? "",
             postalCode: postalCode ?? "",
-            country: profileCountry ?? "",
+            country: country ?? "",
             province: province ?? "",
           },
           update: {
-            firstName: firstName ?? undefined,
-            lastName: lastName ?? undefined,
-            phone: phone ?? undefined,
-            addressLine1: addressLine1 ?? undefined,
-            addressLine2: addressLine2 ?? undefined,
-            city: city ?? undefined,
-            postalCode: postalCode ?? undefined,
-            country: profileCountry ?? undefined,
-            province: province ?? undefined,
+            ...(firstName !== undefined ? { firstName } : {}),
+            ...(lastName !== undefined ? { lastName } : {}),
+            ...(phone !== undefined ? { phone } : {}),
+            ...(addressLine1 !== undefined ? { addressLine1 } : {}),
+            ...(addressLine2 !== undefined ? { addressLine2 } : {}),
+            ...(city !== undefined ? { city } : {}),
+            ...(postalCode !== undefined ? { postalCode } : {}),
+            ...(country !== undefined ? { country } : {}),
+            ...(province !== undefined ? { province } : {}),
           },
         },
       },

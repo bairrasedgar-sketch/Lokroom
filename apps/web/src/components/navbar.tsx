@@ -118,17 +118,137 @@ const NAV_TEXTS: Record<LocaleCode, NavTexts> = {
     authLegal:
       "By continuing, you confirm that you’ve read and accepted Lok’Room’s Terms and Privacy Policy.",
   },
-  es: undefined as any,
-  de: undefined as any,
-  it: undefined as any,
-  pt: undefined as any,
-  zh: undefined as any,
+  es: {
+    navListings: "Anuncios",
+    navBookings: "Viajes",
+    navProfile: "Perfil",
+    hostMode: "Modo anfitrión",
+    travelerMode: "Cambiar a modo viajero",
+    becomeHost: "Conviértete en anfitrión Lok’Room",
+    loginCta: "Iniciar sesión / Registrarse",
+    modalTitle: "Idiomas y divisas de Lok’Room",
+    modalLanguage: "Idioma",
+    modalCurrency: "Divisa",
+    authTitle: "Inicia sesión o regístrate",
+    authWelcome: "Bienvenido a Lok’Room",
+    phoneCountryLabel: "País/región",
+    phoneNumberLabel: "Número de teléfono",
+    phoneHint:
+      "Podemos llamarte o enviarte un SMS para confirmar tu número. Pueden aplicarse tarifas de mensajes y datos.",
+    phoneContinue: "Continuar",
+    or: "o",
+    continueGoogle: "Continuar con Google",
+    continueApple: "Continuar con Apple",
+    continueEmail: "Continuar con el correo electrónico",
+    continueFacebook: "Continuar con Facebook",
+    authLegal:
+      "Al continuar, confirmas que has leído y aceptado las Condiciones y la Política de privacidad de Lok’Room.",
+  },
+  de: {
+    navListings: "Inserate",
+    navBookings: "Reisen",
+    navProfile: "Profil",
+    hostMode: "Gastgebermodus",
+    travelerMode: "In den Gastmodus wechseln",
+    becomeHost: "Lok’Room-Gastgeber werden",
+    loginCta: "Anmelden / Registrieren",
+    modalTitle: "Lok’Room Sprachen & Währungen",
+    modalLanguage: "Sprache",
+    modalCurrency: "Währung",
+    authTitle: "Anmelden oder registrieren",
+    authWelcome: "Willkommen bei Lok’Room",
+    phoneCountryLabel: "Land/Region",
+    phoneNumberLabel: "Telefonnummer",
+    phoneHint:
+      "Wir können dich anrufen oder dir eine SMS senden, um deine Nummer zu bestätigen. Es können Gebühren für Nachrichten und Daten anfallen.",
+    phoneContinue: "Weiter",
+    or: "oder",
+    continueGoogle: "Mit Google fortfahren",
+    continueApple: "Mit Apple fortfahren",
+    continueEmail: "Mit E-Mail fortfahren",
+    continueFacebook: "Mit Facebook fortfahren",
+    authLegal:
+      "Indem du fortfährst, bestätigst du, dass du die AGB und die Datenschutzrichtlinie von Lok’Room gelesen und akzeptiert hast.",
+  },
+  it: {
+    navListings: "Annunci",
+    navBookings: "Viaggi",
+    navProfile: "Profilo",
+    hostMode: "Modalità host",
+    travelerMode: "Passa alla modalità ospite",
+    becomeHost: "Diventa host Lok’Room",
+    loginCta: "Accedi / Registrati",
+    modalTitle: "Lingue e valute Lok’Room",
+    modalLanguage: "Lingua",
+    modalCurrency: "Valuta",
+    authTitle: "Accedi o registrati",
+    authWelcome: "Benvenuto su Lok’Room",
+    phoneCountryLabel: "Paese/regione",
+    phoneNumberLabel: "Numero di telefono",
+    phoneHint:
+      "Potremmo chiamarti o inviarti un SMS per confermare il tuo numero. Possono essere applicati costi per messaggi e dati.",
+    phoneContinue: "Continua",
+    or: "oppure",
+    continueGoogle: "Continua con Google",
+    continueApple: "Continua con Apple",
+    continueEmail: "Continua con e-mail",
+    continueFacebook: "Continua con Facebook",
+    authLegal:
+      "Continuando, confermi di aver letto e accettato i Termini e l’Informativa sulla privacy di Lok’Room.",
+  },
+  pt: {
+    navListings: "Anúncios",
+    navBookings: "Viagens",
+    navProfile: "Perfil",
+    hostMode: "Modo anfitrião",
+    travelerMode: "Mudar para modo hóspede",
+    becomeHost: "Tornar-se anfitrião Lok’Room",
+    loginCta: "Entrar / Cadastrar-se",
+    modalTitle: "Idiomas e moedas Lok’Room",
+    modalLanguage: "Idioma",
+    modalCurrency: "Moeda",
+    authTitle: "Entrar ou cadastrar-se",
+    authWelcome: "Bem-vindo ao Lok’Room",
+    phoneCountryLabel: "País/região",
+    phoneNumberLabel: "Número de telefone",
+    phoneHint:
+      "Podemos ligar ou enviar um SMS para confirmar o seu número. Podem ser cobradas tarifas de mensagens e dados.",
+    phoneContinue: "Continuar",
+    or: "ou",
+    continueGoogle: "Continuar com Google",
+    continueApple: "Continuar com Apple",
+    continueEmail: "Continuar com e-mail",
+    continueFacebook: "Continuar com Facebook",
+    authLegal:
+      "Ao continuar, você confirma que leu e aceitou os Termos e a Política de privacidade do Lok’Room.",
+  },
+  zh: {
+    navListings: "房源",
+    navBookings: "行程",
+    navProfile: "个人资料",
+    hostMode: "房东模式",
+    travelerMode: "切换到房客模式",
+    becomeHost: "成为 Lok’Room 房东",
+    loginCta: "登录 / 注册",
+    modalTitle: "Lok’Room 语言和货币",
+    modalLanguage: "语言",
+    modalCurrency: "货币",
+    authTitle: "登录或注册",
+    authWelcome: "欢迎来到 Lok’Room",
+    phoneCountryLabel: "国家/地区",
+    phoneNumberLabel: "电话号码",
+    phoneHint:
+      "我们可能会给你打电话或发送短信以确认你的号码。可能会产生短信和流量费用。",
+    phoneContinue: "继续",
+    or: "或",
+    continueGoogle: "使用 Google 继续",
+    continueApple: "使用 Apple 继续",
+    continueEmail: "使用邮箱继续",
+    continueFacebook: "使用 Facebook 继续",
+    authLegal:
+      "继续操作即表示你已阅读并接受 Lok’Room 的条款和隐私政策。",
+  },
 };
-
-// Pour les langues autres que fr/en, on réutilise l’anglais par défaut
-(["es", "de", "it", "pt", "zh"] as LocaleCode[]).forEach((code) => {
-  NAV_TEXTS[code] = NAV_TEXTS.en;
-});
 
 type CookieNoticeTexts = {
   display: string;
@@ -282,7 +402,7 @@ export default function Navbar() {
 
   function handlePhoneSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    alert("La connexion par téléphone sera bientôt disponible sur Lok’Room.");
+    alert("La connexion par téléphone sera bientôt disponible sur Lok'Room.");
   }
 
   return (
@@ -636,7 +756,7 @@ export default function Navbar() {
               <div className="space-y-2">
                 <button
                   type="button"
-                  onClick={() => signIn("google", { callbackUrl: "/" })}
+                  onClick={() => signIn("google", { callbackUrl: "/onboarding" })}
                   className="flex w-full items-center justify-start gap-3 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium hover:bg-gray-50"
                 >
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white">
@@ -671,6 +791,10 @@ export default function Navbar() {
 
                 <button
                   type="button"
+                  onClick={() => {
+                    setAuthModalOpen(false);
+                    window.location.href = "/login";
+                  }}
                   className="flex w-full items-center justify-start gap-3 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium hover:bg-gray-50"
                 >
                   <span className="flex h-6 w-6 items-center justify-center rounded-full border border-gray-300 bg-white">

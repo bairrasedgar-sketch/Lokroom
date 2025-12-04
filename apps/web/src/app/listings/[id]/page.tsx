@@ -13,6 +13,7 @@ import { getOrigin } from "@/lib/origin";
 import Map from "@/components/Map"; // mini-map localisation
 import ListingReviews from "@/components/ListingReviews";
 import { formatMoneyAsync, type Currency } from "@/lib/currency";
+import { getServerDictionary } from "@/lib/i18n.server";
 
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
@@ -60,6 +61,8 @@ export default async function ListingDetailPage({
   const isOwner =
     !!session?.user?.email && listing.owner.email === session.user.email;
 
+  const { dict: t, locale } = getServerDictionary();
+
   const displayCurrency =
     (cookies().get("currency")?.value as Currency | undefined) ?? "EUR";
 
@@ -86,15 +89,17 @@ export default async function ListingDetailPage({
     Number.isFinite(lat) &&
     Number.isFinite(lng);
 
+  const publishedDate = new Date(listing.createdAt).toLocaleDateString(locale);
+
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 pb-12 pt-6">
       {/* Ligne retour + date */}
       <div className="flex items-center justify-between text-xs text-gray-600">
         <Link href="/listings" className="hover:underline">
-          ← Retour aux annonces
+          {t.listingDetail.backToListings}
         </Link>
         <span>
-          Publié le {new Date(listing.createdAt).toLocaleDateString()}
+          {t.listingDetail.publishedOn} {publishedDate}
         </span>
       </div>
 
@@ -115,7 +120,7 @@ export default async function ListingDetailPage({
         {/* Boutons sous les photos */}
         <div className="flex items-center justify-between text-sm">
           <span className="text-xs text-gray-500">
-            Protégé par la plate-forme Lok&apos;Room.
+            {t.listingDetail.protectedByLokroom}
           </span>
 
           <div className="flex gap-2">
@@ -123,7 +128,7 @@ export default async function ListingDetailPage({
               type="button"
               className="inline-flex items-center gap-1 rounded-full border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-800 hover:border-black"
             >
-              <span>Partager</span>
+              <span>{t.listingDetail.share}</span>
             </button>
 
             <FavoriteButton listingId={listing.id} />
@@ -139,8 +144,8 @@ export default async function ListingDetailPage({
           <div className="flex items-center justify-between border-b pb-4">
             <div>
               <h2 className="text-lg font-semibold">
-                Logement proposé par{" "}
-                {listing.owner.name || "un hôte Lok'Room"}
+                {t.listingDetail.hostedBy}{" "}
+                {listing.owner.name || t.listingDetail.hostLokroom}
               </h2>
               <p className="text-sm text-gray-600">{locationLabel}</p>
             </div>
@@ -151,10 +156,10 @@ export default async function ListingDetailPage({
               </div>
               <div className="space-y-0.5">
                 <p className="font-medium">
-                  {listing.owner.name || "Hôte Lok'Room"}
+                  {listing.owner.name || t.listingDetail.hostLokroom}
                 </p>
                 <p className="text-[11px] text-gray-500">
-                  Répond généralement en quelques heures
+                  {t.listingDetail.respondsIn}
                 </p>
               </div>
             </div>
@@ -162,43 +167,41 @@ export default async function ListingDetailPage({
 
           {/* Description */}
           <div className="space-y-2 border-b pb-4">
-            <h3 className="text-sm font-semibold">À propos de cet espace</h3>
+            <h3 className="text-sm font-semibold">{t.listingDetail.aboutSpace}</h3>
             <p className="whitespace-pre-wrap text-sm text-gray-700">
-              {listing.description || "Pas encore de description détaillée."}
+              {listing.description || t.listingDetail.noDescription}
             </p>
           </div>
 
-          {/* Ce qu’il faut savoir */}
+          {/* Ce qu'il faut savoir */}
           <div className="grid gap-4 border-b pb-4 text-sm sm:grid-cols-3">
             <div className="space-y-1">
               <p className="font-semibold">
-                Conditions d&apos;annulation
+                {t.listingDetail.cancellationPolicy}
               </p>
               <p className="text-xs text-gray-600">
-                L&apos;hôte définit ses propres règles. Vérifie les détails
-                avant de réserver.
-              </p>
-            </div>
-            <div className="space-y-1">
-              <p className="font-semibold">Règles de l&apos;espace</p>
-              <p className="text-xs text-gray-600">
-                Arrivée autonome ou remise de clés selon l&apos;hôte.
+                {t.listingDetail.cancellationPolicyDesc}
               </p>
             </div>
             <div className="space-y-1">
-              <p className="font-semibold">Sécurité</p>
+              <p className="font-semibold">{t.listingDetail.spaceRules}</p>
               <p className="text-xs text-gray-600">
-                Paiements sécurisés via Lok&apos;Room, jamais en dehors du
-                site.
+                {t.listingDetail.spaceRulesDesc}
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="font-semibold">{t.listingDetail.security}</p>
+              <p className="text-xs text-gray-600">
+                {t.listingDetail.securityDesc}
               </p>
             </div>
           </div>
 
           {/* Infos hôte */}
           <aside className="space-y-1">
-            <p className="text-sm text-gray-600">Hôte</p>
+            <p className="text-sm text-gray-600">{t.listingDetail.host}</p>
             <p className="font-medium">
-              {listing.owner.name ?? "Utilisateur Lok'Room"}
+              {listing.owner.name ?? t.listingDetail.lokroomUser}
             </p>
             <p className="text-sm text-gray-600">
               {listing.owner.email ?? ""}
@@ -209,10 +212,10 @@ export default async function ListingDetailPage({
           {hasCoords && (
             <section className="mt-4 space-y-2">
               <h3 className="text-sm font-semibold">
-                Localisation approximative
+                {t.listingDetail.approximateLocation}
               </h3>
               <p className="text-xs text-gray-500">
-                La position exacte sera communiquée après la réservation.
+                {t.listingDetail.exactLocationNote}
               </p>
               <div className="mt-2 h-64 w-full overflow-hidden rounded-2xl border bg-gray-100">
                 <Map
@@ -242,11 +245,11 @@ export default async function ListingDetailPage({
                 {priceFormatted}
                 <span className="text-sm font-normal text-gray-600">
                   {" "}
-                  / nuit
+                  {t.listingDetail.perNight}
                 </span>
               </p>
               <p className="text-xs text-gray-500">
-                Taxes et frais ajoutés au moment du paiement.
+                {t.listingDetail.taxesNote}
               </p>
             </div>
           </div>
@@ -259,7 +262,7 @@ export default async function ListingDetailPage({
             />
           ) : (
             <p className="text-xs text-gray-500">
-              Tu es le propriétaire de cette annonce.
+              {t.listingDetail.ownerNotice}
             </p>
           )}
         </aside>
@@ -272,7 +275,7 @@ export default async function ListingDetailPage({
             href={`/listings/${listing.id}/edit`}
             className="rounded bg-black px-3 py-2 text-sm text-white"
           >
-            Éditer l&apos;annonce
+            {t.listingDetail.editListing}
           </Link>
           <DeleteListingButton id={listing.id} />
         </div>

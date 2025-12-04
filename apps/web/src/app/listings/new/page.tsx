@@ -24,6 +24,7 @@ import {
   getCroppedImage,
   type PixelCrop,
 } from "@/lib/cropImage";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // ---------- Config upload ----------
 const MAX_FILES = 10;
@@ -177,6 +178,7 @@ function CityAutocomplete({
 
 export default function NewListingPage() {
   const router = useRouter();
+  const { t } = useTranslation();
 
   const [images, setImages] = useState<LocalImage[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -299,7 +301,7 @@ export default function NewListingPage() {
       (f) => f.size > MAX_SIZE_MB * 1024 * 1024
     );
     if (tooBig.length)
-      toast.error(`Certaines images dépassent ${MAX_SIZE_MB} Mo`);
+      toast.error(t.newListing.imageTooBig.replace("{size}", String(MAX_SIZE_MB)));
     const ok = imagesOnly.filter(
       (f) => f.size <= MAX_SIZE_MB * 1024 * 1024
     );
@@ -315,7 +317,7 @@ export default function NewListingPage() {
     setImages((prev) => {
       const merged = [...prev, ...mapped].slice(0, MAX_FILES);
       if (merged.length < prev.length + mapped.length) {
-        toast.message(`Limite de ${MAX_FILES} images atteinte`);
+        toast.message(t.newListing.limitReached.replace("{max}", String(MAX_FILES)));
       }
       return merged;
     });
@@ -334,7 +336,7 @@ export default function NewListingPage() {
 
   function clearAll() {
     if (!images.length) return;
-    if (!confirm("Retirer toutes les images sélectionnées ?")) return;
+    if (!confirm(t.newListing.removeAllConfirm)) return;
     images.forEach((img) => URL.revokeObjectURL(img.previewUrl));
     setImages([]);
   }
@@ -401,9 +403,9 @@ export default function NewListingPage() {
           };
         })
       );
-      toast.success("Image rognée ✔");
+      toast.success(t.newListing.imageCropped);
     } catch {
-      toast.error("Rognage impossible");
+      toast.error(t.newListing.cropFailed);
     } finally {
       setCropOpen(false);
       setCropSrc(null);
@@ -510,23 +512,22 @@ export default function NewListingPage() {
 
         // ⛔️ non connecté
         if (res.status === 401) {
-          throw new Error("Tu dois être connecté pour créer une annonce.");
+          throw new Error(t.newListing.loginRequired);
         }
 
         // ⛔️ pas hôte
         if (res.status === 403) {
           throw new Error(
-            j?.error ||
-              "Tu dois avoir un compte hôte Lok'Room pour créer une annonce."
+            j?.error || t.newListing.hostRequired
           );
         }
 
-        throw new Error(j?.error || "Création annonce: erreur serveur");
+        throw new Error(j?.error || t.newListing.serverError);
       }
 
       const data = await res.json();
       const listingId: string | undefined = data?.listing?.id;
-      if (!listingId) throw new Error("ID annonce manquant après création.");
+      if (!listingId) throw new Error(t.newListing.missingId);
 
       if (images.length) setUploading(true);
 
@@ -547,12 +548,12 @@ export default function NewListingPage() {
         if (!p.ok) {
           const body = await p.text();
           throw new Error(
-            `presign-listing a échoué (${p.status}). ${body.slice(0, 120)}`
+            `${t.newListing.presignFailed} (${p.status}). ${body.slice(0, 120)}`
           );
         }
         const presign = await jsonOrThrow(p);
         if (!presign?.uploadUrl || !presign?.publicUrl) {
-          throw new Error("Réponse presign invalide (uploadUrl/publicUrl).");
+          throw new Error(t.newListing.invalidPresignResponse);
         }
 
         const put = await fetch(presign.uploadUrl, {
@@ -564,7 +565,7 @@ export default function NewListingPage() {
         });
         if (!put.ok) {
           const body = await put.text().catch(() => "");
-          throw new Error(`Upload R2 échoué (${put.status}). ${body}`);
+          throw new Error(`${t.newListing.uploadFailed} (${put.status}). ${body}`);
         }
 
         const saveBody: any = {
@@ -585,11 +586,11 @@ export default function NewListingPage() {
         });
         if (!save.ok) {
           const body = await save.text().catch(() => "");
-          throw new Error(`Save image échoué (${save.status}). ${body}`);
+          throw new Error(`${t.newListing.saveImageFailed} (${save.status}). ${body}`);
         }
       }
 
-      toast.success("Annonce créée ✅");
+      toast.success(t.newListing.listingCreated);
       images.forEach((img) => URL.revokeObjectURL(img.previewUrl));
       setImages([]);
       router.push(`/listings/${listingId}`);
@@ -598,7 +599,7 @@ export default function NewListingPage() {
       toast.error(
         e instanceof Error
           ? e.message
-          : "Impossible de créer l’annonce / uploader les images"
+          : t.newListing.createFailed
       );
     } finally {
       setUploading(false);
@@ -629,13 +630,13 @@ export default function NewListingPage() {
       )}
 
       <section className="mx-auto max-w-3xl space-y-6">
-        <h1 className="text-2xl font-semibold">Nouvelle annonce</h1>
+        <h1 className="text-2xl font-semibold">{t.newListing.title}</h1>
 
         {/* uploader */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <label className="block text-sm font-medium">
-              Images (max {MAX_FILES}) · {images.length} sélectionnée(s)
+              {t.newListing.imagesLabel.replace("{max}", String(MAX_FILES))} · {t.newListing.imagesSelected.replace("{count}", String(images.length))}
               {images.length ? ` · ${totalSizeMb} Mo` : ""}
             </label>
             <button
@@ -643,9 +644,9 @@ export default function NewListingPage() {
               onClick={clearAll}
               className="text-xs underline disabled:opacity-50"
               disabled={!images.length}
-              title="Retirer toutes les images sélectionnées"
+              title={t.newListing.removeAllConfirm}
             >
-              Retirer tout
+              {t.newListing.removeAll}
             </button>
           </div>
 
@@ -661,10 +662,10 @@ export default function NewListingPage() {
               dragOver ? "bg-gray-100" : "bg-gray-50"
             }`}
           >
-            Glissez-déposez vos images ici
-            <span className="mx-2 text-gray-400">ou</span>
+            {t.newListing.dropzone}
+            <span className="mx-2 text-gray-400">{t.common.or}</span>
             <label className="cursor-pointer underline">
-              choisissez des fichiers
+              {t.newListing.chooseFiles}
               <input
                 type="file"
                 accept="image/*"
@@ -674,22 +675,15 @@ export default function NewListingPage() {
               />
             </label>
             <div className="mt-2 text-xs text-gray-500">
-              Formats image uniquement. Taille max {MAX_SIZE_MB} Mo / image.
+              {t.newListing.imageFormats.replace("{size}", String(MAX_SIZE_MB))}
             </div>
           </div>
 
-          {/* panneau d’images */}
+          {/* panneau d'images */}
           {images.length > 0 && (
             <div className="mt-2 rounded-2xl bg-gray-100 px-4 py-4 text-sm text-gray-900 shadow-sm ring-1 ring-gray-200">
               <p className="mb-3 text-xs text-gray-700 sm:text-sm">
-                👉{" "}
-                <span className="font-semibold">La première image</span>{" "}
-                (tout à gauche) est utilisée comme{" "}
-                <span className="font-semibold">photo de couverture</span>. Tu
-                peux cliquer sur{" "}
-                <span className="font-semibold">“Mettre en couverture”</span> ou{" "}
-                <span className="font-semibold">glisser les vignettes</span> pour
-                changer l’ordre.
+                {t.newListing.coverImageNote}
               </p>
 
               <div ref={filesParent} className="flex flex-wrap gap-3">
@@ -722,9 +716,9 @@ export default function NewListingPage() {
                           type="button"
                           onClick={() => openCropper(i)}
                           className="rounded bg-black/75 px-1 text-[11px] text-white shadow"
-                          title="Rogner"
+                          title={t.newListing.crop}
                         >
-                          Rogner
+                          {t.newListing.crop}
                         </button>
                       </div>
 
@@ -732,16 +726,16 @@ export default function NewListingPage() {
                       <div className="absolute inset-x-0 bottom-0 flex justify-center pb-1">
                         {isCover ? (
                           <span className="pointer-events-none inline-flex rounded-full bg-black/85 px-2 py-0.5 text-[11px] font-medium text-white shadow">
-                            Couverture
+                            {t.newListing.cover}
                           </span>
                         ) : (
                           <button
                             type="button"
                             onClick={() => makeCover(i)}
                             className="inline-flex rounded-full bg-black/75 px-2 py-0.5 text-[11px] text-white shadow transition hover:bg-black"
-                            title="Mettre en couverture"
+                            title={t.newListing.setAsCover}
                           >
-                            Mettre en couverture
+                            {t.newListing.setAsCover}
                           </button>
                         )}
                       </div>
@@ -751,7 +745,7 @@ export default function NewListingPage() {
                         type="button"
                         onClick={() => removeAt(i)}
                         className="absolute right-1 top-1 rounded-full bg-black/80 px-1 text-xs text-white shadow transition hover:bg-black"
-                        title="Retirer"
+                        title={t.newListing.remove}
                       >
                         ×
                       </button>
@@ -767,7 +761,7 @@ export default function NewListingPage() {
         <form onSubmit={handleSubmit(onValid)} className="space-y-4">
           <div>
             <label htmlFor="title" className="mb-1 block text-sm">
-              Titre
+              {t.newListing.titleLabel}
             </label>
             <input
               id="title"
@@ -781,7 +775,7 @@ export default function NewListingPage() {
 
           <div>
             <label htmlFor="description" className="mb-1 block text-sm">
-              Description
+              {t.newListing.descriptionLabel}
             </label>
             <textarea
               id="description"
@@ -799,7 +793,7 @@ export default function NewListingPage() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="sm:col-span-2">
               <label htmlFor="price" className="mb-1 block text-sm">
-                Prix
+                {t.newListing.priceLabel}
               </label>
               <input
                 id="price"
@@ -814,13 +808,13 @@ export default function NewListingPage() {
                 </p>
               )}
               <p className="mt-1 text-xs text-gray-500">
-                Montant dans la devise choisie ci-contre (min 2).
+                {t.newListing.priceHint}
               </p>
             </div>
 
             <div>
               <label htmlFor="currency" className="mb-1 block text.sm">
-                Devise
+                {t.newListing.currencyLabel}
               </label>
               <select
                 id="currency"
@@ -836,7 +830,7 @@ export default function NewListingPage() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="country" className="mb-1 block text-sm">
-                Pays
+                {t.newListing.countryLabel}
               </label>
               <select
                 id="country"
@@ -854,7 +848,7 @@ export default function NewListingPage() {
             </div>
             <div>
               <label htmlFor="city" className="mb-1 block text-sm">
-                Ville *
+                {t.newListing.cityLabel}
               </label>
               <Controller
                 name="city"
@@ -877,12 +871,12 @@ export default function NewListingPage() {
 
           <div>
             <label htmlFor="addressFull" className="mb-1 block text-sm">
-              Adresse exacte de l’espace *
+              {t.newListing.addressLabel}
             </label>
             <input
               id="addressFull"
               className="w-full rounded-md border px-3 py-2"
-              placeholder="Numéro + rue, code postal..."
+              placeholder={t.newListing.addressPlaceholder}
               {...register("addressFull")}
             />
             {errors.addressFull && (
@@ -891,16 +885,15 @@ export default function NewListingPage() {
               </p>
             )}
             <p className="mt-1 text-xs text-gray-500">
-              Commence à taper et choisis une adresse proposée. Cette adresse
-              sert à positionner le logement mais ne sera pas affichée telle
-              quelle (seule une position approximative est montrée sur la
-              carte).
+              {t.newListing.addressHint}
             </p>
             {geo && (
               <p className="mt-1 text-xs text-gray-400">
-                Coordonnées détectées : {geo.lat.toFixed(5)},{" "}
-                {geo.lng.toFixed(5)} (publiques ≈ {geo.latPublic},{" "}
-                {geo.lngPublic})
+                {t.newListing.coordinatesDetected
+                  .replace("{lat}", geo.lat.toFixed(5))
+                  .replace("{lng}", geo.lng.toFixed(5))
+                  .replace("{latPublic}", String(geo.latPublic))
+                  .replace("{lngPublic}", String(geo.lngPublic))}
               </p>
             )}
           </div>
@@ -911,14 +904,14 @@ export default function NewListingPage() {
               disabled={isSubmitting || uploading}
               className="rounded bg-black px-4 py-2 text-sm text-white disabled:opacity-60"
             >
-              {isSubmitting || uploading ? "Création & upload…" : "Créer"}
+              {isSubmitting || uploading ? t.newListing.createAndUpload : t.newListing.create}
             </button>
             <button
               type="button"
               onClick={() => router.back()}
               className="rounded border px-4 py-2 text-sm"
             >
-              Annuler
+              {t.common.cancel}
             </button>
           </div>
         </form>
@@ -930,10 +923,9 @@ export default function NewListingPage() {
               <div className="w-full max-w-4xl rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl sm:p-6">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-base font-semibold">Rogner l’image</h3>
+                    <h3 className="text-base font-semibold">{t.newListing.cropImage}</h3>
                     <p className="mt-0.5 text-xs text-gray-500">
-                      Clique-déplace pour recadrer, utilise le slider pour
-                      zoomer.
+                      {t.newListing.cropInstructions}
                     </p>
                   </div>
                 </div>
@@ -959,7 +951,7 @@ export default function NewListingPage() {
 
                 <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-3 sm:w-1/2">
-                    <span className="text-xs text-gray-500">Zoom</span>
+                    <span className="text-xs text-gray-500">{t.newListing.zoom}</span>
                     <input
                       type="range"
                       min={1}
@@ -981,13 +973,13 @@ export default function NewListingPage() {
                       }}
                       className="rounded-md border px-3 py-1.5 text-sm"
                     >
-                      Annuler
+                      {t.common.cancel}
                     </button>
                     <button
                       className="rounded-md bg-black px-3 py-1.5 text-sm font-medium text-white"
                       onClick={saveCrop}
                     >
-                      Enregistrer
+                      {t.common.save}
                     </button>
                   </div>
                 </div>

@@ -50,7 +50,8 @@ export function LanguageCurrencyModal({ open, onClose }: Props) {
 
     const cookieStr = document.cookie;
 
-    const langMatch = cookieStr.match(/(?:^|;\s*)lang=([^;]+)/);
+    // Note: le middleware utilise "locale", pas "lang"
+    const langMatch = cookieStr.match(/(?:^|;\s*)locale=([^;]+)/);
     const curLang = (langMatch?.[1] as SupportedLang | undefined) || "fr";
     if (SUPPORTED_LANGS.includes(curLang)) {
       setLang(curLang);
@@ -64,7 +65,8 @@ export function LanguageCurrencyModal({ open, onClose }: Props) {
   const dict = dictionaries[lang] ?? dictionaries.fr;
 
   function handleSave() {
-    document.cookie = `lang=${lang}; Path=/; Max-Age=${ONE_YEAR}`;
+    // Important: utiliser "locale" comme le middleware l'attend
+    document.cookie = `locale=${lang}; Path=/; Max-Age=${ONE_YEAR}`;
     document.cookie = `currency=${currency}; Path=/; Max-Age=${ONE_YEAR}`;
     onClose();
     router.refresh();

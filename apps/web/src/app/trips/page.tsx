@@ -1,8 +1,8 @@
-// apps/web/src/app/trips/page.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import useTranslation from "@/hooks/useTranslation";
 
 type BookingListing = {
   id: string;
@@ -40,6 +40,9 @@ function getBookingStartDate(b: Booking): Date {
 }
 
 export default function TripsPage() {
+  const { locale, dict } = useTranslation();
+  const t = dict.trips;
+
   const [activeTab, setActiveTab] = useState<Tab>("upcoming");
   const [upcoming, setUpcoming] = useState<Booking[]>([]);
   const [past, setPast] = useState<Booking[]>([]);
@@ -54,7 +57,7 @@ export default function TripsPage() {
           return;
         }
 
-        const data = (await res.json()) as ApiShape1 | ApiShape2 | any;
+        const data = (await res.json()) as ApiShape1 | ApiShape2 | unknown;
 
         if (Array.isArray((data as ApiShape2).upcoming)) {
           setUpcoming((data as ApiShape2).upcoming);
@@ -78,7 +81,6 @@ export default function TripsPage() {
           setUpcoming(upcomingTmp);
           setPast(pastTmp);
         } else {
-          // format inconnu → on ignore
           setUpcoming([]);
           setPast([]);
         }
@@ -97,14 +99,34 @@ export default function TripsPage() {
     [activeTab, upcoming, past],
   );
 
+  function formatDateRange(b: Booking): string {
+    const startRaw = b.startDate ?? b.checkIn;
+    const endRaw = b.endDate ?? b.checkOut;
+
+    if (!startRaw || !endRaw) return t.datesToConfirm;
+
+    const start = new Date(startRaw);
+    const end = new Date(endRaw);
+    const dateLocale = locale === "en" ? "en-US" : "fr-FR";
+
+    const opts: Intl.DateTimeFormatOptions = {
+      day: "2-digit",
+      month: "short",
+    };
+
+    const startStr = start.toLocaleDateString(dateLocale, opts);
+    const endStr = end.toLocaleDateString(dateLocale, opts);
+
+    return `${startStr} – ${endStr}`;
+  }
+
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 lg:px-8">
       <header className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Voyages</h1>
+          <h1 className="text-2xl font-semibold">{t.title}</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Retrouve tous tes séjours Lok&apos;Room : réservations à venir et
-            voyages passés.
+            {t.subtitle}
           </p>
         </div>
       </header>
@@ -121,7 +143,7 @@ export default function TripsPage() {
               : "text-gray-500 hover:text-gray-900",
           ].join(" ")}
         >
-          À venir
+          {t.upcoming}
         </button>
         <button
           type="button"
@@ -133,21 +155,26 @@ export default function TripsPage() {
               : "text-gray-500 hover:text-gray-900",
           ].join(" ")}
         >
-          Passés
+          {t.past}
         </button>
       </div>
 
       {/* Contenu */}
       {loading ? (
         <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-500 shadow-sm">
-          Chargement de tes voyages...
+          {t.loading}
         </div>
       ) : currentList.length === 0 ? (
-        <EmptyStateTrips tab={activeTab} />
+        <EmptyStateTrips tab={activeTab} t={t} />
       ) : (
         <div className="space-y-4">
           {currentList.map((booking) => (
-            <TripCard key={booking.id} booking={booking} />
+            <TripCard
+              key={booking.id}
+              booking={booking}
+              t={t}
+              formatDateRange={formatDateRange}
+            />
           ))}
         </div>
       )}
@@ -155,52 +182,44 @@ export default function TripsPage() {
   );
 }
 
-function EmptyStateTrips({ tab }: { tab: Tab }) {
+function EmptyStateTrips({
+  tab,
+  t,
+}: {
+  tab: Tab;
+  t: typeof import("@/locales/fr").default.trips;
+}) {
   const isUpcoming = tab === "upcoming";
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-600 shadow-sm">
       <p className="font-medium text-gray-900">
-        {isUpcoming ? "Aucun voyage à venir" : "Aucun voyage passé"}
+        {isUpcoming ? t.noUpcomingTrips : t.noPastTrips}
       </p>
       <p className="mt-1 text-sm text-gray-500">
-        {isUpcoming
-          ? "Dès que tu réserveras un séjour, il apparaîtra ici avec toutes les infos utiles."
-          : "Une fois que tu auras terminé des séjours, ils apparaîtront ici pour ton historique."}
+        {isUpcoming ? t.noUpcomingDesc : t.noPastDesc}
       </p>
       {isUpcoming && (
         <Link
           href="/"
           className="mt-4 inline-flex rounded-full bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black"
         >
-          Rechercher une annonce
+          {t.searchListing}
         </Link>
       )}
     </div>
   );
 }
 
-function formatDateRange(b: Booking): string {
-  const startRaw = b.startDate ?? b.checkIn;
-  const endRaw = b.endDate ?? b.checkOut;
-
-  if (!startRaw || !endRaw) return "Dates à confirmer";
-
-  const start = new Date(startRaw);
-  const end = new Date(endRaw);
-
-  const opts: Intl.DateTimeFormatOptions = {
-    day: "2-digit",
-    month: "short",
-  };
-
-  const startStr = start.toLocaleDateString(undefined, opts);
-  const endStr = end.toLocaleDateString(undefined, opts);
-
-  return `${startStr} – ${endStr}`;
-}
-
-function TripCard({ booking }: { booking: Booking }) {
+function TripCard({
+  booking,
+  t,
+  formatDateRange,
+}: {
+  booking: Booking;
+  t: typeof import("@/locales/fr").default.trips;
+  formatDateRange: (b: Booking) => string;
+}) {
   const listing = booking.listing;
   const imageUrl = listing?.images?.[0]?.url ?? null;
   const location = [listing?.city, listing?.country].filter(Boolean).join(", ");
@@ -220,12 +239,12 @@ function TripCard({ booking }: { booking: Booking }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={imageUrl}
-            alt={listing?.title ?? "Annonce Lok'Room"}
+            alt={listing?.title ?? "Lok'Room"}
             className="h-full w-full object-cover transition group-hover:scale-105"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">
-            Aucune image
+            {t.noImage}
           </div>
         )}
       </div>
@@ -235,10 +254,10 @@ function TripCard({ booking }: { booking: Booking }) {
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="line-clamp-1 text-sm font-semibold text-gray-900">
-              {listing?.title ?? "Séjour Lok'Room"}
+              {listing?.title ?? "Lok'Room"}
             </h2>
             <p className="mt-1 text-xs text-gray-500">
-              {location || "Emplacement à venir"}
+              {location || t.locationToCome}
             </p>
             <p className="mt-2 text-xs font-medium text-gray-800">
               {dateRange}
@@ -246,14 +265,12 @@ function TripCard({ booking }: { booking: Booking }) {
           </div>
 
           <span className="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
-            {status.toLowerCase() === "cancelled"
-              ? "Annulé"
-              : "Réservation confirmée"}
+            {status.toLowerCase() === "cancelled" ? t.cancelled : t.confirmed}
           </span>
         </div>
 
         <div className="mt-3 flex items-center justify-between text-xs text-gray-600">
-          <span>Voir les détails du voyage</span>
+          <span>{t.viewDetails}</span>
           {total != null && (
             <span className="font-semibold text-gray-900">
               {Math.round(total)} {currency}

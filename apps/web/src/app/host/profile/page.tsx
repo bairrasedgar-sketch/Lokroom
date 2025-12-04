@@ -1,10 +1,10 @@
-// apps/web/src/app/host/profile/page.tsx
 import Image from "next/image";
 import { cookies, headers } from "next/headers";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
 
 import { authOptions } from "@/lib/auth";
+import { getServerDictionary } from "@/lib/i18n.server";
 import HostProfileForm from "@/components/HostProfileForm";
 
 export const dynamic = "force-dynamic";
@@ -80,6 +80,9 @@ export default async function HostProfilePage() {
     redirect("/login");
   }
 
+  const { dict } = getServerDictionary();
+  const t = dict.host;
+
   const data = await loadHostProfile();
   const profile = data?.profile ?? null;
   const stats = data?.stats ?? null;
@@ -94,11 +97,9 @@ export default async function HostProfilePage() {
       <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold sm:text-3xl">
-            Profil hôte Lok&apos;Room
+            {t.hostProfile} Lok&apos;Room
           </h1>
-          <p className="text-sm text-gray-600">
-            Personnalise ton profil public et suis tes stats d’hébergement.
-          </p>
+          <p className="text-sm text-gray-600">{t.hostProfileSubtitle}</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -106,14 +107,14 @@ export default async function HostProfilePage() {
             <span className="font-medium text-gray-800">
               {session.user?.name ?? session.user?.email}
             </span>
-            <span>Compte hôte</span>
+            <span>{t.profile}</span>
           </div>
 
           <div className="relative h-10 w-10 overflow-hidden rounded-full bg-gray-200">
             {profile?.avatarUrl ? (
               <Image
                 src={profile.avatarUrl}
-                alt="Avatar hôte"
+                alt={t.hostProfile}
                 fill
                 className="object-cover"
               />
@@ -138,7 +139,7 @@ export default async function HostProfilePage() {
                   {profile?.avatarUrl ? (
                     <Image
                       src={profile.avatarUrl}
-                      alt="Avatar hôte"
+                      alt={t.hostProfile}
                       fill
                       className="object-cover"
                     />
@@ -150,30 +151,28 @@ export default async function HostProfilePage() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-gray-900">
-                    {session.user?.name ?? "Hôte Lok&apos;Room"}
+                    {session.user?.name ?? dict.listings.defaultHostName}
                   </p>
-                  <p className="text-xs text-gray-500">
-                    Profil hôte professionnel
-                  </p>
+                  <p className="text-xs text-gray-500">{t.profile}</p>
                 </div>
               </div>
 
               <div className="flex flex-wrap justify-end gap-2">
                 {(profile?.superhost || stats?.superhost) && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-[11px] font-semibold text-amber-800">
-                    ⭐ Superhost
+                    {t.superhost}
                   </span>
                 )}
 
                 {(profile?.verifiedEmail || stats?.verifiedEmail) && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-medium text-emerald-700">
-                    ✅ Email vérifié
+                    {t.emailVerified}
                   </span>
                 )}
 
                 {profile?.verifiedPhone && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-[11px] font-medium text-blue-700">
-                    ☎ Téléphone vérifié
+                    {t.phoneVerified}
                   </span>
                 )}
               </div>
@@ -185,7 +184,7 @@ export default async function HostProfilePage() {
               </p>
             ) : (
               <p className="mt-3 text-xs text-gray-500">
-                Ajoute une bio pour inspirer confiance à tes futurs invités.
+                {t.hostBioPlaceholder}
               </p>
             )}
 
@@ -206,7 +205,7 @@ export default async function HostProfilePage() {
           {/* Carte stats */}
           <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
             <h2 className="mb-3 text-sm font-semibold text-gray-900">
-              Statistiques d&apos;hôte
+              {t.stats}
             </h2>
 
             {stats ? (
@@ -215,9 +214,11 @@ export default async function HostProfilePage() {
                   <p className="text-xl font-semibold text-gray-900">
                     {stats.ratingCount > 0 ? stats.ratingAvg.toFixed(1) : "—"}
                   </p>
-                  <p className="text-[11px] text-gray-500">Note moyenne</p>
+                  <p className="text-[11px] text-gray-500">
+                    {dict.profile.averageRating}
+                  </p>
                   <p className="text-[11px] text-gray-400">
-                    {stats.ratingCount} avis
+                    {stats.ratingCount} {dict.profile.reviewsCount.toLowerCase()}
                   </p>
                 </div>
 
@@ -226,7 +227,7 @@ export default async function HostProfilePage() {
                     {stats.totalHosted}
                   </p>
                   <p className="text-[11px] text-gray-500">
-                    Réservations hébergées
+                    {t.confirmedBookings}
                   </p>
                 </div>
 
@@ -235,10 +236,7 @@ export default async function HostProfilePage() {
                     {Math.round((stats.cancelRate ?? 0) * 100)}%
                   </p>
                   <p className="text-[11px] text-gray-500">
-                    Taux d&apos;annulation
-                  </p>
-                  <p className="text-[11px] text-gray-400">
-                    (plus c&apos;est bas, mieux c&apos;est)
+                    {dict.bookings.cancelled}
                   </p>
                 </div>
 
@@ -247,53 +245,50 @@ export default async function HostProfilePage() {
                     {profile?.experienceYears ?? "—"}
                   </p>
                   <p className="text-[11px] text-gray-500">
-                    Années d&apos;expérience
+                    {dict.common.years ?? "Years"}
                   </p>
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-gray-500">
-                Tes stats apparaîtront dès que tu auras reçu tes premières
-                réservations et avis.
-              </p>
+              <p className="text-xs text-gray-500">{t.noBookingsDesc}</p>
             )}
           </div>
 
           {/* Carte liens & visibilité */}
           <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
             <h2 className="mb-2 text-sm font-semibold text-gray-900">
-              Visibilité & liens externes
+              {t.verificationSection}
             </h2>
             <ul className="space-y-1.5 text-xs text-gray-600">
               <li>
                 {profile?.instagram ? (
                   <>
-                    Instagram connecté :{" "}
+                    Instagram :{" "}
                     <span className="font-medium text-gray-900">
                       {profile.instagram}
                     </span>
                   </>
                 ) : (
-                  "Ajoute ton Instagram pour renforcer la confiance."
+                  "Instagram"
                 )}
               </li>
               <li>
                 {profile?.website ? (
                   <>
-                    Site web :{" "}
+                    {dict.footer.about} :{" "}
                     <span className="font-medium text-gray-900">
                       {profile.website}
                     </span>
                   </>
                 ) : (
-                  "Ton site web (portfolio, agence, etc.) peut aussi être ajouté."
+                  dict.footer.about
                 )}
               </li>
             </ul>
           </div>
         </div>
 
-        {/* Colonne droite : formulaire d’édition */}
+        {/* Colonne droite : formulaire d'édition */}
         <aside className="w-full max-w-xl rounded-2xl border border-gray-200 bg-white p-4 shadow-md">
           <HostProfileForm initialProfile={profile} />
         </aside>

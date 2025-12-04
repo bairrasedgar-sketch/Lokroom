@@ -1,4 +1,3 @@
-// apps/web/src/app/bookings/page.tsx
 "use client";
 
 import { useEffect, useState, useMemo, Suspense } from "react";
@@ -6,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { getDictionaryForLocale, type SupportedLocale } from "@/lib/i18n.client";
 
 type Currency = "EUR" | "CAD";
 type BookingStatus = "PENDING" | "CONFIRMED" | "CANCELLED";
@@ -42,21 +42,24 @@ function formatMoney(amount: number, currency: Currency) {
   }).format(amount);
 }
 
-function formatDate(dateStr: string) {
+function formatDate(dateStr: string, locale: SupportedLocale = "fr") {
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("fr-FR", {
+  const dateLocale = locale === "en" ? "en-US" : "fr-FR";
+  return d.toLocaleDateString(dateLocale, {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
 }
 
-function formatDateRange(startStr: string, endStr: string) {
+function formatDateRange(startStr: string, endStr: string, locale: SupportedLocale = "fr") {
   const start = new Date(startStr);
   const end = new Date(endStr);
+  const dateLocale = locale === "en" ? "en-US" : "fr-FR";
+
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-    return "Dates indisponibles";
+    return locale === "en" ? "Dates unavailable" : "Dates indisponibles";
   }
 
   const sameYear = start.getFullYear() === end.getFullYear();
@@ -73,7 +76,7 @@ function formatDateRange(startStr: string, endStr: string) {
   };
 
   if (sameMonth) {
-    const month = start.toLocaleDateString("fr-FR", { month: "short" });
+    const month = start.toLocaleDateString(dateLocale, { month: "short" });
     return `${start.getDate().toString().padStart(2, "0")}–${end
       .getDate()
       .toString()
@@ -82,41 +85,15 @@ function formatDateRange(startStr: string, endStr: string) {
 
   if (sameYear) {
     return `${start.toLocaleDateString(
-      "fr-FR",
+      dateLocale,
       optsShort,
-    )} – ${end.toLocaleDateString("fr-FR", optsShort)} ${start.getFullYear()}`;
+    )} – ${end.toLocaleDateString(dateLocale, optsShort)} ${start.getFullYear()}`;
   }
 
   return `${start.toLocaleDateString(
-    "fr-FR",
+    dateLocale,
     optsFull,
-  )} – ${end.toLocaleDateString("fr-FR", optsFull)}`;
-}
-
-function statusLabel(status: BookingStatus) {
-  switch (status) {
-    case "PENDING":
-      return "En attente de paiement";
-    case "CONFIRMED":
-      return "Confirmée";
-    case "CANCELLED":
-      return "Annulée";
-    default:
-      return status;
-  }
-}
-
-function statusBadgeClass(status: BookingStatus) {
-  switch (status) {
-    case "PENDING":
-      return "bg-amber-50 text-amber-800 border border-amber-200";
-    case "CONFIRMED":
-      return "bg-emerald-50 text-emerald-800 border border-emerald-200";
-    case "CANCELLED":
-      return "bg-gray-50 text-gray-600 border border-gray-200";
-    default:
-      return "bg-gray-50 text-gray-700 border border-gray-200";
-  }
+  )} – ${end.toLocaleDateString(dateLocale, optsFull)}`;
 }
 
 // ✅ Wrapper avec Suspense pour Next
@@ -160,25 +137,75 @@ function BookingsPageContent() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [dict, setDict] = useState(getDictionaryForLocale("fr"));
+  const [currentLocale, setCurrentLocale] = useState<SupportedLocale>("fr");
 
   const created = searchParams.get("created");
   const paid = searchParams.get("paid");
   const processing = searchParams.get("processing");
 
+  // Charger le dictionnaire selon la locale du cookie
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const m = document.cookie.match(/(?:^|;\s*)locale=([^;]+)/);
+    const locale = (m?.[1] || "fr") as SupportedLocale;
+    setCurrentLocale(locale);
+    setDict(getDictionaryForLocale(locale));
+  }, []);
+
+  const t = dict.bookings;
+
+  // Fonction pour les labels de statut
+  function statusLabel(status: BookingStatus) {
+    switch (status) {
+      case "PENDING":
+        return t.pendingPayment;
+      case "CONFIRMED":
+        return t.confirmed;
+      case "CANCELLED":
+        return dict.bookings.cancelled;
+      default:
+        return status;
+    }
+  }
+
+  function statusBadgeClass(status: BookingStatus) {
+    switch (status) {
+      case "PENDING":
+        return "bg-amber-50 text-amber-800 border border-amber-200";
+      case "CONFIRMED":
+        return "bg-emerald-50 text-emerald-800 border border-emerald-200";
+      case "CANCELLED":
+        return "bg-gray-50 text-gray-600 border border-gray-200";
+      default:
+        return "bg-gray-50 text-gray-700 border border-gray-200";
+    }
+  }
+
   // Affiche les toasts en fonction des query params
   useEffect(() => {
     if (created === "1") {
       toast.success(
-        "Votre réservation a été créée. Il ne reste plus qu’à finaliser le paiement.",
+        currentLocale === "en"
+          ? "Your booking has been created. Just finalize the payment."
+          : "Votre réservation a été créée. Il ne reste plus qu'à finaliser le paiement.",
       );
     }
     if (paid === "1") {
-      toast.success("Paiement confirmé, votre réservation est validée ✅");
+      toast.success(
+        currentLocale === "en"
+          ? "Payment confirmed, your booking is validated ✅"
+          : "Paiement confirmé, votre réservation est validée ✅"
+      );
     }
     if (processing === "1") {
-      toast("Paiement en cours de traitement…");
+      toast(
+        currentLocale === "en"
+          ? "Payment processing..."
+          : "Paiement en cours de traitement…"
+      );
     }
-  }, [created, paid, processing]);
+  }, [created, paid, processing, currentLocale]);
 
   // Chargement des réservations via /api/bookings
   useEffect(() => {
@@ -196,7 +223,9 @@ function BookingsPageContent() {
           const data = (await res.json().catch(() => null)) as
             | { error?: string }
             | null;
-          const msg = data?.error ?? "Impossible de charger vos réservations.";
+          const msg = data?.error ?? (currentLocale === "en"
+            ? "Unable to load your bookings."
+            : "Impossible de charger vos réservations.");
           setError(msg);
           setLoading(false);
           return;
@@ -206,19 +235,26 @@ function BookingsPageContent() {
         setBookings(json.bookings ?? []);
       } catch (err) {
         console.error(err);
-        setError("Erreur inattendue lors du chargement des réservations.");
+        setError(
+          currentLocale === "en"
+            ? "Unexpected error while loading bookings."
+            : "Erreur inattendue lors du chargement des réservations."
+        );
       } finally {
         setLoading(false);
       }
     }
 
     void loadBookings();
-  }, []);
+  }, [currentLocale]);
 
   const hasBookings = bookings.length > 0;
 
   async function cancelPendingBooking(id: string) {
-    if (!window.confirm("Annuler cette demande de réservation ?")) return;
+    const confirmMsg = currentLocale === "en"
+      ? "Cancel this booking request?"
+      : "Annuler cette demande de réservation ?";
+    if (!window.confirm(confirmMsg)) return;
 
     setActionLoadingId(id);
     try {
@@ -234,29 +270,38 @@ function BookingsPageContent() {
 
       if (!res.ok) {
         const msg =
-          data?.error ?? "Impossible d’annuler cette réservation.";
+          data?.error ?? (currentLocale === "en"
+            ? "Unable to cancel this booking."
+            : "Impossible d'annuler cette réservation.");
         toast.error(msg);
         return;
       }
 
-      toast.success("La demande de réservation a été annulée.");
+      toast.success(
+        currentLocale === "en"
+          ? "The booking request has been cancelled."
+          : "La demande de réservation a été annulée."
+      );
       setBookings((prev) =>
         prev.map((b) => (b.id === id ? { ...b, status: "CANCELLED" } : b)),
       );
     } catch (err) {
       console.error(err);
-      toast.error("Erreur inattendue lors de l’annulation.");
+      toast.error(
+        currentLocale === "en"
+          ? "Unexpected error while cancelling."
+          : "Erreur inattendue lors de l'annulation."
+      );
     } finally {
       setActionLoadingId(null);
     }
   }
 
   async function requestRefund(id: string) {
-    if (
-      !window.confirm(
-        "Tu veux vraiment annuler cette réservation confirmée ? Un remboursement partiel ou total sera appliqué selon la politique d’annulation.",
-      )
-    ) {
+    const confirmMsg = currentLocale === "en"
+      ? "Do you really want to cancel this confirmed booking? A partial or full refund will be applied according to the cancellation policy."
+      : "Tu veux vraiment annuler cette réservation confirmée ? Un remboursement partiel ou total sera appliqué selon la politique d'annulation.";
+    if (!window.confirm(confirmMsg)) {
       return;
     }
 
@@ -281,14 +326,18 @@ function BookingsPageContent() {
         const msg =
           data?.policy?.message ??
           data?.error ??
-          "Impossible d’annuler cette réservation.";
+          (currentLocale === "en"
+            ? "Unable to cancel this booking."
+            : "Impossible d'annuler cette réservation.");
         toast.error(msg);
         return;
       }
 
       toast.success(
         data?.policy?.message ??
-          "La demande de remboursement a été envoyée. Le statut sera mis à jour sous peu.",
+          (currentLocale === "en"
+            ? "The refund request has been sent. Status will be updated shortly."
+            : "La demande de remboursement a été envoyée. Le statut sera mis à jour sous peu."),
       );
 
       setBookings((prev) =>
@@ -300,7 +349,11 @@ function BookingsPageContent() {
       );
     } catch (err) {
       console.error(err);
-      toast.error("Erreur inattendue lors de la demande de remboursement.");
+      toast.error(
+        currentLocale === "en"
+          ? "Unexpected error while requesting refund."
+          : "Erreur inattendue lors de la demande de remboursement."
+      );
     } finally {
       setActionLoadingId(null);
     }
@@ -320,10 +373,10 @@ function BookingsPageContent() {
       <header className="mb-6 flex flex-col gap-2 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
-            Mes réservations
+            {t.title}
           </h1>
           <p className="mt-1 text-sm text-gray-600">
-            Retrouve toutes tes demandes, réservations confirmées et annulées.
+            {t.subtitle}
           </p>
         </div>
 
@@ -331,7 +384,7 @@ function BookingsPageContent() {
           href="/listings"
           className="mt-2 inline-flex items-center justify-center rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 sm:mt-0"
         >
-          Continuer à explorer Lok&apos;Room
+          {t.continueExploring}
         </Link>
       </header>
 
@@ -360,17 +413,16 @@ function BookingsPageContent() {
       {!loading && !error && !hasBookings && (
         <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-6 py-10 text-center">
           <p className="text-sm font-medium text-gray-900">
-            Tu n’as pas encore de réservation.
+            {t.noBookingsYet}
           </p>
           <p className="mt-1 text-sm text-gray-600">
-            Explore les annonces Lok&apos;Room et réserve ton premier séjour,
-            bureau ou parking.
+            {t.noBookingsDesc}
           </p>
           <Link
             href="/listings"
             className="mt-4 inline-flex items-center justify-center rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-900"
           >
-            Voir les annonces
+            {t.viewListings}
           </Link>
         </div>
       )}
@@ -386,8 +438,9 @@ function BookingsPageContent() {
             const dateRange = formatDateRange(
               booking.startDate,
               booking.endDate,
+              currentLocale
             );
-            const createdAt = formatDate(booking.createdAt);
+            const createdAt = formatDate(booking.createdAt, currentLocale);
             const isPending = booking.status === "PENDING";
             const isConfirmed = booking.status === "CONFIRMED";
             const isCancelled = booking.status === "CANCELLED";
@@ -412,7 +465,7 @@ function BookingsPageContent() {
                       />
                     ) : (
                       <div className="flex h-24 w-full items-center justify-center text-xs text-gray-400">
-                        Pas de photo
+                        {t.noPhoto}
                       </div>
                     )}
                   </Link>
@@ -438,26 +491,26 @@ function BookingsPageContent() {
                     </div>
 
                     <p className="text-xs text-gray-600">
-                      Séjour :{" "}
+                      {t.stay} :{" "}
                       <span className="font-medium text-gray-900">
                         {dateRange}
                       </span>
                     </p>
 
                     <p className="text-xs text-gray-600">
-                      Réservé le{" "}
+                      {t.bookedOn}{" "}
                       <span className="font-medium text-gray-900">
                         {createdAt}
                       </span>
                     </p>
 
                     <p className="text-xs text-gray-600">
-                      Montant de base :{" "}
+                      {t.baseAmount} :{" "}
                       <span className="font-medium text-gray-900">
                         {totalLabel}
                       </span>{" "}
                       <span className="text-[11px] text-gray-500">
-                        (hors frais Lok&apos;Room)
+                        {t.excludingFees}
                       </span>
                     </p>
                   </div>
@@ -472,8 +525,8 @@ function BookingsPageContent() {
                           className="inline-flex w-full items-center justify-center rounded-full bg-black px-4 py-2 text-xs font-medium text-white hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                         >
                           {actionLoadingId === booking.id
-                            ? "Ouverture du paiement…"
-                            : "Payer maintenant"}
+                            ? t.openingPayment
+                            : t.payNow}
                         </button>
 
                         <button
@@ -485,8 +538,8 @@ function BookingsPageContent() {
                           className="inline-flex w-full items-center justify-center rounded-full border border-gray-300 bg-white px-4 py-2 text-xs font-medium text-gray-800 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                         >
                           {actionLoadingId === booking.id
-                            ? "Annulation…"
-                            : "Annuler la demande"}
+                            ? t.cancelling
+                            : t.cancelRequest}
                         </button>
                       </>
                     )}
@@ -498,7 +551,7 @@ function BookingsPageContent() {
                           onClick={() => router.push(`/bookings/${booking.id}`)}
                           className="inline-flex w-full items-center justify-center rounded-full border border-gray-300 bg-white px-4 py-2 text-xs font-medium text-gray-800 hover:bg-gray-50 sm:w-auto"
                         >
-                          Voir / gérer le paiement
+                          {t.viewManagePayment}
                         </button>
 
                         <button
@@ -508,15 +561,15 @@ function BookingsPageContent() {
                           className="inline-flex w-full items-center justify-center rounded-full bg-gray-900 px-4 py-2 text-xs font-medium text-white hover:bg-black disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                         >
                           {actionLoadingId === booking.id
-                            ? "Demande en cours…"
-                            : "Annuler la réservation"}
+                            ? t.requestInProgress
+                            : t.cancelReservation}
                         </button>
                       </>
                     )}
 
                     {isCancelled && (
                       <p className="text-[11px] font-medium text-gray-500">
-                        Cette réservation a été annulée.
+                        {t.bookingCancelled}
                       </p>
                     )}
                   </div>

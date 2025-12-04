@@ -563,3 +563,15 @@ model Message {
 
   @@index([conversationId, createdAt])
 }
+
+// ======================================================================
+// STRIPE EVENTS - Idempotence pour les webhooks
+// ======================================================================
+
+model StripeEvent {
+  id          String   @id // L'ID de l'événement Stripe (evt_xxx)
+  type        String   // Type d'événement (payment_intent.succeeded, etc.)
+  processedAt DateTime @default(now())
+
+  @@index([processedAt])
+}

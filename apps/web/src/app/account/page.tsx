@@ -1,9 +1,9 @@
-// apps/web/src/app/account/page.tsx
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import PaymentsPage from "./payments/page";
+import useTranslation from "@/hooks/useTranslation";
 
 // Heroicons outline (icônes propres style Airbnb)
 import {
@@ -25,46 +25,9 @@ type TabId =
   | "payments"
   | "language";
 
-// 🔹 chaque tab a une icône React
-const tabs: { id: TabId; label: string; icon: ReactNode }[] = [
-  {
-    id: "personal",
-    label: "Données personnelles",
-    icon: <UserIcon className="h-5 w-5" />,
-  },
-  {
-    id: "security",
-    label: "Connexion et sécurité",
-    icon: <ShieldCheckIcon className="h-5 w-5" />,
-  },
-  {
-    id: "privacy",
-    label: "Confidentialité",
-    icon: <LockClosedIcon className="h-5 w-5" />,
-  },
-  {
-    id: "notifications",
-    label: "Notifications",
-    icon: <BellIcon className="h-5 w-5" />,
-  },
-  {
-    id: "taxes",
-    label: "Taxes",
-    icon: <DocumentTextIcon className="h-5 w-5" />,
-  },
-  {
-    id: "payments",
-    label: "Paiements",
-    icon: <CreditCardIcon className="h-5 w-5" />,
-  },
-  {
-    id: "language",
-    label: "Langues et devise",
-    icon: <GlobeAltIcon className="h-5 w-5" />,
-  },
-];
+type AccountTranslations = typeof import("@/locales/fr").default.account;
 
-// Couleurs d’icône : tout neutre (gris)
+// Couleurs d'icône : tout neutre (gris)
 const iconColorByTab: Record<TabId, string> = {
   personal: "text-gray-500",
   security: "text-gray-500",
@@ -75,7 +38,7 @@ const iconColorByTab: Record<TabId, string> = {
   language: "text-gray-500",
 };
 
-// ---------- Types pour la vérification d’identité ----------
+// ---------- Types pour la vérification d'identité ----------
 type IdentityStatus = "UNVERIFIED" | "PENDING" | "VERIFIED" | "REJECTED";
 
 type IdentityStatusResponse = {
@@ -83,17 +46,20 @@ type IdentityStatusResponse = {
   identityLastVerifiedAt?: string | null;
 };
 
-function formatIdentityStatusLabel(status: IdentityStatus | null): string {
+function formatIdentityStatusLabel(
+  status: IdentityStatus | null,
+  t: AccountTranslations["securitySection"]
+): string {
   switch (status) {
     case "PENDING":
-      return "Vérification en cours";
+      return t.statusPending;
     case "VERIFIED":
-      return "Identité vérifiée";
+      return t.statusVerified;
     case "REJECTED":
-      return "Vérification refusée";
+      return t.statusRejected;
     case "UNVERIFIED":
     default:
-      return "Non vérifiée";
+      return t.statusUnverified;
   }
 }
 
@@ -111,8 +77,9 @@ function identityStatusClasses(status: IdentityStatus | null): string {
   }
 }
 
-// ---------- Carte “Connexion & sécurité” ----------
-function SecurityTabContent() {
+// ---------- Carte "Connexion & sécurité" ----------
+function SecurityTabContent({ t }: { t: AccountTranslations }) {
+  const secT = t.securitySection;
   const [status, setStatus] = useState<IdentityStatus | null>(null);
   const [lastVerifiedAt, setLastVerifiedAt] = useState<string | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(false);
@@ -127,7 +94,7 @@ function SecurityTabContent() {
         const data = (await res.json()) as IdentityStatusResponse;
         setStatus(data.identityStatus ?? "UNVERIFIED");
         setLastVerifiedAt(
-          data.identityLastVerifiedAt ? data.identityLastVerifiedAt : null,
+          data.identityLastVerifiedAt ? data.identityLastVerifiedAt : null
         );
       } catch (e) {
         console.error("Erreur chargement statut identité:", e);
@@ -164,18 +131,18 @@ function SecurityTabContent() {
     }
   };
 
-  const label = formatIdentityStatusLabel(status);
+  const label = formatIdentityStatusLabel(status, secT);
 
-  let buttonLabel = "Vérifier mon identité";
+  let buttonLabel = secT.verifyIdentity;
   let buttonDisabled = false;
 
   if (status === "PENDING") {
-    buttonLabel = "Continuer la vérification";
+    buttonLabel = secT.continueVerification;
   } else if (status === "VERIFIED") {
-    buttonLabel = "Identité vérifiée";
+    buttonLabel = secT.identityVerified;
     buttonDisabled = true;
   } else if (status === "REJECTED") {
-    buttonLabel = "Recommencer la vérification";
+    buttonLabel = secT.restartVerification;
   }
 
   if (startingIdentity) {
@@ -185,13 +152,8 @@ function SecurityTabContent() {
   return (
     <section className="space-y-6">
       <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900">
-          Sécurité du compte
-        </h2>
-        <p className="mt-1 text-sm text-gray-500">
-          Cette section accueillera plus tard les paramètres de mot de passe,
-          méthodes de connexion, etc.
-        </p>
+        <h2 className="text-lg font-semibold text-gray-900">{secT.title}</h2>
+        <p className="mt-1 text-sm text-gray-500">{secT.subtitle}</p>
       </div>
 
       <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -199,32 +161,24 @@ function SecurityTabContent() {
           <div className="space-y-2">
             <div className="flex items-center gap-3">
               <h2 className="text-lg font-semibold text-gray-900">
-                Vérification d&apos;identité
+                {secT.identityTitle}
               </h2>
 
               <span
                 className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${identityStatusClasses(
-                  status,
+                  status
                 )}`}
               >
-                {loadingStatus ? "Chargement..." : label}
+                {loadingStatus ? secT.loading : label}
               </span>
             </div>
 
-            <p className="text-sm text-gray-600">
-              Lok&apos;Room utilise Stripe Identity pour vérifier votre pièce
-              d&apos;identité (carte d&apos;identité, passeport, permis de
-              conduire) et un selfie. Cela renforce la sécurité autant pour les
-              voyageurs que pour les hôtes.
-            </p>
-            <p className="text-xs text-gray-400">
-              La vérification est réalisée sur une page sécurisée Stripe. Vos
-              documents sont traités et stockés par Stripe, pas par Lok&apos;Room.
-            </p>
+            <p className="text-sm text-gray-600">{secT.identityDesc}</p>
+            <p className="text-xs text-gray-400">{secT.identityNote}</p>
 
             {lastVerifiedAt && (
               <p className="pt-1 text-xs text-gray-400">
-                Dernière vérification :{" "}
+                {secT.lastVerification}{" "}
                 {new Date(lastVerifiedAt).toLocaleString()}
               </p>
             )}
@@ -242,7 +196,7 @@ function SecurityTabContent() {
                   : "bg-gray-900 text-white hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900/40",
               ].join(" ")}
             >
-              {startingIdentity ? "Redirection..." : buttonLabel}
+              {startingIdentity ? secT.redirecting : buttonLabel}
             </button>
           </div>
         </div>
@@ -254,7 +208,8 @@ function SecurityTabContent() {
 // ---------- Contenu Taxes ----------
 type TaxesSubTab = "contributors" | "documents";
 
-function TaxesTabContent() {
+function TaxesTabContent({ t }: { t: AccountTranslations }) {
+  const taxT = t.taxes;
   const currentYear = new Date().getFullYear();
   const years = [currentYear];
 
@@ -265,11 +220,8 @@ function TaxesTabContent() {
     <>
       <section className="space-y-6">
         <header className="space-y-1">
-          <h1 className="text-2xl font-semibold">Taxes</h1>
-          <p className="text-sm text-gray-500">
-            Gérez vos informations fiscales et vos documents liés à votre
-            activité sur Lok&apos;Room.
-          </p>
+          <h1 className="text-2xl font-semibold">{taxT.title}</h1>
+          <p className="text-sm text-gray-500">{taxT.subtitle}</p>
         </header>
 
         <div className="border-b border-gray-200">
@@ -284,7 +236,7 @@ function TaxesTabContent() {
                   : "border-b-2 border-transparent text-gray-500 hover:text-gray-900",
               ].join(" ")}
             >
-              Contribuables
+              {taxT.contributors}
             </button>
             <button
               type="button"
@@ -296,7 +248,7 @@ function TaxesTabContent() {
                   : "border-b-2 border-transparent text-gray-500 hover:text-gray-900",
               ].join(" ")}
             >
-              Documents fiscaux
+              {taxT.documents}
             </button>
           </nav>
         </div>
@@ -305,15 +257,12 @@ function TaxesTabContent() {
           <>
             <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
               <h2 className="text-base font-semibold text-gray-900">
-                Informations fiscales
+                {taxT.taxInfoTitle}
               </h2>
               <p className="mt-1 text-sm text-gray-600">
-                Selon les lois de votre pays, Lok&apos;Room peut être amené à
-                vous demander des informations fiscales.{" "}
+                {taxT.taxInfoDesc}{" "}
                 <span className="block text-xs text-gray-500">
-                  Pour le moment, aucune information fiscale supplémentaire
-                  n&apos;est requise pour votre compte. Si la réglementation
-                  change, nous vous en informerons.
+                  {taxT.taxInfoNote}
                 </span>
               </p>
               <button
@@ -321,23 +270,20 @@ function TaxesTabContent() {
                 onClick={() => setShowTaxInfoModal(true)}
                 className="mt-4 inline-flex items-center rounded-full bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-black"
               >
-                Ajouter des infos fiscales
+                {taxT.addTaxInfo}
               </button>
             </div>
 
             <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-600 shadow-sm">
               <h2 className="text-base font-semibold text-gray-900">
-                Besoin d&apos;aide ?
+                {taxT.needHelp}
               </h2>
-              <p className="mt-1">
-                Obtenez des réponses à vos questions sur la fiscalité dans le
-                centre d&apos;aide Lok&apos;Room.
-              </p>
+              <p className="mt-1">{taxT.needHelpDesc}</p>
               <button
                 type="button"
                 className="mt-3 inline-flex items-center text-sm font-medium text-gray-900 underline underline-offset-2"
               >
-                Accéder au Centre d&apos;aide
+                {taxT.helpCenter}
               </button>
             </div>
           </>
@@ -345,13 +291,9 @@ function TaxesTabContent() {
           <div className="space-y-4">
             <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
               <h2 className="text-base font-semibold text-gray-900">
-                Documents fiscaux
+                {taxT.documentsTitle}
               </h2>
-              <p className="mt-1 text-sm text-gray-600">
-                Consultez et téléchargez les documents fiscaux requis pour vos
-                déclarations d&apos;impôts. Vous pouvez également utiliser le
-                récapitulatif détaillé de vos revenus.
-              </p>
+              <p className="mt-1 text-sm text-gray-600">{taxT.documentsDesc}</p>
 
               <div className="mt-4 divide-y divide-gray-100 rounded-xl border border-gray-100 bg-gray-50">
                 {years.map((year) => (
@@ -361,7 +303,7 @@ function TaxesTabContent() {
                   >
                     <span className="font-medium text-gray-900">{year}</span>
                     <span className="text-xs text-gray-500">
-                      Aucun document fiscal n&apos;a été produit.
+                      {taxT.noDocuments}
                     </span>
                   </div>
                 ))}
@@ -378,28 +320,23 @@ function TaxesTabContent() {
               type="button"
               onClick={() => setShowTaxInfoModal(false)}
               className="absolute left-6 top-6 text-2xl leading-none text-gray-400 hover:text-gray-600"
-              aria-label="Fermer"
+              aria-label={taxT.close}
             >
               ×
             </button>
 
             <div className="mt-4 space-y-4">
               <h2 className="text-2xl font-semibold text-gray-900">
-                Vous n&apos;avez pas besoin d&apos;ajouter des infos fiscales
+                {taxT.modalTitle}
               </h2>
+              <p className="text-sm text-gray-600">{taxT.modalDesc}</p>
               <p className="text-sm text-gray-600">
-                Vous n&apos;avez pas besoin d&apos;ajouter des infos fiscales
-                pour le moment. Si nous avons besoin de quelque chose, nous
-                communiquerons avec vous.
-              </p>
-              <p className="text-sm text-gray-600">
-                Pour modifier un numéro d&apos;identification fiscale, vous
-                devrez le supprimer et l&apos;ajouter à nouveau.{" "}
+                {taxT.modalNote}{" "}
                 <button
                   type="button"
                   className="text-sm font-medium text-gray-900 underline underline-offset-2"
                 >
-                  En savoir plus
+                  {taxT.learnMore}
                 </button>
               </p>
             </div>
@@ -410,7 +347,7 @@ function TaxesTabContent() {
                 onClick={() => setShowTaxInfoModal(false)}
                 className="rounded-full bg-gray-900 px-6 py-2 text-sm font-medium text-white shadow-sm hover:bg-black"
               >
-                Fermer
+                {taxT.close}
               </button>
             </div>
           </div>
@@ -421,60 +358,64 @@ function TaxesTabContent() {
 }
 
 // ---------- TabContent global ----------
-function TabContent({ active }: { active: TabId }) {
+function TabContent({
+  active,
+  t,
+  tabLabels,
+}: {
+  active: TabId;
+  t: AccountTranslations;
+  tabLabels: Record<TabId, string>;
+}) {
   switch (active) {
     case "personal":
       return (
         <section className="space-y-6">
           <header>
-            <h1 className="text-2xl font-semibold">Données personnelles</h1>
-            <p className="text-sm text-gray-500">
-              Gérez votre nom, votre adresse e-mail et vos informations de
-              contact.
-            </p>
+            <h1 className="text-2xl font-semibold">{t.personal.title}</h1>
+            <p className="text-sm text-gray-500">{t.personal.subtitle}</p>
           </header>
 
           <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
               <div>
-                <p className="text-sm font-medium text-gray-900">Nom légal</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {t.personal.legalName}
+                </p>
                 <p className="text-xs text-gray-500">
-                  Le nom figurant sur votre pièce d’identité et vos
-                  justificatifs.
+                  {t.personal.legalNameDesc}
                 </p>
               </div>
               <button className="text-sm font-medium text-primary-600 hover:underline">
-                Modifier
+                {t.personal.modify}
               </button>
             </div>
 
             <div className="flex items-center justify-between border-b border-gray-100 pb-4">
               <div>
                 <p className="text-sm font-medium text-gray-900">
-                  Adresse e-mail
+                  {t.personal.emailAddress}
                 </p>
                 <p className="text-xs text-gray-500">
-                  Utilisée pour vos confirmations de réservation et les
-                  notifications.
+                  {t.personal.emailAddressDesc}
                 </p>
               </div>
               <button className="text-sm font-medium text-primary-600 hover:underline">
-                Modifier
+                {t.personal.modify}
               </button>
             </div>
 
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-900">
-                  Numéro de téléphone
+                  {t.personal.phoneNumber}
                 </p>
                 <p className="text-xs text-gray-500">
-                  Sert à sécuriser votre compte et à vous contacter si
-                  nécessaire.
+                  {t.personal.phoneNumberDesc}
                 </p>
               </div>
               <button className="text-sm font-medium text-primary-600 hover:underline">
-                Modifier
+                {t.personal.modify}
               </button>
             </div>
           </div>
@@ -482,10 +423,10 @@ function TabContent({ active }: { active: TabId }) {
       );
 
     case "security":
-      return <SecurityTabContent />;
+      return <SecurityTabContent t={t} />;
 
     case "taxes":
-      return <TaxesTabContent />;
+      return <TaxesTabContent t={t} />;
 
     case "payments":
       return (
@@ -498,16 +439,14 @@ function TabContent({ active }: { active: TabId }) {
       return (
         <section className="space-y-4">
           <header>
-            <h1 className="text-2xl font-semibold">Section à venir</h1>
+            <h1 className="text-2xl font-semibold">{t.comingSoon.title}</h1>
             <p className="text-sm text-gray-500">
-              On préparera le contenu détaillé de «{" "}
-              {tabs.find((t) => t.id === active)?.label} » plus tard.
+              {t.comingSoon.subtitle.replace("{section}", tabLabels[active])}
             </p>
           </header>
 
           <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-6 text-sm text-gray-500">
-            Pour l’instant, cette section est une maquette. On y ajoutera les
-            formulaires et paramètres quand on s’attaquera à cette partie.
+            {t.comingSoon.placeholder}
           </div>
         </section>
       );
@@ -515,11 +454,63 @@ function TabContent({ active }: { active: TabId }) {
 }
 
 export default function AccountSettingsPage() {
+  const { dict } = useTranslation();
+  const t = dict.account;
+
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  // 🔹 chaque tab a une icône React
+  const tabs: { id: TabId; label: string; icon: ReactNode }[] = [
+    {
+      id: "personal",
+      label: t.tabs.personal,
+      icon: <UserIcon className="h-5 w-5" />,
+    },
+    {
+      id: "security",
+      label: t.tabs.security,
+      icon: <ShieldCheckIcon className="h-5 w-5" />,
+    },
+    {
+      id: "privacy",
+      label: t.tabs.privacy,
+      icon: <LockClosedIcon className="h-5 w-5" />,
+    },
+    {
+      id: "notifications",
+      label: t.tabs.notifications,
+      icon: <BellIcon className="h-5 w-5" />,
+    },
+    {
+      id: "taxes",
+      label: t.tabs.taxes,
+      icon: <DocumentTextIcon className="h-5 w-5" />,
+    },
+    {
+      id: "payments",
+      label: t.tabs.payments,
+      icon: <CreditCardIcon className="h-5 w-5" />,
+    },
+    {
+      id: "language",
+      label: t.tabs.language,
+      icon: <GlobeAltIcon className="h-5 w-5" />,
+    },
+  ];
+
+  const tabLabels: Record<TabId, string> = {
+    personal: t.tabs.personal,
+    security: t.tabs.security,
+    privacy: t.tabs.privacy,
+    notifications: t.tabs.notifications,
+    taxes: t.tabs.taxes,
+    payments: t.tabs.payments,
+    language: t.tabs.language,
+  };
+
   const urlTab = searchParams.get("tab") as TabId | null;
-  const initialTab: TabId = tabs.some((t) => t.id === urlTab)
+  const initialTab: TabId = tabs.some((tab) => tab.id === urlTab)
     ? (urlTab as TabId)
     : "personal";
 
@@ -527,10 +518,10 @@ export default function AccountSettingsPage() {
 
   useEffect(() => {
     const currentUrlTab = searchParams.get("tab") as TabId | null;
-    if (currentUrlTab && tabs.some((t) => t.id === currentUrlTab)) {
+    if (currentUrlTab && tabs.some((tab) => tab.id === currentUrlTab)) {
       setActiveTab(currentUrlTab);
     }
-  }, [searchParams]);
+  }, [searchParams, tabs]);
 
   const handleChangeTab = (id: TabId) => {
     setActiveTab(id);
@@ -542,7 +533,7 @@ export default function AccountSettingsPage() {
   return (
     <main className="mx-auto flex max-w-6xl gap-8 px-4 py-10 lg:px-8">
       <aside className="hidden w-72 flex-shrink-0 border-r border-gray-200 pr-6 md:block">
-        <h2 className="mb-6 text-lg font-semibold">Paramètres du compte</h2>
+        <h2 className="mb-6 text-lg font-semibold">{t.settingsTitle}</h2>
         <nav className="space-y-1">
           {tabs.map((tab) => {
             const isActive = tab.id === activeTab;
@@ -578,7 +569,7 @@ export default function AccountSettingsPage() {
       </aside>
 
       <div className="md:hidden">
-        <h2 className="mb-3 text-lg font-semibold">Paramètres du compte</h2>
+        <h2 className="mb-3 text-lg font-semibold">{t.settingsTitle}</h2>
         <select
           value={activeTab}
           onChange={(e) => handleChangeTab(e.target.value as TabId)}
@@ -593,7 +584,7 @@ export default function AccountSettingsPage() {
       </div>
 
       <section className="flex-1">
-        <TabContent active={activeTab} />
+        <TabContent active={activeTab} t={t} tabLabels={tabLabels} />
       </section>
     </main>
   );

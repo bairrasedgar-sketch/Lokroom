@@ -11,7 +11,8 @@ const DEFAULT_LANG: SupportedLang = "fr";
 
 export function resolveLang(): SupportedLang {
   const cookieStore = cookies();
-  const cookieLang = cookieStore.get("lang")?.value;
+  // Priorité au cookie "locale" (utilisé par le middleware et le client)
+  const cookieLang = cookieStore.get("locale")?.value ?? cookieStore.get("lang")?.value;
 
   if (isSupportedLang(cookieLang)) return cookieLang;
 
@@ -27,5 +28,5 @@ export function resolveLang(): SupportedLang {
 export function getServerDictionary() {
   const lang = resolveLang();
   const dict = getDictionary(lang);
-  return { lang, dict };
+  return { lang, locale: lang, dict };
 }

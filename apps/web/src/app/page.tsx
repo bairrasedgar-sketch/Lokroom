@@ -7,6 +7,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/db";
 import { formatMoneyAsync, type Currency } from "@/lib/currency";
 import CurrencyNotice from "@/components/CurrencyNotice";
+import { getServerDictionary } from "@/lib/i18n.server";
 
 async function getFeaturedListings() {
   const listings = await prisma.listing.findMany({
@@ -23,6 +24,9 @@ async function getFeaturedListings() {
 export default async function Home() {
   const displayCurrency =
     (cookies().get("currency")?.value as Currency) ?? "EUR";
+
+  const { dict } = getServerDictionary();
+  const t = dict.home;
 
   const listings = await getFeaturedListings();
 
@@ -47,11 +51,11 @@ export default async function Home() {
   );
 
   const categories = [
-    { key: "home", label: "Maisons & Appartements" },
-    { key: "desk", label: "Bureaux & Coworking" },
-    { key: "parking", label: "Parkings & Garages" },
-    { key: "event", label: "Espaces événements" },
-    { key: "other", label: "Autres espaces" },
+    { key: "home", label: t.categories.home },
+    { key: "desk", label: t.categories.desk },
+    { key: "parking", label: t.categories.parking },
+    { key: "event", label: t.categories.event },
+    { key: "other", label: t.categories.other },
   ];
 
   return (
@@ -65,13 +69,11 @@ export default async function Home() {
 
           <div className="space-y-3">
             <h1 className="text-3xl font-semibold leading-tight text-slate-900 sm:text-4xl">
-              Loue des espaces en quelques secondes.
+              {t.title}
             </h1>
 
             <p className="max-w-xl text-sm text-slate-600 sm:text-base">
-              Trouve une chambre, un bureau, un parking ou un espace pour ton
-              prochain projet. Réservation simple, paiement sécurisé,
-              flexibilité maximale.
+              {t.subtitle}
             </p>
           </div>
 
@@ -80,19 +82,19 @@ export default async function Home() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
               <input
                 type="text"
-                placeholder="Ville, adresse, lieu…"
+                placeholder={t.searchPlaceholder}
                 className="flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-800 outline-none placeholder:text-slate-400 focus:border-slate-900"
               />
 
               <div className="flex gap-2 sm:w-auto">
                 <button className="flex-1 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-medium text-slate-700 hover:bg-slate-50 sm:text-sm">
-                  Dates
+                  {t.dates}
                 </button>
                 <button className="flex-1 rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-medium text-slate-700 hover:bg-slate-50 sm:text-sm">
-                  Type d&apos;espace
+                  {t.spaceType}
                 </button>
                 <button className="flex-1 whitespace-nowrap rounded-2xl bg-slate-900 px-4 py-2.5 text-xs font-medium text-white shadow-sm hover:bg-slate-800 sm:text-sm">
-                  Rechercher
+                  {t.searchBtn}
                 </button>
               </div>
             </div>
@@ -121,23 +123,23 @@ export default async function Home() {
           <div className="flex items-center justify-between gap-2">
             <div>
               <h2 className="text-lg font-semibold text-slate-900 sm:text-xl">
-                Annonces récentes
+                {t.recentListings}
               </h2>
               <p className="text-xs text-slate-500">
-                Découvre les derniers espaces publiés sur Lok’Room.
+                {t.recentListingsDesc}
               </p>
             </div>
             <Link
               href="/listings"
               className="text-xs font-medium text-slate-700 hover:text-slate-900 sm:text-sm"
             >
-              Voir toutes les annonces →
+              {t.viewAllListings} →
             </Link>
           </div>
 
           {cards.length === 0 ? (
             <p className="text-sm text-slate-500">
-              Aucune annonce pour l&apos;instant. Sois le premier à publier ! 🎉
+              {t.noListingsYet}
             </p>
           ) : (
             <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -161,7 +163,7 @@ export default async function Home() {
                           />
                         ) : (
                           <div className="absolute inset-0 grid place-items-center text-xs text-slate-400">
-                            Pas d&apos;image
+                            {t.noImage}
                           </div>
                         )}
                       </div>
@@ -190,19 +192,17 @@ export default async function Home() {
           <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
             <div className="space-y-1">
               <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-slate-300">
-                Deviens hôte sur Lok&apos;Room
+                {t.becomeHostTitle}
               </p>
               <p className="max-w-md text-sm text-slate-100">
-                Loue une chambre libre, un bureau, un parking ou n&apos;importe
-                quel espace inutilisé. Tu fixes les règles, on s&apos;occupe du
-                paiement sécurisé.
+                {t.becomeHostDesc}
               </p>
             </div>
             <Link
               href="/profile?tab=host"
               className="rounded-full bg-white px-5 py-2 text-xs font-medium text-slate-900 shadow-sm hover:bg-slate-100 sm:text-sm"
             >
-              Commencer à louer →
+              {t.startRenting} →
             </Link>
           </div>
         </section>

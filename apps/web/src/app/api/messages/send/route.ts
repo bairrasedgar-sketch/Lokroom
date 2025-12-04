@@ -1,18 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { sendMessageSchema, validateRequestBody } from "@/lib/validations";
 
-type Body = {
-  conversationId?: string;
-  hostId?: string;
-  guestId?: string;
-  listingId?: string | null;
-  reservationId?: string | null;
-  message: string;
-};
+export const dynamic = "force-dynamic";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -20,9 +14,19 @@ export async function POST(req: Request) {
     }
 
     const userId = session.user.id;
-    const body = (await req.json()) as Body;
 
-    const text = body.message?.trim();
+    // Validation Zod du body
+    const validation = await validateRequestBody(req, sendMessageSchema);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error },
+        { status: validation.status },
+      );
+    }
+
+    const { conversationId: convIdInput, listingId, bookingId, recipientId, content } = validation.data;
+    const text = content.trim();
+
     if (!text) {
       return NextResponse.json(
         { error: "Message vide" },
@@ -30,18 +34,37 @@ export async function POST(req: Request) {
       );
     }
 
-    let conversationId = body.conversationId;
+    let conversationId = convIdInput;
 
     // 1️⃣ Si pas de conversationId, on crée / retrouve une conversation
     if (!conversationId) {
-      const { hostId, guestId, listingId, reservationId } = body;
-
-      if (!hostId || !guestId) {
+      // Pour créer une nouvelle conversation, on a besoin d'un recipientId
+      if (!recipientId) {
         return NextResponse.json(
-          { error: "hostId et guestId sont requis si pas de conversationId" },
+          { error: "recipientId requis pour créer une nouvelle conversation" },
           { status: 400 },
         );
       }
+
+      // Déterminer qui est host et qui est guest
+      // On regarde si le recipient est un host (a un hostProfile)
+      const recipientUser = await prisma.user.findUnique({
+        where: { id: recipientId },
+        select: { id: true, hostProfile: { select: { id: true } } },
+      });
+
+      if (!recipientUser) {
+        return NextResponse.json(
+          { error: "Destinataire introuvable" },
+          { status: 404 },
+        );
+      }
+
+      // Si le recipient a un hostProfile, il est le host
+      // Sinon, l'expéditeur est considéré comme host
+      const isRecipientHost = !!recipientUser.hostProfile;
+      const hostId = isRecipientHost ? recipientId : userId;
+      const guestId = isRecipientHost ? userId : recipientId;
 
       // L'utilisateur doit être l'un des deux
       if (userId !== hostId && userId !== guestId) {
@@ -56,7 +79,7 @@ export async function POST(req: Request) {
         where: {
           hostId,
           guestId,
-          reservationId: reservationId ?? undefined,
+          reservationId: bookingId ?? undefined,
         },
       });
 
@@ -67,7 +90,7 @@ export async function POST(req: Request) {
             hostId,
             guestId,
             listingId: listingId ?? undefined,
-            reservationId: reservationId ?? undefined,
+            reservationId: bookingId ?? undefined,
           },
         }));
 

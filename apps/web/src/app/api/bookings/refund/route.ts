@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 import { getCurrentUser } from "@/lib/api-auth";
 import { evaluateCancellationPolicy } from "@/lib/cancellation";
+import { refundBookingSchema, validateRequestBody } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -17,12 +18,12 @@ export const runtime = "nodejs";
  *   "reason"?: string
  * }
  *
- * ➜ Annulation d’une réservation PAYÉE (status CONFIRMED).
- *   - Vérifie que l’utilisateur est bien guest ou host
- *   - Applique la politique d’annulation Lok'Room
+ * ➜ Annulation d'une réservation PAYÉE (status CONFIRMED).
+ *   - Vérifie que l'utilisateur est bien guest ou host
+ *   - Applique la politique d'annulation Lok'Room
  *   - Crée un refund Stripe (partiel ou total)
- *   - Marque qui a annulé + date d’annulation
- *   - Le webhook `charge.refunded` s’occupe d’ajuster :
+ *   - Marque qui a annulé + date d'annulation
+ *   - Le webhook `charge.refunded` s'occupe d'ajuster :
  *       - refundAmountCents
  *       - status (CANCELLED si full refund)
  *       - wallet host / ledger
@@ -33,22 +34,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  const body = (await req.json().catch(() => null)) as
-    | {
-        bookingId?: string;
-        reason?: string;
-      }
-    | null;
-
-  if (!body?.bookingId) {
+  // Validation Zod du body
+  const validation = await validateRequestBody(req, refundBookingSchema);
+  if (!validation.success) {
     return NextResponse.json(
-      { error: "MISSING_BOOKING_ID" },
-      { status: 400 },
+      { error: "VALIDATION_ERROR", details: validation.error },
+      { status: validation.status },
     );
   }
 
+  const { bookingId, reason } = validation.data;
+
   const booking = await prisma.booking.findUnique({
-    where: { id: body.bookingId },
+    where: { id: bookingId },
     include: {
       listing: {
         select: { ownerId: true },
@@ -118,7 +116,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const reason = body.reason ?? "";
+  const customReason = reason ?? "";
 
   // On récupère le PaymentIntent directement par son ID (plus propre que la Search API)
   const pi = await stripe.paymentIntents.retrieve(
@@ -164,7 +162,7 @@ export async function POST(req: NextRequest) {
         userId: me.id,
         policyCode: decision.reasonCode,
         refundRatio: priceBasedRatio.toString(),
-        customReason: reason,
+        customReason,
       },
     });
 
