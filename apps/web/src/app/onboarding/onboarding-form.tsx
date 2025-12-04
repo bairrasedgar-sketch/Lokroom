@@ -1,7 +1,7 @@
 // apps/web/src/app/onboarding/OnboardingForm.tsx
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import useTranslation from "@/hooks/useTranslation";
 
@@ -74,18 +74,10 @@ export default function OnboardingForm({ email }: Props) {
     else if (step === "address") setStep("birthdate");
   }
 
-  // Flag pour savoir si la soumission vient d'un clic explicite
-  const [submitClicked, setSubmitClicked] = useState(false);
-
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-
-    // Bloque les soumissions automatiques (auto-fill, extensions, etc.)
-    if (!submitClicked) {
-      console.log("[Onboarding] Soumission bloquée - pas de clic explicite");
-      return;
-    }
-    setSubmitClicked(false);
+  // Soumission manuelle (pas de <form>)
+  async function handleFinish() {
+    // Empêche les doubles soumissions
+    if (saving) return;
 
     setError(null);
 
@@ -130,11 +122,13 @@ export default function OnboardingForm({ email }: Props) {
   const steps: Step[] = ["identity", "birthdate", "address"];
   const currentStepIndex = steps.indexOf(step);
 
-  // Empêche la soumission par Entrée sauf sur la dernière étape
+  // Gère la touche Entrée pour passer à l'étape suivante (sauf sur l'adresse)
   function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Enter" && step !== "address") {
+    if (e.key === "Enter") {
       e.preventDefault();
-      handleNext();
+      if (step !== "address") {
+        handleNext();
+      }
     }
   }
 
@@ -157,7 +151,8 @@ export default function OnboardingForm({ email }: Props) {
           `Étape ${currentStepIndex + 1} sur ${steps.length}`}
       </p>
 
-      <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="space-y-4">
+      {/* PAS DE <form> - juste des divs pour éviter les soumissions automatiques */}
+      <div className="space-y-4" onKeyDown={handleKeyDown}>
         {/* ========== ÉTAPE 1: IDENTITÉ ========== */}
         {step === "identity" && (
           <div className="space-y-3">
@@ -168,6 +163,7 @@ export default function OnboardingForm({ email }: Props) {
               <input
                 value={email}
                 readOnly
+                tabIndex={-1}
                 className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500"
               />
             </div>
@@ -181,6 +177,7 @@ export default function OnboardingForm({ email }: Props) {
                 onChange={(e) => setFirstName(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 placeholder={t.firstNamePlaceholder}
+                autoComplete="off"
                 autoFocus
               />
             </div>
@@ -194,6 +191,7 @@ export default function OnboardingForm({ email }: Props) {
                 onChange={(e) => setLastName(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 placeholder={t.lastNamePlaceholder}
+                autoComplete="off"
               />
             </div>
 
@@ -216,6 +214,7 @@ export default function OnboardingForm({ email }: Props) {
                 onChange={(e) => setBirthDate(e.target.value)}
                 max={new Date().toISOString().split("T")[0]}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                autoComplete="off"
                 autoFocus
               />
               <p className="text-[11px] text-gray-500">
@@ -233,6 +232,7 @@ export default function OnboardingForm({ email }: Props) {
                 onChange={(e) => setPhone(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 placeholder={t.phonePlaceholder}
+                autoComplete="off"
               />
               <p className="text-[11px] text-gray-500">
                 {t.phoneHint}
@@ -253,6 +253,9 @@ export default function OnboardingForm({ email }: Props) {
                 onChange={(e) => setAddressLine1(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 placeholder={t.addressPlaceholder}
+                autoComplete="off"
+                data-lpignore="true"
+                data-form-type="other"
                 autoFocus
               />
             </div>
@@ -267,6 +270,9 @@ export default function OnboardingForm({ email }: Props) {
                   onChange={(e) => setCity(e.target.value)}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                   placeholder={t.cityPlaceholder}
+                  autoComplete="off"
+                  data-lpignore="true"
+                  data-form-type="other"
                 />
               </div>
 
@@ -279,6 +285,9 @@ export default function OnboardingForm({ email }: Props) {
                   onChange={(e) => setPostalCode(e.target.value)}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                   placeholder={t.postalCodePlaceholder}
+                  autoComplete="off"
+                  data-lpignore="true"
+                  data-form-type="other"
                 />
               </div>
             </div>
@@ -291,6 +300,7 @@ export default function OnboardingForm({ email }: Props) {
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                autoComplete="off"
               >
                 <option value="">{t.countryPlaceholder}</option>
                 <option value="FR">France</option>
@@ -342,9 +352,9 @@ export default function OnboardingForm({ email }: Props) {
             </button>
           ) : (
             <button
-              type="submit"
+              type="button"
               disabled={saving}
-              onClick={() => setSubmitClicked(true)}
+              onClick={handleFinish}
               className="flex-1 rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-black disabled:opacity-60"
             >
               {saving ? t.submitting : t.submit}
@@ -357,20 +367,13 @@ export default function OnboardingForm({ email }: Props) {
           <button
             type="button"
             disabled={saving}
-            onClick={() => {
-              setSubmitClicked(true);
-              // Petit délai pour que le state soit mis à jour avant la soumission
-              setTimeout(() => {
-                const form = document.querySelector("form");
-                if (form) form.requestSubmit();
-              }, 10);
-            }}
+            onClick={handleFinish}
             className="w-full text-center text-xs font-medium text-gray-500 hover:text-gray-700 hover:underline"
           >
             {t.skipAddress || "Passer cette étape"}
           </button>
         )}
-      </form>
+      </div>
     </div>
   );
 }
