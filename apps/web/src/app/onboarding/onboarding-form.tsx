@@ -74,8 +74,19 @@ export default function OnboardingForm({ email }: Props) {
     else if (step === "address") setStep("birthdate");
   }
 
+  // Flag pour savoir si la soumission vient d'un clic explicite
+  const [submitClicked, setSubmitClicked] = useState(false);
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+
+    // Bloque les soumissions automatiques (auto-fill, extensions, etc.)
+    if (!submitClicked) {
+      console.log("[Onboarding] Soumission bloquée - pas de clic explicite");
+      return;
+    }
+    setSubmitClicked(false);
+
     setError(null);
 
     // Validation finale
@@ -333,6 +344,7 @@ export default function OnboardingForm({ email }: Props) {
             <button
               type="submit"
               disabled={saving}
+              onClick={() => setSubmitClicked(true)}
               className="flex-1 rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-black disabled:opacity-60"
             >
               {saving ? t.submitting : t.submit}
@@ -345,7 +357,14 @@ export default function OnboardingForm({ email }: Props) {
           <button
             type="button"
             disabled={saving}
-            onClick={handleSubmit as any}
+            onClick={() => {
+              setSubmitClicked(true);
+              // Petit délai pour que le state soit mis à jour avant la soumission
+              setTimeout(() => {
+                const form = document.querySelector("form");
+                if (form) form.requestSubmit();
+              }, 10);
+            }}
             className="w-full text-center text-xs font-medium text-gray-500 hover:text-gray-700 hover:underline"
           >
             {t.skipAddress || "Passer cette étape"}
