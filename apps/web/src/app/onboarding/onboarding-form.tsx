@@ -119,6 +119,14 @@ export default function OnboardingForm({ email }: Props) {
   const steps: Step[] = ["identity", "birthdate", "address"];
   const currentStepIndex = steps.indexOf(step);
 
+  // Empêche la soumission par Entrée sauf sur la dernière étape
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter" && step !== "address") {
+      e.preventDefault();
+      handleNext();
+    }
+  }
+
   return (
     <div className="space-y-4">
       {/* Barre de progression */}
@@ -138,7 +146,7 @@ export default function OnboardingForm({ email }: Props) {
           `Étape ${currentStepIndex + 1} sur ${steps.length}`}
       </p>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="space-y-4">
         {/* ========== ÉTAPE 1: IDENTITÉ ========== */}
         {step === "identity" && (
           <div className="space-y-3">
@@ -335,8 +343,9 @@ export default function OnboardingForm({ email }: Props) {
         {/* Skip optionnel pour l'adresse */}
         {step === "address" && (
           <button
-            type="submit"
+            type="button"
             disabled={saving}
+            onClick={handleSubmit as any}
             className="w-full text-center text-xs font-medium text-gray-500 hover:text-gray-700 hover:underline"
           >
             {t.skipAddress || "Passer cette étape"}
