@@ -47,11 +47,23 @@ export async function POST(req: NextRequest) {
 
   const me = await prisma.user.findUnique({
     where: { email: session.user.email },
-    select: { id: true },
+    select: { id: true, identityStatus: true },
   });
 
   if (!me) {
     return NextResponse.json({ error: "USER_NOT_FOUND" }, { status: 404 });
+  }
+
+  // 🔐 SÉCURITÉ : Vérification KYC obligatoire pour créer une réservation
+  if (me.identityStatus !== "VERIFIED") {
+    return NextResponse.json(
+      {
+        error: "KYC_REQUIRED",
+        message: "Tu dois vérifier ton identité avant de réserver. Rends-toi dans les paramètres de ton compte.",
+        identityStatus: me.identityStatus,
+      },
+      { status: 403 }
+    );
   }
 
   // Validation Zod du body

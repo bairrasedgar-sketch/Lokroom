@@ -135,7 +135,14 @@ export async function POST(req: NextRequest) {
       select: {
         id: true,
         role: true,
-        hostProfile: { select: { id: true } },
+        identityStatus: true,
+        hostProfile: {
+          select: {
+            id: true,
+            payoutsEnabled: true,
+            stripeAccountId: true,
+          }
+        },
       },
     });
 
@@ -160,6 +167,32 @@ export async function POST(req: NextRequest) {
         {
           error:
             "Seuls les hôtes Lok'Room peuvent créer une annonce. Passe en mode hôte pour continuer.",
+          code: "NOT_HOST",
+        },
+        { status: 403 }
+      );
+    }
+
+    // 🔐 SÉCURITÉ : Vérification KYC obligatoire pour créer une annonce
+    if (user.identityStatus !== "VERIFIED") {
+      return NextResponse.json(
+        {
+          error: "Tu dois vérifier ton identité avant de créer une annonce.",
+          code: "KYC_REQUIRED",
+          identityStatus: user.identityStatus,
+        },
+        { status: 403 }
+      );
+    }
+
+    // 🔐 SÉCURITÉ : Compte Stripe Connect obligatoire pour créer une annonce
+    if (!user.hostProfile?.stripeAccountId || !user.hostProfile?.payoutsEnabled) {
+      return NextResponse.json(
+        {
+          error: "Tu dois configurer ton compte bancaire (Stripe) avant de créer une annonce.",
+          code: "STRIPE_CONNECT_REQUIRED",
+          hasStripeAccount: !!user.hostProfile?.stripeAccountId,
+          payoutsEnabled: user.hostProfile?.payoutsEnabled ?? false,
         },
         { status: 403 }
       );

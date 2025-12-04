@@ -10,6 +10,7 @@ import { z } from "zod";
 const onboardingSchema = z.object({
   firstName: z.string().min(1, "Prénom requis").max(100),
   lastName: z.string().min(1, "Nom requis").max(100),
+  role: z.enum(["guest", "host"]).nullable().optional(),
   birthDate: z.string().nullable().optional(),
   phone: z.string().max(30).nullable().optional(),
   addressLine1: z.string().max(200).nullable().optional(),
@@ -44,6 +45,7 @@ export async function POST(req: Request) {
   const {
     firstName,
     lastName,
+    role,
     birthDate,
     phone,
     addressLine1,
@@ -53,6 +55,9 @@ export async function POST(req: Request) {
   } = validation.data;
 
   const fullName = `${firstName} ${lastName}`.trim();
+
+  // Convertir le rôle frontend en enum Prisma
+  const prismaRole = role === "host" ? "HOST" : role === "guest" ? "GUEST" : undefined;
 
   // Parse birthDate si fournie
   let parsedBirthDate: Date | null = null;
@@ -79,6 +84,7 @@ export async function POST(req: Request) {
       data: {
         name: fullName,
         country: country || undefined,
+        role: prismaRole || undefined,
       },
     });
 

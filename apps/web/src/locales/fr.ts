@@ -401,6 +401,32 @@ const fr = {
     postalCodePlaceholder: "75001",
     addressHint: "Ton adresse est utilisée pour la facturation et reste strictement confidentielle.",
     skipAddress: "Passer cette étape",
+    // Étape choix du rôle
+    roleQuestion: "{firstName}, tu veux utiliser Lok'Room comme...",
+    roleGuestDesc: "Je cherche un espace à louer",
+    roleHostDesc: "Je veux proposer un espace",
+    roleHint: "Tu pourras changer à tout moment dans les paramètres.",
+    errorRoleRequired: "Merci de choisir comment tu souhaites utiliser Lok'Room.",
+    // Étape vérification (hôte uniquement)
+    verificationTitle: "Vérifie ton compte pour commencer",
+    verificationSubtitle: "Pour créer des annonces et recevoir des paiements, tu dois vérifier ton identité et configurer ton compte bancaire.",
+    identityVerificationLabel: "Vérification d'identité",
+    identityVerificationDesc: "Confirme ton identité avec une pièce d'identité et un selfie via Stripe Identity.",
+    verifyIdentity: "Vérifier mon identité",
+    verifying: "Vérification...",
+    identityStarted: "Vérification lancée dans un nouvel onglet",
+    bankAccountLabel: "Compte bancaire",
+    bankAccountDesc: "Configure ton RIB pour recevoir tes revenus sur ton portefeuille Lok'Room.",
+    configureBankAccount: "Configurer mon compte",
+    configuring: "Configuration...",
+    connectStarted: "Configuration lancée dans un nouvel onglet",
+    importantNote: "Important :",
+    verificationNote: "Sans ces vérifications, tu pourras naviguer sur Lok'Room et ajouter des favoris, mais tu ne pourras pas créer d'annonces ni effectuer de réservations.",
+    skipVerification: "Je ferai ça plus tard",
+    // Traductions spécifiques voyageur
+    verificationTitleGuest: "Une dernière étape pour ta sécurité",
+    verificationSubtitleGuest: "Vérifie ton identité pour pouvoir réserver en toute sécurité. Ça prend 2 minutes.",
+    verificationNoteGuest: "Sans la vérification d'identité, tu pourras naviguer et ajouter des favoris, mais tu ne pourras pas effectuer de réservations.",
   },
 
   // ============================================
