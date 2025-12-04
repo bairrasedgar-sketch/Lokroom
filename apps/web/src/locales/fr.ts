@@ -430,6 +430,8 @@ const fr = {
     // Statuts de vérification
     identityVerified: "Identité vérifiée",
     identityPending: "Vérification en cours...",
+    identityFailed: "La vérification a échoué. Réessaie avec un document valide.",
+    retryVerification: "Réessayer",
     connectVerified: "Compte bancaire configuré",
     connectPending: "Configuration en cours...",
     continueConfig: "Continuer la configuration",

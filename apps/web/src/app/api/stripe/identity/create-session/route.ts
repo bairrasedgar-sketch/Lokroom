@@ -59,6 +59,7 @@ export async function POST() {
     const verificationSession = await stripe.identity.verificationSessions.create({
       type: "document",
       metadata: {
+        lokroom_user_id: user.id,
         userId: user.id,
         userEmail: user.email,
       },
