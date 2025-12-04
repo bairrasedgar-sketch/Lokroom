@@ -61,8 +61,8 @@ export default function OnboardingForm({ email, initialData, returnFromStripe }:
   const [connectLoading, setConnectLoading] = useState(false);
 
   // Utiliser le statut réel de la base de données
-  const [identityStatus, setIdentityStatus] = useState(initialData?.identityStatus || "UNVERIFIED");
-  const [connectStatus, setConnectStatus] = useState({
+  const [identityStatus] = useState(initialData?.identityStatus || "UNVERIFIED");
+  const [connectStatus] = useState({
     hasAccount: initialData?.hasStripeConnect || false,
     payoutsEnabled: initialData?.payoutsEnabled || false,
   });
