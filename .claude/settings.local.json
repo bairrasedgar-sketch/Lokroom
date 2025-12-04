@@ -14,7 +14,10 @@
       "mcp__ide__getDiagnostics",
       "Bash(npm install:*)",
       "Bash(npm uninstall:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: add Resend email service with magic link auth\n\n- Add centralized email service using Resend API\n- Implement professional email templates (magic link, welcome, booking, etc.)\n- Update NextAuth EmailProvider to use Resend for magic links\n- Send welcome email after user onboarding\n- Add StripeEvent model for webhook idempotency\n- Fix typo: payements -> payments\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

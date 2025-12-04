@@ -11,8 +11,15 @@
 
 import { Resend } from "resend";
 
-// Client Resend
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Client Resend (lazy initialization pour éviter les erreurs au build)
+let resendClient: Resend | null = null;
+
+function getResendClient(): Resend {
+  if (!resendClient) {
+    resendClient = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resendClient;
+}
 
 // Expéditeur par défaut
 const DEFAULT_FROM =
@@ -435,6 +442,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<EmailResult>
   }
 
   try {
+    const resend = getResendClient();
     const result = await resend.emails.send({
       from,
       to: Array.isArray(to) ? to : [to],
