@@ -1,44 +1,94 @@
 // apps/web/src/app/onboarding/OnboardingForm.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import useTranslation from "@/hooks/useTranslation";
 
+type UserData = {
+  firstName: string;
+  lastName: string;
+  role: "guest" | "host" | null;
+  birthDate: string;
+  phone: string;
+  addressLine1: string;
+  city: string;
+  postalCode: string;
+  country: string;
+  identityStatus: string;
+  hasStripeConnect: boolean;
+  payoutsEnabled: boolean;
+};
+
 type Props = {
   email: string;
+  initialData?: UserData;
+  returnFromStripe?: boolean;
 };
 
 // Étapes du formulaire style Airbnb
 type Step = "identity" | "role" | "birthdate" | "address" | "verification";
 type UserRole = "guest" | "host" | null;
 
-export default function OnboardingForm({ email }: Props) {
+export default function OnboardingForm({ email, initialData, returnFromStripe }: Props) {
   const { dict } = useTranslation();
   const t = dict.onboarding;
   const router = useRouter();
 
+  // Déterminer l'étape initiale
+  const getInitialStep = (): Step => {
+    // Si on revient de Stripe, aller directement à verification
+    if (returnFromStripe && initialData?.firstName) {
+      return "verification";
+    }
+    // Si l'utilisateur a déjà des données, reprendre où il en était
+    if (initialData?.firstName && initialData?.lastName) {
+      if (!initialData.role) return "role";
+      if (!initialData.birthDate) return "birthdate";
+      // Si tout est rempli, aller à verification
+      return "verification";
+    }
+    return "identity";
+  };
+
   // État du formulaire multi-étapes
-  const [step, setStep] = useState<Step>("identity");
+  const [step, setStep] = useState<Step>(getInitialStep);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // États pour les vérifications Stripe (hôte uniquement)
+  // États pour les vérifications Stripe
   const [identityLoading, setIdentityLoading] = useState(false);
   const [connectLoading, setConnectLoading] = useState(false);
-  const [identityDone, setIdentityDone] = useState(false);
-  const [connectDone, setConnectDone] = useState(false);
 
-  // Données du formulaire
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [role, setRole] = useState<UserRole>(null);
-  const [birthDate, setBirthDate] = useState("");
-  const [phone, setPhone] = useState("");
-  const [addressLine1, setAddressLine1] = useState("");
-  const [city, setCity] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-  const [country, setCountry] = useState("");
+  // Utiliser le statut réel de la base de données
+  const [identityStatus, setIdentityStatus] = useState(initialData?.identityStatus || "UNVERIFIED");
+  const [connectStatus, setConnectStatus] = useState({
+    hasAccount: initialData?.hasStripeConnect || false,
+    payoutsEnabled: initialData?.payoutsEnabled || false,
+  });
+
+  // Données du formulaire - pré-remplies avec initialData
+  const [firstName, setFirstName] = useState(initialData?.firstName || "");
+  const [lastName, setLastName] = useState(initialData?.lastName || "");
+  const [role, setRole] = useState<UserRole>(initialData?.role || null);
+  const [birthDate, setBirthDate] = useState(initialData?.birthDate || "");
+  const [phone, setPhone] = useState(initialData?.phone || "");
+  const [addressLine1, setAddressLine1] = useState(initialData?.addressLine1 || "");
+  const [city, setCity] = useState(initialData?.city || "");
+  const [postalCode, setPostalCode] = useState(initialData?.postalCode || "");
+  const [country, setCountry] = useState(initialData?.country || "");
+
+  // Animation pour le retour de Stripe
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+
+  useEffect(() => {
+    if (returnFromStripe) {
+      setShowSuccessAnimation(true);
+      // Cacher l'animation après 2 secondes
+      const timer = setTimeout(() => setShowSuccessAnimation(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [returnFromStripe]);
 
   // Calcul de l'âge pour vérification
   function calculateAge(dateString: string): number {
@@ -51,6 +101,29 @@ export default function OnboardingForm({ email }: Props) {
       age--;
     }
     return age;
+  }
+
+  // Sauvegarder les données actuelles en base
+  async function saveCurrentData() {
+    try {
+      await fetch("/api/account/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          role: role,
+          birthDate: birthDate || null,
+          phone: phone.trim() || null,
+          addressLine1: addressLine1.trim() || null,
+          city: city.trim() || null,
+          postalCode: postalCode.trim() || null,
+          country: country.trim() || null,
+        }),
+      });
+    } catch (err) {
+      console.error("Erreur sauvegarde:", err);
+    }
   }
 
   // Navigation entre les étapes
@@ -98,8 +171,10 @@ export default function OnboardingForm({ email }: Props) {
     setTimeout(() => setStep("birthdate"), 150);
   }
 
-  // Passer à l'étape vérification (pour tous les rôles maintenant)
-  function handleAddressNext() {
+  // Passer à l'étape vérification
+  async function handleAddressNext() {
+    // Sauvegarder les données avant d'aller à verification
+    await saveCurrentData();
     setStep("verification");
   }
 
@@ -107,6 +182,10 @@ export default function OnboardingForm({ email }: Props) {
   async function handleIdentityVerification() {
     setIdentityLoading(true);
     setError(null);
+
+    // D'abord sauvegarder les données
+    await saveCurrentData();
+
     try {
       const res = await fetch("/api/stripe/identity/create-session", {
         method: "POST",
@@ -118,9 +197,8 @@ export default function OnboardingForm({ email }: Props) {
       }
       const { url } = await res.json();
       if (url) {
-        // Ouvre dans un nouvel onglet pour ne pas perdre le formulaire
-        window.open(url, "_blank");
-        setIdentityDone(true);
+        // Rediriger dans le même onglet - on reviendra avec les données
+        window.location.href = url;
       }
     } catch {
       setError(t.errorGeneric);
@@ -133,6 +211,10 @@ export default function OnboardingForm({ email }: Props) {
   async function handleConnectOnboarding() {
     setConnectLoading(true);
     setError(null);
+
+    // D'abord sauvegarder les données
+    await saveCurrentData();
+
     try {
       const res = await fetch("/api/stripe/connect/onboarding", {
         method: "POST",
@@ -144,9 +226,8 @@ export default function OnboardingForm({ email }: Props) {
       }
       const { url } = await res.json();
       if (url) {
-        // Ouvre dans un nouvel onglet pour ne pas perdre le formulaire
-        window.open(url, "_blank");
-        setConnectDone(true);
+        // Rediriger dans le même onglet - on reviendra avec les données
+        window.location.href = url;
       }
     } catch {
       setError(t.errorGeneric);
@@ -155,14 +236,11 @@ export default function OnboardingForm({ email }: Props) {
     }
   }
 
-  // Soumission manuelle (pas de <form>)
+  // Soumission finale
   async function handleFinish() {
-    // Empêche les doubles soumissions
     if (saving) return;
-
     setError(null);
 
-    // Validation finale
     if (!firstName.trim() || !lastName.trim()) {
       setError(t.errorRequired);
       return;
@@ -191,7 +269,6 @@ export default function OnboardingForm({ email }: Props) {
         return;
       }
 
-      // Redirection vers l'accueil
       router.push("/");
     } catch {
       setError(t.errorGeneric);
@@ -200,22 +277,38 @@ export default function OnboardingForm({ email }: Props) {
     }
   }
 
-  // Indicateur de progression - dynamique selon le rôle (tous ont verification maintenant)
+  // Indicateur de progression
   const steps: Step[] = ["identity", "role", "birthdate", "address", "verification"];
   const currentStepIndex = steps.indexOf(step);
 
-  // Gère la touche Entrée pour passer à l'étape suivante (sauf sur l'adresse)
+  // Gère la touche Entrée
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === "Enter") {
       e.preventDefault();
-      if (step !== "address") {
+      if (step !== "address" && step !== "verification") {
         handleNext();
       }
     }
   }
 
+  // Helper pour afficher le statut KYC
+  const isIdentityVerified = identityStatus === "VERIFIED";
+  const isIdentityPending = identityStatus === "PENDING";
+  const isConnectComplete = connectStatus.hasAccount && connectStatus.payoutsEnabled;
+
   return (
     <div className="space-y-4">
+      {/* Animation de succès au retour de Stripe */}
+      {showSuccessAnimation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="animate-bounce rounded-full bg-green-500 p-6">
+            <svg className="h-16 w-16 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+          </div>
+        </div>
+      )}
+
       {/* Barre de progression */}
       <div className="flex items-center gap-2">
         {steps.map((s, i) => (
@@ -233,7 +326,6 @@ export default function OnboardingForm({ email }: Props) {
           `Étape ${currentStepIndex + 1} sur ${steps.length}`}
       </p>
 
-      {/* PAS DE <form> - juste des divs pour éviter les soumissions automatiques */}
       <div className="space-y-4" onKeyDown={handleKeyDown}>
         {/* ========== ÉTAPE 1: IDENTITÉ ========== */}
         {step === "identity" && (
@@ -301,41 +393,18 @@ export default function OnboardingForm({ email }: Props) {
                     : "border-gray-200 bg-white"
                 }`}
               >
-                {/* Illustration Voyageur */}
                 <div className="mb-3 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-blue-50 to-blue-100">
-                  <svg
-                    className="h-12 w-12 text-blue-600"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={1.5}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"
-                    />
+                  <svg className="h-12 w-12 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
                   </svg>
                 </div>
-                <span className="text-sm font-semibold text-gray-900">
-                  {t.roleGuest || "Voyageur"}
-                </span>
-                <span className="mt-1 text-center text-[11px] text-gray-500">
-                  {t.roleGuestDesc || "Je cherche un espace à louer"}
-                </span>
+                <span className="text-sm font-semibold text-gray-900">{t.roleGuest || "Voyageur"}</span>
+                <span className="mt-1 text-center text-[11px] text-gray-500">{t.roleGuestDesc || "Je cherche un espace à louer"}</span>
                 {role === "guest" && (
                   <div className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-gray-900">
                     <svg className="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
                   </div>
                 )}
@@ -351,36 +420,17 @@ export default function OnboardingForm({ email }: Props) {
                     : "border-gray-200 bg-white"
                 }`}
               >
-                {/* Illustration Hôte */}
                 <div className="mb-3 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-amber-50 to-amber-100">
-                  <svg
-                    className="h-12 w-12 text-amber-600"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={1.5}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545m0 6.205l3 1m1.5.5l-1.5-.5M6.75 7.364V3h-3v18m3-13.636l10.5-3.819"
-                    />
+                  <svg className="h-12 w-12 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545m0 6.205l3 1m1.5.5l-1.5-.5M6.75 7.364V3h-3v18m3-13.636l10.5-3.819" />
                   </svg>
                 </div>
-                <span className="text-sm font-semibold text-gray-900">
-                  {t.roleHost || "Hôte"}
-                </span>
-                <span className="mt-1 text-center text-[11px] text-gray-500">
-                  {t.roleHostDesc || "Je veux proposer un espace"}
-                </span>
+                <span className="text-sm font-semibold text-gray-900">{t.roleHost || "Hôte"}</span>
+                <span className="mt-1 text-center text-[11px] text-gray-500">{t.roleHostDesc || "Je veux proposer un espace"}</span>
                 {role === "host" && (
                   <div className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-gray-900">
                     <svg className="h-3 w-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
                   </div>
                 )}
@@ -397,9 +447,7 @@ export default function OnboardingForm({ email }: Props) {
         {step === "birthdate" && (
           <div className="space-y-3">
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-700">
-                {t.birthDateLabel}
-              </label>
+              <label className="text-xs font-semibold text-gray-700">{t.birthDateLabel}</label>
               <input
                 type="date"
                 value={birthDate}
@@ -409,15 +457,11 @@ export default function OnboardingForm({ email }: Props) {
                 autoComplete="off"
                 autoFocus
               />
-              <p className="text-[11px] text-gray-500">
-                {t.birthDateHint}
-              </p>
+              <p className="text-[11px] text-gray-500">{t.birthDateHint}</p>
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-700">
-                {t.phoneLabel}
-              </label>
+              <label className="text-xs font-semibold text-gray-700">{t.phoneLabel}</label>
               <input
                 type="tel"
                 value={phone}
@@ -426,73 +470,55 @@ export default function OnboardingForm({ email }: Props) {
                 placeholder={t.phonePlaceholder}
                 autoComplete="off"
               />
-              <p className="text-[11px] text-gray-500">
-                {t.phoneHint}
-              </p>
+              <p className="text-[11px] text-gray-500">{t.phoneHint}</p>
             </div>
           </div>
         )}
 
-        {/* ========== ÉTAPE 3: ADRESSE ========== */}
+        {/* ========== ÉTAPE 4: ADRESSE ========== */}
         {step === "address" && (
           <div className="space-y-3">
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-700">
-                {t.addressLabel}
-              </label>
+              <label className="text-xs font-semibold text-gray-700">{t.addressLabel}</label>
               <input
                 value={addressLine1}
                 onChange={(e) => setAddressLine1(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 placeholder={t.addressPlaceholder}
                 autoComplete="off"
-                data-lpignore="true"
-                data-form-type="other"
                 autoFocus
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-700">
-                  {t.cityLabel}
-                </label>
+                <label className="text-xs font-semibold text-gray-700">{t.cityLabel}</label>
                 <input
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                   placeholder={t.cityPlaceholder}
                   autoComplete="off"
-                  data-lpignore="true"
-                  data-form-type="other"
                 />
               </div>
-
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-gray-700">
-                  {t.postalCodeLabel}
-                </label>
+                <label className="text-xs font-semibold text-gray-700">{t.postalCodeLabel}</label>
                 <input
                   value={postalCode}
                   onChange={(e) => setPostalCode(e.target.value)}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                   placeholder={t.postalCodePlaceholder}
                   autoComplete="off"
-                  data-lpignore="true"
-                  data-form-type="other"
                 />
               </div>
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-gray-700">
-                {t.countryLabel}
-              </label>
+              <label className="text-xs font-semibold text-gray-700">{t.countryLabel}</label>
               <select
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
-                autoComplete="off"
               >
                 <option value="">{t.countryPlaceholder}</option>
                 <option value="FR">France</option>
@@ -511,9 +537,7 @@ export default function OnboardingForm({ email }: Props) {
               </select>
             </div>
 
-            <p className="text-[11px] text-gray-500">
-              {t.addressHint}
-            </p>
+            <p className="text-[11px] text-gray-500">{t.addressHint}</p>
           </div>
         )}
 
@@ -535,13 +559,26 @@ export default function OnboardingForm({ email }: Props) {
               </p>
             </div>
 
-            {/* Carte Vérification d'identité (pour tous) */}
-            <div className={`rounded-xl border-2 p-4 transition-all ${identityDone ? "border-green-500 bg-green-50" : "border-gray-200"}`}>
+            {/* Carte Vérification d'identité */}
+            <div className={`rounded-xl border-2 p-4 transition-all ${
+              isIdentityVerified ? "border-green-500 bg-green-50" :
+              isIdentityPending ? "border-amber-500 bg-amber-50" :
+              "border-gray-200"
+            }`}>
               <div className="flex items-start gap-4">
-                <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${identityDone ? "bg-green-100" : "bg-purple-100"}`}>
-                  {identityDone ? (
+                <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${
+                  isIdentityVerified ? "bg-green-100" :
+                  isIdentityPending ? "bg-amber-100" :
+                  "bg-purple-100"
+                }`}>
+                  {isIdentityVerified ? (
                     <svg className="h-6 w-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  ) : isIdentityPending ? (
+                    <svg className="h-6 w-6 animate-spin text-amber-600" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
                   ) : (
                     <svg className="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -550,13 +587,18 @@ export default function OnboardingForm({ email }: Props) {
                   )}
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-semibold text-gray-900">
-                    {t.identityVerificationLabel || "Vérification d'identité"}
-                  </h4>
-                  <p className="mt-0.5 text-xs text-gray-500">
-                    {t.identityVerificationDesc || "Confirme ton identité avec une pièce d'identité et un selfie."}
-                  </p>
-                  {!identityDone && (
+                  <h4 className="font-semibold text-gray-900">{t.identityVerificationLabel || "Vérification d'identité"}</h4>
+                  <p className="mt-0.5 text-xs text-gray-500">{t.identityVerificationDesc || "Confirme ton identité avec une pièce d'identité et un selfie."}</p>
+
+                  {isIdentityVerified ? (
+                    <p className="mt-2 text-xs font-medium text-green-600">
+                      {t.identityVerified || "Identité vérifiée"}
+                    </p>
+                  ) : isIdentityPending ? (
+                    <p className="mt-2 text-xs font-medium text-amber-600">
+                      {t.identityPending || "Vérification en cours..."}
+                    </p>
+                  ) : (
                     <button
                       type="button"
                       onClick={handleIdentityVerification}
@@ -566,23 +608,31 @@ export default function OnboardingForm({ email }: Props) {
                       {identityLoading ? (t.verifying || "Vérification...") : (t.verifyIdentity || "Vérifier mon identité")}
                     </button>
                   )}
-                  {identityDone && (
-                    <p className="mt-2 text-xs font-medium text-green-600">
-                      {t.identityStarted || "Vérification lancée dans un nouvel onglet"}
-                    </p>
-                  )}
                 </div>
               </div>
             </div>
 
-            {/* Carte Compte bancaire / Stripe Connect (HÔTE UNIQUEMENT) */}
+            {/* Carte Compte bancaire (HÔTE UNIQUEMENT) */}
             {role === "host" && (
-              <div className={`rounded-xl border-2 p-4 transition-all ${connectDone ? "border-green-500 bg-green-50" : "border-gray-200"}`}>
+              <div className={`rounded-xl border-2 p-4 transition-all ${
+                isConnectComplete ? "border-green-500 bg-green-50" :
+                connectStatus.hasAccount ? "border-amber-500 bg-amber-50" :
+                "border-gray-200"
+              }`}>
                 <div className="flex items-start gap-4">
-                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${connectDone ? "bg-green-100" : "bg-blue-100"}`}>
-                    {connectDone ? (
+                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${
+                    isConnectComplete ? "bg-green-100" :
+                    connectStatus.hasAccount ? "bg-amber-100" :
+                    "bg-blue-100"
+                  }`}>
+                    {isConnectComplete ? (
                       <svg className="h-6 w-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    ) : connectStatus.hasAccount ? (
+                      <svg className="h-6 w-6 animate-spin text-amber-600" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
                     ) : (
                       <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -591,13 +641,28 @@ export default function OnboardingForm({ email }: Props) {
                     )}
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900">
-                      {t.bankAccountLabel || "Compte bancaire"}
-                    </h4>
-                    <p className="mt-0.5 text-xs text-gray-500">
-                      {t.bankAccountDesc || "Configure ton RIB pour recevoir tes revenus sur ton portefeuille Lok'Room."}
-                    </p>
-                    {!connectDone && (
+                    <h4 className="font-semibold text-gray-900">{t.bankAccountLabel || "Compte bancaire"}</h4>
+                    <p className="mt-0.5 text-xs text-gray-500">{t.bankAccountDesc || "Configure ton RIB pour recevoir tes revenus sur ton portefeuille Lok'Room."}</p>
+
+                    {isConnectComplete ? (
+                      <p className="mt-2 text-xs font-medium text-green-600">
+                        {t.connectVerified || "Compte bancaire configuré"}
+                      </p>
+                    ) : connectStatus.hasAccount ? (
+                      <>
+                        <p className="mt-2 text-xs font-medium text-amber-600">
+                          {t.connectPending || "Configuration en cours..."}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={handleConnectOnboarding}
+                          disabled={connectLoading}
+                          className="mt-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-700 disabled:opacity-60"
+                        >
+                          {connectLoading ? (t.configuring || "Configuration...") : (t.continueConfig || "Continuer la configuration")}
+                        </button>
+                      </>
+                    ) : (
                       <button
                         type="button"
                         onClick={handleConnectOnboarding}
@@ -607,17 +672,12 @@ export default function OnboardingForm({ email }: Props) {
                         {connectLoading ? (t.configuring || "Configuration...") : (t.configureBankAccount || "Configurer mon compte")}
                       </button>
                     )}
-                    {connectDone && (
-                      <p className="mt-2 text-xs font-medium text-green-600">
-                        {t.connectStarted || "Configuration lancée dans un nouvel onglet"}
-                      </p>
-                    )}
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Note importante - différente selon le rôle */}
+            {/* Note importante */}
             <div className="rounded-lg bg-amber-50 p-3">
               <p className="text-xs text-amber-800">
                 <span className="font-semibold">{t.importantNote || "Important :"}</span>{" "}
@@ -631,9 +691,7 @@ export default function OnboardingForm({ email }: Props) {
         )}
 
         {/* Erreur */}
-        {error && (
-          <p className="text-xs text-red-600">{error}</p>
-        )}
+        {error && <p className="text-xs text-red-600">{error}</p>}
 
         {/* Boutons de navigation */}
         <div className="flex gap-3 pt-2">
@@ -647,7 +705,6 @@ export default function OnboardingForm({ email }: Props) {
             </button>
           )}
 
-          {/* Bouton Continuer - pas sur l'adresse (hôte va à verification) ni sur verification */}
           {step !== "address" && step !== "verification" && (
             <button
               type="button"
@@ -658,7 +715,6 @@ export default function OnboardingForm({ email }: Props) {
             </button>
           )}
 
-          {/* Bouton sur l'étape adresse */}
           {step === "address" && (
             <button
               type="button"
@@ -670,7 +726,6 @@ export default function OnboardingForm({ email }: Props) {
             </button>
           )}
 
-          {/* Bouton Terminer sur l'étape verification (hôte) */}
           {step === "verification" && (
             <button
               type="button"
@@ -683,25 +738,15 @@ export default function OnboardingForm({ email }: Props) {
           )}
         </div>
 
-        {/* Skip optionnel pour l'adresse */}
+        {/* Skip optionnel */}
         {step === "address" && (
-          <button
-            type="button"
-            onClick={handleAddressNext}
-            className="w-full text-center text-xs font-medium text-gray-500 hover:text-gray-700 hover:underline"
-          >
+          <button type="button" onClick={handleAddressNext} className="w-full text-center text-xs font-medium text-gray-500 hover:text-gray-700 hover:underline">
             {t.skipAddress || "Passer cette étape"}
           </button>
         )}
 
-        {/* Skip optionnel pour la vérification (hôte) */}
         {step === "verification" && (
-          <button
-            type="button"
-            disabled={saving}
-            onClick={handleFinish}
-            className="w-full text-center text-xs font-medium text-gray-500 hover:text-gray-700 hover:underline"
-          >
+          <button type="button" disabled={saving} onClick={handleFinish} className="w-full text-center text-xs font-medium text-gray-500 hover:text-gray-700 hover:underline">
             {t.skipVerification || "Je ferai ça plus tard"}
           </button>
         )}

@@ -427,6 +427,12 @@ const fr = {
     verificationTitleGuest: "Une dernière étape pour ta sécurité",
     verificationSubtitleGuest: "Vérifie ton identité pour pouvoir réserver en toute sécurité. Ça prend 2 minutes.",
     verificationNoteGuest: "Sans la vérification d'identité, tu pourras naviguer et ajouter des favoris, mais tu ne pourras pas effectuer de réservations.",
+    // Statuts de vérification
+    identityVerified: "Identité vérifiée",
+    identityPending: "Vérification en cours...",
+    connectVerified: "Compte bancaire configuré",
+    connectPending: "Configuration en cours...",
+    continueConfig: "Continuer la configuration",
   },
 
   // ============================================
