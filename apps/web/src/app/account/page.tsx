@@ -4,6 +4,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import PaymentsPage from "./payments/page";
 import useTranslation from "@/hooks/useTranslation";
+import { SUPPORTED_LANGS, type SupportedLang } from "@/locales";
+import type { Currency } from "@/lib/currency";
 
 // Heroicons outline (icônes propres style Airbnb)
 import {
@@ -15,6 +17,33 @@ import {
   CreditCardIcon,
   GlobeAltIcon,
 } from "@heroicons/react/24/outline";
+
+const ONE_YEAR = 60 * 60 * 24 * 365;
+
+const LANG_LABELS: Record<SupportedLang, { label: string; code: string }> = {
+  fr: { label: "Français", code: "FR" },
+  en: { label: "English", code: "EN" },
+  es: { label: "Español", code: "ES" },
+  de: { label: "Deutsch", code: "DE" },
+  it: { label: "Italiano", code: "IT" },
+  pt: { label: "Português", code: "PT" },
+  zh: { label: "中文", code: "ZH" },
+};
+
+type CurrencyOption = {
+  value: Currency;
+  label: string;
+  code: string;
+  symbol: string;
+};
+
+const CURRENCY_OPTIONS: CurrencyOption[] = [
+  { value: "EUR", label: "Euro", code: "EUR", symbol: "€" },
+  { value: "USD", label: "Dollar américain", code: "USD", symbol: "$" },
+  { value: "CAD", label: "Dollar canadien", code: "CAD", symbol: "$" },
+  { value: "CNY", label: "Yuan chinois", code: "CNY", symbol: "¥" },
+  { value: "GBP", label: "Livre sterling", code: "GBP", symbol: "£" },
+];
 
 type TabId =
   | "personal"
@@ -416,6 +445,127 @@ function TaxesTabContent({ t }: { t: AccountTranslations }) {
   );
 }
 
+// ---------- Contenu Langue & Devise ----------
+function LanguageTabContent({ t }: { t: AccountTranslations }) {
+  const router = useRouter();
+  const [lang, setLang] = useState<SupportedLang>("fr");
+  const [currency, setCurrency] = useState<Currency>("EUR");
+  const [saved, setSaved] = useState(false);
+
+  // Lecture des cookies au montage
+  useEffect(() => {
+    const cookieStr = document.cookie;
+    const langMatch = cookieStr.match(/(?:^|;\s*)locale=([^;]+)/);
+    const curLang = (langMatch?.[1] as SupportedLang | undefined) || "fr";
+    if (SUPPORTED_LANGS.includes(curLang)) {
+      setLang(curLang);
+    }
+
+    const curMatch = cookieStr.match(/(?:^|;\s*)currency=([^;]+)/);
+    const cur = (curMatch?.[1] as Currency | undefined) || "EUR";
+    setCurrency(cur);
+  }, []);
+
+  function handleSave() {
+    document.cookie = `locale=${lang}; Path=/; Max-Age=${ONE_YEAR}`;
+    document.cookie = `currency=${currency}; Path=/; Max-Age=${ONE_YEAR}`;
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+    router.refresh();
+  }
+
+  return (
+    <section className="space-y-6">
+      <header className="space-y-1">
+        <h1 className="text-2xl font-semibold">{t.languageSection?.title || "Langue et devise"}</h1>
+        <p className="text-sm text-gray-500">{t.languageSection?.subtitle || "Choisissez votre langue et devise préférées"}</p>
+      </header>
+
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        {/* Langues */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="mb-4 text-base font-semibold text-gray-900">
+            {t.languageSection?.languagesTitle || "Langue"}
+          </h2>
+          <div className="space-y-2">
+            {SUPPORTED_LANGS.map((code) => {
+              const meta = LANG_LABELS[code];
+              const active = lang === code;
+              return (
+                <button
+                  key={code}
+                  type="button"
+                  onClick={() => setLang(code)}
+                  className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm transition ${
+                    active
+                      ? "border-gray-900 bg-gray-900 text-white"
+                      : "border-gray-200 bg-white hover:border-gray-400"
+                  }`}
+                >
+                  <span className="font-medium">{meta.label}</span>
+                  <span className={active ? "opacity-80" : "text-gray-400"}>
+                    {meta.code}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Devises */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="mb-4 text-base font-semibold text-gray-900">
+            {t.languageSection?.currenciesTitle || "Devise"}
+          </h2>
+          <div className="space-y-2">
+            {CURRENCY_OPTIONS.map((opt) => {
+              const active = currency === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setCurrency(opt.value)}
+                  className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm transition ${
+                    active
+                      ? "border-gray-900 bg-gray-900 text-white"
+                      : "border-gray-200 bg-white hover:border-gray-400"
+                  }`}
+                >
+                  <span className="font-medium">
+                    {opt.label} ({opt.symbol})
+                  </span>
+                  <span className={active ? "opacity-80" : "text-gray-400"}>
+                    {opt.code}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Bouton sauvegarder */}
+      <div className="flex items-center gap-4">
+        <button
+          type="button"
+          onClick={handleSave}
+          className="inline-flex items-center rounded-full bg-gray-900 px-6 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-black transition"
+        >
+          {t.languageSection?.save || "Enregistrer les préférences"}
+        </button>
+        {saved && (
+          <span className="flex items-center gap-1.5 text-sm text-emerald-600">
+            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            {t.languageSection?.saved || "Préférences enregistrées"}
+          </span>
+        )}
+      </div>
+    </section>
+  );
+}
+
 // ---------- TabContent global ----------
 function TabContent({
   active,
@@ -493,6 +643,9 @@ function TabContent({
           <PaymentsPage />
         </section>
       );
+
+    case "language":
+      return <LanguageTabContent t={t} />;
 
     default:
       return (

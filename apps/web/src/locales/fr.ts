@@ -90,6 +90,28 @@ const fr = {
       event: "Espaces événements",
       other: "Autres espaces",
     },
+    // Section Pourquoi Lok'Room
+    whyLokroom: {
+      title: "Pourquoi Lok'Room ?",
+      securePayment: "Paiement sécurisé",
+      securePaymentDesc: "Transactions protégées via Stripe",
+      verifiedHosts: "Hôtes vérifiés",
+      verifiedHostsDesc: "Identité contrôlée pour votre sécurité",
+      reactiveSupport: "Support réactif",
+      reactiveSupportDesc: "Une équipe disponible pour vous aider",
+    },
+    // Section hôte améliorée
+    hostSection: {
+      tagline: "Tu fixes les règles, on gère les paiements et la sécurité.",
+      features: {
+        yourRules: "Tes règles",
+        yourRulesDesc: "Définis les conditions de location",
+        securePayments: "Paiements sécurisés",
+        securePaymentsDesc: "Reçois tes revenus en toute sécurité",
+        protection: "Protection",
+        protectionDesc: "Couverture en cas de problème",
+      },
+    },
   },
 
   // ============================================
@@ -665,6 +687,15 @@ const fr = {
       title: "Section à venir",
       subtitle: "On préparera le contenu détaillé de « {section} » plus tard.",
       placeholder: "Pour l'instant, cette section est une maquette. On y ajoutera les formulaires et paramètres quand on s'attaquera à cette partie.",
+    },
+    // Language section
+    languageSection: {
+      title: "Langue et devise",
+      subtitle: "Choisissez votre langue et devise préférées pour afficher les prix et les contenus.",
+      languagesTitle: "Langue de l'interface",
+      currenciesTitle: "Devise d'affichage",
+      save: "Enregistrer les préférences",
+      saved: "Préférences enregistrées !",
     },
   },
 
