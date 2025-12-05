@@ -20,7 +20,8 @@
       "Bash(git commit:*)",
       "Bash(npx prisma studio)",
       "Bash(npx tsx:*)",
-      "Bash(npx prisma db push:*)"
+      "Bash(npx prisma db push:*)",
+      "Bash(git fetch:*)"
     ],
     "deny": [],
     "ask": []

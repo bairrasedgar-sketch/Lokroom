@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo, type DragEvent } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import Script from "next/script";
 import Cropper from "react-easy-crop";
@@ -126,6 +127,25 @@ async function jsonOrThrow(res: Response) {
 
 export default function NewListingPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
+
+  // Vérifier si l'utilisateur est hôte
+  const isHost = (session?.user as any)?.isHost || (session?.user as any)?.role === "HOST" || (session?.user as any)?.role === "BOTH";
+
+  // Rediriger les non-hôtes vers la page "devenir hôte"
+  useEffect(() => {
+    if (status === "loading") return;
+
+    if (status === "unauthenticated") {
+      router.push("/login?callbackUrl=/listings/new");
+      return;
+    }
+
+    if (status === "authenticated" && !isHost) {
+      toast.error("Tu dois être hôte pour créer une annonce");
+      router.push("/become-host");
+    }
+  }, [status, isHost, router]);
 
   // Current step
   const [currentStep, setCurrentStep] = useState<Step>("type");
@@ -508,6 +528,27 @@ export default function NewListingPage() {
     () => (images.reduce((acc, img) => acc + img.file.size, 0) / (1024 * 1024)).toFixed(1),
     [images]
   );
+
+  // Afficher un loader pendant la vérification de session
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-gray-900" />
+      </div>
+    );
+  }
+
+  // Ne pas afficher le formulaire si l'utilisateur n'est pas hôte (en attendant la redirection)
+  if (status === "unauthenticated" || !isHost) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="h-8 w-8 mx-auto animate-spin rounded-full border-4 border-gray-300 border-t-gray-900" />
+          <p className="mt-4 text-sm text-gray-500">Redirection...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
