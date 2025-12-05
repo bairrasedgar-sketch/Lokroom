@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 
 // Types d'espaces disponibles sur Lok'Room
@@ -80,40 +81,85 @@ const SPACE_TYPES = [
   },
 ];
 
-type Step = "welcome" | "space-type" | "verify";
+type Step = "welcome" | "space-type" | "check-kyc";
 
 export default function BecomeHostPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [step, setStep] = useState<Step>("welcome");
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [activatingHost, setActivatingHost] = useState(false);
+  const [kycStatus, setKycStatus] = useState<string | null>(null);
+
+  // Vérifier si l'utilisateur est déjà hôte
+  const isHost = (session?.user as { role?: string })?.role === "HOST" ||
+                 (session?.user as { role?: string })?.role === "BOTH" ||
+                 (session?.user as { isHost?: boolean })?.isHost;
+
+  // Rediriger vers création d'annonce si déjà hôte
+  useEffect(() => {
+    if (status === "authenticated" && isHost) {
+      // Si déjà hôte, passer directement au choix du type
+      setStep("space-type");
+    }
+  }, [status, isHost]);
 
   const handleContinue = async () => {
     if (step === "welcome") {
+      // Si pas connecté, rediriger vers login
+      if (status !== "authenticated") {
+        router.push("/login?redirect=/become-host");
+        return;
+      }
       setStep("space-type");
     } else if (step === "space-type" && selectedType) {
-      setStep("verify");
-    } else if (step === "verify") {
-      // Lancer l'onboarding Stripe et rediriger vers création d'annonce
+      // Stocker le type sélectionné
+      sessionStorage.setItem("lokroom_listing_type", selectedType);
+
+      // Activer le mode hôte en arrière-plan si pas déjà hôte
+      if (!isHost) {
+        setActivatingHost(true);
+        try {
+          const res = await fetch("/api/host/activate", { method: "POST" });
+          const data = await res.json();
+
+          if (!res.ok) {
+            throw new Error(data.error || "Erreur activation");
+          }
+
+          setKycStatus(data.identityStatus);
+        } catch (err) {
+          console.error(err);
+          alert(err instanceof Error ? err.message : "Erreur inconnue");
+          setActivatingHost(false);
+          return;
+        }
+        setActivatingHost(false);
+      }
+
+      // Vérifier le statut KYC
+      setStep("check-kyc");
+    } else if (step === "check-kyc") {
+      // Vérifier le KYC avant de continuer
       setLoading(true);
       try {
-        const res = await fetch("/api/host/onboard", { method: "POST" });
+        // Récupérer le statut KYC actuel
+        const res = await fetch("/api/account/security/status");
         const data = await res.json();
+        const currentKycStatus = data.identityStatus || kycStatus;
 
-        if (data.url) {
-          // Stocker le type sélectionné pour la création d'annonce
-          sessionStorage.setItem("lokroom_listing_type", selectedType || "OTHER");
-          window.location.href = data.url;
-        } else if (data.alreadyHost) {
-          // Déjà hôte, rediriger vers création d'annonce
-          sessionStorage.setItem("lokroom_listing_type", selectedType || "OTHER");
-          router.push("/listings/new");
+        if (currentKycStatus !== "VERIFIED") {
+          // KYC pas validé - rediriger vers onboarding pour compléter
+          router.push("/onboarding?from=become-host");
         } else {
-          throw new Error(data.error || "Erreur lors de l'activation");
+          // KYC validé - aller créer l'annonce
+          router.push("/listings/new");
         }
       } catch (err) {
         console.error(err);
-        alert(err instanceof Error ? err.message : "Erreur inconnue");
+        // En cas d'erreur, essayer quand même
+        router.push("/listings/new");
       } finally {
         setLoading(false);
       }
@@ -122,8 +168,17 @@ export default function BecomeHostPage() {
 
   const handleBack = () => {
     if (step === "space-type") setStep("welcome");
-    else if (step === "verify") setStep("space-type");
+    else if (step === "check-kyc") setStep("space-type");
   };
+
+  // Afficher un loader pendant le chargement de la session
+  if (status === "loading") {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-gray-900"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -157,7 +212,7 @@ export default function BecomeHostPage() {
         {step === "welcome" && (
           <div className="text-center">
             <h1 className="text-4xl font-semibold text-gray-900 md:text-5xl">
-              Deviens hôte sur Lok'Room
+              {isHost ? "Créer une nouvelle annonce" : "Deviens hôte sur Lok'Room"}
             </h1>
             <p className="mt-4 text-lg text-gray-600">
               Loue n'importe quel espace : logement, bureau, parking, studio...
@@ -220,10 +275,17 @@ export default function BecomeHostPage() {
                 </button>
               ))}
             </div>
+
+            {activatingHost && (
+              <div className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-500">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-900"></div>
+                Activation du mode hôte...
+              </div>
+            )}
           </div>
         )}
 
-        {step === "verify" && (
+        {step === "check-kyc" && (
           <div className="text-center">
             <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-purple-100">
               <span className="text-4xl">
@@ -231,39 +293,39 @@ export default function BecomeHostPage() {
               </span>
             </div>
             <h1 className="text-3xl font-semibold text-gray-900 md:text-4xl">
-              Dernière étape : configure tes paiements
+              Prêt à créer ton annonce !
             </h1>
             <p className="mt-4 text-gray-600">
-              Pour recevoir tes revenus, tu dois configurer ton compte de paiement via Stripe.
-              <br />
-              C'est rapide, sécurisé et ne prend que 2 minutes.
+              Tu vas pouvoir créer ton annonce{" "}
+              <strong>
+                {SPACE_TYPES.find((t) => t.id === selectedType)?.title.toLowerCase()}
+              </strong>
+              .
             </p>
 
             <div className="mx-auto mt-8 max-w-md rounded-2xl border border-gray-200 bg-gray-50 p-6 text-left">
-              <h3 className="font-semibold text-gray-900">Ce qu'il te faut :</h3>
+              <h3 className="font-semibold text-gray-900">Rappel :</h3>
               <ul className="mt-4 space-y-3">
                 <li className="flex items-start gap-3">
-                  <span className="text-green-500">✓</span>
-                  <span className="text-sm text-gray-600">Une pièce d'identité valide</span>
+                  <span className="text-purple-500">📋</span>
+                  <span className="text-sm text-gray-600">
+                    Tu devras vérifier ton identité (KYC) pour publier ton annonce
+                  </span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="text-green-500">✓</span>
-                  <span className="text-sm text-gray-600">Tes coordonnées bancaires (IBAN)</span>
+                  <span className="text-purple-500">💳</span>
+                  <span className="text-sm text-gray-600">
+                    Tu pourras configurer tes versements bancaires plus tard dans les paramètres
+                  </span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="text-green-500">✓</span>
-                  <span className="text-sm text-gray-600">2 minutes de ton temps</span>
+                  <span className="text-purple-500">📸</span>
+                  <span className="text-sm text-gray-600">
+                    Prépare des photos de ton espace (minimum 3)
+                  </span>
                 </li>
               </ul>
             </div>
-
-            <p className="mt-6 text-sm text-gray-500">
-              Après la configuration, tu pourras créer ton annonce{" "}
-              <strong>
-                {SPACE_TYPES.find((t) => t.id === selectedType)?.title.toLowerCase()}
-              </strong>{" "}
-              et commencer à recevoir des réservations.
-            </p>
           </div>
         )}
       </main>
@@ -286,13 +348,15 @@ export default function BecomeHostPage() {
           <button
             type="button"
             onClick={handleContinue}
-            disabled={loading || (step === "space-type" && !selectedType)}
+            disabled={loading || activatingHost || (step === "space-type" && !selectedType)}
             className="rounded-lg bg-gray-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {loading
+            {loading || activatingHost
               ? "Chargement..."
-              : step === "verify"
-              ? "Configurer mes paiements"
+              : step === "check-kyc"
+              ? "Créer mon annonce"
+              : status !== "authenticated" && step === "welcome"
+              ? "Se connecter pour commencer"
               : "Continuer"}
           </button>
         </div>

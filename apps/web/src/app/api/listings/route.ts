@@ -185,18 +185,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 🔐 SÉCURITÉ : Compte Stripe Connect obligatoire pour créer une annonce
-    if (!user.hostProfile?.stripeAccountId || !user.hostProfile?.payoutsEnabled) {
-      return NextResponse.json(
-        {
-          error: "Tu dois configurer ton compte bancaire (Stripe) avant de créer une annonce.",
-          code: "STRIPE_CONNECT_REQUIRED",
-          hasStripeAccount: !!user.hostProfile?.stripeAccountId,
-          payoutsEnabled: user.hostProfile?.payoutsEnabled ?? false,
-        },
-        { status: 403 }
-      );
-    }
+    // ℹ️ NOTE : On ne bloque plus la création si Stripe Connect n'est pas configuré
+    // L'utilisateur pourra créer son annonce mais devra configurer ses versements
+    // pour recevoir ses paiements. On stocke l'info pour afficher un message à la fin.
+    const needsStripeSetup = !user.hostProfile?.stripeAccountId || !user.hostProfile?.payoutsEnabled;
 
     // Validation Zod du body
     const validation = await validateRequestBody(req, createListingSchema);
@@ -264,7 +256,13 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ listing }, { status: 201 });
+    return NextResponse.json({
+      listing,
+      needsStripeSetup,
+      message: needsStripeSetup
+        ? "Annonce créée ! Configure tes versements pour recevoir tes paiements."
+        : undefined,
+    }, { status: 201 });
   } catch (err) {
     console.error("POST /api/listings error", err);
     return NextResponse.json(

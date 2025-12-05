@@ -45,6 +45,7 @@ type NavTexts = {
   hostMode: string;
   travelerMode: string;
   becomeHost: string;
+  createListing: string;
   loginCta: string;
 
   modalTitle: string;
@@ -72,7 +73,8 @@ const NAV_TEXTS: Record<LocaleCode, NavTexts> = {
     navProfile: "Profil",
     hostMode: "Mode hôte",
     travelerMode: "Passer en mode voyageur",
-    becomeHost: "Devenir hôte Lok’Room",
+    becomeHost: "Devenir hôte Lok'Room",
+    createListing: "Créer une annonce",
     loginCta: "Connexion / Inscription",
     modalTitle: "Langues et devises Lok’Room",
     modalLanguage: "Langue",
@@ -98,7 +100,8 @@ const NAV_TEXTS: Record<LocaleCode, NavTexts> = {
     navProfile: "Profile",
     hostMode: "Host mode",
     travelerMode: "Switch to guest mode",
-    becomeHost: "Become a Lok’Room host",
+    becomeHost: "Become a Lok'Room host",
+    createListing: "Create a listing",
     loginCta: "Log in / Sign up",
     modalTitle: "Lok’Room languages & currencies",
     modalLanguage: "Language",
@@ -124,7 +127,8 @@ const NAV_TEXTS: Record<LocaleCode, NavTexts> = {
     navProfile: "Perfil",
     hostMode: "Modo anfitrión",
     travelerMode: "Cambiar a modo viajero",
-    becomeHost: "Conviértete en anfitrión Lok’Room",
+    becomeHost: "Conviértete en anfitrión Lok'Room",
+    createListing: "Crear un anuncio",
     loginCta: "Iniciar sesión / Registrarse",
     modalTitle: "Idiomas y divisas de Lok’Room",
     modalLanguage: "Idioma",
@@ -150,7 +154,8 @@ const NAV_TEXTS: Record<LocaleCode, NavTexts> = {
     navProfile: "Profil",
     hostMode: "Gastgebermodus",
     travelerMode: "In den Gastmodus wechseln",
-    becomeHost: "Lok’Room-Gastgeber werden",
+    becomeHost: "Lok'Room-Gastgeber werden",
+    createListing: "Inserat erstellen",
     loginCta: "Anmelden / Registrieren",
     modalTitle: "Lok’Room Sprachen & Währungen",
     modalLanguage: "Sprache",
@@ -176,7 +181,8 @@ const NAV_TEXTS: Record<LocaleCode, NavTexts> = {
     navProfile: "Profilo",
     hostMode: "Modalità host",
     travelerMode: "Passa alla modalità ospite",
-    becomeHost: "Diventa host Lok’Room",
+    becomeHost: "Diventa host Lok'Room",
+    createListing: "Crea un annuncio",
     loginCta: "Accedi / Registrati",
     modalTitle: "Lingue e valute Lok’Room",
     modalLanguage: "Lingua",
@@ -202,7 +208,8 @@ const NAV_TEXTS: Record<LocaleCode, NavTexts> = {
     navProfile: "Perfil",
     hostMode: "Modo anfitrião",
     travelerMode: "Mudar para modo hóspede",
-    becomeHost: "Tornar-se anfitrião Lok’Room",
+    becomeHost: "Tornar-se anfitrião Lok'Room",
+    createListing: "Criar um anúncio",
     loginCta: "Entrar / Cadastrar-se",
     modalTitle: "Idiomas e moedas Lok’Room",
     modalLanguage: "Idioma",
@@ -228,7 +235,8 @@ const NAV_TEXTS: Record<LocaleCode, NavTexts> = {
     navProfile: "个人资料",
     hostMode: "房东模式",
     travelerMode: "切换到房客模式",
-    becomeHost: "成为 Lok’Room 房东",
+    becomeHost: "成为 Lok'Room 房东",
+    createListing: "创建房源",
     loginCta: "登录 / 注册",
     modalTitle: "Lok’Room 语言和货币",
     modalLanguage: "语言",
@@ -459,11 +467,27 @@ export default function Navbar() {
               {isLoggedIn && isHost && (
                 <>
                   <Link
-                    href={isOnHostArea ? "/" : "/host"}
+                    href="/listings/new"
                     className="inline-flex items-center rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-800 transition hover:bg-gray-50"
                   >
-                    {isOnHostArea ? t.travelerMode : t.hostMode}
+                    {t.createListing || "Créer une annonce"}
                   </Link>
+
+                  {isOnHostArea ? (
+                    <Link
+                      href="/"
+                      className="inline-flex items-center rounded-full bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200"
+                    >
+                      {t.travelerMode}
+                    </Link>
+                  ) : (
+                    <Link
+                      href="/host"
+                      className="inline-flex items-center rounded-full bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200"
+                    >
+                      {t.hostMode}
+                    </Link>
+                  )}
 
                   <UserMenu />
                 </>
