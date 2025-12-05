@@ -799,12 +799,53 @@ export default function NewListingPage() {
       ? { lat: formData.lat, lng: formData.lng }
       : defaultCenter;
 
+    // Clean, minimal map style like Airbnb
+    const mapStyles = [
+      {
+        featureType: "poi",
+        elementType: "labels",
+        stylers: [{ visibility: "off" }],
+      },
+      {
+        featureType: "transit",
+        elementType: "labels",
+        stylers: [{ visibility: "off" }],
+      },
+      {
+        featureType: "road",
+        elementType: "labels.icon",
+        stylers: [{ visibility: "off" }],
+      },
+      {
+        featureType: "water",
+        elementType: "geometry.fill",
+        stylers: [{ color: "#c8e0f0" }],
+      },
+      {
+        featureType: "landscape",
+        elementType: "geometry.fill",
+        stylers: [{ color: "#f5f5f5" }],
+      },
+      {
+        featureType: "road",
+        elementType: "geometry.fill",
+        stylers: [{ color: "#ffffff" }],
+      },
+      {
+        featureType: "road",
+        elementType: "geometry.stroke",
+        stylers: [{ color: "#e0e0e0" }],
+      },
+    ];
+
     const map = new g.maps.Map(container, {
       center,
       zoom: formData.lat ? 16 : 6,
       mapTypeControl: false,
       streetViewControl: false,
       fullscreenControl: false,
+      zoomControl: false, // Disable default zoom controls
+      styles: mapStyles,
     });
 
     // Store map reference
@@ -1371,20 +1412,60 @@ export default function NewListingPage() {
 
               {/* Map container */}
               <div className="space-y-2">
-                <div
-                  id="map-container"
-                  className="h-[300px] w-full rounded-xl border border-gray-200 bg-gray-100 overflow-hidden"
-                  style={{ minHeight: "300px" }}
-                >
-                  {!mapsReady ? (
-                    <div className="flex h-full items-center justify-center">
-                      <div className="text-center">
-                        <div className="h-8 w-8 mx-auto animate-spin rounded-full border-4 border-gray-300 border-t-gray-900" />
-                        <p className="mt-2 text-sm text-gray-500">Chargement de la carte...</p>
+                <div className="relative">
+                  <div
+                    id="map-container"
+                    className="h-[300px] w-full rounded-xl border border-gray-200 bg-gray-100 overflow-hidden"
+                    style={{ minHeight: "300px" }}
+                  >
+                    {!mapsReady ? (
+                      <div className="flex h-full items-center justify-center">
+                        <div className="text-center">
+                          <div className="h-8 w-8 mx-auto animate-spin rounded-full border-4 border-gray-300 border-t-gray-900" />
+                          <p className="mt-2 text-sm text-gray-500">Chargement de la carte...</p>
+                        </div>
                       </div>
+                    ) : (
+                      <div id="google-map" className="h-full w-full" />
+                    )}
+                  </div>
+
+                  {/* Custom zoom controls */}
+                  {mapsReady && (
+                    <div className="absolute right-3 top-3 flex flex-col gap-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const mapElement = document.getElementById("google-map");
+                          if (mapElement && (mapElement as any).__gmap) {
+                            const map = (mapElement as any).__gmap;
+                            map.setZoom(map.getZoom() + 1);
+                          }
+                        }}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg bg-white shadow-md border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
+                        aria-label="Zoomer"
+                      >
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const mapElement = document.getElementById("google-map");
+                          if (mapElement && (mapElement as any).__gmap) {
+                            const map = (mapElement as any).__gmap;
+                            map.setZoom(map.getZoom() - 1);
+                          }
+                        }}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg bg-white shadow-md border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
+                        aria-label="Dézoomer"
+                      >
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
+                        </svg>
+                      </button>
                     </div>
-                  ) : (
-                    <div id="google-map" className="h-full w-full" />
                   )}
                 </div>
                 <p className="text-xs text-gray-500">
@@ -1565,16 +1646,56 @@ export default function NewListingPage() {
 
               {/* Confirmation map */}
               <div className="space-y-2">
-                <div
-                  id="confirm-map-container"
-                  className="h-[350px] w-full rounded-xl border border-gray-200 bg-gray-100 overflow-hidden"
-                >
-                  {!mapsReady ? (
-                    <div className="flex h-full items-center justify-center">
-                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-gray-900" />
+                <div className="relative">
+                  <div
+                    id="confirm-map-container"
+                    className="h-[350px] w-full rounded-xl border border-gray-200 bg-gray-100 overflow-hidden"
+                  >
+                    {!mapsReady ? (
+                      <div className="flex h-full items-center justify-center">
+                        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-gray-900" />
+                      </div>
+                    ) : (
+                      <div id="confirm-google-map" className="h-full w-full" />
+                    )}
+                  </div>
+
+                  {/* Custom zoom controls */}
+                  {mapsReady && (
+                    <div className="absolute right-3 top-3 flex flex-col gap-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const mapElement = document.getElementById("confirm-google-map");
+                          if (mapElement && (mapElement as any).__gmap) {
+                            const map = (mapElement as any).__gmap;
+                            map.setZoom(map.getZoom() + 1);
+                          }
+                        }}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg bg-white shadow-md border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
+                        aria-label="Zoomer"
+                      >
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const mapElement = document.getElementById("confirm-google-map");
+                          if (mapElement && (mapElement as any).__gmap) {
+                            const map = (mapElement as any).__gmap;
+                            map.setZoom(map.getZoom() - 1);
+                          }
+                        }}
+                        className="flex h-9 w-9 items-center justify-center rounded-lg bg-white shadow-md border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
+                        aria-label="Dézoomer"
+                      >
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
+                        </svg>
+                      </button>
                     </div>
-                  ) : (
-                    <div id="confirm-google-map" className="h-full w-full" />
                   )}
                 </div>
                 <p className="text-xs text-gray-500">
