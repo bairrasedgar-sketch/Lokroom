@@ -55,7 +55,9 @@ export async function GET(
     const listing = await prisma.listing.findUnique({
       where: { id: params.id },
       include: {
-        images: true,
+        images: {
+          orderBy: { position: "asc" },
+        },
         owner: { select: { id: true, name: true, email: true } },
       },
     });
@@ -93,26 +95,13 @@ export async function PUT(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const body = (await req.json().catch(() => null)) as
-      | {
-          title?: string;
-          description?: string;
-          price?: number;
-          currency?: "EUR" | "CAD";
-          country?: string;
-          city?: string;
-          addressFull?: string;
-          lat?: number | null;
-          lng?: number | null;
-          latPublic?: number | null;
-          lngPublic?: number | null;
-        }
-      | null;
+    const body = await req.json().catch(() => null);
 
     if (!body) {
       return NextResponse.json({ error: "Invalid body" }, { status: 400 });
     }
 
+    // Basic required fields
     const title = String(body.title ?? "").trim();
     const description = String(body.description ?? "").trim();
     const currency =
@@ -147,7 +136,7 @@ export async function PUT(
       );
     }
 
-    // 🔢 Coordonnées : on prend ce qui vient du body si fourni, sinon on garde celles existantes
+    // Coordinates
     const lat =
       body.lat !== undefined && body.lat !== null
         ? Number(body.lat)
@@ -175,23 +164,138 @@ export async function PUT(
       );
     }
 
+    // Validate listing type
+    const validTypes = [
+      "ROOM", "STUDIO", "APARTMENT", "HOUSE", "OFFICE", "COWORKING",
+      "MEETING_ROOM", "PARKING", "GARAGE", "STORAGE", "EVENT_SPACE",
+      "RECORDING_STUDIO", "OTHER"
+    ];
+    const type = validTypes.includes(body.type) ? body.type : listing.type;
+
+    // Validate pricing mode
+    const validPricingModes = ["HOURLY", "DAILY", "BOTH"];
+    const pricingMode = validPricingModes.includes(body.pricingMode)
+      ? body.pricingMode
+      : listing.pricingMode;
+
+    // Optional fields
+    const addressLine1 = body.addressLine1 !== undefined
+      ? String(body.addressLine1 ?? "").trim()
+      : listing.addressLine1;
+    const postalCode = body.postalCode !== undefined
+      ? String(body.postalCode ?? "").trim()
+      : listing.postalCode;
+
+    // Province must be a valid ProvinceCA enum value
+    const validProvinces = ["AB", "BC", "ON", "QC", "NB", "NS", "NL", "PE"];
+    const rawProvince = body.province !== undefined
+      ? String(body.province ?? "").trim()
+      : listing.province;
+    const province = country === "Canada" && rawProvince && validProvinces.includes(rawProvince)
+      ? rawProvince as "AB" | "BC" | "ON" | "QC" | "NB" | "NS" | "NL" | "PE"
+      : country === "Canada" ? listing.province : null;
+
+    const regionFR = country === "France" && body.regionFR !== undefined
+      ? String(body.regionFR ?? "").trim() || null
+      : country === "France" ? listing.regionFR : null;
+    const customType = type === "OTHER" && body.customType !== undefined
+      ? String(body.customType ?? "").trim() || null
+      : type === "OTHER" ? listing.customType : null;
+
+    // Numeric optional fields
+    const hourlyPrice = body.hourlyPrice !== undefined
+      ? (Number(body.hourlyPrice) > 0 ? Number(body.hourlyPrice) : null)
+      : listing.hourlyPrice;
+    const maxGuests = body.maxGuests !== undefined
+      ? (Number.isInteger(Number(body.maxGuests)) && Number(body.maxGuests) > 0 ? Number(body.maxGuests) : null)
+      : listing.maxGuests;
+    const beds = body.beds !== undefined
+      ? (Number.isInteger(Number(body.beds)) && Number(body.beds) > 0 ? Number(body.beds) : null)
+      : listing.beds;
+    const desks = body.desks !== undefined
+      ? (Number.isInteger(Number(body.desks)) && Number(body.desks) > 0 ? Number(body.desks) : null)
+      : listing.desks;
+    const parkings = body.parkings !== undefined
+      ? (Number.isInteger(Number(body.parkings)) && Number(body.parkings) > 0 ? Number(body.parkings) : null)
+      : listing.parkings;
+    const bathrooms = body.bathrooms !== undefined
+      ? (Number.isInteger(Number(body.bathrooms)) && Number(body.bathrooms) > 0 ? Number(body.bathrooms) : null)
+      : listing.bathrooms;
+    const minNights = body.minNights !== undefined
+      ? (Number.isInteger(Number(body.minNights)) && Number(body.minNights) > 0 ? Number(body.minNights) : null)
+      : listing.minNights;
+    const maxNights = body.maxNights !== undefined
+      ? (Number.isInteger(Number(body.maxNights)) && Number(body.maxNights) > 0 ? Number(body.maxNights) : null)
+      : listing.maxNights;
+
+    // Discount fields (percentages 0-100)
+    const discountHours3Plus = body.discountHours3Plus !== undefined
+      ? (Number.isInteger(Number(body.discountHours3Plus)) && Number(body.discountHours3Plus) >= 0 && Number(body.discountHours3Plus) <= 100 ? Number(body.discountHours3Plus) : null)
+      : listing.discountHours3Plus;
+    const discountHours6Plus = body.discountHours6Plus !== undefined
+      ? (Number.isInteger(Number(body.discountHours6Plus)) && Number(body.discountHours6Plus) >= 0 && Number(body.discountHours6Plus) <= 100 ? Number(body.discountHours6Plus) : null)
+      : listing.discountHours6Plus;
+    const discountDays3Plus = body.discountDays3Plus !== undefined
+      ? (Number.isInteger(Number(body.discountDays3Plus)) && Number(body.discountDays3Plus) >= 0 && Number(body.discountDays3Plus) <= 100 ? Number(body.discountDays3Plus) : null)
+      : listing.discountDays3Plus;
+    const discountWeekly = body.discountWeekly !== undefined
+      ? (Number.isInteger(Number(body.discountWeekly)) && Number(body.discountWeekly) >= 0 && Number(body.discountWeekly) <= 100 ? Number(body.discountWeekly) : null)
+      : listing.discountWeekly;
+    const discountMonthly = body.discountMonthly !== undefined
+      ? (Number.isInteger(Number(body.discountMonthly)) && Number(body.discountMonthly) >= 0 && Number(body.discountMonthly) <= 100 ? Number(body.discountMonthly) : null)
+      : listing.discountMonthly;
+
+    // Boolean fields
+    const isInstantBook = body.isInstantBook !== undefined
+      ? Boolean(body.isInstantBook)
+      : listing.isInstantBook;
+
+    // Array fields
+    const spaceFeatures = Array.isArray(body.spaceFeatures)
+      ? body.spaceFeatures.filter((f: any) => typeof f === "string")
+      : listing.spaceFeatures;
+
     const updated = await prisma.listing.update({
       where: { id: params.id },
       data: {
         title,
         description,
+        type,
+        customType,
         price: priceNum,
+        hourlyPrice,
+        pricingMode,
         currency,
         country,
         city,
         addressFull,
+        addressLine1,
+        postalCode,
+        province,
+        regionFR,
         lat,
         lng,
         latPublic,
         lngPublic,
+        maxGuests,
+        beds,
+        desks,
+        parkings,
+        bathrooms,
+        spaceFeatures,
+        isInstantBook,
+        minNights,
+        maxNights,
+        discountHours3Plus,
+        discountHours6Plus,
+        discountDays3Plus,
+        discountWeekly,
+        discountMonthly,
       },
       include: {
-        images: true,
+        images: {
+          orderBy: { position: "asc" },
+        },
         owner: { select: { id: true, name: true, email: true } },
       },
     });
