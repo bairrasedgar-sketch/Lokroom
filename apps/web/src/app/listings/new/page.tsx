@@ -443,6 +443,10 @@ export default function NewListingPage() {
   const [citySuggestions, setCitySuggestions] = useState<any[]>([]);
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
 
+  // Draft choice modal
+  const [showDraftModal, setShowDraftModal] = useState(false);
+  const [pendingDraft, setPendingDraft] = useState<{ formData: FormData; currentStep: Step; lastSaved: string } | null>(null);
+
   // Images
   const [images, setImages] = useState<LocalImage[]>([]);
   const [dragOver, setDragOver] = useState(false);
@@ -501,28 +505,57 @@ export default function NewListingPage() {
     }
   }, [status]);
 
-  // Load draft from localStorage
+  // Load draft from localStorage - show modal instead of auto-restore
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedDraft = localStorage.getItem(DRAFT_KEY);
       if (savedDraft) {
         try {
           const parsed = JSON.parse(savedDraft);
-          if (parsed.formData) {
-            setFormData(parsed.formData);
+          if (parsed.formData && (parsed.formData.type || parsed.formData.title || parsed.formData.city)) {
+            // Ensure spaceFeatures is always an array
+            if (!Array.isArray(parsed.formData.spaceFeatures)) {
+              parsed.formData.spaceFeatures = [];
+            }
+            setPendingDraft(parsed);
+            setShowDraftModal(true);
           }
-          if (parsed.currentStep) {
-            setCurrentStep(parsed.currentStep);
-          }
-          if (parsed.lastSaved) {
-            setLastSaved(new Date(parsed.lastSaved));
-          }
-          toast.message("Brouillon restauré", { description: "Ton annonce a été récupérée depuis ta dernière session." });
         } catch (e) {
           console.error("Error loading draft:", e);
+          localStorage.removeItem(DRAFT_KEY);
         }
       }
     }
+  }, []);
+
+  // Restore draft from modal
+  const handleRestoreDraft = useCallback(() => {
+    if (pendingDraft) {
+      // Ensure spaceFeatures is an array before restoring
+      const safeFormData = {
+        ...pendingDraft.formData,
+        spaceFeatures: Array.isArray(pendingDraft.formData.spaceFeatures) ? pendingDraft.formData.spaceFeatures : [],
+      };
+      setFormData(safeFormData);
+      if (pendingDraft.currentStep) {
+        setCurrentStep(pendingDraft.currentStep);
+      }
+      if (pendingDraft.lastSaved) {
+        setLastSaved(new Date(pendingDraft.lastSaved));
+      }
+      toast.success("Brouillon restauré !");
+    }
+    setShowDraftModal(false);
+    setPendingDraft(null);
+  }, [pendingDraft]);
+
+  // Start fresh - clear draft
+  const handleStartFresh = useCallback(() => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem(DRAFT_KEY);
+    }
+    setShowDraftModal(false);
+    setPendingDraft(null);
   }, []);
 
   // Auto-save draft every 30 seconds
@@ -1573,18 +1606,22 @@ export default function NewListingPage() {
 
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {SPACE_FEATURES.map((feature) => {
-                  const isSelected = formData.spaceFeatures.includes(feature.value);
+                  const features = Array.isArray(formData.spaceFeatures) ? formData.spaceFeatures : [];
+                  const isSelected = features.includes(feature.value);
                   return (
                     <button
                       key={feature.value}
                       type="button"
                       onClick={() => {
-                        setFormData((prev) => ({
-                          ...prev,
-                          spaceFeatures: isSelected
-                            ? prev.spaceFeatures.filter((f) => f !== feature.value)
-                            : [...prev.spaceFeatures, feature.value],
-                        }));
+                        setFormData((prev) => {
+                          const currentFeatures = Array.isArray(prev.spaceFeatures) ? prev.spaceFeatures : [];
+                          return {
+                            ...prev,
+                            spaceFeatures: isSelected
+                              ? currentFeatures.filter((f) => f !== feature.value)
+                              : [...currentFeatures, feature.value],
+                          };
+                        });
                       }}
                       className={`flex items-center gap-2 rounded-xl border-2 p-3 text-left transition-all ${
                         isSelected ? "border-gray-900 bg-gray-50" : "border-gray-200 hover:border-gray-400"
@@ -1604,7 +1641,7 @@ export default function NewListingPage() {
                 })}
               </div>
 
-              {formData.spaceFeatures.length > 0 && (
+              {Array.isArray(formData.spaceFeatures) && formData.spaceFeatures.length > 0 && (
                 <div className="rounded-xl bg-gray-50 p-4">
                   <p className="text-sm text-gray-600">
                     <span className="font-medium">{formData.spaceFeatures.length}</span> caractéristique{formData.spaceFeatures.length > 1 ? "s" : ""} sélectionnée{formData.spaceFeatures.length > 1 ? "s" : ""}
@@ -2250,6 +2287,74 @@ export default function NewListingPage() {
           </div>
         </footer>
       </div>
+
+      {/* Draft Choice Modal */}
+      {showDraftModal && pendingDraft && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
+              <svg className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Tu as une annonce en cours
+            </h3>
+            <p className="mt-2 text-sm text-gray-600">
+              Un brouillon a été trouvé. Que souhaites-tu faire ?
+            </p>
+
+            {/* Draft preview */}
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-200">
+                  <svg className="h-5 w-5 text-amber-700" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-gray-900 truncate">
+                    {pendingDraft.formData.title || "Annonce sans titre"}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {pendingDraft.formData.type ? LISTING_TYPES.find(t => t.value === pendingDraft.formData.type)?.label : "Type non défini"}
+                    {pendingDraft.formData.city && ` · ${pendingDraft.formData.city}`}
+                  </p>
+                  <p className="mt-1 text-xs text-amber-700">
+                    Étape : {STEPS.find(s => s.key === pendingDraft.currentStep)?.title || pendingDraft.currentStep}
+                    {pendingDraft.lastSaved && (
+                      <> · Sauvegardé le {new Date(pendingDraft.lastSaved).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</>
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={handleStartFresh}
+                className="flex items-center justify-center gap-2 rounded-xl border border-gray-300 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                Nouvelle annonce
+              </button>
+              <button
+                type="button"
+                onClick={handleRestoreDraft}
+                className="flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-3 text-sm font-medium text-white hover:bg-amber-700 transition-colors"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+                </svg>
+                Continuer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Identity Verification Modal */}
       {showIdentityModal && (
