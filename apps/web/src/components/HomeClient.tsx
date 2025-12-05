@@ -46,20 +46,20 @@ type HomeClientProps = {
 };
 
 // ============================================================================
-// CATEGORY ICONS (SVG)
+// CATEGORY ICONS WITH UNIQUE ANIMATIONS
 // ============================================================================
 
 type CategoryIconProps = {
   category: string;
   isActive: boolean;
-  hasAnimated: boolean;
+  isAnimating: boolean;
 };
 
-function CategoryIcon({ category, isActive, hasAnimated }: CategoryIconProps) {
+function CategoryIcon({ category, isActive, isAnimating }: CategoryIconProps) {
   const baseClass = `h-6 w-6 transition-colors duration-300 ${isActive ? "text-gray-900" : "text-gray-500"}`;
 
-  // Animation class - only animate once
-  const animationClass = hasAnimated ? "animate-category-icon" : "";
+  // Each category has its own unique animation class
+  const animationClass = isAnimating ? `animate-${category.toLowerCase()}` : "";
 
   const icons: Record<string, React.ReactNode> = {
     APARTMENT: (
@@ -149,13 +149,13 @@ function SearchBar() {
   const today = new Date().toISOString().split("T")[0];
 
   return (
-    <div ref={searchRef} className="relative w-full max-w-3xl mx-auto">
+    <div ref={searchRef} className="relative w-full max-w-3xl mx-auto z-50">
       {/* Main Search Bar */}
       <div
         className={`relative rounded-full border bg-white transition-all duration-300 ${
           searchFocused
-            ? "border-gray-400 shadow-lg"
-            : "border-gray-300 shadow-md hover:shadow-lg"
+            ? "border-gray-300 shadow-lg"
+            : "border-gray-200 shadow-md hover:shadow-lg"
         }`}
       >
         <div className="flex items-center">
@@ -164,7 +164,7 @@ function SearchBar() {
             type="button"
             onClick={() => { setSearchFocused(true); setActiveTab("location"); }}
             className={`flex-1 px-6 py-4 text-left rounded-l-full transition-colors ${
-              searchFocused && activeTab === "location" ? "bg-gray-100" : "hover:bg-gray-50"
+              searchFocused && activeTab === "location" ? "bg-gray-50" : "hover:bg-gray-50"
             }`}
           >
             <p className="text-xs font-semibold text-gray-900">Destination</p>
@@ -185,7 +185,7 @@ function SearchBar() {
             type="button"
             onClick={() => { setSearchFocused(true); setActiveTab("dates"); }}
             className={`flex-1 px-6 py-4 text-left transition-colors ${
-              searchFocused && activeTab === "dates" ? "bg-gray-100" : "hover:bg-gray-50"
+              searchFocused && activeTab === "dates" ? "bg-gray-50" : "hover:bg-gray-50"
             }`}
           >
             <p className="text-xs font-semibold text-gray-900">Arrivée</p>
@@ -203,7 +203,7 @@ function SearchBar() {
             type="button"
             onClick={() => { setSearchFocused(true); setActiveTab("dates"); }}
             className={`flex-1 px-6 py-4 text-left transition-colors ${
-              searchFocused && activeTab === "dates" ? "bg-gray-100" : "hover:bg-gray-50"
+              searchFocused && activeTab === "dates" ? "bg-gray-50" : "hover:bg-gray-50"
             }`}
           >
             <p className="text-xs font-semibold text-gray-900">Départ</p>
@@ -221,7 +221,7 @@ function SearchBar() {
             type="button"
             onClick={() => { setSearchFocused(true); setActiveTab("guests"); }}
             className={`flex-1 px-6 py-4 text-left rounded-r-full transition-colors ${
-              searchFocused && activeTab === "guests" ? "bg-gray-100" : "hover:bg-gray-50"
+              searchFocused && activeTab === "guests" ? "bg-gray-50" : "hover:bg-gray-50"
             }`}
           >
             <p className="text-xs font-semibold text-gray-900">Voyageurs</p>
@@ -230,11 +230,11 @@ function SearchBar() {
             </p>
           </button>
 
-          {/* Search Button */}
+          {/* Search Button - Gris clair agréable */}
           <div className="pr-2">
             <button
               onClick={handleSearch}
-              className="flex items-center gap-2 rounded-full bg-rose-500 px-4 py-3 text-white transition-all hover:bg-rose-600 active:scale-95"
+              className="flex items-center gap-2 rounded-full bg-gray-800 px-4 py-3 text-white transition-all hover:bg-gray-900 active:scale-95"
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
@@ -244,19 +244,19 @@ function SearchBar() {
         </div>
       </div>
 
-      {/* Expanded Search Panel */}
+      {/* Expanded Search Panel - Z-index élevé */}
       {searchFocused && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-3">
+        <div className="absolute left-0 right-0 top-full z-[100] mt-3">
           <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-xl">
             {activeTab === "location" && (
               <div className="space-y-4">
                 <h3 className="text-sm font-semibold text-gray-900">Destinations populaires</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
-                    { city: "Paris", country: "France", flag: "FR" },
-                    { city: "Montréal", country: "Canada", flag: "CA" },
-                    { city: "Lyon", country: "France", flag: "FR" },
-                    { city: "Toronto", country: "Canada", flag: "CA" },
+                    { city: "Paris", country: "France" },
+                    { city: "Montréal", country: "Canada" },
+                    { city: "Lyon", country: "France" },
+                    { city: "Toronto", country: "Canada" },
                   ].map((dest) => (
                     <button
                       key={dest.city}
@@ -264,10 +264,10 @@ function SearchBar() {
                         setQuery(dest.city);
                         setActiveTab("dates");
                       }}
-                      className="flex items-center gap-3 rounded-xl border border-gray-200 p-3 text-left transition-all hover:border-gray-400 hover:bg-gray-50"
+                      className="flex items-center gap-3 rounded-xl border border-gray-200 p-3 text-left transition-all hover:border-gray-300 hover:bg-gray-50"
                     >
                       <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100">
-                        <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                        <svg className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
                           <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
                         </svg>
@@ -376,7 +376,7 @@ function SearchBar() {
                 </div>
                 <button
                   onClick={handleSearch}
-                  className="w-full rounded-xl bg-rose-500 py-3 font-medium text-white transition-all hover:bg-rose-600"
+                  className="w-full rounded-xl bg-gray-900 py-3 font-medium text-white transition-all hover:bg-black"
                 >
                   Rechercher
                 </button>
@@ -482,7 +482,7 @@ function ListingCard({ card, index }: { card: ListingCard; index: number }) {
           >
             <svg
               className={`h-6 w-6 drop-shadow-md transition-colors ${
-                isFavorited ? "fill-rose-500 text-rose-500" : "fill-black/30 text-white"
+                isFavorited ? "fill-gray-900 text-gray-900" : "fill-black/30 text-white"
               }`}
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -495,7 +495,7 @@ function ListingCard({ card, index }: { card: ListingCard; index: number }) {
           {/* Instant Book Badge */}
           {card.isInstantBook && (
             <div className="absolute left-3 top-3 flex items-center gap-1 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-900 shadow-md">
-              <svg className="h-3 w-3 text-rose-500" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="h-3 w-3 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
               </svg>
               Instantané
@@ -531,7 +531,7 @@ function ListingCard({ card, index }: { card: ListingCard; index: number }) {
 }
 
 // ============================================================================
-// CATEGORY BUTTON WITH ANIMATION
+// CATEGORY BUTTON WITH UNIQUE ANIMATION
 // ============================================================================
 
 function CategoryButton({
@@ -545,43 +545,31 @@ function CategoryButton({
   isActive: boolean;
   onClick: () => void;
 }) {
-  const [hasAnimated, setHasAnimated] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
 
   const handleClick = () => {
-    if (!hasAnimated && !isAnimating) {
+    // Only animate if clicking to activate (not deactivate)
+    if (!isActive) {
       setIsAnimating(true);
-      setHasAnimated(true);
-      // Reset animation state after animation completes (3s)
+      // Reset animation state after animation completes
       setTimeout(() => {
         setIsAnimating(false);
-      }, 3000);
+      }, 2500);
     }
     onClick();
-  };
-
-  const handleMouseEnter = () => {
-    if (!hasAnimated && !isAnimating) {
-      setIsAnimating(true);
-      setHasAnimated(true);
-      setTimeout(() => {
-        setIsAnimating(false);
-      }, 3000);
-    }
   };
 
   return (
     <button
       onClick={handleClick}
-      onMouseEnter={handleMouseEnter}
-      className={`flex flex-col items-center gap-2 rounded-xl px-4 py-3 transition-all duration-300 ${
+      className={`flex flex-col items-center gap-2 px-4 py-3 transition-all duration-300 ${
         isActive
           ? "border-b-2 border-gray-900"
-          : "border-b-2 border-transparent opacity-70 hover:opacity-100"
+          : "border-b-2 border-transparent opacity-60 hover:opacity-100"
       }`}
     >
-      <div className={isAnimating ? "animate-bounce-once" : ""}>
-        <CategoryIcon category={category} isActive={isActive} hasAnimated={isAnimating} />
+      <div className="relative">
+        <CategoryIcon category={category} isActive={isActive} isAnimating={isAnimating} />
       </div>
       <span className={`whitespace-nowrap text-xs font-medium ${isActive ? "text-gray-900" : "text-gray-600"}`}>
         {label}
@@ -607,37 +595,105 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
     : cards;
 
   return (
-    <main className="min-h-screen bg-white">
-      {/* Custom styles for animations */}
+    <main className="min-h-screen bg-[#FAFAFA]">
+      {/* Custom styles for unique animations per category */}
       <style jsx global>{`
-        @keyframes bounce-once {
-          0%, 100% { transform: translateY(0); }
-          25% { transform: translateY(-8px); }
-          50% { transform: translateY(0); }
-          75% { transform: translateY(-4px); }
+        /* Animation pour TOUS - Grille qui pulse */
+        @keyframes all-anim {
+          0% { transform: scale(1); }
+          20% { transform: scale(1.1); }
+          40% { transform: scale(1); }
+          60% { transform: scale(1.05); }
+          100% { transform: scale(1); }
         }
+        .animate-all { animation: all-anim 0.8s ease-out; }
 
-        @keyframes category-icon {
-          0% { transform: scale(1) rotate(0deg); }
-          25% { transform: scale(1.2) rotate(-5deg); }
-          50% { transform: scale(1.1) rotate(5deg); }
-          75% { transform: scale(1.15) rotate(-3deg); }
-          100% { transform: scale(1) rotate(0deg); }
+        /* Animation APARTMENT - Building qui s'élève */
+        @keyframes apartment-anim {
+          0% { transform: translateY(0); }
+          25% { transform: translateY(-6px); }
+          50% { transform: translateY(-3px); }
+          75% { transform: translateY(-5px); }
+          100% { transform: translateY(0); }
         }
+        .animate-apartment { animation: apartment-anim 0.7s ease-out; }
 
-        .animate-bounce-once {
-          animation: bounce-once 0.6s ease-out;
+        /* Animation HOUSE - Maison qui rebondit */
+        @keyframes house-anim {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          25% { transform: translateY(-8px) rotate(-3deg); }
+          50% { transform: translateY(-4px) rotate(2deg); }
+          75% { transform: translateY(-6px) rotate(-1deg); }
         }
+        .animate-house { animation: house-anim 0.8s ease-out; }
 
-        .animate-category-icon {
-          animation: category-icon 0.5s ease-out;
+        /* Animation STUDIO - Pinceau qui trace une ligne ondulée */
+        @keyframes studio-anim {
+          0% { transform: translateX(0) rotate(0deg); }
+          15% { transform: translateX(4px) rotate(8deg); }
+          30% { transform: translateX(-4px) rotate(-8deg); }
+          45% { transform: translateX(3px) rotate(5deg); }
+          60% { transform: translateX(-3px) rotate(-5deg); }
+          75% { transform: translateX(2px) rotate(3deg); }
+          100% { transform: translateX(0) rotate(0deg); }
         }
+        .animate-studio { animation: studio-anim 1s ease-out; }
 
+        /* Animation OFFICE - Valise qui s'ouvre */
+        @keyframes office-anim {
+          0% { transform: scaleY(1); }
+          30% { transform: scaleY(1.15); }
+          50% { transform: scaleY(0.95); }
+          70% { transform: scaleY(1.05); }
+          100% { transform: scaleY(1); }
+        }
+        .animate-office { animation: office-anim 0.7s ease-out; }
+
+        /* Animation COWORKING - Personnes qui bougent ensemble */
+        @keyframes coworking-anim {
+          0% { transform: scale(1) translateY(0); }
+          25% { transform: scale(1.1) translateY(-4px); }
+          50% { transform: scale(1.05) translateY(-2px); }
+          75% { transform: scale(1.08) translateY(-3px); }
+          100% { transform: scale(1) translateY(0); }
+        }
+        .animate-coworking { animation: coworking-anim 0.8s ease-out; }
+
+        /* Animation PARKING - Voiture qui arrive et s'arrête */
+        @keyframes parking-anim {
+          0% { transform: translateX(-20px); opacity: 0.5; }
+          40% { transform: translateX(5px); opacity: 1; }
+          60% { transform: translateX(-2px); }
+          80% { transform: translateX(1px); }
+          100% { transform: translateX(0); }
+        }
+        .animate-parking { animation: parking-anim 0.9s ease-out; }
+
+        /* Animation EVENT_SPACE - Fusée qui décolle */
+        @keyframes event_space-anim {
+          0% { transform: translateY(0) rotate(0deg); }
+          30% { transform: translateY(-10px) rotate(-5deg); }
+          50% { transform: translateY(-6px) rotate(3deg); }
+          70% { transform: translateY(-8px) rotate(-2deg); }
+          100% { transform: translateY(0) rotate(0deg); }
+        }
+        .animate-event_space { animation: event_space-anim 0.8s ease-out; }
+
+        /* Animation RECORDING_STUDIO - Micro qui pulse */
+        @keyframes recording_studio-anim {
+          0%, 100% { transform: scale(1); }
+          20% { transform: scale(1.15); }
+          40% { transform: scale(1); }
+          60% { transform: scale(1.1); }
+          80% { transform: scale(1); }
+        }
+        .animate-recording_studio { animation: recording_studio-anim 0.9s ease-out; }
+
+        /* Fade in pour les cards */
         @keyframes fade-in {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
         }
-
         .animate-fade-in {
           animation: fade-in 0.4s ease-out forwards;
           opacity: 0;
@@ -645,7 +701,7 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
       `}</style>
 
       {/* HERO SECTION */}
-      <section className="bg-white pb-6 pt-8">
+      <section className="bg-[#FAFAFA] pb-6 pt-8">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Hero Content */}
           <div className={`mx-auto max-w-3xl text-center transition-all duration-700 ${isLoaded ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}>
@@ -666,8 +722,8 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
         </div>
       </section>
 
-      {/* CATEGORIES */}
-      <section className="border-b border-gray-200 bg-white sticky top-16 z-30">
+      {/* CATEGORIES - Z-index plus bas que la recherche */}
+      <section className="border-b border-gray-200 bg-white sticky top-16 z-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-1 overflow-x-auto py-2 scrollbar-hide">
             <CategoryButton
@@ -709,7 +765,7 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
         </div>
 
         {filteredCards.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-gray-300 py-16 text-center">
+          <div className="rounded-2xl border border-dashed border-gray-300 bg-white py-16 text-center">
             <div className="mx-auto h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
               <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
@@ -727,71 +783,113 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
         )}
       </section>
 
-      {/* WHY CHOOSE US SECTION */}
-      <section className="border-t border-gray-100 bg-gray-50 py-16">
+      {/* DECORATIVE VISUAL SECTION - Sobre et premium */}
+      <section className="py-16 overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl font-semibold text-gray-900">
-              Pourquoi choisir Lok&apos;Room ?
-            </h2>
-            <p className="mt-2 text-gray-500">
-              Une expérience de location simple et sécurisée
-            </p>
-          </div>
-
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              {
-                icon: (
-                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-                  </svg>
-                ),
-                title: "Paiement sécurisé",
-                description: "Transactions protégées par Stripe",
-              },
-              {
-                icon: (
-                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-                  </svg>
-                ),
-                title: "Hôtes vérifiés",
-                description: "Identité contrôlée pour votre sécurité",
-              },
-              {
-                icon: (
-                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                ),
-                title: "Réservation rapide",
-                description: "Confirmez votre réservation en quelques clics",
-              },
-              {
-                icon: (
-                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />
-                  </svg>
-                ),
-                title: "Support réactif",
-                description: "Une équipe disponible pour vous aider",
-              },
-            ].map((feature, i) => (
-              <div key={i} className="text-center">
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white text-gray-700 shadow-sm">
-                  {feature.icon}
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Text Content */}
+            <div>
+              <h2 className="text-2xl font-semibold text-gray-900 sm:text-3xl">
+                Des espaces pour chaque besoin
+              </h2>
+              <p className="mt-4 text-gray-500 leading-relaxed">
+                Que vous cherchiez un appartement pour vos vacances, un bureau pour votre équipe,
+                ou un studio pour votre projet créatif, trouvez l&apos;espace idéal parmi notre sélection.
+              </p>
+              <div className="mt-8 grid grid-cols-2 gap-6">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100">
+                    <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">Paiement sécurisé</p>
+                    <p className="text-sm text-gray-500">Transactions protégées</p>
+                  </div>
                 </div>
-                <h3 className="font-medium text-gray-900">{feature.title}</h3>
-                <p className="mt-1 text-sm text-gray-500">{feature.description}</p>
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100">
+                    <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">Hôtes vérifiés</p>
+                    <p className="text-sm text-gray-500">Identité contrôlée</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100">
+                    <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">Réservation rapide</p>
+                    <p className="text-sm text-gray-500">En quelques clics</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100">
+                    <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.402-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">Support réactif</p>
+                    <p className="text-sm text-gray-500">Équipe disponible</p>
+                  </div>
+                </div>
               </div>
-            ))}
+            </div>
+
+            {/* Visual Grid - Sobre et premium */}
+            <div className="relative">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-4">
+                  <div className="aspect-[4/3] rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
+                    <div className="h-full w-full flex items-center justify-center">
+                      <svg className="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={0.75} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="aspect-[4/5] rounded-2xl bg-gradient-to-br from-gray-50 to-gray-150 overflow-hidden">
+                    <div className="h-full w-full flex items-center justify-center">
+                      <svg className="h-20 w-20 text-gray-300" fill="none" viewBox="0 0 24 24" strokeWidth={0.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-4 pt-8">
+                  <div className="aspect-[4/5] rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
+                    <div className="h-full w-full flex items-center justify-center">
+                      <svg className="h-20 w-20 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={0.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="aspect-[4/3] rounded-2xl bg-gradient-to-br from-gray-50 to-gray-150 overflow-hidden">
+                    <div className="h-full w-full flex items-center justify-center">
+                      <svg className="h-16 w-16 text-gray-300" fill="none" viewBox="0 0 24 24" strokeWidth={0.75} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {/* Subtle decorative circles */}
+              <div className="absolute -top-4 -right-4 h-24 w-24 rounded-full bg-gray-100/50 blur-2xl" />
+              <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-gray-100/50 blur-2xl" />
+            </div>
           </div>
         </div>
       </section>
 
       {/* CTA SECTION */}
-      <section className="bg-white py-16">
+      <section className="bg-[#FAFAFA] py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="rounded-2xl bg-gray-900 px-8 py-12 text-center sm:px-12">
             <h2 className="text-2xl font-semibold text-white sm:text-3xl">
