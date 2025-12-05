@@ -435,15 +435,15 @@ function CategoryIcon({ category, isActive, isAnimating }: CategoryIconProps) {
 }
 
 // ============================================================================
-// SEARCH BAR COMPONENT - Se réduit en place
+// SEARCH BAR COMPONENT - Style Airbnb : Grande barre → Bouton compact au scroll
 // ============================================================================
 
-function SearchBar({ isCompact }: { isCompact: boolean }) {
+function SearchBar({ isCompact, onExpand }: { isCompact: boolean; onExpand?: () => void }) {
   const router = useRouter();
-  const [searchFocused, setSearchFocused] = useState(false);
-  const [query, setQuery] = useState("");
+  const [isExpanded, setIsExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<"location" | "dates" | "hours" | "guests">("location");
   const [bookingMode, setBookingMode] = useState<BookingMode>("days");
+  const [query, setQuery] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [startTime, setStartTime] = useState("09:00");
@@ -451,11 +451,11 @@ function SearchBar({ isCompact }: { isCompact: boolean }) {
   const [guests, setGuests] = useState(1);
   const searchRef = useRef<HTMLDivElement>(null);
 
-  // Close on click outside
+  // Fermer au clic extérieur
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        setSearchFocused(false);
+        setIsExpanded(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -487,54 +487,116 @@ function SearchBar({ isCompact }: { isCompact: boolean }) {
     timeOptions.push(`${h.toString().padStart(2, "0")}:30`);
   }
 
+  // Résumé pour la barre compacte
+  const getSummary = () => {
+    const parts = [];
+    parts.push(query || "N'importe où");
+    if (startDate) {
+      const dateStr = new Date(startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+      if (bookingMode === "hours") {
+        parts.push(`${dateStr} · ${startTime}-${endTime}`);
+      } else if (endDate) {
+        const endStr = new Date(endDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+        parts.push(`${dateStr} - ${endStr}`);
+      } else {
+        parts.push(dateStr);
+      }
+    } else {
+      parts.push("N'importe quand");
+    }
+    parts.push(guests > 1 ? `${guests} voyageurs` : "Ajouter des voyageurs");
+    return parts;
+  };
+
+  const handleCompactClick = () => {
+    if (onExpand) onExpand();
+    setIsExpanded(true);
+    setActiveTab("location");
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MODE COMPACT (bouton unique style Airbnb)
+  // ═══════════════════════════════════════════════════════════════════════════
+  if (isCompact && !isExpanded) {
+    const summary = getSummary();
+    return (
+      <div ref={searchRef} className="relative w-full max-w-2xl mx-auto">
+        <button
+          onClick={handleCompactClick}
+          className="w-full flex items-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-2 shadow-md transition-all duration-300 hover:shadow-lg"
+        >
+          {/* Icône recherche */}
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center">
+            <svg className="h-4 w-4 text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+          </div>
+
+          {/* Texte résumé */}
+          <div className="flex-1 flex items-center gap-2 text-left overflow-hidden">
+            <span className="font-medium text-gray-900 truncate text-sm">{summary[0]}</span>
+            <span className="text-gray-300">|</span>
+            <span className="text-gray-500 truncate text-sm">{summary[1]}</span>
+            <span className="text-gray-300">|</span>
+            <span className="text-gray-500 truncate text-sm">{summary[2]}</span>
+          </div>
+
+          {/* Bouton filtres */}
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gray-200">
+            <svg className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+            </svg>
+          </div>
+        </button>
+      </div>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MODE EXPANDED (grande barre de recherche)
+  // ═══════════════════════════════════════════════════════════════════════════
   return (
     <div ref={searchRef} className="relative w-full max-w-3xl mx-auto">
-      {/* Main Search Bar - se réduit avec animation */}
+      {/* Grande barre de recherche */}
       <div
-        className={`relative rounded-full border bg-white transition-all duration-500 ease-out ${
-          searchFocused
-            ? "border-gray-300 shadow-xl"
-            : "border-gray-200 shadow-md hover:shadow-lg"
-        } ${isCompact && !searchFocused ? "py-1 scale-90" : ""}`}
+        className={`relative rounded-full border bg-white transition-all duration-300 ${
+          isExpanded ? "border-gray-300 shadow-xl" : "border-gray-200 shadow-md hover:shadow-lg"
+        }`}
       >
-        <div className={`flex items-center transition-all duration-500 ${isCompact && !searchFocused ? "gap-2" : ""}`}>
+        <div className="flex items-center">
           {/* Location */}
           <button
             type="button"
-            onClick={() => { setSearchFocused(true); setActiveTab("location"); }}
-            className={`flex-1 text-left rounded-l-full transition-all duration-300 ${
-              searchFocused && activeTab === "location" ? "bg-gray-50" : "hover:bg-gray-50"
-            } ${isCompact && !searchFocused ? "px-3 py-2" : "px-6 py-4"}`}
+            onClick={() => { setIsExpanded(true); setActiveTab("location"); }}
+            className={`flex-1 text-left rounded-l-full px-6 py-4 transition-all duration-200 ${
+              isExpanded && activeTab === "location" ? "bg-gray-50" : "hover:bg-gray-50"
+            }`}
           >
-            <p className={`font-semibold text-gray-900 transition-all duration-300 ${isCompact && !searchFocused ? "text-[10px]" : "text-xs"}`}>Destination</p>
-            {isCompact && !searchFocused ? (
-              <p className="text-xs text-gray-400 truncate">{query || "Où ?"}</p>
-            ) : (
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onFocus={() => { setSearchFocused(true); setActiveTab("location"); }}
-                placeholder="Rechercher une destination"
-                className="w-full bg-transparent text-sm text-gray-600 placeholder:text-gray-400 focus:outline-none"
-              />
-            )}
+            <p className="text-xs font-semibold text-gray-900">Destination</p>
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onFocus={() => { setIsExpanded(true); setActiveTab("location"); }}
+              placeholder="Rechercher une destination"
+              className="w-full bg-transparent text-sm text-gray-600 placeholder:text-gray-400 focus:outline-none"
+            />
           </button>
 
-          <div className={`w-px bg-gray-200 transition-all duration-300 ${isCompact && !searchFocused ? "h-6" : "h-8"}`} />
+          <div className="w-px h-8 bg-gray-200" />
 
-          {/* Dates ou Heures selon le mode */}
+          {/* Dates */}
           <button
             type="button"
-            onClick={() => { setSearchFocused(true); setActiveTab(bookingMode === "hours" ? "hours" : "dates"); }}
-            className={`flex-1 text-left transition-all duration-300 ${
-              searchFocused && (activeTab === "dates" || activeTab === "hours") ? "bg-gray-50" : "hover:bg-gray-50"
-            } ${isCompact && !searchFocused ? "px-3 py-2" : "px-6 py-4"}`}
+            onClick={() => { setIsExpanded(true); setActiveTab(bookingMode === "hours" ? "hours" : "dates"); }}
+            className={`flex-1 text-left px-6 py-4 transition-all duration-200 ${
+              isExpanded && (activeTab === "dates" || activeTab === "hours") ? "bg-gray-50" : "hover:bg-gray-50"
+            }`}
           >
-            <p className={`font-semibold text-gray-900 transition-all duration-300 ${isCompact && !searchFocused ? "text-[10px]" : "text-xs"}`}>
+            <p className="text-xs font-semibold text-gray-900">
               {bookingMode === "hours" ? "Date & Heures" : "Dates"}
             </p>
-            <p className={`text-gray-400 transition-all duration-300 ${isCompact && !searchFocused ? "text-xs" : "text-sm"}`}>
+            <p className="text-sm text-gray-400">
               {bookingMode === "hours" ? (
                 startDate ? `${new Date(startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })} · ${startTime}-${endTime}` : "Quand ?"
               ) : (
@@ -545,31 +607,29 @@ function SearchBar({ isCompact }: { isCompact: boolean }) {
             </p>
           </button>
 
-          <div className={`w-px bg-gray-200 transition-all duration-300 ${isCompact && !searchFocused ? "h-6" : "h-8"}`} />
+          <div className="w-px h-8 bg-gray-200" />
 
           {/* Guests */}
           <button
             type="button"
-            onClick={() => { setSearchFocused(true); setActiveTab("guests"); }}
-            className={`flex-1 text-left rounded-r-full transition-all duration-300 ${
-              searchFocused && activeTab === "guests" ? "bg-gray-50" : "hover:bg-gray-50"
-            } ${isCompact && !searchFocused ? "px-3 py-2" : "px-6 py-4"}`}
+            onClick={() => { setIsExpanded(true); setActiveTab("guests"); }}
+            className={`flex-1 text-left px-6 py-4 transition-all duration-200 ${
+              isExpanded && activeTab === "guests" ? "bg-gray-50" : "hover:bg-gray-50"
+            }`}
           >
-            <p className={`font-semibold text-gray-900 transition-all duration-300 ${isCompact && !searchFocused ? "text-[10px]" : "text-xs"}`}>Voyageurs</p>
-            <p className={`text-gray-400 transition-all duration-300 ${isCompact && !searchFocused ? "text-xs" : "text-sm"}`}>
+            <p className="text-xs font-semibold text-gray-900">Voyageurs</p>
+            <p className="text-sm text-gray-400">
               {guests > 1 ? `${guests} voyageurs` : "Combien ?"}
             </p>
           </button>
 
           {/* Search Button */}
-          <div className={`transition-all duration-300 ${isCompact && !searchFocused ? "pr-1" : "pr-2"}`}>
+          <div className="pr-2">
             <button
               onClick={handleSearch}
-              className={`flex items-center justify-center rounded-full bg-gray-800 text-white transition-all hover:bg-gray-900 active:scale-95 ${
-                isCompact && !searchFocused ? "h-8 w-8" : "gap-2 px-4 py-3"
-              }`}
+              className="flex items-center justify-center gap-2 rounded-full bg-gray-900 px-4 py-3 text-white transition-all hover:bg-gray-800 active:scale-95"
             >
-              <svg className={`transition-all duration-300 ${isCompact && !searchFocused ? "h-4 w-4" : "h-5 w-5"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
               </svg>
             </button>
@@ -577,8 +637,8 @@ function SearchBar({ isCompact }: { isCompact: boolean }) {
         </div>
       </div>
 
-      {/* Expanded Search Panel */}
-      {searchFocused && (
+      {/* Panneau déroulant */}
+      {isExpanded && (
         <div className="absolute left-0 right-0 top-full mt-3" style={{ zIndex: 9999 }}>
           <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl">
             {activeTab === "location" && (
@@ -1008,48 +1068,24 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [categoriesCollapsed, setCategoriesCollapsed] = useState(false);
-  const [lastScrollY, setLastScrollY] = useState(0);
-  const [isAnimatingCollapse, setIsAnimatingCollapse] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsLoaded(true);
   }, []);
 
-  // Scroll detection pour la barre de recherche et les catégories
+  // Scroll detection pour la barre de recherche
   useEffect(() => {
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-
       if (heroRef.current) {
         const heroBottom = heroRef.current.getBoundingClientRect().bottom;
         setIsScrolled(heroBottom < 80);
       }
-
-      // Collapse categories quand on scroll vers le bas, expand quand on remonte
-      if (currentScrollY > lastScrollY && currentScrollY > 200) {
-        // Scrolling down - collapse categories into "Tous"
-        if (!categoriesCollapsed) {
-          setIsAnimatingCollapse(true);
-          setTimeout(() => {
-            setCategoriesCollapsed(true);
-            setIsAnimatingCollapse(false);
-          }, 400);
-        }
-      } else if (currentScrollY < lastScrollY && currentScrollY < 100) {
-        // Scrolling up near top - expand categories
-        if (categoriesCollapsed) {
-          setCategoriesCollapsed(false);
-        }
-      }
-
-      setLastScrollY(currentScrollY);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastScrollY, categoriesCollapsed]);
+  }, []);
 
   const filteredCards = activeCategory
     ? cards.filter((card) => card.type === activeCategory)
@@ -1396,92 +1432,49 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
         </div>
       </section>
 
-      {/* STICKY HEADER - Barre de recherche unique qui se réduit */}
+      {/* STICKY HEADER - Barre de recherche style Airbnb */}
       <div
-        className={`sticky z-50 transition-all duration-500 ${
+        className={`sticky z-50 transition-all duration-300 ${
           isScrolled
             ? "top-0 bg-white/95 backdrop-blur-md shadow-md border-b border-gray-200"
             : "top-0 bg-[#FAFAFA]"
         }`}
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className={`flex items-center gap-3 transition-all duration-500 ${isScrolled ? "py-3" : "py-4"}`}>
-            {/* Bouton Tous - Apparaît collé à gauche quand collapsed */}
-            <div
-              className={`shrink-0 transition-all duration-500 ${
-                categoriesCollapsed && isScrolled
-                  ? "opacity-100 translate-x-0"
-                  : "opacity-0 -translate-x-4 w-0 overflow-hidden"
-              }`}
-            >
-              <button
-                onClick={() => {
-                  setCategoriesCollapsed(false);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-                className="flex items-center gap-2 rounded-full bg-gray-900 px-4 py-2.5 text-white transition-all hover:bg-black hover:scale-105 active:scale-95"
-              >
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none">
-                  <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
-                  <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
-                  <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
-                  <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
-                </svg>
-                <span className="text-sm font-medium">Tous</span>
-                <span className={`flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-gray-900 ${categoriesCollapsed ? "animate-count-pop" : ""}`}>
-                  {categories.length}
-                </span>
-              </button>
-            </div>
-
-            {/* Barre de recherche - se réduit sur scroll */}
-            <div className={`flex-1 transition-all duration-500 ${isLoaded ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}>
+          <div className={`flex items-center justify-center transition-all duration-300 ${isScrolled ? "py-3" : "py-4"}`}>
+            {/* Barre de recherche - Grande barre → Bouton compact au scroll */}
+            <div className={`w-full transition-all duration-500 ${isLoaded ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}>
               <SearchBar isCompact={isScrolled} />
             </div>
           </div>
         </div>
       </div>
 
-      {/* CATEGORIES - Animation fluide */}
+      {/* CATEGORIES - Toujours visibles, sticky sous la barre de recherche */}
       <section
         className={`border-b border-gray-200 bg-white sticky z-40 transition-all duration-300 ${
-          isScrolled ? "top-[72px]" : "top-[88px]"
+          isScrolled ? "top-[56px]" : "top-[72px]"
         }`}
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-1 overflow-x-auto py-2 scrollbar-hide">
-            {/* Bouton Tous dans la barre des catégories */}
+            {/* Bouton Tous */}
             <CategoryButton
               category="ALL"
               label="Tous"
               isActive={activeCategory === null}
-              onClick={() => {
-                setActiveCategory(null);
-                if (categoriesCollapsed) {
-                  setCategoriesCollapsed(false);
-                }
-              }}
+              onClick={() => setActiveCategory(null)}
             />
 
-            {/* Autres catégories avec animation fluide */}
-            {categories.map((cat, index) => (
-              <div
+            {/* Autres catégories */}
+            {categories.map((cat) => (
+              <CategoryButton
                 key={cat.key}
-                className={`transition-all duration-300 ${
-                  isAnimatingCollapse
-                    ? `animate-category-collapse collapse-delay-${Math.min(index + 1, 8)}`
-                    : categoriesCollapsed
-                    ? "hidden"
-                    : ""
-                }`}
-              >
-                <CategoryButton
-                  category={cat.key}
-                  label={cat.label}
-                  isActive={activeCategory === cat.key}
-                  onClick={() => setActiveCategory(cat.key === activeCategory ? null : cat.key)}
-                />
-              </div>
+                category={cat.key}
+                label={cat.label}
+                isActive={activeCategory === cat.key}
+                onClick={() => setActiveCategory(cat.key === activeCategory ? null : cat.key)}
+              />
             ))}
           </div>
         </div>

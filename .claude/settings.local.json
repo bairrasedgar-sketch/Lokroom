@@ -22,7 +22,9 @@
       "Bash(npx tsx:*)",
       "Bash(npx prisma db push:*)",
       "Bash(git fetch:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "WebFetch(domain:www.airbnb.com)",
+      "Bash(Voyageurs\"\n- Click on compact bar to expand back to full search\n- Categories stay visible at all times (no collapse animation)\n- Cleaner, simpler UX matching Airbnb''s pattern\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
     ],
     "deny": [],
     "ask": []
