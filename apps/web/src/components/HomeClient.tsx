@@ -435,10 +435,10 @@ function CategoryIcon({ category, isActive, isAnimating }: CategoryIconProps) {
 }
 
 // ============================================================================
-// SEARCH BAR COMPONENT - Style Airbnb : Grande barre → Bouton compact au scroll
+// SEARCH BAR COMPONENT - Animation fluide de rétrécissement
 // ============================================================================
 
-function SearchBar({ isCompact, onExpand }: { isCompact: boolean; onExpand?: () => void }) {
+function SearchBar({ isCompact }: { isCompact: boolean }) {
   const router = useRouter();
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<"location" | "dates" | "hours" | "guests">("location");
@@ -487,149 +487,111 @@ function SearchBar({ isCompact, onExpand }: { isCompact: boolean; onExpand?: () 
     timeOptions.push(`${h.toString().padStart(2, "0")}:30`);
   }
 
-  // Résumé pour la barre compacte
-  const getSummary = () => {
-    const parts = [];
-    parts.push(query || "N'importe où");
+  // Textes pour le mode compact
+  const getLocationText = () => query || "N'importe où";
+  const getDatesText = () => {
     if (startDate) {
       const dateStr = new Date(startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
       if (bookingMode === "hours") {
-        parts.push(`${dateStr} · ${startTime}-${endTime}`);
+        return `${dateStr}`;
       } else if (endDate) {
         const endStr = new Date(endDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
-        parts.push(`${dateStr} - ${endStr}`);
-      } else {
-        parts.push(dateStr);
+        return `${dateStr} - ${endStr}`;
       }
-    } else {
-      parts.push("N'importe quand");
+      return dateStr;
     }
-    parts.push(guests > 1 ? `${guests} voyageurs` : "Ajouter des voyageurs");
-    return parts;
+    return "N'importe quand";
   };
+  const getGuestsText = () => guests > 1 ? `${guests} voyageurs` : "Voyageurs";
 
-  const handleCompactClick = () => {
-    if (onExpand) onExpand();
-    setIsExpanded(true);
-    setActiveTab("location");
-  };
+  // Mode compact ou expanded selon isCompact ET isExpanded
+  const showCompact = isCompact && !isExpanded;
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // MODE COMPACT (bouton unique style Airbnb)
-  // ═══════════════════════════════════════════════════════════════════════════
-  if (isCompact && !isExpanded) {
-    const summary = getSummary();
-    return (
-      <div ref={searchRef} className="relative w-full max-w-2xl mx-auto">
-        <button
-          onClick={handleCompactClick}
-          className="w-full flex items-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-2 shadow-md transition-all duration-300 hover:shadow-lg"
-        >
-          {/* Icône recherche */}
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center">
-            <svg className="h-4 w-4 text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-            </svg>
-          </div>
-
-          {/* Texte résumé */}
-          <div className="flex-1 flex items-center gap-2 text-left overflow-hidden">
-            <span className="font-medium text-gray-900 truncate text-sm">{summary[0]}</span>
-            <span className="text-gray-300">|</span>
-            <span className="text-gray-500 truncate text-sm">{summary[1]}</span>
-            <span className="text-gray-300">|</span>
-            <span className="text-gray-500 truncate text-sm">{summary[2]}</span>
-          </div>
-
-          {/* Bouton filtres */}
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gray-200">
-            <svg className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
-            </svg>
-          </div>
-        </button>
-      </div>
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // MODE EXPANDED (grande barre de recherche)
-  // ═══════════════════════════════════════════════════════════════════════════
   return (
     <div ref={searchRef} className="relative w-full max-w-3xl mx-auto">
-      {/* Grande barre de recherche */}
+      {/* Barre de recherche avec animation de taille fluide */}
       <div
-        className={`relative rounded-full border bg-white transition-all duration-300 ${
+        onClick={() => { if (showCompact) setIsExpanded(true); }}
+        className={`relative rounded-full border bg-white transition-all duration-500 ease-out cursor-pointer ${
           isExpanded ? "border-gray-300 shadow-xl" : "border-gray-200 shadow-md hover:shadow-lg"
         }`}
+        style={{
+          transform: showCompact ? "scale(0.85)" : "scale(1)",
+          transformOrigin: "center center",
+        }}
       >
         <div className="flex items-center">
           {/* Location */}
           <button
             type="button"
-            onClick={() => { setIsExpanded(true); setActiveTab("location"); }}
-            className={`flex-1 text-left rounded-l-full px-6 py-4 transition-all duration-200 ${
+            onClick={(e) => { e.stopPropagation(); setIsExpanded(true); setActiveTab("location"); }}
+            className={`flex-1 text-left rounded-l-full transition-all duration-300 ${
               isExpanded && activeTab === "location" ? "bg-gray-50" : "hover:bg-gray-50"
-            }`}
+            } ${showCompact ? "px-4 py-2" : "px-6 py-4"}`}
           >
-            <p className="text-xs font-semibold text-gray-900">Destination</p>
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onFocus={() => { setIsExpanded(true); setActiveTab("location"); }}
-              placeholder="Rechercher une destination"
-              className="w-full bg-transparent text-sm text-gray-600 placeholder:text-gray-400 focus:outline-none"
-            />
+            <p className={`font-semibold text-gray-900 transition-all duration-300 ${showCompact ? "text-[10px]" : "text-xs"}`}>
+              Destination
+            </p>
+            {showCompact ? (
+              <p className="text-xs text-gray-500 truncate">{getLocationText()}</p>
+            ) : (
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onFocus={() => { setIsExpanded(true); setActiveTab("location"); }}
+                placeholder="Rechercher une destination"
+                className="w-full bg-transparent text-sm text-gray-600 placeholder:text-gray-400 focus:outline-none"
+                onClick={(e) => e.stopPropagation()}
+              />
+            )}
           </button>
 
-          <div className="w-px h-8 bg-gray-200" />
+          <div className={`w-px bg-gray-200 transition-all duration-300 ${showCompact ? "h-6" : "h-8"}`} />
 
           {/* Dates */}
           <button
             type="button"
-            onClick={() => { setIsExpanded(true); setActiveTab(bookingMode === "hours" ? "hours" : "dates"); }}
-            className={`flex-1 text-left px-6 py-4 transition-all duration-200 ${
+            onClick={(e) => { e.stopPropagation(); setIsExpanded(true); setActiveTab(bookingMode === "hours" ? "hours" : "dates"); }}
+            className={`flex-1 text-left transition-all duration-300 ${
               isExpanded && (activeTab === "dates" || activeTab === "hours") ? "bg-gray-50" : "hover:bg-gray-50"
-            }`}
+            } ${showCompact ? "px-4 py-2" : "px-6 py-4"}`}
           >
-            <p className="text-xs font-semibold text-gray-900">
-              {bookingMode === "hours" ? "Date & Heures" : "Dates"}
+            <p className={`font-semibold text-gray-900 transition-all duration-300 ${showCompact ? "text-[10px]" : "text-xs"}`}>
+              Dates
             </p>
-            <p className="text-sm text-gray-400">
-              {bookingMode === "hours" ? (
-                startDate ? `${new Date(startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })} · ${startTime}-${endTime}` : "Quand ?"
-              ) : (
-                startDate
-                  ? `${new Date(startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}${endDate ? ` - ${new Date(endDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}` : ""}`
-                  : "Quand ?"
-              )}
+            <p className={`text-gray-500 truncate transition-all duration-300 ${showCompact ? "text-xs" : "text-sm"}`}>
+              {getDatesText()}
             </p>
           </button>
 
-          <div className="w-px h-8 bg-gray-200" />
+          <div className={`w-px bg-gray-200 transition-all duration-300 ${showCompact ? "h-6" : "h-8"}`} />
 
           {/* Guests */}
           <button
             type="button"
-            onClick={() => { setIsExpanded(true); setActiveTab("guests"); }}
-            className={`flex-1 text-left px-6 py-4 transition-all duration-200 ${
+            onClick={(e) => { e.stopPropagation(); setIsExpanded(true); setActiveTab("guests"); }}
+            className={`flex-1 text-left transition-all duration-300 ${
               isExpanded && activeTab === "guests" ? "bg-gray-50" : "hover:bg-gray-50"
-            }`}
+            } ${showCompact ? "px-4 py-2" : "px-6 py-4"}`}
           >
-            <p className="text-xs font-semibold text-gray-900">Voyageurs</p>
-            <p className="text-sm text-gray-400">
-              {guests > 1 ? `${guests} voyageurs` : "Combien ?"}
+            <p className={`font-semibold text-gray-900 transition-all duration-300 ${showCompact ? "text-[10px]" : "text-xs"}`}>
+              Voyageurs
+            </p>
+            <p className={`text-gray-500 truncate transition-all duration-300 ${showCompact ? "text-xs" : "text-sm"}`}>
+              {getGuestsText()}
             </p>
           </button>
 
           {/* Search Button */}
-          <div className="pr-2">
+          <div className={`transition-all duration-300 ${showCompact ? "pr-1" : "pr-2"}`}>
             <button
-              onClick={handleSearch}
-              className="flex items-center justify-center gap-2 rounded-full bg-gray-900 px-4 py-3 text-white transition-all hover:bg-gray-800 active:scale-95"
+              onClick={(e) => { e.stopPropagation(); handleSearch(); }}
+              className={`flex items-center justify-center rounded-full bg-gray-900 text-white transition-all duration-300 hover:bg-gray-800 active:scale-95 ${
+                showCompact ? "h-8 w-8" : "h-12 w-12"
+              }`}
             >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <svg className={`transition-all duration-300 ${showCompact ? "h-4 w-4" : "h-5 w-5"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
               </svg>
             </button>
@@ -639,7 +601,7 @@ function SearchBar({ isCompact, onExpand }: { isCompact: boolean; onExpand?: () 
 
       {/* Panneau déroulant */}
       {isExpanded && (
-        <div className="absolute left-0 right-0 top-full mt-3" style={{ zIndex: 9999 }}>
+        <div className="absolute left-0 right-0 top-full mt-3 animate-dropdown-appear" style={{ zIndex: 9999 }}>
           <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl">
             {activeTab === "location" && (
               <div className="space-y-4">
@@ -709,7 +671,6 @@ function SearchBar({ isCompact, onExpand }: { isCompact: boolean; onExpand?: () 
                           min={today}
                           onChange={(e) => setStartDate(e.target.value)}
                           className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
-                          style={{ position: "relative", zIndex: 10000 }}
                         />
                       </div>
                       <div>
@@ -720,7 +681,6 @@ function SearchBar({ isCompact, onExpand }: { isCompact: boolean; onExpand?: () 
                           min={startDate || today}
                           onChange={(e) => setEndDate(e.target.value)}
                           className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
-                          style={{ position: "relative", zIndex: 10000 }}
                         />
                       </div>
                     </div>
@@ -1068,19 +1028,35 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [categoriesCollapsed, setCategoriesCollapsed] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsLoaded(true);
   }, []);
 
-  // Scroll detection pour la barre de recherche
+  // Scroll detection pour la barre de recherche et les catégories
   useEffect(() => {
+    let lastScrollY = 0;
+
     const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
       if (heroRef.current) {
         const heroBottom = heroRef.current.getBoundingClientRect().bottom;
         setIsScrolled(heroBottom < 80);
       }
+
+      // Collapse categories quand on scroll vers le bas après 150px
+      if (currentScrollY > 150 && currentScrollY > lastScrollY) {
+        setCategoriesCollapsed(true);
+      }
+      // Expand categories quand on remonte près du top
+      else if (currentScrollY < 100) {
+        setCategoriesCollapsed(false);
+      }
+
+      lastScrollY = currentScrollY;
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -1450,7 +1426,7 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
         </div>
       </div>
 
-      {/* CATEGORIES - Toujours visibles, sticky sous la barre de recherche */}
+      {/* CATEGORIES - Animation premium où elles rentrent dans "Tous" */}
       <section
         className={`border-b border-gray-200 bg-white sticky z-40 transition-all duration-300 ${
           isScrolled ? "top-[56px]" : "top-[72px]"
@@ -1458,23 +1434,65 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-1 overflow-x-auto py-2 scrollbar-hide">
-            {/* Bouton Tous */}
-            <CategoryButton
-              category="ALL"
-              label="Tous"
-              isActive={activeCategory === null}
-              onClick={() => setActiveCategory(null)}
-            />
+            {/* Bouton "Tous" - S'agrandit quand les catégories sont collapsed */}
+            <div className="relative">
+              <button
+                onClick={() => {
+                  setActiveCategory(null);
+                  if (categoriesCollapsed) {
+                    setCategoriesCollapsed(false);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }
+                }}
+                className={`flex items-center gap-2 px-4 py-3 transition-all duration-500 ease-out ${
+                  activeCategory === null
+                    ? "border-b-2 border-gray-900"
+                    : "border-b-2 border-transparent opacity-60 hover:opacity-100"
+                } ${categoriesCollapsed ? "bg-gray-900 rounded-full text-white border-none px-5" : ""}`}
+              >
+                <div className={`relative transition-all duration-300 ${categoriesCollapsed ? "scale-90" : ""}`}>
+                  <CategoryIcon category="ALL" isActive={!categoriesCollapsed && activeCategory === null} isAnimating={false} />
+                </div>
+                <span className={`whitespace-nowrap text-xs font-medium transition-all duration-300 ${
+                  categoriesCollapsed ? "text-white" : activeCategory === null ? "text-gray-900" : "text-gray-600"
+                }`}>
+                  Tous
+                </span>
+                {/* Badge avec le nombre de catégories */}
+                <span
+                  className={`flex items-center justify-center rounded-full text-xs font-bold transition-all duration-500 ${
+                    categoriesCollapsed
+                      ? "h-5 w-5 bg-white text-gray-900 opacity-100 scale-100"
+                      : "h-0 w-0 opacity-0 scale-0"
+                  }`}
+                >
+                  {categories.length}
+                </span>
+              </button>
+            </div>
 
-            {/* Autres catégories */}
-            {categories.map((cat) => (
-              <CategoryButton
+            {/* Autres catégories - Animation de slide/fade vers "Tous" */}
+            {categories.map((cat, index) => (
+              <div
                 key={cat.key}
-                category={cat.key}
-                label={cat.label}
-                isActive={activeCategory === cat.key}
-                onClick={() => setActiveCategory(cat.key === activeCategory ? null : cat.key)}
-              />
+                className="transition-all duration-500 ease-out"
+                style={{
+                  opacity: categoriesCollapsed ? 0 : 1,
+                  transform: categoriesCollapsed
+                    ? `translateX(-${(index + 1) * 40}px) scale(0.5)`
+                    : "translateX(0) scale(1)",
+                  maxWidth: categoriesCollapsed ? 0 : "200px",
+                  overflow: "hidden",
+                  transitionDelay: categoriesCollapsed ? `${index * 30}ms` : `${(categories.length - index) * 30}ms`,
+                }}
+              >
+                <CategoryButton
+                  category={cat.key}
+                  label={cat.label}
+                  isActive={activeCategory === cat.key}
+                  onClick={() => setActiveCategory(cat.key === activeCategory ? null : cat.key)}
+                />
+              </div>
             ))}
           </div>
         </div>
