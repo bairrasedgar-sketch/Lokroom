@@ -435,6 +435,47 @@ function CategoryIcon({ category, isActive, isAnimating }: CategoryIconProps) {
 }
 
 // ============================================================================
+// COMPACT "TOUS" BUTTON - Pour le header sticky
+// ============================================================================
+
+function CompactAllButton({
+  onClick,
+  categoryCount,
+  isExpanding
+}: {
+  onClick: () => void;
+  categoryCount: number;
+  isExpanding: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`relative flex items-center gap-2 rounded-full bg-gray-900 px-4 py-2 text-white transition-all duration-500 hover:bg-black ${
+        isExpanding ? "scale-110" : ""
+      }`}
+    >
+      <div className="relative">
+        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none">
+          <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+          <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+          <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+          <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+        </svg>
+        {/* Badge avec le nombre de catégories */}
+        <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] font-bold text-gray-900">
+          {categoryCount}
+        </span>
+      </div>
+      <span className="text-sm font-medium">Tous</span>
+      {/* Indicateur d'expansion */}
+      <svg className={`h-4 w-4 transition-transform duration-300 ${isExpanding ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+      </svg>
+    </button>
+  );
+}
+
+// ============================================================================
 // SEARCH BAR COMPONENT - Se réduit en place
 // ============================================================================
 
@@ -1008,8 +1049,9 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [showCategories, setShowCategories] = useState(true);
+  const [categoriesCollapsed, setCategoriesCollapsed] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [isAnimatingCollapse, setIsAnimatingCollapse] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -1026,13 +1068,21 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
         setIsScrolled(heroBottom < 80);
       }
 
-      // Cacher les catégories quand on scroll vers le bas, les montrer quand on remonte
+      // Collapse categories quand on scroll vers le bas, expand quand on remonte
       if (currentScrollY > lastScrollY && currentScrollY > 200) {
-        // Scrolling down
-        setShowCategories(false);
-      } else {
-        // Scrolling up or at top
-        setShowCategories(true);
+        // Scrolling down - collapse categories into "Tous"
+        if (!categoriesCollapsed) {
+          setIsAnimatingCollapse(true);
+          setTimeout(() => {
+            setCategoriesCollapsed(true);
+            setIsAnimatingCollapse(false);
+          }, 400);
+        }
+      } else if (currentScrollY < lastScrollY && currentScrollY < 100) {
+        // Scrolling up near top - expand categories
+        if (categoriesCollapsed) {
+          setCategoriesCollapsed(false);
+        }
       }
 
       setLastScrollY(currentScrollY);
@@ -1040,7 +1090,13 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastScrollY]);
+  }, [lastScrollY, categoriesCollapsed]);
+
+  const handleExpandCategories = () => {
+    setCategoriesCollapsed(false);
+    // Scroll vers le haut pour voir les catégories
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const filteredCards = activeCategory
     ? cards.filter((card) => card.type === activeCategory)
@@ -1297,6 +1353,66 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
           animation: fade-in 0.4s ease-out forwards;
           opacity: 0;
         }
+
+        /* ============================================
+           CATEGORIES COLLAPSE ANIMATION
+           ============================================ */
+        @keyframes collapse-to-center {
+          0% {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+          }
+          50% {
+            opacity: 0.5;
+            transform: scale(0.8);
+          }
+          100% {
+            opacity: 0;
+            transform: translateX(var(--collapse-x, -100px)) scale(0.3);
+          }
+        }
+
+        @keyframes expand-from-center {
+          0% {
+            opacity: 0;
+            transform: translateX(var(--expand-x, 100px)) scale(0.3);
+          }
+          50% {
+            opacity: 0.5;
+            transform: scale(0.8);
+          }
+          100% {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+          }
+        }
+
+        .animate-collapse {
+          animation: collapse-to-center 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+
+        .animate-expand {
+          animation: expand-from-center 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        /* Staggered delays for categories */
+        .collapse-delay-1 { animation-delay: 0ms; --collapse-x: -50px; }
+        .collapse-delay-2 { animation-delay: 30ms; --collapse-x: -80px; }
+        .collapse-delay-3 { animation-delay: 60ms; --collapse-x: -110px; }
+        .collapse-delay-4 { animation-delay: 90ms; --collapse-x: -140px; }
+        .collapse-delay-5 { animation-delay: 120ms; --collapse-x: -170px; }
+        .collapse-delay-6 { animation-delay: 150ms; --collapse-x: -200px; }
+        .collapse-delay-7 { animation-delay: 180ms; --collapse-x: -230px; }
+        .collapse-delay-8 { animation-delay: 210ms; --collapse-x: -260px; }
+
+        .expand-delay-1 { animation-delay: 0ms; --expand-x: 50px; }
+        .expand-delay-2 { animation-delay: 50ms; --expand-x: 80px; }
+        .expand-delay-3 { animation-delay: 100ms; --expand-x: 110px; }
+        .expand-delay-4 { animation-delay: 150ms; --expand-x: 140px; }
+        .expand-delay-5 { animation-delay: 200ms; --expand-x: 170px; }
+        .expand-delay-6 { animation-delay: 250ms; --expand-x: 200px; }
+        .expand-delay-7 { animation-delay: 300ms; --expand-x: 230px; }
+        .expand-delay-8 { animation-delay: 350ms; --expand-x: 260px; }
       `}</style>
 
       {/* HERO SECTION */}
@@ -1321,28 +1437,64 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
         </div>
       </section>
 
-      {/* CATEGORIES - disparaît quand on scroll vers le bas */}
+      {/* STICKY HEADER - Apparaît quand on scroll avec barre de recherche + bouton Tous */}
+      {isScrolled && categoriesCollapsed && (
+        <header className="fixed top-0 left-0 right-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur-md shadow-sm">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="flex h-16 items-center gap-4">
+              {/* Bouton Tous à gauche */}
+              <CompactAllButton
+                onClick={handleExpandCategories}
+                categoryCount={categories.length}
+                isExpanding={false}
+              />
+
+              {/* Barre de recherche compacte au centre */}
+              <div className="flex-1 max-w-2xl">
+                <SearchBar isCompact={true} />
+              </div>
+            </div>
+          </div>
+        </header>
+      )}
+
+      {/* CATEGORIES - avec animation de collapse */}
       <section
-        className={`border-b border-gray-200 bg-white sticky top-16 z-30 transition-all duration-300 ${
-          showCategories ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
+        className={`border-b border-gray-200 bg-white sticky top-16 z-30 transition-all duration-500 ${
+          categoriesCollapsed ? "opacity-0 pointer-events-none h-0 overflow-hidden" : "opacity-100"
         }`}
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-1 overflow-x-auto py-2 scrollbar-hide">
-            <CategoryButton
-              category="ALL"
-              label="Tous"
-              isActive={activeCategory === null}
-              onClick={() => setActiveCategory(null)}
-            />
-            {categories.map((cat) => (
+            {/* Bouton Tous */}
+            <div className={`${isAnimatingCollapse ? "" : ""}`}>
               <CategoryButton
-                key={cat.key}
-                category={cat.key}
-                label={cat.label}
-                isActive={activeCategory === cat.key}
-                onClick={() => setActiveCategory(cat.key === activeCategory ? null : cat.key)}
+                category="ALL"
+                label="Tous"
+                isActive={activeCategory === null}
+                onClick={() => setActiveCategory(null)}
               />
+            </div>
+            {/* Autres catégories avec animation staggered */}
+            {categories.map((cat, index) => (
+              <div
+                key={cat.key}
+                className={`${
+                  isAnimatingCollapse
+                    ? `animate-collapse collapse-delay-${Math.min(index + 1, 8)}`
+                    : !categoriesCollapsed
+                    ? `animate-expand expand-delay-${Math.min(index + 1, 8)}`
+                    : ""
+                }`}
+                style={{ opacity: categoriesCollapsed && !isAnimatingCollapse ? 0 : undefined }}
+              >
+                <CategoryButton
+                  category={cat.key}
+                  label={cat.label}
+                  isActive={activeCategory === cat.key}
+                  onClick={() => setActiveCategory(cat.key === activeCategory ? null : cat.key)}
+                />
+              </div>
             ))}
           </div>
         </div>
