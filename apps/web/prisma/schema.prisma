@@ -208,8 +208,11 @@ model Listing {
   title       String
   description String
 
-  /// Type d’espace (chambre, bureau, parking, studio, etc.)
+  /// Type d'espace (chambre, bureau, parking, studio, etc.)
   type ListingType @default(OTHER)
+
+  /// Type personnalisé si type = OTHER (ex: "Atelier", "Cave", etc.)
+  customType String?
 
   /// Mode de tarification (à l’heure, à la journée, ou les deux)
   pricingMode PricingMode @default(DAILY)
@@ -218,11 +221,27 @@ model Listing {
   price    Float
   currency Currency @default(EUR)
 
-  /// Prix à l’heure (optionnel, si l’espace est louable à l’heure)
+  /// Prix à l'heure (optionnel, si l'espace est louable à l'heure)
   hourlyPrice Float?
 
-  /// Capacité de l’espace (nombre de personnes max)
+  /// Réductions pour réservations multiples (en pourcentage)
+  discountHours3Plus  Int? /// Réduction pour 3+ heures
+  discountHours6Plus  Int? /// Réduction pour 6+ heures
+  discountDays3Plus   Int? /// Réduction pour 3+ jours
+  discountWeekly      Int? /// Réduction hebdomadaire
+  discountMonthly     Int? /// Réduction mensuelle
+
+  /// Capacité de l'espace (nombre de personnes max)
   maxGuests Int?
+
+  /// Capacités spécifiques selon le type d'espace
+  beds       Int? /// Nombre de lits (logements)
+  desks      Int? /// Nombre de bureaux (coworking/office)
+  parkings   Int? /// Nombre de places (parking/garage)
+  bathrooms  Int? /// Nombre de salles de bain
+
+  /// Caractéristiques de l'espace (tags descriptifs)
+  spaceFeatures String[] @default([])
 
   /// Réservation instantanée possible ?
   isInstantBook Boolean @default(false)
@@ -237,6 +256,9 @@ model Listing {
 
   country  String
   province ProvinceCA?
+
+  /// Région/département pour la France
+  regionFR String?
 
   /// Ville : obligatoire (défaut vide pour anciennes lignes)
   city String @default("")

@@ -32,11 +32,15 @@ type PricingMode = "HOURLY" | "DAILY" | "BOTH";
 
 type Step =
   | "type"
+  | "map"
   | "location"
+  | "confirmLocation"
   | "details"
+  | "features"
   | "photos"
   | "description"
   | "pricing"
+  | "discounts"
   | "review";
 
 type LocalImage = {
@@ -49,14 +53,24 @@ type LocalImage = {
 
 type FormData = {
   type: ListingType | null;
+  customType: string;
   country: "France" | "Canada";
   city: string;
   addressFull: string;
+  addressLine1: string;
+  postalCode: string;
+  province: string;
+  regionFR: string;
   lat: number | null;
   lng: number | null;
   latPublic: number | null;
   lngPublic: number | null;
   maxGuests: number;
+  beds: number | null;
+  desks: number | null;
+  parkings: number | null;
+  bathrooms: number | null;
+  spaceFeatures: string[];
   title: string;
   description: string;
   pricingMode: PricingMode;
@@ -66,6 +80,11 @@ type FormData = {
   isInstantBook: boolean;
   minNights: number | null;
   maxNights: number | null;
+  discountHours3Plus: number | null;
+  discountHours6Plus: number | null;
+  discountDays3Plus: number | null;
+  discountWeekly: number | null;
+  discountMonthly: number | null;
 };
 
 // ============================================================================
@@ -162,11 +181,15 @@ const LISTING_TYPES: { value: ListingType; label: string; description: string }[
 
 const STEPS: { key: Step; title: string; subtitle: string }[] = [
   { key: "type", title: "Type d'espace", subtitle: "Quel type d'espace proposez-vous ?" },
-  { key: "location", title: "Localisation", subtitle: "Où se trouve votre espace ?" },
-  { key: "details", title: "Caractéristiques", subtitle: "Décrivez les détails de votre espace" },
+  { key: "map", title: "Localisation", subtitle: "Où se trouve votre espace ?" },
+  { key: "location", title: "Adresse", subtitle: "Complétez l'adresse de votre espace" },
+  { key: "confirmLocation", title: "Confirmation", subtitle: "Vérifiez l'emplacement sur la carte" },
+  { key: "details", title: "Capacité", subtitle: "Décrivez les détails de votre espace" },
+  { key: "features", title: "Caractéristiques", subtitle: "Qu'est-ce qui rend votre espace unique ?" },
   { key: "photos", title: "Photos", subtitle: "Ajoutez des photos de votre espace" },
   { key: "description", title: "Description", subtitle: "Donnez envie aux voyageurs" },
   { key: "pricing", title: "Tarification", subtitle: "Définissez vos prix" },
+  { key: "discounts", title: "Réductions", subtitle: "Proposez des réductions attractives" },
   { key: "review", title: "Vérification", subtitle: "Vérifiez et publiez votre annonce" },
 ];
 
@@ -238,6 +261,105 @@ const createId = () =>
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
+// Provinces canadiennes
+const PROVINCES_CA = [
+  { value: "QC", label: "Québec" },
+  { value: "ON", label: "Ontario" },
+  { value: "BC", label: "Colombie-Britannique" },
+  { value: "AB", label: "Alberta" },
+  { value: "MB", label: "Manitoba" },
+  { value: "SK", label: "Saskatchewan" },
+  { value: "NS", label: "Nouvelle-Écosse" },
+  { value: "NB", label: "Nouveau-Brunswick" },
+  { value: "NL", label: "Terre-Neuve-et-Labrador" },
+  { value: "PE", label: "Île-du-Prince-Édouard" },
+  { value: "NT", label: "Territoires du Nord-Ouest" },
+  { value: "YT", label: "Yukon" },
+  { value: "NU", label: "Nunavut" },
+];
+
+// Régions françaises
+const REGIONS_FR = [
+  { value: "IDF", label: "Île-de-France" },
+  { value: "ARA", label: "Auvergne-Rhône-Alpes" },
+  { value: "NAQ", label: "Nouvelle-Aquitaine" },
+  { value: "OCC", label: "Occitanie" },
+  { value: "HDF", label: "Hauts-de-France" },
+  { value: "GES", label: "Grand Est" },
+  { value: "PAC", label: "Provence-Alpes-Côte d'Azur" },
+  { value: "PDL", label: "Pays de la Loire" },
+  { value: "BRE", label: "Bretagne" },
+  { value: "NOR", label: "Normandie" },
+  { value: "BFC", label: "Bourgogne-Franche-Comté" },
+  { value: "CVL", label: "Centre-Val de Loire" },
+  { value: "COR", label: "Corse" },
+  { value: "GUA", label: "Guadeloupe" },
+  { value: "MTQ", label: "Martinique" },
+  { value: "GUF", label: "Guyane" },
+  { value: "REU", label: "La Réunion" },
+  { value: "MAY", label: "Mayotte" },
+];
+
+// Caractéristiques d'espace disponibles
+const SPACE_FEATURES = [
+  { value: "well-located", label: "Bien situé", icon: "📍" },
+  { value: "unique", label: "Unique", icon: "✨" },
+  { value: "spacious", label: "Spacieux", icon: "🏠" },
+  { value: "quiet", label: "Calme", icon: "🤫" },
+  { value: "bright", label: "Lumineux", icon: "☀️" },
+  { value: "modern", label: "Moderne", icon: "🆕" },
+  { value: "charming", label: "Charmant", icon: "💫" },
+  { value: "cozy", label: "Cosy", icon: "🛋️" },
+  { value: "professional", label: "Professionnel", icon: "💼" },
+  { value: "equipped", label: "Bien équipé", icon: "🔧" },
+  { value: "secure", label: "Sécurisé", icon: "🔒" },
+  { value: "accessible", label: "Accessible", icon: "♿" },
+];
+
+// Types d'espace valides pour customType
+const VALID_CUSTOM_TYPES = [
+  "atelier", "cave", "grenier", "loft", "penthouse", "duplex", "triplex",
+  "mezzanine", "terrasse", "rooftop", "jardin", "piscine", "spa", "gym",
+  "salle de sport", "cuisine", "laboratoire", "showroom", "galerie",
+  "espace photo", "salle de danse", "salle de yoga", "local commercial",
+  "entrepôt", "hangar", "box", "container", "mobile home", "tiny house",
+  "cabane", "yourte", "tipi", "bateau", "péniche", "camping-car",
+];
+
+// Labels des types d'espace pour les titres dynamiques
+const LISTING_TYPE_LOCATION_LABELS: Record<ListingType, string> = {
+  APARTMENT: "votre appartement",
+  HOUSE: "votre maison",
+  ROOM: "votre chambre",
+  STUDIO: "votre studio",
+  OFFICE: "votre bureau",
+  COWORKING: "votre espace de coworking",
+  MEETING_ROOM: "votre salle de réunion",
+  PARKING: "votre parking",
+  GARAGE: "votre garage",
+  STORAGE: "votre espace de stockage",
+  EVENT_SPACE: "votre espace événementiel",
+  RECORDING_STUDIO: "votre studio d'enregistrement",
+  OTHER: "votre espace",
+};
+
+// Configuration des capacités par type d'espace
+const CAPACITY_CONFIG: Record<ListingType, { fields: string[]; labels: Record<string, string> }> = {
+  APARTMENT: { fields: ["maxGuests", "beds", "bathrooms"], labels: { maxGuests: "Voyageurs", beds: "Lits", bathrooms: "Salles de bain" } },
+  HOUSE: { fields: ["maxGuests", "beds", "bathrooms"], labels: { maxGuests: "Voyageurs", beds: "Lits", bathrooms: "Salles de bain" } },
+  ROOM: { fields: ["maxGuests", "beds"], labels: { maxGuests: "Voyageurs", beds: "Lits" } },
+  STUDIO: { fields: ["maxGuests"], labels: { maxGuests: "Personnes max" } },
+  OFFICE: { fields: ["maxGuests", "desks"], labels: { maxGuests: "Personnes max", desks: "Bureaux" } },
+  COWORKING: { fields: ["maxGuests", "desks"], labels: { maxGuests: "Personnes max", desks: "Postes de travail" } },
+  MEETING_ROOM: { fields: ["maxGuests"], labels: { maxGuests: "Participants max" } },
+  PARKING: { fields: ["parkings"], labels: { parkings: "Places de parking" } },
+  GARAGE: { fields: ["parkings"], labels: { parkings: "Véhicules max" } },
+  STORAGE: { fields: ["maxGuests"], labels: { maxGuests: "Personnes accès" } },
+  EVENT_SPACE: { fields: ["maxGuests"], labels: { maxGuests: "Participants max" } },
+  RECORDING_STUDIO: { fields: ["maxGuests"], labels: { maxGuests: "Personnes max" } },
+  OTHER: { fields: ["maxGuests"], labels: { maxGuests: "Personnes max" } },
+};
+
 // ============================================================================
 // HELPERS
 // ============================================================================
@@ -283,14 +405,24 @@ export default function NewListingPage() {
   // Form data
   const [formData, setFormData] = useState<FormData>({
     type: null,
+    customType: "",
     country: "France",
     city: "",
     addressFull: "",
+    addressLine1: "",
+    postalCode: "",
+    province: "",
+    regionFR: "",
     lat: null,
     lng: null,
     latPublic: null,
     lngPublic: null,
     maxGuests: 1,
+    beds: null,
+    desks: null,
+    parkings: null,
+    bathrooms: null,
+    spaceFeatures: [],
     title: "",
     description: "",
     pricingMode: "DAILY",
@@ -300,7 +432,16 @@ export default function NewListingPage() {
     isInstantBook: false,
     minNights: null,
     maxNights: null,
+    discountHours3Plus: null,
+    discountHours6Plus: null,
+    discountDays3Plus: null,
+    discountWeekly: null,
+    discountMonthly: null,
   });
+
+  // City suggestions for autocomplete
+  const [citySuggestions, setCitySuggestions] = useState<any[]>([]);
+  const [showCitySuggestions, setShowCitySuggestions] = useState(false);
 
   // Images
   const [images, setImages] = useState<LocalImage[]>([]);
@@ -448,7 +589,7 @@ export default function NewListingPage() {
       const savedType = sessionStorage.getItem("lokroom_listing_type");
       if (savedType && LISTING_TYPES.some(t => t.value === savedType)) {
         setFormData((prev) => ({ ...prev, type: savedType as ListingType }));
-        setCurrentStep("location");
+        setCurrentStep("map");
         sessionStorage.removeItem("lokroom_listing_type");
       }
     }
@@ -464,19 +605,20 @@ export default function NewListingPage() {
     }
   }, []);
 
-  // Setup address autocomplete
+  // Setup address autocomplete for map step
   useEffect(() => {
-    if (!mapsReady || currentStep !== "location") return;
+    if (!mapsReady || currentStep !== "map") return;
 
     const g = (window as any).google;
     if (!g?.maps?.places?.Autocomplete) return;
 
-    const input = document.getElementById("addressFull") as HTMLInputElement | null;
+    const input = document.getElementById("addressSearch") as HTMLInputElement | null;
     if (!input) return;
 
     const autocomplete = new g.maps.places.Autocomplete(input, {
       types: ["geocode"],
-      fields: ["formatted_address", "geometry"],
+      fields: ["formatted_address", "geometry", "address_components"],
+      componentRestrictions: { country: formData.country === "France" ? "fr" : "ca" },
     });
 
     autocomplete.addListener("place_changed", () => {
@@ -491,20 +633,115 @@ export default function NewListingPage() {
       const latPublic = Math.round(lat * 1000) / 1000;
       const lngPublic = Math.round(lng * 1000) / 1000;
 
+      // Extract address components
+      let streetNumber = "";
+      let route = "";
+      let city = "";
+      let postalCode = "";
+
+      for (const comp of place.address_components || []) {
+        if (comp.types.includes("street_number")) streetNumber = comp.long_name;
+        if (comp.types.includes("route")) route = comp.long_name;
+        if (comp.types.includes("locality")) city = comp.long_name;
+        if (comp.types.includes("postal_code")) postalCode = comp.long_name;
+      }
+
       setFormData((prev) => ({
         ...prev,
         addressFull: place.formatted_address || prev.addressFull,
+        addressLine1: streetNumber ? `${streetNumber} ${route}` : route,
+        city: city || prev.city,
+        postalCode: postalCode || prev.postalCode,
         lat,
         lng,
         latPublic,
         lngPublic,
       }));
+
+      // Update map view
+      const mapElement = document.getElementById("google-map");
+      if (mapElement && (mapElement as any).__gmap) {
+        const map = (mapElement as any).__gmap;
+        map.setCenter({ lat, lng });
+        map.setZoom(15);
+      }
     });
 
     return () => {
       g.maps.event.clearInstanceListeners(autocomplete);
     };
-  }, [mapsReady, currentStep]);
+  }, [mapsReady, currentStep, formData.country]);
+
+  // Initialize map when entering map step
+  useEffect(() => {
+    if (!mapsReady || (currentStep !== "map" && currentStep !== "confirmLocation")) return;
+
+    const g = (window as any).google;
+    if (!g?.maps) return;
+
+    const containerId = currentStep === "map" ? "google-map" : "confirm-google-map";
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    // Default center based on country
+    const defaultCenter = formData.country === "France"
+      ? { lat: 48.8566, lng: 2.3522 }
+      : { lat: 45.5017, lng: -73.5673 };
+
+    const center = formData.lat && formData.lng
+      ? { lat: formData.lat, lng: formData.lng }
+      : defaultCenter;
+
+    const map = new g.maps.Map(container, {
+      center,
+      zoom: formData.lat ? 16 : 6,
+      mapTypeControl: false,
+      streetViewControl: false,
+      fullscreenControl: false,
+    });
+
+    // Store map reference
+    (container as any).__gmap = map;
+
+    const marker = new g.maps.Marker({
+      position: center,
+      map,
+      draggable: true,
+      animation: g.maps.Animation.DROP,
+    });
+
+    // Update position when marker is dragged
+    marker.addListener("dragend", () => {
+      const pos = marker.getPosition();
+      if (pos) {
+        const lat = pos.lat();
+        const lng = pos.lng();
+        const latPublic = Math.round(lat * 1000) / 1000;
+        const lngPublic = Math.round(lng * 1000) / 1000;
+
+        setFormData((prev) => ({
+          ...prev,
+          lat,
+          lng,
+          latPublic,
+          lngPublic,
+        }));
+      }
+    });
+
+    // Update map when clicking
+    map.addListener("click", (e: any) => {
+      if (e.latLng) {
+        marker.setPosition(e.latLng);
+        g.maps.event.trigger(marker, "dragend");
+      }
+    });
+
+    return () => {
+      g.maps.event.clearInstanceListeners(map);
+      g.maps.event.clearInstanceListeners(marker);
+    };
+  }, [mapsReady, currentStep, formData.country]);
 
   // ============================================================================
   // IMAGE HANDLERS
@@ -634,20 +871,48 @@ export default function NewListingPage() {
   const isFirstStep = stepIndex === 0;
   const isLastStep = stepIndex === STEPS.length - 1;
 
+  // Validation du type personnalisé
+  function isValidCustomType(customType: string): boolean {
+    const normalized = customType.toLowerCase().trim();
+    if (normalized.length < 2) return false;
+    // Bloquer les mots interdits
+    const blockedWords = ["enfant", "bougie", "drogue", "arme", "sexe", "xxx", "porno", "illegal"];
+    if (blockedWords.some(word => normalized.includes(word))) return false;
+    // Autoriser si dans la liste ou ressemble à un type d'espace
+    return VALID_CUSTOM_TYPES.some(type => normalized.includes(type) || type.includes(normalized)) || normalized.length >= 3;
+  }
+
   function canProceed(): boolean {
     switch (currentStep) {
       case "type":
+        if (formData.type === "OTHER") {
+          return formData.customType.trim().length >= 2 && isValidCustomType(formData.customType);
+        }
         return formData.type !== null;
-      case "location":
-        return formData.city.trim().length > 0 && formData.addressFull.trim().length >= 5;
+      case "map":
+        return formData.lat !== null && formData.lng !== null;
+      case "location": {
+        const hasAddress = formData.addressLine1.trim().length >= 3;
+        const hasPostalCode = formData.postalCode.trim().length >= 4;
+        const hasRegion = formData.country === "France"
+          ? formData.regionFR.trim().length > 0
+          : formData.province.trim().length > 0;
+        return hasAddress && hasPostalCode && hasRegion && formData.city.trim().length > 0;
+      }
+      case "confirmLocation":
+        return formData.lat !== null && formData.lng !== null;
       case "details":
-        return formData.maxGuests >= 1;
+        return formData.maxGuests >= 1 || (formData.type === "PARKING" || formData.type === "GARAGE" ? (formData.parkings || 0) >= 1 : false);
+      case "features":
+        return true; // Optionnel
       case "photos":
         return images.length >= 3;
       case "description":
         return formData.title.trim().length >= 3 && formData.description.trim().length >= 10;
       case "pricing":
-        return formData.price >= 2;
+        return formData.price >= 2 || (formData.pricingMode === "HOURLY" && (formData.hourlyPrice || 0) >= 1);
+      case "discounts":
+        return true; // Optionnel
       case "review":
         return true;
       default:
@@ -694,6 +959,7 @@ export default function NewListingPage() {
         title: formData.title,
         description: formData.description,
         type: formData.type,
+        customType: formData.type === "OTHER" ? formData.customType : null,
         price: formData.price,
         hourlyPrice: formData.hourlyPrice,
         pricingMode: formData.pricingMode,
@@ -701,14 +967,28 @@ export default function NewListingPage() {
         country: formData.country,
         city: formData.city.trim(),
         addressFull: formData.addressFull.trim(),
+        addressLine1: formData.addressLine1.trim(),
+        postalCode: formData.postalCode.trim(),
+        province: formData.country === "Canada" ? formData.province : null,
+        regionFR: formData.country === "France" ? formData.regionFR : null,
         lat: formData.lat,
         lng: formData.lng,
         latPublic: formData.latPublic,
         lngPublic: formData.lngPublic,
         maxGuests: formData.maxGuests,
+        beds: formData.beds,
+        desks: formData.desks,
+        parkings: formData.parkings,
+        bathrooms: formData.bathrooms,
+        spaceFeatures: formData.spaceFeatures,
         isInstantBook: formData.isInstantBook,
         minNights: formData.minNights,
         maxNights: formData.maxNights,
+        discountHours3Plus: formData.discountHours3Plus,
+        discountHours6Plus: formData.discountHours6Plus,
+        discountDays3Plus: formData.discountDays3Plus,
+        discountWeekly: formData.discountWeekly,
+        discountMonthly: formData.discountMonthly,
       };
 
       const res = await fetch("/api/listings", {
@@ -864,40 +1144,78 @@ export default function NewListingPage() {
 
           {/* ========== STEP: TYPE ========== */}
           {currentStep === "type" && (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {LISTING_TYPES.map((t) => (
-                <button
-                  key={t.value}
-                  type="button"
-                  onClick={() => setFormData((prev) => ({ ...prev, type: t.value }))}
-                  className={`group flex items-start gap-4 rounded-xl border-2 p-4 text-left transition-all hover:border-gray-400 ${
-                    formData.type === t.value
-                      ? "border-gray-900 bg-gray-50"
-                      : "border-gray-200"
-                  }`}
-                >
-                  <div className={`flex-shrink-0 ${formData.type === t.value ? "text-gray-900" : "text-gray-400"}`}>
-                    {ListingTypeIcons[t.value]}
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-900">{t.label}</span>
-                    <p className="mt-0.5 text-sm text-gray-500">{t.description}</p>
-                  </div>
-                  {formData.type === t.value && (
-                    <div className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-900">
-                      <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {LISTING_TYPES.map((t) => (
+                  <button
+                    key={t.value}
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, type: t.value, customType: t.value === "OTHER" ? prev.customType : "" }))}
+                    className={`group flex items-start gap-4 rounded-xl border-2 p-4 text-left transition-all hover:border-gray-400 ${
+                      formData.type === t.value
+                        ? "border-gray-900 bg-gray-50"
+                        : "border-gray-200"
+                    }`}
+                  >
+                    <div className={`flex-shrink-0 ${formData.type === t.value ? "text-gray-900" : "text-gray-400"}`}>
+                      {ListingTypeIcons[t.value]}
                     </div>
+                    <div>
+                      <span className="font-medium text-gray-900">{t.label}</span>
+                      <p className="mt-0.5 text-sm text-gray-500">{t.description}</p>
+                    </div>
+                    {formData.type === t.value && (
+                      <div className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-900">
+                        <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* Custom type input when OTHER is selected */}
+              {formData.type === "OTHER" && (
+                <div className="space-y-2 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                  <label htmlFor="customType" className="text-sm font-medium text-gray-700">
+                    Précisez le type d&apos;espace
+                  </label>
+                  <input
+                    id="customType"
+                    type="text"
+                    value={formData.customType}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, customType: e.target.value }))}
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                    placeholder="Ex: Atelier, Loft, Rooftop, Cave..."
+                  />
+                  <p className="text-xs text-gray-500">
+                    Décrivez votre type d&apos;espace en quelques mots (min. 2 caractères)
+                  </p>
+                  {formData.customType.trim().length >= 2 && !isValidCustomType(formData.customType) && (
+                    <p className="text-xs text-red-500">
+                      Ce type d&apos;espace n&apos;est pas valide. Veuillez décrire un espace locatif.
+                    </p>
                   )}
-                </button>
-              ))}
+                </div>
+              )}
             </div>
           )}
 
-          {/* ========== STEP: LOCATION ========== */}
-          {currentStep === "location" && (
+          {/* ========== STEP: MAP ========== */}
+          {currentStep === "map" && (
             <div className="space-y-6">
+              {/* Dynamic title based on space type */}
+              <div className="text-center">
+                <h2 className="text-lg font-medium text-gray-900">
+                  Où se trouve {formData.type ? LISTING_TYPE_LOCATION_LABELS[formData.type] : "votre espace"} ?
+                </h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  Entrez l&apos;adresse ou placez le marqueur sur la carte
+                </p>
+              </div>
+
+              {/* Country selection */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Pays</label>
                 <div className="grid grid-cols-2 gap-3">
@@ -909,6 +1227,8 @@ export default function NewListingPage() {
                         ...prev,
                         country,
                         currency: country === "Canada" ? "CAD" : "EUR",
+                        province: "",
+                        regionFR: "",
                       }))}
                       className={`rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all ${
                         formData.country === country
@@ -916,13 +1236,98 @@ export default function NewListingPage() {
                           : "border-gray-200 hover:border-gray-400"
                       }`}
                     >
-                      {country === "France" ? "🇫🇷 France" : "🇨🇦 Canada"}
+                      {country === "France" ? "France" : "Canada"}
                     </button>
                   ))}
                 </div>
               </div>
 
+              {/* Address search with autocomplete */}
               <div className="space-y-2">
+                <label htmlFor="addressSearch" className="text-sm font-medium text-gray-700">
+                  Rechercher une adresse
+                </label>
+                <div className="relative">
+                  <input
+                    id="addressSearch"
+                    type="text"
+                    value={formData.addressFull}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, addressFull: e.target.value }))}
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 pl-10 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                    placeholder="Commencez à taper une adresse..."
+                  />
+                  <svg className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Map container */}
+              <div className="space-y-2">
+                <div
+                  id="map-container"
+                  className="h-[300px] w-full rounded-xl border border-gray-200 bg-gray-100 overflow-hidden"
+                  style={{ minHeight: "300px" }}
+                >
+                  {!mapsReady ? (
+                    <div className="flex h-full items-center justify-center">
+                      <div className="text-center">
+                        <div className="h-8 w-8 mx-auto animate-spin rounded-full border-4 border-gray-300 border-t-gray-900" />
+                        <p className="mt-2 text-sm text-gray-500">Chargement de la carte...</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div id="google-map" className="h-full w-full" />
+                  )}
+                </div>
+                <p className="text-xs text-gray-500">
+                  Glissez le marqueur pour ajuster l&apos;emplacement exact
+                </p>
+              </div>
+
+              {/* Location info */}
+              {formData.lat && formData.lng && (
+                <div className="rounded-xl border border-green-200 bg-green-50 p-4">
+                  <div className="flex items-start gap-3">
+                    <svg className="h-5 w-5 flex-shrink-0 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    <div>
+                      <p className="text-sm font-medium text-green-800">Emplacement sélectionné</p>
+                      <p className="mt-0.5 text-sm text-green-700">{formData.addressFull || "Position sur la carte"}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ========== STEP: LOCATION (Address details) ========== */}
+          {currentStep === "location" && (
+            <div className="space-y-6">
+              <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 mb-4">
+                <p className="text-sm text-blue-800">
+                  <span className="font-medium">Adresse sélectionnée :</span> {formData.addressFull || "Non définie"}
+                </p>
+              </div>
+
+              {/* Street address */}
+              <div className="space-y-2">
+                <label htmlFor="addressLine1" className="text-sm font-medium text-gray-700">
+                  Adresse (numéro et rue)
+                </label>
+                <input
+                  id="addressLine1"
+                  type="text"
+                  value={formData.addressLine1}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, addressLine1: e.target.value }))}
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                  placeholder="123 rue de la Paix"
+                />
+              </div>
+
+              {/* City with autocomplete */}
+              <div className="space-y-2 relative">
                 <label htmlFor="city" className="text-sm font-medium text-gray-700">
                   Ville
                 </label>
@@ -930,35 +1335,157 @@ export default function NewListingPage() {
                   id="city"
                   type="text"
                   value={formData.city}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, city: e.target.value }))}
+                  onChange={(e) => {
+                    setFormData((prev) => ({ ...prev, city: e.target.value }));
+                    // Trigger city autocomplete
+                    if (mapsReady && e.target.value.length >= 2) {
+                      const g = (window as any).google;
+                      if (g?.maps?.places?.AutocompleteService) {
+                        const service = new g.maps.places.AutocompleteService();
+                        service.getPlacePredictions(
+                          {
+                            input: e.target.value,
+                            types: ["(cities)"],
+                            componentRestrictions: { country: formData.country === "France" ? "fr" : "ca" },
+                          },
+                          (predictions: any[] | null) => {
+                            setCitySuggestions(predictions || []);
+                            setShowCitySuggestions(true);
+                          }
+                        );
+                      }
+                    } else {
+                      setCitySuggestions([]);
+                      setShowCitySuggestions(false);
+                    }
+                  }}
+                  onFocus={() => citySuggestions.length > 0 && setShowCitySuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowCitySuggestions(false), 200)}
                   className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
-                  placeholder="Paris, Lyon, Montréal..."
+                  placeholder={formData.country === "France" ? "Paris, Lyon, Marseille..." : "Montréal, Toronto, Vancouver..."}
+                />
+                {/* City suggestions dropdown */}
+                {showCitySuggestions && citySuggestions.length > 0 && (
+                  <div className="absolute z-10 mt-1 w-full rounded-xl border border-gray-200 bg-white shadow-lg">
+                    {citySuggestions.map((suggestion) => (
+                      <button
+                        key={suggestion.place_id}
+                        type="button"
+                        onClick={() => {
+                          const cityName = suggestion.structured_formatting?.main_text || suggestion.description.split(",")[0];
+                          setFormData((prev) => ({ ...prev, city: cityName }));
+                          setShowCitySuggestions(false);
+                          setCitySuggestions([]);
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 first:rounded-t-xl last:rounded-b-xl"
+                      >
+                        <span className="font-medium">{suggestion.structured_formatting?.main_text}</span>
+                        <span className="text-gray-500 ml-1">{suggestion.structured_formatting?.secondary_text}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Postal code */}
+              <div className="space-y-2">
+                <label htmlFor="postalCode" className="text-sm font-medium text-gray-700">
+                  Code postal
+                </label>
+                <input
+                  id="postalCode"
+                  type="text"
+                  value={formData.postalCode}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, postalCode: e.target.value }))}
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                  placeholder={formData.country === "France" ? "75001" : "H2X 1Y4"}
                 />
               </div>
 
+              {/* Province/Region */}
               <div className="space-y-2">
-                <label htmlFor="addressFull" className="text-sm font-medium text-gray-700">
-                  Adresse exacte
+                <label htmlFor="region" className="text-sm font-medium text-gray-700">
+                  {formData.country === "France" ? "Région" : "Province/Territoire"}
                 </label>
-                <input
-                  id="addressFull"
-                  type="text"
-                  value={formData.addressFull}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, addressFull: e.target.value }))}
+                <select
+                  id="region"
+                  value={formData.country === "France" ? formData.regionFR : formData.province}
+                  onChange={(e) => {
+                    if (formData.country === "France") {
+                      setFormData((prev) => ({ ...prev, regionFR: e.target.value }));
+                    } else {
+                      setFormData((prev) => ({ ...prev, province: e.target.value }));
+                    }
+                  }}
                   className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
-                  placeholder="123 rue de la Paix, 75001 Paris"
-                />
-                <p className="text-xs text-gray-500">
-                  L&apos;adresse exacte ne sera visible que par les voyageurs ayant réservé.
+                >
+                  <option value="">Sélectionner...</option>
+                  {(formData.country === "France" ? REGIONS_FR : PROVINCES_CA).map((r) => (
+                    <option key={r.value} value={r.value}>{r.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <p className="text-xs text-gray-500">
+                L&apos;adresse exacte ne sera visible que par les voyageurs ayant confirmé une réservation.
+              </p>
+            </div>
+          )}
+
+          {/* ========== STEP: CONFIRM LOCATION ========== */}
+          {currentStep === "confirmLocation" && (
+            <div className="space-y-6">
+              <div className="text-center mb-4">
+                <h2 className="text-lg font-medium text-gray-900">
+                  Confirmez l&apos;emplacement de {formData.type ? LISTING_TYPE_LOCATION_LABELS[formData.type] : "votre espace"}
+                </h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  Vérifiez que le marqueur est bien placé sur votre espace
                 </p>
-                {formData.lat && formData.lng && (
-                  <p className="flex items-center gap-1 text-xs text-green-600">
-                    <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                    Position détectée
-                  </p>
-                )}
+              </div>
+
+              {/* Address summary */}
+              <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                <h3 className="text-sm font-medium text-gray-900 mb-2">Adresse complète</h3>
+                <p className="text-sm text-gray-700">
+                  {formData.addressLine1}<br />
+                  {formData.postalCode} {formData.city}<br />
+                  {formData.country === "France"
+                    ? REGIONS_FR.find(r => r.value === formData.regionFR)?.label
+                    : PROVINCES_CA.find(p => p.value === formData.province)?.label}, {formData.country}
+                </p>
+              </div>
+
+              {/* Confirmation map */}
+              <div className="space-y-2">
+                <div
+                  id="confirm-map-container"
+                  className="h-[350px] w-full rounded-xl border border-gray-200 bg-gray-100 overflow-hidden"
+                >
+                  {!mapsReady ? (
+                    <div className="flex h-full items-center justify-center">
+                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-gray-900" />
+                    </div>
+                  ) : (
+                    <div id="confirm-google-map" className="h-full w-full" />
+                  )}
+                </div>
+                <p className="text-xs text-gray-500">
+                  Vous pouvez ajuster le marqueur si nécessaire
+                </p>
+              </div>
+
+              {/* Confirmation checkbox */}
+              <div className="flex items-start gap-3 rounded-xl border border-gray-200 p-4">
+                <input
+                  type="checkbox"
+                  id="confirmAddress"
+                  className="mt-1 h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                  defaultChecked
+                />
+                <label htmlFor="confirmAddress" className="text-sm text-gray-700">
+                  Je confirme que l&apos;emplacement indiqué correspond bien à mon espace
+                </label>
               </div>
             </div>
           )}
@@ -966,35 +1493,52 @@ export default function NewListingPage() {
           {/* ========== STEP: DETAILS ========== */}
           {currentStep === "details" && (
             <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
-                  Capacité d&apos;accueil
-                </label>
-                <div className="flex items-center gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setFormData((prev) => ({ ...prev, maxGuests: Math.max(1, prev.maxGuests - 1) }))}
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:border-gray-900"
-                  >
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
-                    </svg>
-                  </button>
-                  <span className="w-16 text-center text-lg font-medium">
-                    {formData.maxGuests} {formData.maxGuests > 1 ? "personnes" : "personne"}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setFormData((prev) => ({ ...prev, maxGuests: Math.min(50, prev.maxGuests + 1) }))}
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:border-gray-900"
-                  >
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
+              {/* Dynamic capacity fields based on space type */}
+              {formData.type && CAPACITY_CONFIG[formData.type] && (
+                <>
+                  {CAPACITY_CONFIG[formData.type].fields.map((field) => {
+                    const label = CAPACITY_CONFIG[formData.type!].labels[field];
+                    const currentValue = formData[field as keyof FormData] as number || (field === "maxGuests" ? formData.maxGuests : 1);
 
+                    return (
+                      <div key={field} className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700">{label}</label>
+                        <div className="flex items-center gap-4">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newValue = Math.max(1, (currentValue || 1) - 1);
+                              setFormData((prev) => ({ ...prev, [field]: newValue }));
+                            }}
+                            className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:border-gray-900"
+                          >
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
+                            </svg>
+                          </button>
+                          <span className="w-20 text-center text-lg font-medium">
+                            {currentValue || 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newValue = Math.min(50, (currentValue || 1) + 1);
+                              setFormData((prev) => ({ ...prev, [field]: newValue }));
+                            }}
+                            className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:border-gray-900"
+                          >
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </>
+              )}
+
+              {/* Instant booking toggle */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">
                   Réservation instantanée
@@ -1017,6 +1561,56 @@ export default function NewListingPage() {
                   </div>
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* ========== STEP: FEATURES ========== */}
+          {currentStep === "features" && (
+            <div className="space-y-6">
+              <p className="text-sm text-gray-600">
+                Sélectionnez les caractéristiques qui décrivent le mieux votre espace (optionnel)
+              </p>
+
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {SPACE_FEATURES.map((feature) => {
+                  const isSelected = formData.spaceFeatures.includes(feature.value);
+                  return (
+                    <button
+                      key={feature.value}
+                      type="button"
+                      onClick={() => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          spaceFeatures: isSelected
+                            ? prev.spaceFeatures.filter((f) => f !== feature.value)
+                            : [...prev.spaceFeatures, feature.value],
+                        }));
+                      }}
+                      className={`flex items-center gap-2 rounded-xl border-2 p-3 text-left transition-all ${
+                        isSelected ? "border-gray-900 bg-gray-50" : "border-gray-200 hover:border-gray-400"
+                      }`}
+                    >
+                      <span className="text-lg">{feature.icon}</span>
+                      <span className={`text-sm font-medium ${isSelected ? "text-gray-900" : "text-gray-700"}`}>
+                        {feature.label}
+                      </span>
+                      {isSelected && (
+                        <svg className="ml-auto h-4 w-4 text-gray-900" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {formData.spaceFeatures.length > 0 && (
+                <div className="rounded-xl bg-gray-50 p-4">
+                  <p className="text-sm text-gray-600">
+                    <span className="font-medium">{formData.spaceFeatures.length}</span> caractéristique{formData.spaceFeatures.length > 1 ? "s" : ""} sélectionnée{formData.spaceFeatures.length > 1 ? "s" : ""}
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -1203,18 +1797,39 @@ export default function NewListingPage() {
               </div>
 
               {(formData.pricingMode === "DAILY" || formData.pricingMode === "BOTH") && (
-                <div className="space-y-2">
+                <div className="space-y-4">
                   <label htmlFor="price" className="text-sm font-medium text-gray-700">
                     Prix par jour/nuit ({formData.currency})
                   </label>
+
+                  {/* Price slider */}
+                  <div className="space-y-3">
+                    <input
+                      type="range"
+                      min={2}
+                      max={1000}
+                      step={1}
+                      value={formData.price || 2}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, price: parseInt(e.target.value) }))}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-900"
+                    />
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>2{formData.currency === "EUR" ? "€" : "$"}</span>
+                      <span>1000{formData.currency === "EUR" ? "€" : "$"}</span>
+                    </div>
+                  </div>
+
+                  {/* Manual price input */}
                   <div className="relative">
                     <input
                       id="price"
-                      type="number"
-                      min={2}
-                      step={1}
+                      type="text"
                       value={formData.price || ""}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^0-9.,]/g, "").replace(",", ".");
+                        const numValue = parseFloat(value) || 0;
+                        setFormData((prev) => ({ ...prev, price: Math.min(100000, numValue) }));
+                      }}
                       className="w-full rounded-xl border border-gray-300 px-4 py-3 pr-16 text-lg font-medium focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       placeholder="0"
                     />
@@ -1222,22 +1837,46 @@ export default function NewListingPage() {
                       {formData.currency === "EUR" ? "€" : "$"} / jour
                     </span>
                   </div>
+                  <p className="text-xs text-gray-500">
+                    Vous pouvez saisir un prix supérieur à 1000{formData.currency === "EUR" ? "€" : "$"} manuellement
+                  </p>
                 </div>
               )}
 
               {(formData.pricingMode === "HOURLY" || formData.pricingMode === "BOTH") && (
-                <div className="space-y-2">
+                <div className="space-y-4">
                   <label htmlFor="hourlyPrice" className="text-sm font-medium text-gray-700">
                     Prix par heure ({formData.currency})
                   </label>
+
+                  {/* Hourly price slider */}
+                  <div className="space-y-3">
+                    <input
+                      type="range"
+                      min={1}
+                      max={200}
+                      step={1}
+                      value={formData.hourlyPrice || 1}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, hourlyPrice: parseInt(e.target.value) }))}
+                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-900"
+                    />
+                    <div className="flex justify-between text-xs text-gray-500">
+                      <span>1{formData.currency === "EUR" ? "€" : "$"}</span>
+                      <span>200{formData.currency === "EUR" ? "€" : "$"}</span>
+                    </div>
+                  </div>
+
+                  {/* Manual hourly price input */}
                   <div className="relative">
                     <input
                       id="hourlyPrice"
-                      type="number"
-                      min={1}
-                      step={1}
+                      type="text"
                       value={formData.hourlyPrice || ""}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, hourlyPrice: parseFloat(e.target.value) || null }))}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^0-9.,]/g, "").replace(",", ".");
+                        const numValue = parseFloat(value) || 0;
+                        setFormData((prev) => ({ ...prev, hourlyPrice: Math.min(10000, numValue) || null }));
+                      }}
                       className="w-full rounded-xl border border-gray-300 px-4 py-3 pr-16 text-lg font-medium focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                       placeholder="0"
                     />
@@ -1330,6 +1969,148 @@ export default function NewListingPage() {
                   );
                 })()
               )}
+            </div>
+          )}
+
+          {/* ========== STEP: DISCOUNTS ========== */}
+          {currentStep === "discounts" && (
+            <div className="space-y-6">
+              <p className="text-sm text-gray-600">
+                Proposez des réductions pour encourager les réservations plus longues (optionnel)
+              </p>
+
+              {/* Hourly discounts */}
+              {(formData.pricingMode === "HOURLY" || formData.pricingMode === "BOTH") && (
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium text-gray-900">Réductions à l&apos;heure</h3>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between rounded-xl border border-gray-200 p-4">
+                      <div>
+                        <p className="font-medium text-gray-900">3 heures ou plus</p>
+                        <p className="text-sm text-gray-500">Réduction appliquée automatiquement</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min={0}
+                          max={50}
+                          value={formData.discountHours3Plus || ""}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, discountHours3Plus: parseInt(e.target.value) || null }))}
+                          className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-center text-sm focus:border-gray-900 focus:outline-none"
+                          placeholder="0"
+                        />
+                        <span className="text-sm text-gray-500">%</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-xl border border-gray-200 p-4">
+                      <div>
+                        <p className="font-medium text-gray-900">6 heures ou plus</p>
+                        <p className="text-sm text-gray-500">Idéal pour les demi-journées</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min={0}
+                          max={50}
+                          value={formData.discountHours6Plus || ""}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, discountHours6Plus: parseInt(e.target.value) || null }))}
+                          className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-center text-sm focus:border-gray-900 focus:outline-none"
+                          placeholder="0"
+                        />
+                        <span className="text-sm text-gray-500">%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Daily discounts */}
+              {(formData.pricingMode === "DAILY" || formData.pricingMode === "BOTH") && (
+                <div className="space-y-4">
+                  <h3 className="text-sm font-medium text-gray-900">Réductions à la journée</h3>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between rounded-xl border border-gray-200 p-4">
+                      <div>
+                        <p className="font-medium text-gray-900">3 jours ou plus</p>
+                        <p className="text-sm text-gray-500">Pour les séjours de quelques jours</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min={0}
+                          max={50}
+                          value={formData.discountDays3Plus || ""}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, discountDays3Plus: parseInt(e.target.value) || null }))}
+                          className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-center text-sm focus:border-gray-900 focus:outline-none"
+                          placeholder="0"
+                        />
+                        <span className="text-sm text-gray-500">%</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-xl border border-gray-200 p-4">
+                      <div>
+                        <p className="font-medium text-gray-900">Semaine (7+ jours)</p>
+                        <p className="text-sm text-gray-500">Attirez les séjours d&apos;une semaine</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min={0}
+                          max={60}
+                          value={formData.discountWeekly || ""}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, discountWeekly: parseInt(e.target.value) || null }))}
+                          className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-center text-sm focus:border-gray-900 focus:outline-none"
+                          placeholder="0"
+                        />
+                        <span className="text-sm text-gray-500">%</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-xl border border-gray-200 p-4">
+                      <div>
+                        <p className="font-medium text-gray-900">Mois (28+ jours)</p>
+                        <p className="text-sm text-gray-500">Pour les longs séjours</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min={0}
+                          max={70}
+                          value={formData.discountMonthly || ""}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, discountMonthly: parseInt(e.target.value) || null }))}
+                          className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-center text-sm focus:border-gray-900 focus:outline-none"
+                          placeholder="0"
+                        />
+                        <span className="text-sm text-gray-500">%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Preview of discounts */}
+              {(formData.discountHours3Plus || formData.discountHours6Plus || formData.discountDays3Plus || formData.discountWeekly || formData.discountMonthly) && (
+                <div className="rounded-xl bg-green-50 border border-green-200 p-4">
+                  <h4 className="text-sm font-medium text-green-900 mb-2">Aperçu des réductions</h4>
+                  <div className="space-y-1 text-sm text-green-800">
+                    {formData.discountHours3Plus && <p>3+ heures : -{formData.discountHours3Plus}%</p>}
+                    {formData.discountHours6Plus && <p>6+ heures : -{formData.discountHours6Plus}%</p>}
+                    {formData.discountDays3Plus && <p>3+ jours : -{formData.discountDays3Plus}%</p>}
+                    {formData.discountWeekly && <p>Semaine : -{formData.discountWeekly}%</p>}
+                    {formData.discountMonthly && <p>Mois : -{formData.discountMonthly}%</p>}
+                  </div>
+                </div>
+              )}
+
+              <div className="rounded-xl bg-gray-50 p-4">
+                <p className="text-sm text-gray-600">
+                  <span className="font-medium">Conseil :</span> Les réductions de 10-20% sont efficaces pour attirer plus de réservations longues.
+                </p>
+              </div>
             </div>
           )}
 
