@@ -86,7 +86,7 @@ export default function OnboardingForm({ email, initialData, returnFromStripe }:
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [savingPassword, setSavingPassword] = useState(false);
-  const hasExistingPassword = initialData?.hasPassword || false;
+  const [passwordCreated, setPasswordCreated] = useState(initialData?.hasPassword || false);
 
   // Validation du mot de passe en temps réel
   const passwordValidation = useMemo(() => validatePassword(password), [password]);
@@ -183,7 +183,7 @@ export default function OnboardingForm({ email, initialData, returnFromStripe }:
       }
 
       // Validation du mot de passe (sauf si l'utilisateur en a déjà un)
-      if (!hasExistingPassword) {
+      if (!passwordCreated) {
         if (!password) {
           setPasswordError("Le mot de passe est requis");
           return;
@@ -211,6 +211,9 @@ export default function OnboardingForm({ email, initialData, returnFromStripe }:
             setPasswordError(data.error || "Erreur lors de la création du mot de passe");
             return;
           }
+
+          // Marquer le mot de passe comme créé pour éviter les erreurs si on revient en arrière
+          setPasswordCreated(true);
         } catch {
           setPasswordError("Erreur de connexion au serveur");
           return;
@@ -464,7 +467,7 @@ export default function OnboardingForm({ email, initialData, returnFromStripe }:
             </div>
 
             {/* Création du mot de passe (seulement si l'utilisateur n'en a pas) */}
-            {!hasExistingPassword && (
+            {!passwordCreated && (
               <div className="border-t border-gray-100 pt-3">
                 <PasswordInput
                   value={password}
@@ -481,7 +484,7 @@ export default function OnboardingForm({ email, initialData, returnFromStripe }:
             )}
 
             {/* Message si l'utilisateur a déjà un mot de passe */}
-            {hasExistingPassword && (
+            {passwordCreated && (
               <div className="flex items-center gap-2 rounded-lg bg-green-50 p-3">
                 <svg className="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
