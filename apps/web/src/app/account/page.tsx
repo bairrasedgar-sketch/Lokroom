@@ -84,18 +84,44 @@ function SecurityTabContent({ t }: { t: AccountTranslations }) {
   const [lastVerifiedAt, setLastVerifiedAt] = useState<string | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(false);
   const [startingIdentity, setStartingIdentity] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
+  // Charger le statut et synchroniser si nécessaire
   useEffect(() => {
-    const loadStatus = async () => {
+    const loadAndSyncStatus = async () => {
       try {
         setLoadingStatus(true);
         const res = await fetch("/api/account/security/status");
         if (!res.ok) return;
         const data = (await res.json()) as IdentityStatusResponse;
-        setStatus(data.identityStatus ?? "UNVERIFIED");
+        const currentStatus = data.identityStatus ?? "UNVERIFIED";
+        setStatus(currentStatus);
         setLastVerifiedAt(
           data.identityLastVerifiedAt ? data.identityLastVerifiedAt : null
         );
+
+        // Si le statut est PENDING, essayer de synchroniser avec Stripe
+        if (currentStatus === "PENDING") {
+          setSyncing(true);
+          try {
+            const syncRes = await fetch("/api/account/security/refresh-identity", {
+              method: "POST",
+            });
+            if (syncRes.ok) {
+              const syncData = await syncRes.json();
+              if (syncData.identityStatus && syncData.identityStatus !== currentStatus) {
+                setStatus(syncData.identityStatus);
+                if (syncData.identityLastVerifiedAt) {
+                  setLastVerifiedAt(syncData.identityLastVerifiedAt);
+                }
+              }
+            }
+          } catch (e) {
+            console.error("Erreur sync status:", e);
+          } finally {
+            setSyncing(false);
+          }
+        }
       } catch (e) {
         console.error("Erreur chargement statut identité:", e);
       } finally {
@@ -103,7 +129,7 @@ function SecurityTabContent({ t }: { t: AccountTranslations }) {
       }
     };
 
-    void loadStatus();
+    void loadAndSyncStatus();
   }, []);
 
   const handleStartIdentity = async () => {
@@ -136,7 +162,10 @@ function SecurityTabContent({ t }: { t: AccountTranslations }) {
   let buttonLabel = secT.verifyIdentity;
   let buttonDisabled = false;
 
-  if (status === "PENDING") {
+  if (syncing) {
+    buttonLabel = secT.syncing || "Synchronisation...";
+    buttonDisabled = true;
+  } else if (status === "PENDING") {
     buttonLabel = secT.continueVerification;
   } else if (status === "VERIFIED") {
     buttonLabel = secT.identityVerified;
@@ -149,6 +178,15 @@ function SecurityTabContent({ t }: { t: AccountTranslations }) {
     buttonDisabled = true;
   }
 
+  // Message descriptif selon le statut
+  const getStatusDescription = () => {
+    if (syncing) return secT.syncingDesc || "Vérification de ton statut auprès de Stripe...";
+    if (status === "VERIFIED") return secT.verifiedDesc || "Tes documents ont été vérifiés avec succès. Tu peux utiliser toutes les fonctionnalités de Lok'Room.";
+    if (status === "PENDING") return secT.pendingDesc || "Ta vérification est en cours de traitement. Cela peut prendre quelques minutes.";
+    if (status === "REJECTED") return secT.rejectedDesc || "La vérification a échoué. Cela peut arriver si les documents ne sont pas lisibles ou si le consentement a été refusé. Tu peux réessayer.";
+    return secT.identityDesc;
+  };
+
   return (
     <section className="space-y-6">
       <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -156,7 +194,12 @@ function SecurityTabContent({ t }: { t: AccountTranslations }) {
         <p className="mt-1 text-sm text-gray-500">{secT.subtitle}</p>
       </div>
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className={`rounded-2xl border bg-white p-6 shadow-sm ${
+        status === "VERIFIED" ? "border-emerald-200" :
+        status === "REJECTED" ? "border-rose-200" :
+        status === "PENDING" ? "border-amber-200" :
+        "border-gray-200"
+      }`}>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
@@ -169,14 +212,26 @@ function SecurityTabContent({ t }: { t: AccountTranslations }) {
                   status
                 )}`}
               >
-                {loadingStatus ? secT.loading : label}
+                {loadingStatus ? secT.loading : syncing ? (secT.syncing || "Sync...") : label}
               </span>
             </div>
 
-            <p className="text-sm text-gray-600">{secT.identityDesc}</p>
-            <p className="text-xs text-gray-400">{secT.identityNote}</p>
+            <p className="text-sm text-gray-600">{getStatusDescription()}</p>
 
-            {lastVerifiedAt && (
+            {status === "VERIFIED" && (
+              <div className="flex items-center gap-2 text-emerald-600">
+                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span className="text-xs font-medium">{secT.allDocumentsValid || "Tous tes documents sont en règle"}</span>
+              </div>
+            )}
+
+            {status !== "VERIFIED" && (
+              <p className="text-xs text-gray-400">{secT.identityNote}</p>
+            )}
+
+            {lastVerifiedAt && status === "VERIFIED" && (
               <p className="pt-1 text-xs text-gray-400">
                 {secT.lastVerification}{" "}
                 {new Date(lastVerifiedAt).toLocaleString()}
@@ -191,8 +246,12 @@ function SecurityTabContent({ t }: { t: AccountTranslations }) {
               disabled={buttonDisabled}
               className={[
                 "inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-medium transition shadow-sm",
-                buttonDisabled
+                buttonDisabled && status === "VERIFIED"
                   ? "bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default"
+                  : buttonDisabled
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : status === "REJECTED"
+                  ? "bg-rose-600 text-white hover:bg-rose-700"
                   : "bg-gray-900 text-white hover:bg-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-900/40",
               ].join(" ")}
             >

@@ -431,10 +431,22 @@ const fr = {
     identityVerified: "Identité vérifiée",
     identityPending: "Vérification en cours...",
     identityFailed: "La vérification a échoué. Réessaie avec un document valide.",
-    retryVerification: "Réessayer",
+    retryVerification: "Réessayer la vérification",
     connectVerified: "Compte bancaire configuré",
     connectPending: "Configuration en cours...",
     continueConfig: "Continuer la configuration",
+    // Nouveaux messages détaillés pour le KYC
+    identitySyncing: "Vérification du statut en cours...",
+    identityVerifiedMessage: "Tes documents ont été vérifiés avec succès. Tu es prêt à utiliser Lok'Room !",
+    identityPendingMessage: "Ta vérification est en cours de traitement. Cela peut prendre quelques minutes.",
+    identityFailedMessage: "La vérification a échoué. Cela peut arriver si les documents ne sont pas lisibles ou si le consentement a été refusé.",
+    identityUnverifiedMessage: "Confirme ton identité avec une pièce d'identité et un selfie.",
+    identityPendingHint: "Le processus prend généralement quelques minutes. Tu peux continuer et revenir plus tard.",
+    identityFailedHint: "Vérifie que tes documents sont lisibles et que tu as bien donné ton consentement.",
+    allDocumentsValid: "Tous tes documents sont en règle",
+    statusVerified: "Validé",
+    statusPending: "En cours",
+    statusFailed: "Échoué",
   },
 
   // ============================================
@@ -617,6 +629,13 @@ const fr = {
       identityVerified: "Identité vérifiée",
       restartVerification: "Recommencer la vérification",
       redirecting: "Redirection...",
+      // Nouveaux messages pour les statuts détaillés
+      syncing: "Synchronisation...",
+      syncingDesc: "Vérification de ton statut auprès de Stripe...",
+      verifiedDesc: "Tes documents ont été vérifiés avec succès. Tu peux utiliser toutes les fonctionnalités de Lok'Room.",
+      pendingDesc: "Ta vérification est en cours de traitement. Cela peut prendre quelques minutes.",
+      rejectedDesc: "La vérification a échoué. Cela peut arriver si les documents ne sont pas lisibles ou si le consentement a été refusé. Tu peux réessayer.",
+      allDocumentsValid: "Tous tes documents sont en règle",
     },
     // Taxes section
     taxes: {

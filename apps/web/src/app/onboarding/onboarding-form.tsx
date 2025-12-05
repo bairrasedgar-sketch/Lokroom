@@ -60,12 +60,13 @@ export default function OnboardingForm({ email, initialData, returnFromStripe }:
   const [identityLoading, setIdentityLoading] = useState(false);
   const [connectLoading, setConnectLoading] = useState(false);
 
-  // Utiliser le statut réel de la base de données
-  const [identityStatus] = useState(initialData?.identityStatus || "UNVERIFIED");
-  const [connectStatus] = useState({
+  // Utiliser le statut réel de la base de données (avec possibilité de mise à jour)
+  const [identityStatus, setIdentityStatus] = useState(initialData?.identityStatus || "UNVERIFIED");
+  const [connectStatus, setConnectStatus] = useState({
     hasAccount: initialData?.hasStripeConnect || false,
     payoutsEnabled: initialData?.payoutsEnabled || false,
   });
+  const [syncingStatus, setSyncingStatus] = useState(false);
 
   // Données du formulaire - pré-remplies avec initialData
   const [firstName, setFirstName] = useState(initialData?.firstName || "");
@@ -89,6 +90,35 @@ export default function OnboardingForm({ email, initialData, returnFromStripe }:
       return () => clearTimeout(timer);
     }
   }, [returnFromStripe]);
+
+  // Synchroniser le statut Identity au retour de Stripe ou si PENDING
+  useEffect(() => {
+    const syncIdentityStatus = async () => {
+      // Synchroniser si on revient de Stripe ou si le statut est PENDING
+      if (returnFromStripe || identityStatus === "PENDING") {
+        setSyncingStatus(true);
+        try {
+          const res = await fetch("/api/account/security/refresh-identity", {
+            method: "POST",
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.identityStatus && data.identityStatus !== identityStatus) {
+              setIdentityStatus(data.identityStatus);
+            }
+          }
+        } catch (err) {
+          console.error("Erreur sync status:", err);
+        } finally {
+          setSyncingStatus(false);
+        }
+      }
+    };
+
+    // Petit délai pour laisser le temps au webhook de traiter
+    const timer = setTimeout(syncIdentityStatus, returnFromStripe ? 1500 : 500);
+    return () => clearTimeout(timer);
+  }, [returnFromStripe]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Calcul de l'âge pour vérification
   function calculateAge(dateString: string): number {
@@ -293,9 +323,18 @@ export default function OnboardingForm({ email, initialData, returnFromStripe }:
 
   // Helper pour afficher le statut KYC
   const isIdentityVerified = identityStatus === "VERIFIED";
-  const isIdentityPending = identityStatus === "PENDING";
+  const isIdentityPending = identityStatus === "PENDING" || syncingStatus;
   const isIdentityFailed = identityStatus === "REJECTED" || identityStatus === "FAILED";
   const isConnectComplete = connectStatus.hasAccount && connectStatus.payoutsEnabled;
+
+  // Messages dynamiques selon le statut
+  const getIdentityStatusMessage = () => {
+    if (syncingStatus) return t.identitySyncing || "Vérification du statut...";
+    if (isIdentityVerified) return t.identityVerifiedMessage || "Tes documents ont été vérifiés avec succès. Tu es prêt à utiliser Lok'Room !";
+    if (isIdentityPending) return t.identityPendingMessage || "Ta vérification est en cours de traitement. Cela peut prendre quelques minutes.";
+    if (isIdentityFailed) return t.identityFailedMessage || "La vérification a échoué. Cela peut arriver si les documents ne sont pas lisibles ou si le consentement a été refusé.";
+    return t.identityUnverifiedMessage || "Confirme ton identité avec une pièce d'identité et un selfie.";
+  };
 
   return (
     <div className="space-y-4">
@@ -594,21 +633,43 @@ export default function OnboardingForm({ email, initialData, returnFromStripe }:
                   )}
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-semibold text-gray-900">{t.identityVerificationLabel || "Vérification d'identité"}</h4>
-                  <p className="mt-0.5 text-xs text-gray-500">{t.identityVerificationDesc || "Confirme ton identité avec une pièce d'identité et un selfie."}</p>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-semibold text-gray-900">{t.identityVerificationLabel || "Vérification d'identité"}</h4>
+                    {isIdentityVerified && (
+                      <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700">
+                        {t.statusVerified || "Validé"}
+                      </span>
+                    )}
+                    {isIdentityPending && !syncingStatus && (
+                      <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700">
+                        {t.statusPending || "En cours"}
+                      </span>
+                    )}
+                    {isIdentityFailed && (
+                      <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-medium text-red-700">
+                        {t.statusFailed || "Échoué"}
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1 text-xs text-gray-600">{getIdentityStatusMessage()}</p>
 
                   {isIdentityVerified ? (
-                    <p className="mt-2 text-xs font-medium text-green-600">
-                      {t.identityVerified || "Identité vérifiée"}
-                    </p>
-                  ) : isIdentityPending ? (
-                    <p className="mt-2 text-xs font-medium text-amber-600">
-                      {t.identityPending || "Vérification en cours..."}
-                    </p>
+                    <div className="mt-3 flex items-center gap-2 text-xs text-green-600">
+                      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span className="font-medium">{t.allDocumentsValid || "Tous tes documents sont en règle"}</span>
+                    </div>
+                  ) : isIdentityPending && !syncingStatus ? (
+                    <div className="mt-3">
+                      <p className="text-xs text-amber-600">
+                        {t.identityPendingHint || "Le processus prend généralement quelques minutes. Tu peux continuer et revenir plus tard."}
+                      </p>
+                    </div>
                   ) : isIdentityFailed ? (
                     <>
-                      <p className="mt-2 text-xs font-medium text-red-600">
-                        {t.identityFailed || "La vérification a échoué. Réessaie avec un document valide."}
+                      <p className="mt-2 text-xs text-red-600">
+                        {t.identityFailedHint || "Vérifie que tes documents sont lisibles et que tu as bien donné ton consentement."}
                       </p>
                       <button
                         type="button"
@@ -616,14 +677,14 @@ export default function OnboardingForm({ email, initialData, returnFromStripe }:
                         disabled={identityLoading}
                         className="mt-3 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
                       >
-                        {identityLoading ? (t.verifying || "Vérification...") : (t.retryVerification || "Réessayer")}
+                        {identityLoading ? (t.verifying || "Vérification...") : (t.retryVerification || "Réessayer la vérification")}
                       </button>
                     </>
                   ) : (
                     <button
                       type="button"
                       onClick={handleIdentityVerification}
-                      disabled={identityLoading}
+                      disabled={identityLoading || syncingStatus}
                       className="mt-3 rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 disabled:opacity-60"
                     >
                       {identityLoading ? (t.verifying || "Vérification...") : (t.verifyIdentity || "Vérifier mon identité")}
