@@ -586,8 +586,7 @@ export async function POST(req: Request) {
           break;
         case "canceled":
           // Vérifier si c'est un refus de consentement
-          // @ts-expect-error - last_error peut contenir des infos sur le refus
-          if (vs.last_error?.code === "consent_declined") {
+          if ((vs as { last_error?: { code?: string } }).last_error?.code === "consent_declined") {
             newStatus = "REJECTED"; // Consent declined = bloqué
           } else {
             newStatus = "REJECTED";
