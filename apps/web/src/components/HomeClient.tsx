@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -46,7 +46,7 @@ type HomeClientProps = {
 };
 
 // ============================================================================
-// CATEGORY ICONS WITH UNIQUE ANIMATIONS
+// PREMIUM ANIMATED CATEGORY ICONS - Vraies animations SVG
 // ============================================================================
 
 type CategoryIconProps = {
@@ -56,56 +56,340 @@ type CategoryIconProps = {
 };
 
 function CategoryIcon({ category, isActive, isAnimating }: CategoryIconProps) {
-  const baseClass = `h-6 w-6 transition-colors duration-300 ${isActive ? "text-gray-900" : "text-gray-500"}`;
+  const color = isActive ? "#111827" : "#6B7280";
 
-  // Each category has its own unique animation class
-  const animationClass = isAnimating ? `animate-${category.toLowerCase()}` : "";
+  // Animation wrapper classes
+  const wrapperClass = `relative transition-all duration-300 ${isAnimating ? "scale-110" : ""}`;
 
   const icons: Record<string, React.ReactNode> = {
-    APARTMENT: (
-      <svg className={`${baseClass} ${animationClass}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
-      </svg>
-    ),
-    HOUSE: (
-      <svg className={`${baseClass} ${animationClass}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-      </svg>
-    ),
-    STUDIO: (
-      <svg className={`${baseClass} ${animationClass}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
-      </svg>
-    ),
-    OFFICE: (
-      <svg className={`${baseClass} ${animationClass}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" />
-      </svg>
-    ),
-    COWORKING: (
-      <svg className={`${baseClass} ${animationClass}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-      </svg>
-    ),
-    PARKING: (
-      <svg className={`${baseClass} ${animationClass}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
-      </svg>
-    ),
-    EVENT_SPACE: (
-      <svg className={`${baseClass} ${animationClass}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
-      </svg>
-    ),
-    RECORDING_STUDIO: (
-      <svg className={`${baseClass} ${animationClass}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
-      </svg>
-    ),
+    // TOUS - Grille avec carrés qui s'assemblent
     ALL: (
-      <svg className={`${baseClass} ${animationClass}`} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
-      </svg>
+      <div className={wrapperClass}>
+        <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
+          <rect
+            x="3" y="3" width="7" height="7" rx="1.5"
+            stroke={color}
+            strokeWidth="1.5"
+            className={isAnimating ? "animate-grid-tl" : ""}
+          />
+          <rect
+            x="14" y="3" width="7" height="7" rx="1.5"
+            stroke={color}
+            strokeWidth="1.5"
+            className={isAnimating ? "animate-grid-tr" : ""}
+          />
+          <rect
+            x="3" y="14" width="7" height="7" rx="1.5"
+            stroke={color}
+            strokeWidth="1.5"
+            className={isAnimating ? "animate-grid-bl" : ""}
+          />
+          <rect
+            x="14" y="14" width="7" height="7" rx="1.5"
+            stroke={color}
+            strokeWidth="1.5"
+            className={isAnimating ? "animate-grid-br" : ""}
+          />
+        </svg>
+      </div>
+    ),
+
+    // APPARTEMENT - Building avec fenêtres qui s'allument
+    APARTMENT: (
+      <div className={wrapperClass}>
+        <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
+          {/* Building structure */}
+          <path
+            d="M3 21V5a2 2 0 012-2h8a2 2 0 012 2v16"
+            stroke={color}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            className={isAnimating ? "animate-building-rise" : ""}
+          />
+          <path
+            d="M15 21V10a2 2 0 012-2h2a2 2 0 012 2v11"
+            stroke={color}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            className={isAnimating ? "animate-building-rise-delay" : ""}
+          />
+          <line x1="3" y1="21" x2="21" y2="21" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+          {/* Windows that light up */}
+          <rect x="6" y="6" width="2" height="2" rx="0.5" fill={color} className={isAnimating ? "animate-window-1" : ""} />
+          <rect x="10" y="6" width="2" height="2" rx="0.5" fill={color} className={isAnimating ? "animate-window-2" : ""} />
+          <rect x="6" y="10" width="2" height="2" rx="0.5" fill={color} className={isAnimating ? "animate-window-3" : ""} />
+          <rect x="10" y="10" width="2" height="2" rx="0.5" fill={color} className={isAnimating ? "animate-window-4" : ""} />
+          <rect x="6" y="14" width="2" height="2" rx="0.5" fill={color} className={isAnimating ? "animate-window-5" : ""} />
+          <rect x="10" y="14" width="2" height="2" rx="0.5" fill={color} className={isAnimating ? "animate-window-6" : ""} />
+        </svg>
+      </div>
+    ),
+
+    // MAISON - Toit qui se pose, porte qui s'ouvre
+    HOUSE: (
+      <div className={wrapperClass}>
+        <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
+          {/* Roof */}
+          <path
+            d="M3 11L12 3L21 11"
+            stroke={color}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={isAnimating ? "animate-roof-drop" : ""}
+          />
+          {/* House body */}
+          <path
+            d="M5 10V19a2 2 0 002 2h10a2 2 0 002-2V10"
+            stroke={color}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            className={isAnimating ? "animate-house-body" : ""}
+          />
+          {/* Door that opens */}
+          <path
+            d="M10 21V15a2 2 0 012-2h0a2 2 0 012 2v6"
+            stroke={color}
+            strokeWidth="1.5"
+            className={isAnimating ? "animate-door-open" : ""}
+          />
+          {/* Chimney with smoke */}
+          <path
+            d="M16 6V3"
+            stroke={color}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            className={isAnimating ? "animate-chimney" : ""}
+          />
+          {isAnimating && (
+            <>
+              <circle cx="16" cy="1" r="0.5" fill={color} className="animate-smoke-1" />
+              <circle cx="17" cy="-1" r="0.5" fill={color} className="animate-smoke-2" />
+              <circle cx="15" cy="-2" r="0.5" fill={color} className="animate-smoke-3" />
+            </>
+          )}
+        </svg>
+      </div>
+    ),
+
+    // STUDIO - Pinceau qui peint une ligne arc-en-ciel
+    STUDIO: (
+      <div className={wrapperClass}>
+        <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
+          {/* Paint stroke being drawn */}
+          {isAnimating && (
+            <path
+              d="M3 18C5 16 7 17 9 15C11 13 13 14 15 12"
+              stroke={color}
+              strokeWidth="2"
+              strokeLinecap="round"
+              className="animate-paint-stroke"
+              strokeDasharray="20"
+              strokeDashoffset="20"
+            />
+          )}
+          {/* Brush */}
+          <g className={isAnimating ? "animate-brush-paint" : ""}>
+            <path
+              d="M18.37 2.63L14 7L17 10L21.37 5.63A2.12 2.12 0 1018.37 2.63Z"
+              stroke={color}
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M14 7L5.5 15.5C4.67 16.33 4.67 17.67 5.5 18.5C6.33 19.33 7.67 19.33 8.5 18.5L17 10"
+              stroke={color}
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <circle cx="6" cy="18" r="1" fill={color} className={isAnimating ? "animate-paint-drop" : ""} />
+          </g>
+        </svg>
+      </div>
+    ),
+
+    // BUREAU - Valise qui s'ouvre avec documents
+    OFFICE: (
+      <div className={wrapperClass}>
+        <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
+          {/* Briefcase body */}
+          <rect
+            x="2" y="7" width="20" height="13" rx="2"
+            stroke={color}
+            strokeWidth="1.5"
+            className={isAnimating ? "animate-briefcase" : ""}
+          />
+          {/* Handle */}
+          <path
+            d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"
+            stroke={color}
+            strokeWidth="1.5"
+            className={isAnimating ? "animate-handle" : ""}
+          />
+          {/* Center line (opening) */}
+          <path
+            d="M2 12h20"
+            stroke={color}
+            strokeWidth="1.5"
+            className={isAnimating ? "animate-briefcase-open" : ""}
+          />
+          {/* Documents flying out */}
+          {isAnimating && (
+            <>
+              <rect x="9" y="9" width="6" height="4" rx="0.5" fill={color} className="animate-doc-1" />
+              <rect x="10" y="10" width="4" height="3" rx="0.5" fill={color} className="animate-doc-2" />
+            </>
+          )}
+        </svg>
+      </div>
+    ),
+
+    // COWORKING - Personnes qui se connectent
+    COWORKING: (
+      <div className={wrapperClass}>
+        <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
+          {/* Center person */}
+          <circle cx="12" cy="7" r="2.5" stroke={color} strokeWidth="1.5" className={isAnimating ? "animate-person-center" : ""} />
+          <path d="M8 21v-2a4 4 0 014-4h0a4 4 0 014 4v2" stroke={color} strokeWidth="1.5" className={isAnimating ? "animate-person-center" : ""} />
+
+          {/* Left person */}
+          <circle cx="5" cy="9" r="2" stroke={color} strokeWidth="1.5" className={isAnimating ? "animate-person-left" : ""} />
+          <path d="M1 21v-1a3 3 0 013-3h2" stroke={color} strokeWidth="1.5" className={isAnimating ? "animate-person-left" : ""} />
+
+          {/* Right person */}
+          <circle cx="19" cy="9" r="2" stroke={color} strokeWidth="1.5" className={isAnimating ? "animate-person-right" : ""} />
+          <path d="M23 21v-1a3 3 0 00-3-3h-2" stroke={color} strokeWidth="1.5" className={isAnimating ? "animate-person-right" : ""} />
+
+          {/* Connection lines */}
+          {isAnimating && (
+            <>
+              <line x1="7" y1="8" x2="9.5" y2="7" stroke={color} strokeWidth="1" className="animate-connect-left" />
+              <line x1="17" y1="8" x2="14.5" y2="7" stroke={color} strokeWidth="1" className="animate-connect-right" />
+            </>
+          )}
+        </svg>
+      </div>
+    ),
+
+    // PARKING - Voiture qui se gare avec effet perspective
+    PARKING: (
+      <div className={wrapperClass}>
+        <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
+          {/* Parking spot lines */}
+          <path d="M4 20V8" stroke={color} strokeWidth="1.5" strokeLinecap="round" className={isAnimating ? "animate-parking-line" : ""} />
+          <path d="M20 20V8" stroke={color} strokeWidth="1.5" strokeLinecap="round" className={isAnimating ? "animate-parking-line" : ""} />
+
+          {/* Car body */}
+          <g className={isAnimating ? "animate-car-park" : ""}>
+            <path
+              d="M6 15h12a2 2 0 012 2v2a1 1 0 01-1 1H5a1 1 0 01-1-1v-2a2 2 0 012-2z"
+              stroke={color}
+              strokeWidth="1.5"
+            />
+            <path
+              d="M7 15l1.5-4h7l1.5 4"
+              stroke={color}
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
+            {/* Wheels */}
+            <circle cx="7.5" cy="18" r="1" fill={color} />
+            <circle cx="16.5" cy="18" r="1" fill={color} />
+            {/* Windows */}
+            <path d="M9 12h6" stroke={color} strokeWidth="1" strokeLinecap="round" />
+          </g>
+
+          {/* Headlights */}
+          {isAnimating && (
+            <>
+              <circle cx="7" cy="16" r="0.5" fill={color} className="animate-headlight" />
+              <circle cx="17" cy="16" r="0.5" fill={color} className="animate-headlight" />
+            </>
+          )}
+        </svg>
+      </div>
+    ),
+
+    // EVENT SPACE - Confettis et étoiles qui explosent
+    EVENT_SPACE: (
+      <div className={wrapperClass}>
+        <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
+          {/* Party popper base */}
+          <path
+            d="M5.8 17.2L2 22l4.8-3.8"
+            stroke={color}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            className={isAnimating ? "animate-popper-base" : ""}
+          />
+          <path
+            d="M6 16l2-2"
+            stroke={color}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            className={isAnimating ? "animate-popper" : ""}
+          />
+
+          {/* Confetti explosion */}
+          {isAnimating ? (
+            <>
+              <circle cx="10" cy="10" r="1" fill={color} className="animate-confetti-1" />
+              <circle cx="14" cy="8" r="0.8" fill={color} className="animate-confetti-2" />
+              <circle cx="18" cy="12" r="1" fill={color} className="animate-confetti-3" />
+              <circle cx="12" cy="5" r="0.8" fill={color} className="animate-confetti-4" />
+              <circle cx="16" cy="4" r="1" fill={color} className="animate-confetti-5" />
+              <path d="M11 7l1-2" stroke={color} strokeWidth="1.5" strokeLinecap="round" className="animate-confetti-6" />
+              <path d="M15 6l2-1" stroke={color} strokeWidth="1.5" strokeLinecap="round" className="animate-confetti-7" />
+              <path d="M17 9l2 1" stroke={color} strokeWidth="1.5" strokeLinecap="round" className="animate-confetti-8" />
+              {/* Stars */}
+              <path d="M20 5l0.5 1 1 0.5-1 0.5-0.5 1-0.5-1-1-0.5 1-0.5z" fill={color} className="animate-star-1" />
+              <path d="M8 3l0.3 0.7 0.7 0.3-0.7 0.3-0.3 0.7-0.3-0.7-0.7-0.3 0.7-0.3z" fill={color} className="animate-star-2" />
+            </>
+          ) : (
+            <>
+              <circle cx="12" cy="10" r="1" fill={color} />
+              <circle cx="16" cy="8" r="0.8" fill={color} />
+              <circle cx="14" cy="5" r="1" fill={color} />
+            </>
+          )}
+        </svg>
+      </div>
+    ),
+
+    // RECORDING STUDIO - Micro avec ondes sonores
+    RECORDING_STUDIO: (
+      <div className={wrapperClass}>
+        <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
+          {/* Microphone */}
+          <rect
+            x="9" y="2" width="6" height="10" rx="3"
+            stroke={color}
+            strokeWidth="1.5"
+            className={isAnimating ? "animate-mic-pulse" : ""}
+          />
+          <path d="M12 14v4" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+          <path d="M8 18h8" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+          <path
+            d="M5 10a7 7 0 0014 0"
+            stroke={color}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            className={isAnimating ? "animate-mic-stand" : ""}
+          />
+
+          {/* Sound waves */}
+          {isAnimating && (
+            <>
+              <path d="M2 8v4" stroke={color} strokeWidth="1.5" strokeLinecap="round" className="animate-wave-1" />
+              <path d="M4 6v8" stroke={color} strokeWidth="1.5" strokeLinecap="round" className="animate-wave-2" />
+              <path d="M20 6v8" stroke={color} strokeWidth="1.5" strokeLinecap="round" className="animate-wave-3" />
+              <path d="M22 8v4" stroke={color} strokeWidth="1.5" strokeLinecap="round" className="animate-wave-4" />
+            </>
+          )}
+        </svg>
+      </div>
     ),
   };
 
@@ -113,10 +397,10 @@ function CategoryIcon({ category, isActive, isAnimating }: CategoryIconProps) {
 }
 
 // ============================================================================
-// SEARCH BAR COMPONENT
+// STICKY SEARCH BAR COMPONENT - Airbnb style
 // ============================================================================
 
-function SearchBar() {
+function SearchBar({ isCompact, onExpand }: { isCompact: boolean; onExpand: () => void }) {
   const router = useRouter();
   const [searchFocused, setSearchFocused] = useState(false);
   const [query, setQuery] = useState("");
@@ -148,13 +432,39 @@ function SearchBar() {
 
   const today = new Date().toISOString().split("T")[0];
 
+  // Compact search bar (when scrolled)
+  if (isCompact && !searchFocused) {
+    return (
+      <div className="w-full flex justify-center">
+        <button
+          onClick={() => {
+            onExpand();
+            setSearchFocused(true);
+          }}
+          className="flex items-center gap-4 rounded-full border border-gray-200 bg-white px-4 py-2 shadow-md transition-all hover:shadow-lg"
+        >
+          <span className="text-sm font-medium text-gray-900">Destination</span>
+          <span className="h-6 w-px bg-gray-200" />
+          <span className="text-sm text-gray-500">Dates</span>
+          <span className="h-6 w-px bg-gray-200" />
+          <span className="text-sm text-gray-500">Voyageurs</span>
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-800">
+            <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+          </div>
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div ref={searchRef} className="relative w-full max-w-3xl mx-auto z-50">
+    <div ref={searchRef} className="relative w-full max-w-3xl mx-auto">
       {/* Main Search Bar */}
       <div
         className={`relative rounded-full border bg-white transition-all duration-300 ${
           searchFocused
-            ? "border-gray-300 shadow-lg"
+            ? "border-gray-300 shadow-xl"
             : "border-gray-200 shadow-md hover:shadow-lg"
         }`}
       >
@@ -230,7 +540,7 @@ function SearchBar() {
             </p>
           </button>
 
-          {/* Search Button - Gris clair agréable */}
+          {/* Search Button */}
           <div className="pr-2">
             <button
               onClick={handleSearch}
@@ -244,10 +554,10 @@ function SearchBar() {
         </div>
       </div>
 
-      {/* Expanded Search Panel - Z-index élevé */}
+      {/* Expanded Search Panel - Z-index très élevé */}
       {searchFocused && (
-        <div className="absolute left-0 right-0 top-full z-[100] mt-3">
-          <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-xl">
+        <div className="absolute left-0 right-0 top-full mt-3" style={{ zIndex: 9999 }}>
+          <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl">
             {activeTab === "location" && (
               <div className="space-y-4">
                 <h3 className="text-sm font-semibold text-gray-900">Destinations populaires</h3>
@@ -294,6 +604,7 @@ function SearchBar() {
                       min={today}
                       onChange={(e) => setStartDate(e.target.value)}
                       className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
+                      style={{ position: "relative", zIndex: 10000 }}
                     />
                   </div>
                   <div>
@@ -304,6 +615,7 @@ function SearchBar() {
                       min={startDate || today}
                       onChange={(e) => setEndDate(e.target.value)}
                       className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
+                      style={{ position: "relative", zIndex: 10000 }}
                     />
                   </div>
                 </div>
@@ -531,7 +843,7 @@ function ListingCard({ card, index }: { card: ListingCard; index: number }) {
 }
 
 // ============================================================================
-// CATEGORY BUTTON WITH UNIQUE ANIMATION
+// CATEGORY BUTTON WITH PREMIUM ANIMATION
 // ============================================================================
 
 function CategoryButton({
@@ -548,13 +860,11 @@ function CategoryButton({
   const [isAnimating, setIsAnimating] = useState(false);
 
   const handleClick = () => {
-    // Only animate if clicking to activate (not deactivate)
     if (!isActive) {
       setIsAnimating(true);
-      // Reset animation state after animation completes
       setTimeout(() => {
         setIsAnimating(false);
-      }, 2500);
+      }, 2000);
     }
     onClick();
   };
@@ -585,111 +895,298 @@ function CategoryButton({
 export default function HomeClient({ cards, categories }: HomeClientProps) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [forceExpandSearch, setForceExpandSearch] = useState(false);
+  const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsLoaded(true);
+  }, []);
+
+  // Scroll detection for sticky search bar
+  useEffect(() => {
+    const handleScroll = () => {
+      if (heroRef.current) {
+        const heroBottom = heroRef.current.getBoundingClientRect().bottom;
+        setIsScrolled(heroBottom < 80);
+        if (heroBottom >= 80) {
+          setForceExpandSearch(false);
+        }
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const filteredCards = activeCategory
     ? cards.filter((card) => card.type === activeCategory)
     : cards;
 
+  const handleExpandSearch = useCallback(() => {
+    setForceExpandSearch(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
   return (
     <main className="min-h-screen bg-[#FAFAFA]">
-      {/* Custom styles for unique animations per category */}
+      {/* Premium Animation Styles */}
       <style jsx global>{`
-        /* Animation pour TOUS - Grille qui pulse */
-        @keyframes all-anim {
-          0% { transform: scale(1); }
-          20% { transform: scale(1.1); }
-          40% { transform: scale(1); }
-          60% { transform: scale(1.05); }
-          100% { transform: scale(1); }
+        /* ============================================
+           GRID ANIMATION - Tous
+           ============================================ */
+        @keyframes grid-assemble-tl {
+          0% { transform: translate(-10px, -10px) rotate(-10deg); opacity: 0; }
+          50% { transform: translate(2px, 2px) rotate(5deg); opacity: 1; }
+          100% { transform: translate(0, 0) rotate(0deg); }
         }
-        .animate-all { animation: all-anim 0.8s ease-out; }
-
-        /* Animation APARTMENT - Building qui s'élève */
-        @keyframes apartment-anim {
-          0% { transform: translateY(0); }
-          25% { transform: translateY(-6px); }
-          50% { transform: translateY(-3px); }
-          75% { transform: translateY(-5px); }
-          100% { transform: translateY(0); }
+        @keyframes grid-assemble-tr {
+          0% { transform: translate(10px, -10px) rotate(10deg); opacity: 0; }
+          50% { transform: translate(-2px, 2px) rotate(-5deg); opacity: 1; }
+          100% { transform: translate(0, 0) rotate(0deg); }
         }
-        .animate-apartment { animation: apartment-anim 0.7s ease-out; }
-
-        /* Animation HOUSE - Maison qui rebondit */
-        @keyframes house-anim {
-          0%, 100% { transform: translateY(0) rotate(0deg); }
-          25% { transform: translateY(-8px) rotate(-3deg); }
-          50% { transform: translateY(-4px) rotate(2deg); }
-          75% { transform: translateY(-6px) rotate(-1deg); }
+        @keyframes grid-assemble-bl {
+          0% { transform: translate(-10px, 10px) rotate(10deg); opacity: 0; }
+          50% { transform: translate(2px, -2px) rotate(-5deg); opacity: 1; }
+          100% { transform: translate(0, 0) rotate(0deg); }
         }
-        .animate-house { animation: house-anim 0.8s ease-out; }
-
-        /* Animation STUDIO - Pinceau qui trace une ligne ondulée */
-        @keyframes studio-anim {
-          0% { transform: translateX(0) rotate(0deg); }
-          15% { transform: translateX(4px) rotate(8deg); }
-          30% { transform: translateX(-4px) rotate(-8deg); }
-          45% { transform: translateX(3px) rotate(5deg); }
-          60% { transform: translateX(-3px) rotate(-5deg); }
-          75% { transform: translateX(2px) rotate(3deg); }
-          100% { transform: translateX(0) rotate(0deg); }
+        @keyframes grid-assemble-br {
+          0% { transform: translate(10px, 10px) rotate(-10deg); opacity: 0; }
+          50% { transform: translate(-2px, -2px) rotate(5deg); opacity: 1; }
+          100% { transform: translate(0, 0) rotate(0deg); }
         }
-        .animate-studio { animation: studio-anim 1s ease-out; }
+        .animate-grid-tl { animation: grid-assemble-tl 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+        .animate-grid-tr { animation: grid-assemble-tr 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s forwards; }
+        .animate-grid-bl { animation: grid-assemble-bl 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s forwards; }
+        .animate-grid-br { animation: grid-assemble-br 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s forwards; }
 
-        /* Animation OFFICE - Valise qui s'ouvre */
-        @keyframes office-anim {
-          0% { transform: scaleY(1); }
-          30% { transform: scaleY(1.15); }
-          50% { transform: scaleY(0.95); }
-          70% { transform: scaleY(1.05); }
+        /* ============================================
+           APARTMENT - Building rises with windows lighting up
+           ============================================ */
+        @keyframes building-rise {
+          0% { transform: translateY(8px); opacity: 0; }
+          100% { transform: translateY(0); opacity: 1; }
+        }
+        .animate-building-rise { animation: building-rise 0.6s ease-out forwards; }
+        .animate-building-rise-delay { animation: building-rise 0.6s ease-out 0.2s forwards; opacity: 0; }
+
+        @keyframes window-light {
+          0%, 30% { opacity: 0.3; }
+          50% { opacity: 1; }
+          100% { opacity: 1; }
+        }
+        .animate-window-1 { animation: window-light 0.3s ease-out 0.3s forwards; opacity: 0.3; }
+        .animate-window-2 { animation: window-light 0.3s ease-out 0.4s forwards; opacity: 0.3; }
+        .animate-window-3 { animation: window-light 0.3s ease-out 0.5s forwards; opacity: 0.3; }
+        .animate-window-4 { animation: window-light 0.3s ease-out 0.6s forwards; opacity: 0.3; }
+        .animate-window-5 { animation: window-light 0.3s ease-out 0.7s forwards; opacity: 0.3; }
+        .animate-window-6 { animation: window-light 0.3s ease-out 0.8s forwards; opacity: 0.3; }
+
+        /* ============================================
+           HOUSE - Roof drops, smoke rises
+           ============================================ */
+        @keyframes roof-drop {
+          0% { transform: translateY(-15px); opacity: 0; }
+          60% { transform: translateY(2px); }
+          100% { transform: translateY(0); opacity: 1; }
+        }
+        @keyframes house-body-appear {
+          0% { transform: scaleY(0); transform-origin: bottom; }
           100% { transform: scaleY(1); }
         }
-        .animate-office { animation: office-anim 0.7s ease-out; }
-
-        /* Animation COWORKING - Personnes qui bougent ensemble */
-        @keyframes coworking-anim {
-          0% { transform: scale(1) translateY(0); }
-          25% { transform: scale(1.1) translateY(-4px); }
-          50% { transform: scale(1.05) translateY(-2px); }
-          75% { transform: scale(1.08) translateY(-3px); }
-          100% { transform: scale(1) translateY(0); }
+        @keyframes door-swing {
+          0% { transform: perspective(100px) rotateY(0deg); }
+          50% { transform: perspective(100px) rotateY(-30deg); }
+          100% { transform: perspective(100px) rotateY(0deg); }
         }
-        .animate-coworking { animation: coworking-anim 0.8s ease-out; }
+        @keyframes smoke-rise {
+          0% { transform: translateY(0) scale(1); opacity: 0; }
+          30% { opacity: 0.8; }
+          100% { transform: translateY(-8px) scale(1.5); opacity: 0; }
+        }
+        .animate-roof-drop { animation: roof-drop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+        .animate-house-body { animation: house-body-appear 0.5s ease-out 0.2s forwards; }
+        .animate-door-open { animation: door-swing 0.8s ease-in-out 0.5s forwards; }
+        .animate-chimney { animation: building-rise 0.4s ease-out forwards; }
+        .animate-smoke-1 { animation: smoke-rise 1.5s ease-out 0.6s infinite; }
+        .animate-smoke-2 { animation: smoke-rise 1.5s ease-out 0.9s infinite; }
+        .animate-smoke-3 { animation: smoke-rise 1.5s ease-out 1.2s infinite; }
 
-        /* Animation PARKING - Voiture qui arrive et s'arrête */
-        @keyframes parking-anim {
-          0% { transform: translateX(-20px); opacity: 0.5; }
-          40% { transform: translateX(5px); opacity: 1; }
-          60% { transform: translateX(-2px); }
-          80% { transform: translateX(1px); }
+        /* ============================================
+           STUDIO - Brush painting stroke
+           ============================================ */
+        @keyframes brush-paint {
+          0% { transform: translate(0, 0) rotate(0deg); }
+          25% { transform: translate(-8px, 8px) rotate(-15deg); }
+          50% { transform: translate(-4px, 4px) rotate(-10deg); }
+          75% { transform: translate(-2px, 2px) rotate(-5deg); }
+          100% { transform: translate(0, 0) rotate(0deg); }
+        }
+        @keyframes paint-stroke-draw {
+          0% { stroke-dashoffset: 20; }
+          100% { stroke-dashoffset: 0; }
+        }
+        @keyframes paint-drop {
+          0%, 50% { transform: scale(1); }
+          75% { transform: scale(1.3); }
+          100% { transform: scale(1); }
+        }
+        .animate-brush-paint { animation: brush-paint 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+        .animate-paint-stroke { animation: paint-stroke-draw 1s ease-out forwards; }
+        .animate-paint-drop { animation: paint-drop 0.6s ease-out 0.8s forwards; }
+
+        /* ============================================
+           OFFICE - Briefcase opens with documents
+           ============================================ */
+        @keyframes briefcase-bounce {
+          0% { transform: translateY(0); }
+          30% { transform: translateY(-6px); }
+          50% { transform: translateY(0); }
+          70% { transform: translateY(-3px); }
+          100% { transform: translateY(0); }
+        }
+        @keyframes briefcase-open-line {
+          0% { stroke-dasharray: 20; stroke-dashoffset: 20; }
+          100% { stroke-dasharray: 20; stroke-dashoffset: 0; }
+        }
+        @keyframes doc-fly {
+          0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(-12px) rotate(-10deg); opacity: 0; }
+        }
+        .animate-briefcase { animation: briefcase-bounce 0.8s ease-out forwards; }
+        .animate-handle { animation: building-rise 0.4s ease-out forwards; }
+        .animate-briefcase-open { animation: briefcase-open-line 0.5s ease-out 0.3s forwards; }
+        .animate-doc-1 { animation: doc-fly 0.8s ease-out 0.4s forwards; }
+        .animate-doc-2 { animation: doc-fly 0.8s ease-out 0.5s forwards; }
+
+        /* ============================================
+           COWORKING - People connect
+           ============================================ */
+        @keyframes person-appear-center {
+          0% { transform: scale(0.5); opacity: 0; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes person-appear-left {
+          0% { transform: translateX(-10px) scale(0.5); opacity: 0; }
+          100% { transform: translateX(0) scale(1); opacity: 1; }
+        }
+        @keyframes person-appear-right {
+          0% { transform: translateX(10px) scale(0.5); opacity: 0; }
+          100% { transform: translateX(0) scale(1); opacity: 1; }
+        }
+        @keyframes connect-line {
+          0% { stroke-dasharray: 10; stroke-dashoffset: 10; opacity: 0; }
+          50% { opacity: 1; }
+          100% { stroke-dasharray: 10; stroke-dashoffset: 0; opacity: 1; }
+        }
+        .animate-person-center { animation: person-appear-center 0.5s ease-out forwards; }
+        .animate-person-left { animation: person-appear-left 0.5s ease-out 0.2s forwards; opacity: 0; }
+        .animate-person-right { animation: person-appear-right 0.5s ease-out 0.2s forwards; opacity: 0; }
+        .animate-connect-left { animation: connect-line 0.6s ease-out 0.5s forwards; }
+        .animate-connect-right { animation: connect-line 0.6s ease-out 0.5s forwards; }
+
+        /* ============================================
+           PARKING - Car drives in
+           ============================================ */
+        @keyframes parking-line-appear {
+          0% { stroke-dasharray: 12; stroke-dashoffset: 12; }
+          100% { stroke-dasharray: 12; stroke-dashoffset: 0; }
+        }
+        @keyframes car-drive-in {
+          0% { transform: translateX(-30px) scale(0.8); opacity: 0; }
+          60% { transform: translateX(3px) scale(1); opacity: 1; }
+          80% { transform: translateX(-1px); }
           100% { transform: translateX(0); }
         }
-        .animate-parking { animation: parking-anim 0.9s ease-out; }
-
-        /* Animation EVENT_SPACE - Fusée qui décolle */
-        @keyframes event_space-anim {
-          0% { transform: translateY(0) rotate(0deg); }
-          30% { transform: translateY(-10px) rotate(-5deg); }
-          50% { transform: translateY(-6px) rotate(3deg); }
-          70% { transform: translateY(-8px) rotate(-2deg); }
-          100% { transform: translateY(0) rotate(0deg); }
+        @keyframes headlight-flash {
+          0%, 40% { opacity: 0; }
+          50% { opacity: 1; }
+          60% { opacity: 0.3; }
+          70% { opacity: 1; }
+          100% { opacity: 1; }
         }
-        .animate-event_space { animation: event_space-anim 0.8s ease-out; }
+        .animate-parking-line { animation: parking-line-appear 0.4s ease-out forwards; }
+        .animate-car-park { animation: car-drive-in 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+        .animate-headlight { animation: headlight-flash 1s ease-out forwards; }
 
-        /* Animation RECORDING_STUDIO - Micro qui pulse */
-        @keyframes recording_studio-anim {
-          0%, 100% { transform: scale(1); }
-          20% { transform: scale(1.15); }
-          40% { transform: scale(1); }
-          60% { transform: scale(1.1); }
-          80% { transform: scale(1); }
+        /* ============================================
+           EVENT SPACE - Confetti explosion
+           ============================================ */
+        @keyframes popper-shake {
+          0%, 100% { transform: rotate(0deg); }
+          25% { transform: rotate(-5deg); }
+          75% { transform: rotate(5deg); }
         }
-        .animate-recording_studio { animation: recording_studio-anim 0.9s ease-out; }
+        @keyframes confetti-burst-1 {
+          0% { transform: translate(0, 0) scale(0); opacity: 0; }
+          30% { opacity: 1; }
+          100% { transform: translate(5px, -15px) scale(1); opacity: 0; }
+        }
+        @keyframes confetti-burst-2 {
+          0% { transform: translate(0, 0) scale(0); opacity: 0; }
+          30% { opacity: 1; }
+          100% { transform: translate(10px, -10px) scale(1); opacity: 0; }
+        }
+        @keyframes confetti-burst-3 {
+          0% { transform: translate(0, 0) scale(0); opacity: 0; }
+          30% { opacity: 1; }
+          100% { transform: translate(12px, -5px) scale(1); opacity: 0; }
+        }
+        @keyframes confetti-burst-4 {
+          0% { transform: translate(0, 0) scale(0); opacity: 0; }
+          30% { opacity: 1; }
+          100% { transform: translate(3px, -18px) scale(1); opacity: 0; }
+        }
+        @keyframes confetti-burst-5 {
+          0% { transform: translate(0, 0) scale(0); opacity: 0; }
+          30% { opacity: 1; }
+          100% { transform: translate(8px, -12px) scale(1); opacity: 0; }
+        }
+        @keyframes confetti-line {
+          0% { transform: scale(0); opacity: 0; }
+          50% { opacity: 1; }
+          100% { transform: scale(1.2); opacity: 0; }
+        }
+        @keyframes star-twinkle {
+          0% { transform: scale(0) rotate(0deg); opacity: 0; }
+          50% { transform: scale(1.2) rotate(180deg); opacity: 1; }
+          100% { transform: scale(1) rotate(360deg); opacity: 1; }
+        }
+        .animate-popper-base { animation: popper-shake 0.5s ease-out forwards; }
+        .animate-popper { animation: popper-shake 0.3s ease-out forwards; }
+        .animate-confetti-1 { animation: confetti-burst-1 0.8s ease-out forwards; }
+        .animate-confetti-2 { animation: confetti-burst-2 0.8s ease-out 0.1s forwards; }
+        .animate-confetti-3 { animation: confetti-burst-3 0.8s ease-out 0.15s forwards; }
+        .animate-confetti-4 { animation: confetti-burst-4 0.8s ease-out 0.05s forwards; }
+        .animate-confetti-5 { animation: confetti-burst-5 0.8s ease-out 0.2s forwards; }
+        .animate-confetti-6 { animation: confetti-line 0.6s ease-out 0.1s forwards; }
+        .animate-confetti-7 { animation: confetti-line 0.6s ease-out 0.15s forwards; }
+        .animate-confetti-8 { animation: confetti-line 0.6s ease-out 0.2s forwards; }
+        .animate-star-1 { animation: star-twinkle 0.8s ease-out 0.3s forwards; }
+        .animate-star-2 { animation: star-twinkle 0.8s ease-out 0.4s forwards; }
 
-        /* Fade in pour les cards */
+        /* ============================================
+           RECORDING STUDIO - Mic with sound waves
+           ============================================ */
+        @keyframes mic-glow {
+          0%, 100% { transform: scale(1); filter: brightness(1); }
+          50% { transform: scale(1.05); filter: brightness(1.2); }
+        }
+        @keyframes sound-wave {
+          0% { transform: scaleY(0.5); opacity: 0; }
+          50% { transform: scaleY(1); opacity: 1; }
+          100% { transform: scaleY(0.5); opacity: 0; }
+        }
+        .animate-mic-pulse { animation: mic-glow 1s ease-in-out infinite; }
+        .animate-mic-stand { animation: building-rise 0.5s ease-out forwards; }
+        .animate-wave-1 { animation: sound-wave 0.8s ease-in-out infinite; }
+        .animate-wave-2 { animation: sound-wave 0.8s ease-in-out 0.1s infinite; }
+        .animate-wave-3 { animation: sound-wave 0.8s ease-in-out 0.2s infinite; }
+        .animate-wave-4 { animation: sound-wave 0.8s ease-in-out 0.3s infinite; }
+
+        /* ============================================
+           GENERAL ANIMATIONS
+           ============================================ */
         @keyframes fade-in {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
@@ -700,8 +1197,19 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
         }
       `}</style>
 
+      {/* STICKY SEARCH BAR HEADER */}
+      <div
+        className={`fixed left-0 right-0 bg-white/95 backdrop-blur-md transition-all duration-300 ${
+          isScrolled ? "top-16 z-[9998] shadow-md py-3" : "top-0 -translate-y-full opacity-0 pointer-events-none"
+        }`}
+      >
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <SearchBar isCompact={isScrolled && !forceExpandSearch} onExpand={handleExpandSearch} />
+        </div>
+      </div>
+
       {/* HERO SECTION */}
-      <section className="bg-[#FAFAFA] pb-6 pt-8">
+      <section ref={heroRef} className="bg-[#FAFAFA] pb-6 pt-8">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Hero Content */}
           <div className={`mx-auto max-w-3xl text-center transition-all duration-700 ${isLoaded ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}>
@@ -715,15 +1223,15 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
             </p>
           </div>
 
-          {/* Search Bar */}
-          <div className={`mt-8 transition-all delay-150 duration-700 ${isLoaded ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}>
-            <SearchBar />
+          {/* Main Search Bar */}
+          <div className={`mt-8 transition-all delay-150 duration-700 ${isLoaded ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`} style={{ position: "relative", zIndex: 9999 }}>
+            <SearchBar isCompact={false} onExpand={() => {}} />
           </div>
         </div>
       </section>
 
-      {/* CATEGORIES - Z-index plus bas que la recherche */}
-      <section className="border-b border-gray-200 bg-white sticky top-16 z-20">
+      {/* CATEGORIES */}
+      <section className="border-b border-gray-200 bg-white sticky top-16 z-30">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-1 overflow-x-auto py-2 scrollbar-hide">
             <CategoryButton
@@ -783,7 +1291,7 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
         )}
       </section>
 
-      {/* DECORATIVE VISUAL SECTION - Sobre et premium */}
+      {/* DECORATIVE VISUAL SECTION */}
       <section className="py-16 overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -844,7 +1352,7 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
               </div>
             </div>
 
-            {/* Visual Grid - Sobre et premium */}
+            {/* Visual Grid */}
             <div className="relative">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-4">
@@ -880,7 +1388,6 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
                   </div>
                 </div>
               </div>
-              {/* Subtle decorative circles */}
               <div className="absolute -top-4 -right-4 h-24 w-24 rounded-full bg-gray-100/50 blur-2xl" />
               <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-gray-100/50 blur-2xl" />
             </div>
