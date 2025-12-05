@@ -1,17 +1,27 @@
 "use client";
 
 import { FormEvent, useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { signIn, useSession } from "next-auth/react";
 import { getDictionaryForLocale, type SupportedLocale } from "@/lib/i18n.client";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { status } = useSession();
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dict, setDict] = useState(getDictionaryForLocale("fr"));
+
+  // Si déjà connecté, rediriger vers la page demandée ou l'accueil
+  useEffect(() => {
+    if (status === "authenticated") {
+      const callbackUrl = searchParams.get("callbackUrl") || "/";
+      router.push(callbackUrl);
+    }
+  }, [status, router, searchParams]);
 
   // Charger le dictionnaire selon la locale du cookie
   useEffect(() => {
@@ -22,6 +32,24 @@ export default function LoginPage() {
   }, []);
 
   const t = dict.auth;
+
+  // Afficher un loader pendant la vérification de session
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-gray-900" />
+      </div>
+    );
+  }
+
+  // Si authentifié, ne rien afficher (la redirection est en cours)
+  if (status === "authenticated") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-gray-900" />
+      </div>
+    );
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
