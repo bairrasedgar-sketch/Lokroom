@@ -435,47 +435,6 @@ function CategoryIcon({ category, isActive, isAnimating }: CategoryIconProps) {
 }
 
 // ============================================================================
-// COMPACT "TOUS" BUTTON - Pour le header sticky
-// ============================================================================
-
-function CompactAllButton({
-  onClick,
-  categoryCount,
-  isExpanding
-}: {
-  onClick: () => void;
-  categoryCount: number;
-  isExpanding: boolean;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`relative flex items-center gap-2 rounded-full bg-gray-900 px-4 py-2 text-white transition-all duration-500 hover:bg-black ${
-        isExpanding ? "scale-110" : ""
-      }`}
-    >
-      <div className="relative">
-        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none">
-          <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
-          <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
-          <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
-          <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
-        </svg>
-        {/* Badge avec le nombre de catégories */}
-        <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] font-bold text-gray-900">
-          {categoryCount}
-        </span>
-      </div>
-      <span className="text-sm font-medium">Tous</span>
-      {/* Indicateur d'expansion */}
-      <svg className={`h-4 w-4 transition-transform duration-300 ${isExpanding ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-      </svg>
-    </button>
-  );
-}
-
-// ============================================================================
 // SEARCH BAR COMPONENT - Se réduit en place
 // ============================================================================
 
@@ -1092,12 +1051,6 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY, categoriesCollapsed]);
 
-  const handleExpandCategories = () => {
-    setCategoriesCollapsed(false);
-    // Scroll vers le haut pour voir les catégories
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
   const filteredCards = activeCategory
     ? cards.filter((card) => card.type === activeCategory)
     : cards;
@@ -1355,64 +1308,63 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
         }
 
         /* ============================================
-           CATEGORIES COLLAPSE ANIMATION
+           CATEGORIES COLLAPSE ANIMATION - ROLLING EFFECT
            ============================================ */
-        @keyframes collapse-to-center {
+        @keyframes roll-to-tous {
           0% {
             opacity: 1;
-            transform: translateX(0) scale(1);
+            transform: translateX(0) rotate(0deg) scale(1);
           }
-          50% {
-            opacity: 0.5;
-            transform: scale(0.8);
+          30% {
+            opacity: 1;
+            transform: translateX(calc(var(--roll-distance, -100px) * 0.3)) rotate(-120deg) scale(0.9);
+          }
+          60% {
+            opacity: 0.7;
+            transform: translateX(calc(var(--roll-distance, -100px) * 0.7)) rotate(-280deg) scale(0.6);
           }
           100% {
             opacity: 0;
-            transform: translateX(var(--collapse-x, -100px)) scale(0.3);
+            transform: translateX(var(--roll-distance, -100px)) rotate(-360deg) scale(0.2);
           }
         }
 
-        @keyframes expand-from-center {
+        @keyframes roll-from-tous {
           0% {
             opacity: 0;
-            transform: translateX(var(--expand-x, 100px)) scale(0.3);
+            transform: translateX(var(--roll-distance, -100px)) rotate(-360deg) scale(0.2);
           }
-          50% {
-            opacity: 0.5;
-            transform: scale(0.8);
+          40% {
+            opacity: 0.7;
+            transform: translateX(calc(var(--roll-distance, -100px) * 0.5)) rotate(-180deg) scale(0.6);
+          }
+          70% {
+            opacity: 1;
+            transform: translateX(calc(var(--roll-distance, -100px) * 0.2)) rotate(-60deg) scale(0.9);
           }
           100% {
             opacity: 1;
-            transform: translateX(0) scale(1);
+            transform: translateX(0) rotate(0deg) scale(1);
           }
         }
 
-        .animate-collapse {
-          animation: collapse-to-center 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        .animate-roll-collapse {
+          animation: roll-to-tous 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
 
-        .animate-expand {
-          animation: expand-from-center 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        .animate-roll-expand {
+          animation: roll-from-tous 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
 
-        /* Staggered delays for categories */
-        .collapse-delay-1 { animation-delay: 0ms; --collapse-x: -50px; }
-        .collapse-delay-2 { animation-delay: 30ms; --collapse-x: -80px; }
-        .collapse-delay-3 { animation-delay: 60ms; --collapse-x: -110px; }
-        .collapse-delay-4 { animation-delay: 90ms; --collapse-x: -140px; }
-        .collapse-delay-5 { animation-delay: 120ms; --collapse-x: -170px; }
-        .collapse-delay-6 { animation-delay: 150ms; --collapse-x: -200px; }
-        .collapse-delay-7 { animation-delay: 180ms; --collapse-x: -230px; }
-        .collapse-delay-8 { animation-delay: 210ms; --collapse-x: -260px; }
-
-        .expand-delay-1 { animation-delay: 0ms; --expand-x: 50px; }
-        .expand-delay-2 { animation-delay: 50ms; --expand-x: 80px; }
-        .expand-delay-3 { animation-delay: 100ms; --expand-x: 110px; }
-        .expand-delay-4 { animation-delay: 150ms; --expand-x: 140px; }
-        .expand-delay-5 { animation-delay: 200ms; --expand-x: 170px; }
-        .expand-delay-6 { animation-delay: 250ms; --expand-x: 200px; }
-        .expand-delay-7 { animation-delay: 300ms; --expand-x: 230px; }
-        .expand-delay-8 { animation-delay: 350ms; --expand-x: 260px; }
+        /* Staggered delays et distances pour le rolling */
+        .roll-delay-1 { animation-delay: 0ms; --roll-distance: -60px; }
+        .roll-delay-2 { animation-delay: 50ms; --roll-distance: -120px; }
+        .roll-delay-3 { animation-delay: 100ms; --roll-distance: -180px; }
+        .roll-delay-4 { animation-delay: 150ms; --roll-distance: -240px; }
+        .roll-delay-5 { animation-delay: 200ms; --roll-distance: -300px; }
+        .roll-delay-6 { animation-delay: 250ms; --roll-distance: -360px; }
+        .roll-delay-7 { animation-delay: 300ms; --roll-distance: -420px; }
+        .roll-delay-8 { animation-delay: 350ms; --roll-distance: -480px; }
       `}</style>
 
       {/* HERO SECTION */}
@@ -1437,20 +1389,13 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
         </div>
       </section>
 
-      {/* STICKY HEADER - Apparaît quand on scroll avec barre de recherche + bouton Tous */}
-      {isScrolled && categoriesCollapsed && (
+      {/* STICKY SEARCH BAR - Toujours visible et centrée */}
+      {isScrolled && (
         <header className="fixed top-0 left-0 right-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur-md shadow-sm">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="flex h-16 items-center gap-4">
-              {/* Bouton Tous à gauche */}
-              <CompactAllButton
-                onClick={handleExpandCategories}
-                categoryCount={categories.length}
-                isExpanding={false}
-              />
-
-              {/* Barre de recherche compacte au centre */}
-              <div className="flex-1 max-w-2xl">
+            <div className="flex h-16 items-center justify-center">
+              {/* Barre de recherche compacte et centrée */}
+              <div className="w-full max-w-2xl">
                 <SearchBar isCompact={true} />
               </div>
             </div>
@@ -1458,35 +1403,41 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
         </header>
       )}
 
-      {/* CATEGORIES - avec animation de collapse */}
+      {/* CATEGORIES - avec animation de rolling vers Tous */}
       <section
-        className={`border-b border-gray-200 bg-white sticky top-16 z-30 transition-all duration-500 ${
-          categoriesCollapsed ? "opacity-0 pointer-events-none h-0 overflow-hidden" : "opacity-100"
+        className={`border-b border-gray-200 bg-white sticky top-16 z-30 transition-all duration-300 ${
+          isScrolled ? "top-16" : ""
         }`}
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-1 overflow-x-auto py-2 scrollbar-hide">
-            {/* Bouton Tous */}
-            <div className={`${isAnimatingCollapse ? "" : ""}`}>
+            {/* Bouton Tous - devient plus visible quand les autres sont collapsed */}
+            <div className={`transition-all duration-500 ${
+              categoriesCollapsed ? "scale-110" : ""
+            }`}>
               <CategoryButton
                 category="ALL"
-                label="Tous"
+                label={categoriesCollapsed ? `Tous (${categories.length + 1})` : "Tous"}
                 isActive={activeCategory === null}
-                onClick={() => setActiveCategory(null)}
+                onClick={() => {
+                  setActiveCategory(null);
+                  if (categoriesCollapsed) {
+                    setCategoriesCollapsed(false);
+                  }
+                }}
               />
             </div>
-            {/* Autres catégories avec animation staggered */}
+            {/* Autres catégories avec animation de rolling */}
             {categories.map((cat, index) => (
               <div
                 key={cat.key}
                 className={`${
                   isAnimatingCollapse
-                    ? `animate-collapse collapse-delay-${Math.min(index + 1, 8)}`
-                    : !categoriesCollapsed
-                    ? `animate-expand expand-delay-${Math.min(index + 1, 8)}`
-                    : ""
+                    ? `animate-roll-collapse roll-delay-${Math.min(index + 1, 8)}`
+                    : categoriesCollapsed
+                    ? "hidden"
+                    : `animate-roll-expand roll-delay-${Math.min(index + 1, 8)}`
                 }`}
-                style={{ opacity: categoriesCollapsed && !isAnimatingCollapse ? 0 : undefined }}
               >
                 <CategoryButton
                   category={cat.key}
