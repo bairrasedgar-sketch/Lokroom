@@ -851,11 +851,19 @@ export default function NewListingPage() {
     // Store map reference
     (container as any).__gmap = map;
 
+    // Custom marker icon
+    const customIcon = {
+      url: "/location-pin.png",
+      scaledSize: new g.maps.Size(40, 50),
+      anchor: new g.maps.Point(20, 50), // Anchor at bottom center
+    };
+
     const marker = new g.maps.Marker({
       position: center,
       map,
       draggable: true,
       animation: g.maps.Animation.DROP,
+      icon: customIcon,
     });
 
     // Update position when marker is dragged
