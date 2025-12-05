@@ -302,7 +302,6 @@ type SessionUser = {
 export default function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [hostLoading, setHostLoading] = useState(false);
 
   const [localeModalOpen, setLocaleModalOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -361,45 +360,6 @@ export default function Navbar() {
     setLocaleModalOpen(false);
   }
 
-  async function handleBecomeHost() {
-    if (hostLoading) return;
-    setHostLoading(true);
-    try {
-      const res = await fetch("/api/host/onboard", { method: "POST" });
-
-      const text = await res.text();
-      let data: unknown = null;
-      try {
-        data = text ? JSON.parse(text) : null;
-      } catch {
-        // pas du JSON
-      }
-
-      if (!res.ok) {
-        const parsed = data as { error?: string } | null;
-        const msg = parsed?.error || text || `HTTP ${res.status}`;
-        throw new Error(msg);
-      }
-
-      const parsed = data as { url?: string } | null;
-      const url = parsed?.url;
-
-      if (!url) {
-        throw new Error("Stripe onboarding URL manquante dans la réponse.");
-      }
-
-      window.location.href = url;
-    } catch (err) {
-      alert(
-        err instanceof Error
-          ? err.message
-          : "Erreur inconnue lors de l'onboarding hôte",
-      );
-    } finally {
-      setHostLoading(false);
-    }
-  }
-
   function handlePhoneSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     alert("La connexion par téléphone sera bientôt disponible sur Lok'Room.");
@@ -407,7 +367,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="border-b bg-white">
+      <header className="sticky top-0 z-50 border-b bg-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
           <Link href="/" className="font-semibold text-lg">
             Lokroom
@@ -464,16 +424,12 @@ export default function Navbar() {
               {/* Pas connecté */}
               {!isLoggedIn && (
                 <>
-                  <button
-                    type="button"
-                    onClick={handleBecomeHost}
-                    disabled={hostLoading}
-                    className="inline-flex items-center rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-60"
+                  <Link
+                    href="/become-host"
+                    className="inline-flex items-center rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50"
                   >
-                    {hostLoading
-                      ? "Redirection vers Stripe…"
-                      : t.becomeHost}
-                  </button>
+                    {t.becomeHost}
+                  </Link>
 
                   <button
                     type="button"
@@ -488,16 +444,12 @@ export default function Navbar() {
               {/* Connecté mais pas hôte */}
               {isLoggedIn && !isHost && (
                 <>
-                  <button
-                    type="button"
-                    onClick={handleBecomeHost}
-                    disabled={hostLoading}
-                    className="inline-flex items-center rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 disabled:opacity-60"
+                  <Link
+                    href="/become-host"
+                    className="inline-flex items-center rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50"
                   >
-                    {hostLoading
-                      ? "Redirection vers Stripe…"
-                      : t.becomeHost}
-                  </button>
+                    {t.becomeHost}
+                  </Link>
 
                   <UserMenu />
                 </>
