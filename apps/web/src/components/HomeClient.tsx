@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -44,6 +44,8 @@ type HomeClientProps = {
   translations: Record<string, unknown>;
   displayCurrency: string;
 };
+
+type BookingMode = "days" | "hours";
 
 // ============================================================================
 // PREMIUM ANIMATED CATEGORY ICONS - Vraies animations SVG
@@ -172,40 +174,49 @@ function CategoryIcon({ category, isActive, isAnimating }: CategoryIconProps) {
       </div>
     ),
 
-    // STUDIO - Pinceau qui peint une ligne arc-en-ciel
+    // STUDIO - Pinceau qui dessine puis revient
     STUDIO: (
       <div className={wrapperClass}>
         <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
-          {/* Paint stroke being drawn */}
-          {isAnimating && (
-            <path
-              d="M3 18C5 16 7 17 9 15C11 13 13 14 15 12"
-              stroke={color}
-              strokeWidth="2"
-              strokeLinecap="round"
-              className="animate-paint-stroke"
-              strokeDasharray="20"
-              strokeDashoffset="20"
-            />
-          )}
-          {/* Brush */}
-          <g className={isAnimating ? "animate-brush-paint" : ""}>
-            <path
-              d="M18.37 2.63L14 7L17 10L21.37 5.63A2.12 2.12 0 1018.37 2.63Z"
-              stroke={color}
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M14 7L5.5 15.5C4.67 16.33 4.67 17.67 5.5 18.5C6.33 19.33 7.67 19.33 8.5 18.5L17 10"
-              stroke={color}
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            <circle cx="6" cy="18" r="1" fill={color} className={isAnimating ? "animate-paint-drop" : ""} />
+          {/* Canvas/Chevalet */}
+          <rect
+            x="3" y="6" width="12" height="14" rx="1"
+            stroke={color}
+            strokeWidth="1.5"
+            className={isAnimating ? "animate-canvas-appear" : ""}
+          />
+          {/* Pieds du chevalet */}
+          <path d="M5 20L3 23" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+          <path d="M13 20L15 23" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+
+          {/* Trait en train d'être dessiné */}
+          <path
+            d="M5 10C6 11 7 9 8 10C9 11 10 9 11 10C12 11 13 9 13 10"
+            stroke={color}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            className={isAnimating ? "animate-paint-line" : ""}
+            strokeDasharray="20"
+            strokeDashoffset={isAnimating ? "0" : "20"}
+          />
+
+          {/* Pinceau */}
+          <g className={isAnimating ? "animate-brush-draw" : ""} style={{ transformOrigin: "19px 8px" }}>
+            {/* Manche du pinceau */}
+            <rect x="17" y="2" width="4" height="10" rx="1" stroke={color} strokeWidth="1.5" fill="none" />
+            {/* Virole (partie métallique) */}
+            <rect x="17" y="10" width="4" height="2" fill={color} />
+            {/* Poils du pinceau */}
+            <path d="M17.5 12L17 15L19 16L21 15L20.5 12" stroke={color} strokeWidth="1" fill={color} />
           </g>
+
+          {/* Gouttes de peinture */}
+          {isAnimating && (
+            <>
+              <circle cx="19" cy="18" r="0.8" fill={color} className="animate-drop-1" />
+              <circle cx="17" cy="19" r="0.5" fill={color} className="animate-drop-2" />
+            </>
+          )}
         </svg>
       </div>
     ),
@@ -273,85 +284,112 @@ function CategoryIcon({ category, isActive, isAnimating }: CategoryIconProps) {
       </div>
     ),
 
-    // PARKING - Voiture qui se gare avec effet perspective
+    // PARKING - Voiture bien visible qui se gare
     PARKING: (
       <div className={wrapperClass}>
         <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
-          {/* Parking spot lines */}
-          <path d="M4 20V8" stroke={color} strokeWidth="1.5" strokeLinecap="round" className={isAnimating ? "animate-parking-line" : ""} />
-          <path d="M20 20V8" stroke={color} strokeWidth="1.5" strokeLinecap="round" className={isAnimating ? "animate-parking-line" : ""} />
+          {/* Panneau P */}
+          <rect x="2" y="2" width="8" height="10" rx="1" stroke={color} strokeWidth="1.5" />
+          <text x="6" y="9" textAnchor="middle" fontSize="7" fontWeight="bold" fill={color}>P</text>
 
-          {/* Car body */}
-          <g className={isAnimating ? "animate-car-park" : ""}>
+          {/* Voiture bien dessinée */}
+          <g className={isAnimating ? "animate-car-arrive" : ""}>
+            {/* Carrosserie */}
             <path
-              d="M6 15h12a2 2 0 012 2v2a1 1 0 01-1 1H5a1 1 0 01-1-1v-2a2 2 0 012-2z"
+              d="M8 18H20C21 18 22 17 22 16V15C22 14 21.5 13.5 21 13.5L19 13L18 11H12L10 13L9 13.5C8.5 13.5 8 14 8 15V16C8 17 8 18 8 18Z"
               stroke={color}
               strokeWidth="1.5"
+              fill="none"
+              strokeLinejoin="round"
             />
-            <path
-              d="M7 15l1.5-4h7l1.5 4"
-              stroke={color}
-              strokeWidth="1.5"
-              strokeLinecap="round"
-            />
-            {/* Wheels */}
-            <circle cx="7.5" cy="18" r="1" fill={color} />
-            <circle cx="16.5" cy="18" r="1" fill={color} />
-            {/* Windows */}
-            <path d="M9 12h6" stroke={color} strokeWidth="1" strokeLinecap="round" />
+            {/* Toit/Vitres */}
+            <path d="M12 11L13 9H17L18 11" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            {/* Pare-brise */}
+            <path d="M13.5 10L16.5 10" stroke={color} strokeWidth="1" strokeLinecap="round" />
+            {/* Roue avant */}
+            <circle cx="11" cy="18" r="1.5" stroke={color} strokeWidth="1.5" />
+            <circle cx="11" cy="18" r="0.5" fill={color} />
+            {/* Roue arrière */}
+            <circle cx="19" cy="18" r="1.5" stroke={color} strokeWidth="1.5" />
+            <circle cx="19" cy="18" r="0.5" fill={color} />
+            {/* Phares */}
+            <circle cx="9" cy="15" r="0.5" fill={color} className={isAnimating ? "animate-headlight-blink" : ""} />
+            <circle cx="21" cy="15" r="0.5" fill={color} />
+            {/* Rétroviseur */}
+            <path d="M12.5 11L11.5 10.5" stroke={color} strokeWidth="1" strokeLinecap="round" />
           </g>
 
-          {/* Headlights */}
+          {/* Lignes de mouvement quand la voiture arrive */}
           {isAnimating && (
             <>
-              <circle cx="7" cy="16" r="0.5" fill={color} className="animate-headlight" />
-              <circle cx="17" cy="16" r="0.5" fill={color} className="animate-headlight" />
+              <path d="M4 15H6" stroke={color} strokeWidth="1" strokeLinecap="round" className="animate-motion-line-1" />
+              <path d="M3 17H5" stroke={color} strokeWidth="1" strokeLinecap="round" className="animate-motion-line-2" />
             </>
           )}
         </svg>
       </div>
     ),
 
-    // EVENT SPACE - Confettis et étoiles qui explosent
+    // EVENT SPACE - Feu d'artifice bien visible
     EVENT_SPACE: (
       <div className={wrapperClass}>
         <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
-          {/* Party popper base */}
+          {/* Fusée de feu d'artifice (base) */}
           <path
-            d="M5.8 17.2L2 22l4.8-3.8"
+            d="M12 22V16"
             stroke={color}
-            strokeWidth="1.5"
+            strokeWidth="2"
             strokeLinecap="round"
-            className={isAnimating ? "animate-popper-base" : ""}
+            className={isAnimating ? "animate-rocket-launch" : ""}
           />
           <path
-            d="M6 16l2-2"
+            d="M10 22L12 20L14 22"
             stroke={color}
             strokeWidth="1.5"
             strokeLinecap="round"
-            className={isAnimating ? "animate-popper" : ""}
+            strokeLinejoin="round"
           />
 
-          {/* Confetti explosion */}
-          {isAnimating ? (
+          {/* Centre de l'explosion */}
+          <circle
+            cx="12" cy="8" r="2"
+            stroke={color}
+            strokeWidth="1.5"
+            fill={isAnimating ? color : "none"}
+            className={isAnimating ? "animate-explosion-center" : ""}
+          />
+
+          {/* Rayons de l'explosion - étoile à 8 branches */}
+          <g className={isAnimating ? "animate-firework-rays" : ""}>
+            {/* Haut */}
+            <path d="M12 6V2" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+            <circle cx="12" cy="1" r="1" fill={color} />
+            {/* Bas */}
+            <path d="M12 10V12" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+            {/* Gauche */}
+            <path d="M10 8H5" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+            <circle cx="4" cy="8" r="1" fill={color} />
+            {/* Droite */}
+            <path d="M14 8H19" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+            <circle cx="20" cy="8" r="1" fill={color} />
+            {/* Diagonales */}
+            <path d="M9.5 5.5L7 3" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+            <circle cx="6" cy="2" r="0.8" fill={color} />
+            <path d="M14.5 5.5L17 3" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+            <circle cx="18" cy="2" r="0.8" fill={color} />
+            <path d="M9.5 10.5L7 13" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M14.5 10.5L17 13" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+          </g>
+
+          {/* Étincelles */}
+          {isAnimating && (
             <>
-              <circle cx="10" cy="10" r="1" fill={color} className="animate-confetti-1" />
-              <circle cx="14" cy="8" r="0.8" fill={color} className="animate-confetti-2" />
-              <circle cx="18" cy="12" r="1" fill={color} className="animate-confetti-3" />
-              <circle cx="12" cy="5" r="0.8" fill={color} className="animate-confetti-4" />
-              <circle cx="16" cy="4" r="1" fill={color} className="animate-confetti-5" />
-              <path d="M11 7l1-2" stroke={color} strokeWidth="1.5" strokeLinecap="round" className="animate-confetti-6" />
-              <path d="M15 6l2-1" stroke={color} strokeWidth="1.5" strokeLinecap="round" className="animate-confetti-7" />
-              <path d="M17 9l2 1" stroke={color} strokeWidth="1.5" strokeLinecap="round" className="animate-confetti-8" />
-              {/* Stars */}
-              <path d="M20 5l0.5 1 1 0.5-1 0.5-0.5 1-0.5-1-1-0.5 1-0.5z" fill={color} className="animate-star-1" />
-              <path d="M8 3l0.3 0.7 0.7 0.3-0.7 0.3-0.3 0.7-0.3-0.7-0.7-0.3 0.7-0.3z" fill={color} className="animate-star-2" />
-            </>
-          ) : (
-            <>
-              <circle cx="12" cy="10" r="1" fill={color} />
-              <circle cx="16" cy="8" r="0.8" fill={color} />
-              <circle cx="14" cy="5" r="1" fill={color} />
+              <circle cx="8" cy="5" r="0.5" fill={color} className="animate-sparkle-1" />
+              <circle cx="16" cy="5" r="0.5" fill={color} className="animate-sparkle-2" />
+              <circle cx="6" cy="10" r="0.5" fill={color} className="animate-sparkle-3" />
+              <circle cx="18" cy="10" r="0.5" fill={color} className="animate-sparkle-4" />
+              <circle cx="10" cy="3" r="0.4" fill={color} className="animate-sparkle-5" />
+              <circle cx="14" cy="3" r="0.4" fill={color} className="animate-sparkle-6" />
             </>
           )}
         </svg>
@@ -397,16 +435,19 @@ function CategoryIcon({ category, isActive, isAnimating }: CategoryIconProps) {
 }
 
 // ============================================================================
-// STICKY SEARCH BAR COMPONENT - Airbnb style
+// SEARCH BAR COMPONENT - Se réduit en place
 // ============================================================================
 
-function SearchBar({ isCompact, onExpand }: { isCompact: boolean; onExpand: () => void }) {
+function SearchBar({ isCompact }: { isCompact: boolean }) {
   const router = useRouter();
   const [searchFocused, setSearchFocused] = useState(false);
   const [query, setQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<"location" | "dates" | "guests">("location");
+  const [activeTab, setActiveTab] = useState<"location" | "dates" | "hours" | "guests">("location");
+  const [bookingMode, setBookingMode] = useState<BookingMode>("days");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [startTime, setStartTime] = useState("09:00");
+  const [endTime, setEndTime] = useState("18:00");
   const [guests, setGuests] = useState(1);
   const searchRef = useRef<HTMLDivElement>(null);
 
@@ -424,129 +465,111 @@ function SearchBar({ isCompact, onExpand }: { isCompact: boolean; onExpand: () =
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (query) params.set("q", query);
-    if (startDate) params.set("startDate", startDate);
-    if (endDate) params.set("endDate", endDate);
+    if (bookingMode === "days") {
+      if (startDate) params.set("startDate", startDate);
+      if (endDate) params.set("endDate", endDate);
+    } else {
+      if (startDate) params.set("date", startDate);
+      if (startTime) params.set("startTime", startTime);
+      if (endTime) params.set("endTime", endTime);
+      params.set("mode", "hourly");
+    }
     if (guests > 1) params.set("guests", guests.toString());
     router.push(`/listings?${params.toString()}`);
   };
 
   const today = new Date().toISOString().split("T")[0];
 
-  // Compact search bar (when scrolled)
-  if (isCompact && !searchFocused) {
-    return (
-      <div className="w-full flex justify-center">
-        <button
-          onClick={() => {
-            onExpand();
-            setSearchFocused(true);
-          }}
-          className="flex items-center gap-4 rounded-full border border-gray-200 bg-white px-4 py-2 shadow-md transition-all hover:shadow-lg"
-        >
-          <span className="text-sm font-medium text-gray-900">Destination</span>
-          <span className="h-6 w-px bg-gray-200" />
-          <span className="text-sm text-gray-500">Dates</span>
-          <span className="h-6 w-px bg-gray-200" />
-          <span className="text-sm text-gray-500">Voyageurs</span>
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-800">
-            <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-            </svg>
-          </div>
-        </button>
-      </div>
-    );
+  // Générer les options d'heures
+  const timeOptions = [];
+  for (let h = 0; h < 24; h++) {
+    timeOptions.push(`${h.toString().padStart(2, "0")}:00`);
+    timeOptions.push(`${h.toString().padStart(2, "0")}:30`);
   }
 
   return (
     <div ref={searchRef} className="relative w-full max-w-3xl mx-auto">
-      {/* Main Search Bar */}
+      {/* Main Search Bar - se réduit avec animation */}
       <div
-        className={`relative rounded-full border bg-white transition-all duration-300 ${
+        className={`relative rounded-full border bg-white transition-all duration-500 ease-out ${
           searchFocused
             ? "border-gray-300 shadow-xl"
             : "border-gray-200 shadow-md hover:shadow-lg"
-        }`}
+        } ${isCompact && !searchFocused ? "py-1 scale-90" : ""}`}
       >
-        <div className="flex items-center">
+        <div className={`flex items-center transition-all duration-500 ${isCompact && !searchFocused ? "gap-2" : ""}`}>
           {/* Location */}
           <button
             type="button"
             onClick={() => { setSearchFocused(true); setActiveTab("location"); }}
-            className={`flex-1 px-6 py-4 text-left rounded-l-full transition-colors ${
+            className={`flex-1 text-left rounded-l-full transition-all duration-300 ${
               searchFocused && activeTab === "location" ? "bg-gray-50" : "hover:bg-gray-50"
-            }`}
+            } ${isCompact && !searchFocused ? "px-3 py-2" : "px-6 py-4"}`}
           >
-            <p className="text-xs font-semibold text-gray-900">Destination</p>
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onFocus={() => { setSearchFocused(true); setActiveTab("location"); }}
-              placeholder="Rechercher une destination"
-              className="w-full bg-transparent text-sm text-gray-600 placeholder:text-gray-400 focus:outline-none"
-            />
+            <p className={`font-semibold text-gray-900 transition-all duration-300 ${isCompact && !searchFocused ? "text-[10px]" : "text-xs"}`}>Destination</p>
+            {isCompact && !searchFocused ? (
+              <p className="text-xs text-gray-400 truncate">{query || "Où ?"}</p>
+            ) : (
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onFocus={() => { setSearchFocused(true); setActiveTab("location"); }}
+                placeholder="Rechercher une destination"
+                className="w-full bg-transparent text-sm text-gray-600 placeholder:text-gray-400 focus:outline-none"
+              />
+            )}
           </button>
 
-          <div className="h-8 w-px bg-gray-200" />
+          <div className={`w-px bg-gray-200 transition-all duration-300 ${isCompact && !searchFocused ? "h-6" : "h-8"}`} />
 
-          {/* Dates */}
+          {/* Dates ou Heures selon le mode */}
           <button
             type="button"
-            onClick={() => { setSearchFocused(true); setActiveTab("dates"); }}
-            className={`flex-1 px-6 py-4 text-left transition-colors ${
-              searchFocused && activeTab === "dates" ? "bg-gray-50" : "hover:bg-gray-50"
-            }`}
+            onClick={() => { setSearchFocused(true); setActiveTab(bookingMode === "hours" ? "hours" : "dates"); }}
+            className={`flex-1 text-left transition-all duration-300 ${
+              searchFocused && (activeTab === "dates" || activeTab === "hours") ? "bg-gray-50" : "hover:bg-gray-50"
+            } ${isCompact && !searchFocused ? "px-3 py-2" : "px-6 py-4"}`}
           >
-            <p className="text-xs font-semibold text-gray-900">Arrivée</p>
-            <p className="text-sm text-gray-400">
-              {startDate
-                ? new Date(startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })
-                : "Quand ?"}
+            <p className={`font-semibold text-gray-900 transition-all duration-300 ${isCompact && !searchFocused ? "text-[10px]" : "text-xs"}`}>
+              {bookingMode === "hours" ? "Date & Heures" : "Dates"}
+            </p>
+            <p className={`text-gray-400 transition-all duration-300 ${isCompact && !searchFocused ? "text-xs" : "text-sm"}`}>
+              {bookingMode === "hours" ? (
+                startDate ? `${new Date(startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })} · ${startTime}-${endTime}` : "Quand ?"
+              ) : (
+                startDate
+                  ? `${new Date(startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}${endDate ? ` - ${new Date(endDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}` : ""}`
+                  : "Quand ?"
+              )}
             </p>
           </button>
 
-          <div className="h-8 w-px bg-gray-200" />
-
-          {/* End Date */}
-          <button
-            type="button"
-            onClick={() => { setSearchFocused(true); setActiveTab("dates"); }}
-            className={`flex-1 px-6 py-4 text-left transition-colors ${
-              searchFocused && activeTab === "dates" ? "bg-gray-50" : "hover:bg-gray-50"
-            }`}
-          >
-            <p className="text-xs font-semibold text-gray-900">Départ</p>
-            <p className="text-sm text-gray-400">
-              {endDate
-                ? new Date(endDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })
-                : "Quand ?"}
-            </p>
-          </button>
-
-          <div className="h-8 w-px bg-gray-200" />
+          <div className={`w-px bg-gray-200 transition-all duration-300 ${isCompact && !searchFocused ? "h-6" : "h-8"}`} />
 
           {/* Guests */}
           <button
             type="button"
             onClick={() => { setSearchFocused(true); setActiveTab("guests"); }}
-            className={`flex-1 px-6 py-4 text-left rounded-r-full transition-colors ${
+            className={`flex-1 text-left rounded-r-full transition-all duration-300 ${
               searchFocused && activeTab === "guests" ? "bg-gray-50" : "hover:bg-gray-50"
-            }`}
+            } ${isCompact && !searchFocused ? "px-3 py-2" : "px-6 py-4"}`}
           >
-            <p className="text-xs font-semibold text-gray-900">Voyageurs</p>
-            <p className="text-sm text-gray-400">
+            <p className={`font-semibold text-gray-900 transition-all duration-300 ${isCompact && !searchFocused ? "text-[10px]" : "text-xs"}`}>Voyageurs</p>
+            <p className={`text-gray-400 transition-all duration-300 ${isCompact && !searchFocused ? "text-xs" : "text-sm"}`}>
               {guests > 1 ? `${guests} voyageurs` : "Combien ?"}
             </p>
           </button>
 
           {/* Search Button */}
-          <div className="pr-2">
+          <div className={`transition-all duration-300 ${isCompact && !searchFocused ? "pr-1" : "pr-2"}`}>
             <button
               onClick={handleSearch}
-              className="flex items-center gap-2 rounded-full bg-gray-800 px-4 py-3 text-white transition-all hover:bg-gray-900 active:scale-95"
+              className={`flex items-center justify-center rounded-full bg-gray-800 text-white transition-all hover:bg-gray-900 active:scale-95 ${
+                isCompact && !searchFocused ? "h-8 w-8" : "gap-2 px-4 py-3"
+              }`}
             >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <svg className={`transition-all duration-300 ${isCompact && !searchFocused ? "h-4 w-4" : "h-5 w-5"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
               </svg>
             </button>
@@ -554,7 +577,7 @@ function SearchBar({ isCompact, onExpand }: { isCompact: boolean; onExpand: () =
         </div>
       </div>
 
-      {/* Expanded Search Panel - Z-index très élevé */}
+      {/* Expanded Search Panel */}
       {searchFocused && (
         <div className="absolute left-0 right-0 top-full mt-3" style={{ zIndex: 9999 }}>
           <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-2xl">
@@ -572,7 +595,7 @@ function SearchBar({ isCompact, onExpand }: { isCompact: boolean; onExpand: () =
                       key={dest.city}
                       onClick={() => {
                         setQuery(dest.city);
-                        setActiveTab("dates");
+                        setActiveTab(bookingMode === "hours" ? "hours" : "dates");
                       }}
                       className="flex items-center gap-3 rounded-xl border border-gray-200 p-3 text-left transition-all hover:border-gray-300 hover:bg-gray-50"
                     >
@@ -592,69 +615,158 @@ function SearchBar({ isCompact, onExpand }: { isCompact: boolean; onExpand: () =
               </div>
             )}
 
-            {activeTab === "dates" && (
+            {(activeTab === "dates" || activeTab === "hours") && (
               <div className="space-y-4">
-                <h3 className="text-sm font-semibold text-gray-900">Sélectionnez vos dates</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-gray-600">Arrivée</label>
-                    <input
-                      type="date"
-                      value={startDate}
-                      min={today}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
-                      style={{ position: "relative", zIndex: 10000 }}
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-gray-600">Départ</label>
-                    <input
-                      type="date"
-                      value={endDate}
-                      min={startDate || today}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
-                      style={{ position: "relative", zIndex: 10000 }}
-                    />
-                  </div>
+                {/* Mode selector */}
+                <div className="flex items-center gap-2 p-1 bg-gray-100 rounded-xl w-fit">
+                  <button
+                    onClick={() => { setBookingMode("days"); setActiveTab("dates"); }}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      bookingMode === "days" ? "bg-white shadow text-gray-900" : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
+                    À la journée
+                  </button>
+                  <button
+                    onClick={() => { setBookingMode("hours"); setActiveTab("hours"); }}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      bookingMode === "hours" ? "bg-white shadow text-gray-900" : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
+                    À l&apos;heure
+                  </button>
                 </div>
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {[
-                    { label: "Ce week-end", type: "weekend" as const },
-                    { label: "Semaine prochaine", type: "week" as const },
-                    { label: "Ce mois-ci", type: "month" as const },
-                  ].map((shortcut) => (
-                    <button
-                      key={shortcut.label}
-                      onClick={() => {
-                        const todayDate = new Date();
-                        const start = new Date();
-                        const end = new Date();
 
-                        if (shortcut.type === "weekend") {
-                          const dayOfWeek = todayDate.getDay();
-                          const daysUntilSaturday = (6 - dayOfWeek + 7) % 7 || 7;
-                          start.setDate(todayDate.getDate() + daysUntilSaturday);
-                          end.setDate(start.getDate() + 1);
-                        } else if (shortcut.type === "week") {
-                          start.setDate(todayDate.getDate() + 1);
-                          end.setDate(start.getDate() + 7);
-                        } else {
-                          start.setDate(todayDate.getDate() + 1);
-                          end.setDate(start.getDate() + 30);
-                        }
+                {bookingMode === "days" ? (
+                  <>
+                    <h3 className="text-sm font-semibold text-gray-900">Sélectionnez vos dates</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="mb-1.5 block text-xs font-medium text-gray-600">Arrivée</label>
+                        <input
+                          type="date"
+                          value={startDate}
+                          min={today}
+                          onChange={(e) => setStartDate(e.target.value)}
+                          className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
+                          style={{ position: "relative", zIndex: 10000 }}
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1.5 block text-xs font-medium text-gray-600">Départ</label>
+                        <input
+                          type="date"
+                          value={endDate}
+                          min={startDate || today}
+                          onChange={(e) => setEndDate(e.target.value)}
+                          className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
+                          style={{ position: "relative", zIndex: 10000 }}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      {[
+                        { label: "Ce week-end", type: "weekend" as const },
+                        { label: "Semaine prochaine", type: "week" as const },
+                        { label: "Ce mois-ci", type: "month" as const },
+                      ].map((shortcut) => (
+                        <button
+                          key={shortcut.label}
+                          onClick={() => {
+                            const todayDate = new Date();
+                            const start = new Date();
+                            const end = new Date();
 
-                        setStartDate(start.toISOString().split("T")[0]);
-                        setEndDate(end.toISOString().split("T")[0]);
-                        setActiveTab("guests");
-                      }}
-                      className="rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:border-gray-400 hover:bg-gray-50"
-                    >
-                      {shortcut.label}
-                    </button>
-                  ))}
-                </div>
+                            if (shortcut.type === "weekend") {
+                              const dayOfWeek = todayDate.getDay();
+                              const daysUntilSaturday = (6 - dayOfWeek + 7) % 7 || 7;
+                              start.setDate(todayDate.getDate() + daysUntilSaturday);
+                              end.setDate(start.getDate() + 1);
+                            } else if (shortcut.type === "week") {
+                              start.setDate(todayDate.getDate() + 1);
+                              end.setDate(start.getDate() + 7);
+                            } else {
+                              start.setDate(todayDate.getDate() + 1);
+                              end.setDate(start.getDate() + 30);
+                            }
+
+                            setStartDate(start.toISOString().split("T")[0]);
+                            setEndDate(end.toISOString().split("T")[0]);
+                            setActiveTab("guests");
+                          }}
+                          className="rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:border-gray-400 hover:bg-gray-50"
+                        >
+                          {shortcut.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="text-sm font-semibold text-gray-900">Sélectionnez votre créneau</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="mb-1.5 block text-xs font-medium text-gray-600">Date</label>
+                        <input
+                          type="date"
+                          value={startDate}
+                          min={today}
+                          onChange={(e) => setStartDate(e.target.value)}
+                          className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="mb-1.5 block text-xs font-medium text-gray-600">Heure de début</label>
+                          <select
+                            value={startTime}
+                            onChange={(e) => setStartTime(e.target.value)}
+                            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
+                          >
+                            {timeOptions.map((time) => (
+                              <option key={time} value={time}>{time}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="mb-1.5 block text-xs font-medium text-gray-600">Heure de fin</label>
+                          <select
+                            value={endTime}
+                            onChange={(e) => setEndTime(e.target.value)}
+                            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
+                          >
+                            {timeOptions.map((time) => (
+                              <option key={time} value={time}>{time}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2 pt-2">
+                        {[
+                          { label: "Matinée (9h-12h)", start: "09:00", end: "12:00" },
+                          { label: "Après-midi (14h-18h)", start: "14:00", end: "18:00" },
+                          { label: "Journée (9h-18h)", start: "09:00", end: "18:00" },
+                          { label: "Soirée (18h-22h)", start: "18:00", end: "22:00" },
+                        ].map((slot) => (
+                          <button
+                            key={slot.label}
+                            onClick={() => {
+                              setStartTime(slot.start);
+                              setEndTime(slot.end);
+                              if (!startDate) {
+                                setStartDate(today);
+                              }
+                              setActiveTab("guests");
+                            }}
+                            className="rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:border-gray-400 hover:bg-gray-50"
+                          >
+                            {slot.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
@@ -896,37 +1008,43 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [forceExpandSearch, setForceExpandSearch] = useState(false);
+  const [showCategories, setShowCategories] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsLoaded(true);
   }, []);
 
-  // Scroll detection for sticky search bar
+  // Scroll detection pour la barre de recherche et les catégories
   useEffect(() => {
     const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+
       if (heroRef.current) {
         const heroBottom = heroRef.current.getBoundingClientRect().bottom;
         setIsScrolled(heroBottom < 80);
-        if (heroBottom >= 80) {
-          setForceExpandSearch(false);
-        }
       }
+
+      // Cacher les catégories quand on scroll vers le bas, les montrer quand on remonte
+      if (currentScrollY > lastScrollY && currentScrollY > 200) {
+        // Scrolling down
+        setShowCategories(false);
+      } else {
+        // Scrolling up or at top
+        setShowCategories(true);
+      }
+
+      setLastScrollY(currentScrollY);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [lastScrollY]);
 
   const filteredCards = activeCategory
     ? cards.filter((card) => card.type === activeCategory)
     : cards;
-
-  const handleExpandSearch = useCallback(() => {
-    setForceExpandSearch(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
 
   return (
     <main className="min-h-screen bg-[#FAFAFA]">
@@ -1015,25 +1133,30 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
         /* ============================================
            STUDIO - Brush painting stroke
            ============================================ */
-        @keyframes brush-paint {
+        @keyframes brush-draw {
           0% { transform: translate(0, 0) rotate(0deg); }
-          25% { transform: translate(-8px, 8px) rotate(-15deg); }
-          50% { transform: translate(-4px, 4px) rotate(-10deg); }
-          75% { transform: translate(-2px, 2px) rotate(-5deg); }
+          30% { transform: translate(-6px, 6px) rotate(-20deg); }
+          60% { transform: translate(-3px, 3px) rotate(-10deg); }
           100% { transform: translate(0, 0) rotate(0deg); }
         }
-        @keyframes paint-stroke-draw {
+        @keyframes paint-line-draw {
           0% { stroke-dashoffset: 20; }
           100% { stroke-dashoffset: 0; }
         }
-        @keyframes paint-drop {
-          0%, 50% { transform: scale(1); }
-          75% { transform: scale(1.3); }
-          100% { transform: scale(1); }
+        @keyframes canvas-appear {
+          0% { transform: scale(0.9); opacity: 0; }
+          100% { transform: scale(1); opacity: 1; }
         }
-        .animate-brush-paint { animation: brush-paint 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
-        .animate-paint-stroke { animation: paint-stroke-draw 1s ease-out forwards; }
-        .animate-paint-drop { animation: paint-drop 0.6s ease-out 0.8s forwards; }
+        @keyframes drop-fall {
+          0% { transform: translateY(0) scale(0); opacity: 0; }
+          50% { transform: translateY(1px) scale(1); opacity: 1; }
+          100% { transform: translateY(3px) scale(0.8); opacity: 0; }
+        }
+        .animate-brush-draw { animation: brush-draw 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+        .animate-paint-line { animation: paint-line-draw 1s ease-out 0.3s forwards; }
+        .animate-canvas-appear { animation: canvas-appear 0.5s ease-out forwards; }
+        .animate-drop-1 { animation: drop-fall 0.8s ease-out 0.8s forwards; }
+        .animate-drop-2 { animation: drop-fall 0.8s ease-out 1s forwards; }
 
         /* ============================================
            OFFICE - Briefcase opens with documents
@@ -1086,84 +1209,63 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
         .animate-connect-right { animation: connect-line 0.6s ease-out 0.5s forwards; }
 
         /* ============================================
-           PARKING - Car drives in
+           PARKING - Car arrives
            ============================================ */
-        @keyframes parking-line-appear {
-          0% { stroke-dasharray: 12; stroke-dashoffset: 12; }
-          100% { stroke-dasharray: 12; stroke-dashoffset: 0; }
-        }
-        @keyframes car-drive-in {
-          0% { transform: translateX(-30px) scale(0.8); opacity: 0; }
-          60% { transform: translateX(3px) scale(1); opacity: 1; }
+        @keyframes car-arrive {
+          0% { transform: translateX(-20px); opacity: 0; }
+          60% { transform: translateX(3px); opacity: 1; }
           80% { transform: translateX(-1px); }
           100% { transform: translateX(0); }
         }
-        @keyframes headlight-flash {
-          0%, 40% { opacity: 0; }
+        @keyframes headlight-blink {
+          0%, 40% { opacity: 0.3; }
           50% { opacity: 1; }
           60% { opacity: 0.3; }
           70% { opacity: 1; }
           100% { opacity: 1; }
         }
-        .animate-parking-line { animation: parking-line-appear 0.4s ease-out forwards; }
-        .animate-car-park { animation: car-drive-in 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
-        .animate-headlight { animation: headlight-flash 1s ease-out forwards; }
+        @keyframes motion-line {
+          0% { opacity: 1; transform: translateX(0); }
+          100% { opacity: 0; transform: translateX(-5px); }
+        }
+        .animate-car-arrive { animation: car-arrive 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+        .animate-headlight-blink { animation: headlight-blink 1s ease-out forwards; }
+        .animate-motion-line-1 { animation: motion-line 0.5s ease-out forwards; }
+        .animate-motion-line-2 { animation: motion-line 0.5s ease-out 0.1s forwards; }
 
         /* ============================================
-           EVENT SPACE - Confetti explosion
+           EVENT SPACE - Firework explosion
            ============================================ */
-        @keyframes popper-shake {
-          0%, 100% { transform: rotate(0deg); }
-          25% { transform: rotate(-5deg); }
-          75% { transform: rotate(5deg); }
+        @keyframes rocket-launch {
+          0% { transform: translateY(5px); opacity: 0; }
+          50% { transform: translateY(-2px); opacity: 1; }
+          100% { transform: translateY(0); opacity: 1; }
         }
-        @keyframes confetti-burst-1 {
-          0% { transform: translate(0, 0) scale(0); opacity: 0; }
-          30% { opacity: 1; }
-          100% { transform: translate(5px, -15px) scale(1); opacity: 0; }
-        }
-        @keyframes confetti-burst-2 {
-          0% { transform: translate(0, 0) scale(0); opacity: 0; }
-          30% { opacity: 1; }
-          100% { transform: translate(10px, -10px) scale(1); opacity: 0; }
-        }
-        @keyframes confetti-burst-3 {
-          0% { transform: translate(0, 0) scale(0); opacity: 0; }
-          30% { opacity: 1; }
-          100% { transform: translate(12px, -5px) scale(1); opacity: 0; }
-        }
-        @keyframes confetti-burst-4 {
-          0% { transform: translate(0, 0) scale(0); opacity: 0; }
-          30% { opacity: 1; }
-          100% { transform: translate(3px, -18px) scale(1); opacity: 0; }
-        }
-        @keyframes confetti-burst-5 {
-          0% { transform: translate(0, 0) scale(0); opacity: 0; }
-          30% { opacity: 1; }
-          100% { transform: translate(8px, -12px) scale(1); opacity: 0; }
-        }
-        @keyframes confetti-line {
+        @keyframes explosion-center {
           0% { transform: scale(0); opacity: 0; }
-          50% { opacity: 1; }
-          100% { transform: scale(1.2); opacity: 0; }
+          50% { transform: scale(1.3); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
         }
-        @keyframes star-twinkle {
-          0% { transform: scale(0) rotate(0deg); opacity: 0; }
-          50% { transform: scale(1.2) rotate(180deg); opacity: 1; }
-          100% { transform: scale(1) rotate(360deg); opacity: 1; }
+        @keyframes firework-rays {
+          0% { transform: scale(0); opacity: 0; }
+          30% { transform: scale(0.5); opacity: 0.5; }
+          60% { transform: scale(1.1); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
         }
-        .animate-popper-base { animation: popper-shake 0.5s ease-out forwards; }
-        .animate-popper { animation: popper-shake 0.3s ease-out forwards; }
-        .animate-confetti-1 { animation: confetti-burst-1 0.8s ease-out forwards; }
-        .animate-confetti-2 { animation: confetti-burst-2 0.8s ease-out 0.1s forwards; }
-        .animate-confetti-3 { animation: confetti-burst-3 0.8s ease-out 0.15s forwards; }
-        .animate-confetti-4 { animation: confetti-burst-4 0.8s ease-out 0.05s forwards; }
-        .animate-confetti-5 { animation: confetti-burst-5 0.8s ease-out 0.2s forwards; }
-        .animate-confetti-6 { animation: confetti-line 0.6s ease-out 0.1s forwards; }
-        .animate-confetti-7 { animation: confetti-line 0.6s ease-out 0.15s forwards; }
-        .animate-confetti-8 { animation: confetti-line 0.6s ease-out 0.2s forwards; }
-        .animate-star-1 { animation: star-twinkle 0.8s ease-out 0.3s forwards; }
-        .animate-star-2 { animation: star-twinkle 0.8s ease-out 0.4s forwards; }
+        @keyframes sparkle {
+          0% { transform: scale(0); opacity: 0; }
+          50% { transform: scale(1.5); opacity: 1; }
+          100% { transform: scale(1); opacity: 0.7; }
+        }
+        .animate-rocket-launch { animation: rocket-launch 0.5s ease-out forwards; }
+        .animate-explosion-center { animation: explosion-center 0.6s ease-out 0.3s forwards; }
+        .animate-firework-rays { animation: firework-rays 0.8s ease-out 0.4s forwards; }
+        .animate-sparkle-1 { animation: sparkle 0.6s ease-out 0.5s forwards; }
+        .animate-sparkle-2 { animation: sparkle 0.6s ease-out 0.6s forwards; }
+        .animate-sparkle-3 { animation: sparkle 0.6s ease-out 0.7s forwards; }
+        .animate-sparkle-4 { animation: sparkle 0.6s ease-out 0.8s forwards; }
+        .animate-sparkle-5 { animation: sparkle 0.6s ease-out 0.55s forwards; }
+        .animate-sparkle-6 { animation: sparkle 0.6s ease-out 0.65s forwards; }
 
         /* ============================================
            RECORDING STUDIO - Mic with sound waves
@@ -1197,17 +1299,6 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
         }
       `}</style>
 
-      {/* STICKY SEARCH BAR HEADER */}
-      <div
-        className={`fixed left-0 right-0 bg-white/95 backdrop-blur-md transition-all duration-300 ${
-          isScrolled ? "top-16 z-[9998] shadow-md py-3" : "top-0 -translate-y-full opacity-0 pointer-events-none"
-        }`}
-      >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <SearchBar isCompact={isScrolled && !forceExpandSearch} onExpand={handleExpandSearch} />
-        </div>
-      </div>
-
       {/* HERO SECTION */}
       <section ref={heroRef} className="bg-[#FAFAFA] pb-6 pt-8">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -1223,15 +1314,19 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
             </p>
           </div>
 
-          {/* Main Search Bar */}
+          {/* Main Search Bar - se réduit en place */}
           <div className={`mt-8 transition-all delay-150 duration-700 ${isLoaded ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`} style={{ position: "relative", zIndex: 9999 }}>
-            <SearchBar isCompact={false} onExpand={() => {}} />
+            <SearchBar isCompact={isScrolled} />
           </div>
         </div>
       </section>
 
-      {/* CATEGORIES */}
-      <section className="border-b border-gray-200 bg-white sticky top-16 z-30">
+      {/* CATEGORIES - disparaît quand on scroll vers le bas */}
+      <section
+        className={`border-b border-gray-200 bg-white sticky top-16 z-30 transition-all duration-300 ${
+          showCategories ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
+        }`}
+      >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-1 overflow-x-auto py-2 scrollbar-hide">
             <CategoryButton
