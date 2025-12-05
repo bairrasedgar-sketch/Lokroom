@@ -62,7 +62,7 @@ export default function OnboardingForm({ email, initialData, returnFromStripe }:
 
   // Utiliser le statut réel de la base de données (avec possibilité de mise à jour)
   const [identityStatus, setIdentityStatus] = useState(initialData?.identityStatus || "UNVERIFIED");
-  const [connectStatus, setConnectStatus] = useState({
+  const [connectStatus] = useState({
     hasAccount: initialData?.hasStripeConnect || false,
     payoutsEnabled: initialData?.payoutsEnabled || false,
   });
@@ -93,9 +93,10 @@ export default function OnboardingForm({ email, initialData, returnFromStripe }:
 
   // Synchroniser le statut Identity au chargement si PENDING
   useEffect(() => {
+    const currentStatus = identityStatus;
     const syncIdentityStatus = async () => {
       // Toujours synchroniser si le statut est PENDING (le statut réel est peut-être VERIFIED)
-      if (identityStatus === "PENDING") {
+      if (currentStatus === "PENDING") {
         setSyncingStatus(true);
         try {
           const res = await fetch("/api/account/security/refresh-identity", {
@@ -104,7 +105,7 @@ export default function OnboardingForm({ email, initialData, returnFromStripe }:
           if (res.ok) {
             const data = await res.json();
             console.log("Sync Identity response:", data);
-            if (data.identityStatus && data.identityStatus !== identityStatus) {
+            if (data.identityStatus && data.identityStatus !== currentStatus) {
               setIdentityStatus(data.identityStatus);
             }
           }
@@ -119,7 +120,7 @@ export default function OnboardingForm({ email, initialData, returnFromStripe }:
     // Petit délai pour s'assurer que le composant est monté
     const timer = setTimeout(syncIdentityStatus, 500);
     return () => clearTimeout(timer);
-  }, []); // Se déclenche une seule fois au montage
+  }, [identityStatus]);
 
   // Calcul de l'âge pour vérification
   function calculateAge(dateString: string): number {
