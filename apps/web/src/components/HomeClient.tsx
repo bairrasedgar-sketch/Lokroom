@@ -1308,63 +1308,75 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
         }
 
         /* ============================================
-           CATEGORIES COLLAPSE ANIMATION - ROLLING EFFECT
+           CATEGORIES SMOOTH COLLAPSE ANIMATION
+           Animation fluide et premium
            ============================================ */
-        @keyframes roll-to-tous {
+        @keyframes category-collapse {
           0% {
             opacity: 1;
-            transform: translateX(0) rotate(0deg) scale(1);
-          }
-          30% {
-            opacity: 1;
-            transform: translateX(calc(var(--roll-distance, -100px) * 0.3)) rotate(-120deg) scale(0.9);
-          }
-          60% {
-            opacity: 0.7;
-            transform: translateX(calc(var(--roll-distance, -100px) * 0.7)) rotate(-280deg) scale(0.6);
+            transform: scale(1) translateX(0);
+            max-width: 150px;
           }
           100% {
             opacity: 0;
-            transform: translateX(var(--roll-distance, -100px)) rotate(-360deg) scale(0.2);
+            transform: scale(0.3) translateX(-20px);
+            max-width: 0;
+            padding: 0;
+            margin: 0;
           }
         }
 
-        @keyframes roll-from-tous {
+        @keyframes category-expand {
           0% {
             opacity: 0;
-            transform: translateX(var(--roll-distance, -100px)) rotate(-360deg) scale(0.2);
-          }
-          40% {
-            opacity: 0.7;
-            transform: translateX(calc(var(--roll-distance, -100px) * 0.5)) rotate(-180deg) scale(0.6);
-          }
-          70% {
-            opacity: 1;
-            transform: translateX(calc(var(--roll-distance, -100px) * 0.2)) rotate(-60deg) scale(0.9);
+            transform: scale(0.3) translateX(-20px);
+            max-width: 0;
           }
           100% {
             opacity: 1;
-            transform: translateX(0) rotate(0deg) scale(1);
+            transform: scale(1) translateX(0);
+            max-width: 150px;
           }
         }
 
-        .animate-roll-collapse {
-          animation: roll-to-tous 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        .animate-category-collapse {
+          animation: category-collapse 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+          overflow: hidden;
         }
 
-        .animate-roll-expand {
-          animation: roll-from-tous 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        .animate-category-expand {
+          animation: category-expand 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+          overflow: hidden;
         }
 
-        /* Staggered delays et distances pour le rolling */
-        .roll-delay-1 { animation-delay: 0ms; --roll-distance: -60px; }
-        .roll-delay-2 { animation-delay: 50ms; --roll-distance: -120px; }
-        .roll-delay-3 { animation-delay: 100ms; --roll-distance: -180px; }
-        .roll-delay-4 { animation-delay: 150ms; --roll-distance: -240px; }
-        .roll-delay-5 { animation-delay: 200ms; --roll-distance: -300px; }
-        .roll-delay-6 { animation-delay: 250ms; --roll-distance: -360px; }
-        .roll-delay-7 { animation-delay: 300ms; --roll-distance: -420px; }
-        .roll-delay-8 { animation-delay: 350ms; --roll-distance: -480px; }
+        /* Délais échelonnés pour effet cascade */
+        .collapse-delay-1 { animation-delay: 0ms; }
+        .collapse-delay-2 { animation-delay: 30ms; }
+        .collapse-delay-3 { animation-delay: 60ms; }
+        .collapse-delay-4 { animation-delay: 90ms; }
+        .collapse-delay-5 { animation-delay: 120ms; }
+        .collapse-delay-6 { animation-delay: 150ms; }
+        .collapse-delay-7 { animation-delay: 180ms; }
+        .collapse-delay-8 { animation-delay: 210ms; }
+
+        /* Animation du compteur dans Tous */
+        @keyframes count-pop {
+          0% { transform: scale(0); }
+          50% { transform: scale(1.3); }
+          100% { transform: scale(1); }
+        }
+        .animate-count-pop {
+          animation: count-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        /* Scrollbar cachée mais fonctionnelle */
+        .scrollbar-hide {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+          display: none;
+        }
       `}</style>
 
       {/* HERO SECTION */}
@@ -1381,62 +1393,86 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
               Réservez des espaces uniques en quelques clics.
             </p>
           </div>
-
-          {/* Main Search Bar - se réduit en place */}
-          <div className={`mt-8 transition-all delay-150 duration-700 ${isLoaded ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`} style={{ position: "relative", zIndex: 9999 }}>
-            <SearchBar isCompact={isScrolled} />
-          </div>
         </div>
       </section>
 
-      {/* STICKY SEARCH BAR - Toujours visible et centrée */}
-      {isScrolled && (
-        <header className="fixed top-0 left-0 right-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur-md shadow-sm">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="flex h-16 items-center justify-center">
-              {/* Barre de recherche compacte et centrée */}
-              <div className="w-full max-w-2xl">
-                <SearchBar isCompact={true} />
-              </div>
+      {/* STICKY HEADER - Barre de recherche unique qui se réduit */}
+      <div
+        className={`sticky z-50 transition-all duration-500 ${
+          isScrolled
+            ? "top-0 bg-white/95 backdrop-blur-md shadow-md border-b border-gray-200"
+            : "top-0 bg-[#FAFAFA]"
+        }`}
+      >
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className={`flex items-center gap-3 transition-all duration-500 ${isScrolled ? "py-3" : "py-4"}`}>
+            {/* Bouton Tous - Apparaît collé à gauche quand collapsed */}
+            <div
+              className={`shrink-0 transition-all duration-500 ${
+                categoriesCollapsed && isScrolled
+                  ? "opacity-100 translate-x-0"
+                  : "opacity-0 -translate-x-4 w-0 overflow-hidden"
+              }`}
+            >
+              <button
+                onClick={() => {
+                  setCategoriesCollapsed(false);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className="flex items-center gap-2 rounded-full bg-gray-900 px-4 py-2.5 text-white transition-all hover:bg-black hover:scale-105 active:scale-95"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+                  <rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+                  <rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+                  <rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5" />
+                </svg>
+                <span className="text-sm font-medium">Tous</span>
+                <span className={`flex h-5 w-5 items-center justify-center rounded-full bg-white text-xs font-bold text-gray-900 ${categoriesCollapsed ? "animate-count-pop" : ""}`}>
+                  {categories.length}
+                </span>
+              </button>
+            </div>
+
+            {/* Barre de recherche - se réduit sur scroll */}
+            <div className={`flex-1 transition-all duration-500 ${isLoaded ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}>
+              <SearchBar isCompact={isScrolled} />
             </div>
           </div>
-        </header>
-      )}
+        </div>
+      </div>
 
-      {/* CATEGORIES - avec animation de rolling vers Tous */}
+      {/* CATEGORIES - Animation fluide */}
       <section
-        className={`border-b border-gray-200 bg-white sticky top-16 z-30 transition-all duration-300 ${
-          isScrolled ? "top-16" : ""
+        className={`border-b border-gray-200 bg-white sticky z-40 transition-all duration-300 ${
+          isScrolled ? "top-[72px]" : "top-[88px]"
         }`}
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-1 overflow-x-auto py-2 scrollbar-hide">
-            {/* Bouton Tous - devient plus visible quand les autres sont collapsed */}
-            <div className={`transition-all duration-500 ${
-              categoriesCollapsed ? "scale-110" : ""
-            }`}>
-              <CategoryButton
-                category="ALL"
-                label={categoriesCollapsed ? `Tous (${categories.length + 1})` : "Tous"}
-                isActive={activeCategory === null}
-                onClick={() => {
-                  setActiveCategory(null);
-                  if (categoriesCollapsed) {
-                    setCategoriesCollapsed(false);
-                  }
-                }}
-              />
-            </div>
-            {/* Autres catégories avec animation de rolling */}
+            {/* Bouton Tous dans la barre des catégories */}
+            <CategoryButton
+              category="ALL"
+              label="Tous"
+              isActive={activeCategory === null}
+              onClick={() => {
+                setActiveCategory(null);
+                if (categoriesCollapsed) {
+                  setCategoriesCollapsed(false);
+                }
+              }}
+            />
+
+            {/* Autres catégories avec animation fluide */}
             {categories.map((cat, index) => (
               <div
                 key={cat.key}
-                className={`${
+                className={`transition-all duration-300 ${
                   isAnimatingCollapse
-                    ? `animate-roll-collapse roll-delay-${Math.min(index + 1, 8)}`
+                    ? `animate-category-collapse collapse-delay-${Math.min(index + 1, 8)}`
                     : categoriesCollapsed
                     ? "hidden"
-                    : `animate-roll-expand roll-delay-${Math.min(index + 1, 8)}`
+                    : ""
                 }`}
               >
                 <CategoryButton

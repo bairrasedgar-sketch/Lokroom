@@ -30,8 +30,89 @@ const PUBLIC_ROUTES = [
 const SUPPORTED_LOCALES = ["fr", "en", "es", "de", "it", "pt", "zh"] as const;
 type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 
-// Détecte la locale depuis Accept-Language
+// Devises supportées
+type SupportedCurrency = "EUR" | "CAD" | "USD" | "GBP" | "CNY";
+
+// Mapping pays -> devise par défaut
+const COUNTRY_CURRENCY_MAP: Record<string, SupportedCurrency> = {
+  // Amérique du Nord
+  CA: "CAD", // Canada
+  US: "USD", // États-Unis
+
+  // Europe (Zone Euro)
+  FR: "EUR", // France
+  DE: "EUR", // Allemagne
+  ES: "EUR", // Espagne
+  IT: "EUR", // Italie
+  PT: "EUR", // Portugal
+  NL: "EUR", // Pays-Bas
+  BE: "EUR", // Belgique
+  AT: "EUR", // Autriche
+  IE: "EUR", // Irlande
+  FI: "EUR", // Finlande
+  LU: "EUR", // Luxembourg
+  GR: "EUR", // Grèce
+
+  // Europe (Hors zone Euro)
+  GB: "GBP", // Royaume-Uni
+  CH: "EUR", // Suisse (on utilise EUR pour simplifier)
+
+  // Asie
+  CN: "CNY", // Chine
+  HK: "CNY", // Hong Kong
+  TW: "CNY", // Taiwan
+  MO: "CNY", // Macao
+};
+
+// Mapping pays -> langue par défaut
+const COUNTRY_LOCALE_MAP: Record<string, SupportedLocale> = {
+  // Francophone
+  FR: "fr", // France
+  BE: "fr", // Belgique
+  CH: "fr", // Suisse
+  CA: "fr", // Canada (Québec en priorité)
+  LU: "fr", // Luxembourg
+  MC: "fr", // Monaco
+
+  // Anglophone
+  US: "en", // États-Unis
+  GB: "en", // Royaume-Uni
+  IE: "en", // Irlande
+  AU: "en", // Australie
+  NZ: "en", // Nouvelle-Zélande
+
+  // Hispanophone
+  ES: "es", // Espagne
+  MX: "es", // Mexique
+  AR: "es", // Argentine
+  CO: "es", // Colombie
+
+  // Germanophone
+  DE: "de", // Allemagne
+  AT: "de", // Autriche
+
+  // Italien
+  IT: "it", // Italie
+
+  // Portugais
+  PT: "pt", // Portugal
+  BR: "pt", // Brésil
+
+  // Chinois
+  CN: "zh", // Chine
+  HK: "zh", // Hong Kong
+  TW: "zh", // Taiwan
+};
+
+// Détecte la locale depuis le pays IP ou Accept-Language
 function pickLocale(req: NextRequest): SupportedLocale {
+  // 1. Essayer d'abord par le pays IP (Vercel)
+  const countryCode = (req.headers.get("x-vercel-ip-country") || "").toUpperCase();
+  if (countryCode && COUNTRY_LOCALE_MAP[countryCode]) {
+    return COUNTRY_LOCALE_MAP[countryCode];
+  }
+
+  // 2. Fallback sur Accept-Language
   const header = (req.headers.get("accept-language") || "").toLowerCase();
 
   // Essaie de trouver une langue supportée dans l'en-tête
@@ -41,14 +122,19 @@ function pickLocale(req: NextRequest): SupportedLocale {
     }
   }
 
-  // Fallback sur le français
+  // 3. Fallback sur le français
   return "fr";
 }
 
-// Détecte devise depuis le pays (en-tête Vercel) sinon EUR par défaut
-function pickCurrency(req: NextRequest): "EUR" | "CAD" {
-  const cc = (req.headers.get("x-vercel-ip-country") || "").toUpperCase();
-  if (cc === "CA") return "CAD";
+// Détecte devise depuis le pays IP
+function pickCurrency(req: NextRequest): SupportedCurrency {
+  const countryCode = (req.headers.get("x-vercel-ip-country") || "").toUpperCase();
+
+  if (countryCode && COUNTRY_CURRENCY_MAP[countryCode]) {
+    return COUNTRY_CURRENCY_MAP[countryCode];
+  }
+
+  // Par défaut EUR
   return "EUR";
 }
 
@@ -166,13 +252,11 @@ export async function middleware(req: NextRequest) {
     ? cookieLocale
     : pickLocale(req);
 
-  let currency = req.cookies.get("currency")?.value as
-    | "EUR"
-    | "CAD"
-    | undefined;
-
-  // Défaut si absent
-  if (!currency) currency = pickCurrency(req);
+  const cookieCurrency = req.cookies.get("currency")?.value as SupportedCurrency | undefined;
+  const validCurrencies: SupportedCurrency[] = ["EUR", "CAD", "USD", "GBP", "CNY"];
+  const currency: SupportedCurrency = cookieCurrency && validCurrencies.includes(cookieCurrency)
+    ? cookieCurrency
+    : pickCurrency(req);
 
   // Pose/rafraîchit cookies (1 an)
   res.cookies.set("locale", locale, {

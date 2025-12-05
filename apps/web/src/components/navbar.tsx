@@ -38,6 +38,15 @@ const CURRENCIES: CurrencyOption[] = [
   { code: "GBP", label: "Livre", symbol: "£" },
 ];
 
+// Mapping devise -> symbole pour l'affichage compact
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  EUR: "€",
+  USD: "$",
+  CAD: "$",
+  CNY: "¥",
+  GBP: "£",
+};
+
 type NavTexts = {
   navListings: string;
   navBookings: string;
@@ -254,23 +263,8 @@ const NAV_TEXTS: Record<LocaleCode, NavTexts> = {
     continueEmail: "使用邮箱继续",
     continueFacebook: "使用 Facebook 继续",
     authLegal:
-      "继续操作即表示你已阅读并接受 Lok’Room 的条款和隐私政策。",
+      "继续操作即表示你已阅读并接受 Lok'Room 的条款和隐私政策。",
   },
-};
-
-type CookieNoticeTexts = {
-  display: string;
-  close: string;
-};
-
-const COOKIE_NOTICE_TEXTS: Record<LocaleCode, CookieNoticeTexts> = {
-  fr: { display: "Affichage", close: "Fermer" },
-  en: { display: "Display", close: "Close" },
-  es: { display: "Visualización", close: "Cerrar" },
-  de: { display: "Anzeige", close: "Schließen" },
-  it: { display: "Visualizzazione", close: "Chiudi" },
-  pt: { display: "Exibição", close: "Fechar" },
-  zh: { display: "显示", close: "关闭" },
 };
 
 /**
@@ -408,11 +402,11 @@ export default function Navbar() {
             )}
 
             <div className="ml-4 flex items-center gap-2">
-              {/* Globe langue/devise */}
+              {/* Globe langue/devise avec indicateur */}
               <button
                 type="button"
                 onClick={() => setLocaleModalOpen(true)}
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 bg-white transition hover:bg-gray-100 hover:shadow-md"
+                className="flex items-center gap-1.5 rounded-full border border-gray-300 bg-white px-3 py-2 transition hover:bg-gray-100 hover:shadow-md"
                 aria-label="Choisir la langue et la devise"
               >
                 <svg
@@ -427,6 +421,9 @@ export default function Navbar() {
                   <path d="M12 2a15 15 0 0 1 0 20" />
                   <path d="M12 2a15 15 0 0 0 0 20" />
                 </svg>
+                <span className="text-sm font-medium text-gray-700">
+                  {currentLocale.toUpperCase()} {CURRENCY_SYMBOLS[currentCurrency] || "€"}
+                </span>
               </button>
 
               {/* Pas connecté */}
@@ -622,7 +619,7 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={() => setLocaleModalOpen(true)}
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-300 bg-white transition hover:bg-gray-100 hover:shadow-md"
+                  className="flex items-center gap-1.5 rounded-full border border-gray-300 bg-white px-3 py-2 transition hover:bg-gray-100 hover:shadow-md"
                   aria-label="Choisir la langue et la devise"
                 >
                   <svg
@@ -637,6 +634,9 @@ export default function Navbar() {
                     <path d="M12 2a15 15 0 0 1 0 20" />
                     <path d="M12 2a15 15 0 0 0 0 20" />
                   </svg>
+                  <span className="text-sm font-medium text-gray-700">
+                    {currentLocale.toUpperCase()} {CURRENCY_SYMBOLS[currentCurrency] || "€"}
+                  </span>
                 </button>
 
                 {!isLoggedIn && (
@@ -652,8 +652,6 @@ export default function Navbar() {
             </nav>
           </div>
         )}
-
-        <TopCookieNotice />
       </header>
 
       {/* MODAL LANGUE / DEVISE */}
@@ -882,47 +880,5 @@ export default function Navbar() {
         </div>
       )}
     </>
-  );
-}
-
-function TopCookieNotice() {
-  const [show, setShow] = useState(true);
-  const [currency, setCurrency] = useState<string>("EUR");
-  const [locale, setLocale] = useState<LocaleCode>("fr");
-
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-
-    const mCur = document.cookie.match(/(?:^|;\s*)currency=([^;]+)/);
-    const mLoc = document.cookie.match(/(?:^|;\s*)locale=([^;]+)/);
-
-    setCurrency(mCur?.[1] || "EUR");
-
-    const loc = (mLoc?.[1] as LocaleCode | undefined) ?? getClientLocale();
-    setLocale(loc);
-  }, []);
-
-  if (!show) return null;
-
-  const texts = COOKIE_NOTICE_TEXTS[locale] ?? COOKIE_NOTICE_TEXTS.fr;
-
-  return (
-    <div className="border-t bg-gray-50">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-2 text-xs text-gray-700">
-        <div>
-          {texts.display}&nbsp;:&nbsp;
-          <strong>{currency}</strong>&nbsp;•&nbsp;
-          <strong>{locale.toUpperCase()}</strong>
-        </div>
-        <button
-          type="button"
-          onClick={() => setShow(false)}
-          className="rounded px-1.5 py-0.5 hover:bg-gray-100"
-          aria-label={texts.close}
-        >
-          {texts.close}
-        </button>
-      </div>
-    </div>
   );
 }
