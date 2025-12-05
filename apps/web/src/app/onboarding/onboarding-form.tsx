@@ -91,11 +91,11 @@ export default function OnboardingForm({ email, initialData, returnFromStripe }:
     }
   }, [returnFromStripe]);
 
-  // Synchroniser le statut Identity au retour de Stripe ou si PENDING
+  // Synchroniser le statut Identity au chargement si PENDING
   useEffect(() => {
     const syncIdentityStatus = async () => {
-      // Synchroniser si on revient de Stripe ou si le statut est PENDING
-      if (returnFromStripe || identityStatus === "PENDING") {
+      // Toujours synchroniser si le statut est PENDING (le statut réel est peut-être VERIFIED)
+      if (identityStatus === "PENDING") {
         setSyncingStatus(true);
         try {
           const res = await fetch("/api/account/security/refresh-identity", {
@@ -103,6 +103,7 @@ export default function OnboardingForm({ email, initialData, returnFromStripe }:
           });
           if (res.ok) {
             const data = await res.json();
+            console.log("Sync Identity response:", data);
             if (data.identityStatus && data.identityStatus !== identityStatus) {
               setIdentityStatus(data.identityStatus);
             }
@@ -115,10 +116,10 @@ export default function OnboardingForm({ email, initialData, returnFromStripe }:
       }
     };
 
-    // Petit délai pour laisser le temps au webhook de traiter
-    const timer = setTimeout(syncIdentityStatus, returnFromStripe ? 1500 : 500);
+    // Petit délai pour s'assurer que le composant est monté
+    const timer = setTimeout(syncIdentityStatus, 500);
     return () => clearTimeout(timer);
-  }, [returnFromStripe]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // Se déclenche une seule fois au montage
 
   // Calcul de l'âge pour vérification
   function calculateAge(dateString: string): number {
