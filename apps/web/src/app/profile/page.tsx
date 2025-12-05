@@ -68,6 +68,7 @@ export default function ProfilePage() {
   const [user, setUser] = useState<UserDTO | null>(null);
   const [initial, setInitial] = useState<UserDTO | null>(null);
   const [role, setRole] = useState<Role>("GUEST");
+  const [loading, setLoading] = useState(true);
 
   // pour l'édition simple (nom + pays)
   const [name, setName] = useState("");
@@ -107,7 +108,10 @@ export default function ProfilePage() {
     (async () => {
       try {
         const res = await fetch("/api/profile", { cache: "no-store" });
-        if (!res.ok) return;
+        if (!res.ok) {
+          setLoading(false);
+          return;
+        }
         const { user } = (await res.json()) as { user: UserDTO };
         setUser(user);
         setInitial(user);
@@ -131,6 +135,8 @@ export default function ProfilePage() {
         }
       } catch {
         // silencieux
+      } finally {
+        setLoading(false);
       }
     })();
   }, []);
@@ -395,6 +401,17 @@ export default function ProfilePage() {
   }, [user]);
 
   const tripsCount = trips.length;
+
+  // Afficher un loader pendant le chargement
+  if (loading) {
+    return (
+      <main className="mx-auto max-w-6xl px-4 pb-12 pt-10">
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-gray-900" />
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-12 pt-10">
