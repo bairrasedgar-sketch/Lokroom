@@ -164,6 +164,20 @@ export function UserMenu() {
               Versements
             </Link>
             <Link
+              href="/host/wallet"
+              onClick={() => setOpen(false)}
+              className="block px-4 py-2 hover:bg-gray-50"
+            >
+              Portefeuille
+            </Link>
+            <Link
+              href="/host/listings"
+              onClick={() => setOpen(false)}
+              className="block px-4 py-2 hover:bg-gray-50"
+            >
+              Mes annonces
+            </Link>
+            <Link
               href="/account?tab=taxes"
               onClick={() => setOpen(false)}
               className="block px-4 py-2 hover:bg-gray-50"

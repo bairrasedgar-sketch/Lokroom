@@ -72,7 +72,7 @@ export default async function HostPage() {
               {t.createListing}
             </a>
             <a
-              href="/listings?mine=1"
+              href="/host/listings"
               className="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50"
             >
               {t.viewMyListings}

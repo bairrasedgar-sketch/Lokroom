@@ -5,77 +5,179 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 
+// Icônes SVG pour les types d'espaces (style Airbnb)
+const SpaceIcons = {
+  APARTMENT: (
+    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2" className="h-8 w-8">
+      <rect x="4" y="8" width="24" height="20" rx="2" />
+      <path d="M4 14h24" />
+      <path d="M12 14v14" />
+      <rect x="7" y="17" width="3" height="3" fill="currentColor" stroke="none" />
+      <rect x="15" y="17" width="3" height="3" fill="currentColor" stroke="none" />
+      <rect x="22" y="17" width="3" height="3" fill="currentColor" stroke="none" />
+      <rect x="15" y="23" width="3" height="3" fill="currentColor" stroke="none" />
+      <rect x="22" y="23" width="3" height="3" fill="currentColor" stroke="none" />
+    </svg>
+  ),
+  HOUSE: (
+    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2" className="h-8 w-8">
+      <path d="M5 16L16 6l11 10" />
+      <path d="M7 15v11a2 2 0 002 2h14a2 2 0 002-2V15" />
+      <rect x="12" y="20" width="8" height="8" />
+    </svg>
+  ),
+  ROOM: (
+    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2" className="h-8 w-8">
+      <rect x="4" y="14" width="24" height="12" rx="2" />
+      <path d="M4 20h24" />
+      <rect x="6" y="8" width="8" height="6" rx="1" />
+      <circle cx="10" cy="11" r="1.5" fill="currentColor" stroke="none" />
+    </svg>
+  ),
+  STUDIO: (
+    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2" className="h-8 w-8">
+      <circle cx="16" cy="16" r="10" />
+      <circle cx="16" cy="16" r="4" />
+      <path d="M16 6v2" />
+      <path d="M16 24v2" />
+      <path d="M6 16h2" />
+      <path d="M24 16h2" />
+    </svg>
+  ),
+  OFFICE: (
+    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2" className="h-8 w-8">
+      <rect x="6" y="8" width="20" height="16" rx="2" />
+      <path d="M6 12h20" />
+      <path d="M10 16h4" />
+      <path d="M10 20h8" />
+    </svg>
+  ),
+  COWORKING: (
+    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2" className="h-8 w-8">
+      <circle cx="10" cy="10" r="4" />
+      <circle cx="22" cy="10" r="4" />
+      <path d="M6 28v-4a4 4 0 014-4h4" />
+      <path d="M26 28v-4a4 4 0 00-4-4h-4" />
+      <path d="M16 16v12" />
+    </svg>
+  ),
+  MEETING_ROOM: (
+    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2" className="h-8 w-8">
+      <rect x="4" y="10" width="24" height="14" rx="2" />
+      <path d="M8 10V8a2 2 0 012-2h12a2 2 0 012 2v2" />
+      <circle cx="10" cy="17" r="2" fill="currentColor" stroke="none" />
+      <circle cx="16" cy="17" r="2" fill="currentColor" stroke="none" />
+      <circle cx="22" cy="17" r="2" fill="currentColor" stroke="none" />
+    </svg>
+  ),
+  PARKING: (
+    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2" className="h-8 w-8">
+      <rect x="4" y="4" width="24" height="24" rx="4" />
+      <path d="M12 22V10h5a4 4 0 010 8h-5" strokeWidth="3" />
+    </svg>
+  ),
+  GARAGE: (
+    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2" className="h-8 w-8">
+      <path d="M4 14l12-8 12 8" />
+      <path d="M6 13v13h20V13" />
+      <rect x="10" y="18" width="12" height="8" />
+      <path d="M10 22h12" />
+    </svg>
+  ),
+  STORAGE: (
+    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2" className="h-8 w-8">
+      <rect x="4" y="6" width="24" height="8" rx="1" />
+      <rect x="4" y="18" width="24" height="8" rx="1" />
+      <circle cx="22" cy="10" r="1.5" fill="currentColor" stroke="none" />
+      <circle cx="22" cy="22" r="1.5" fill="currentColor" stroke="none" />
+    </svg>
+  ),
+  EVENT_SPACE: (
+    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2" className="h-8 w-8">
+      <path d="M16 4l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1 3-6z" />
+    </svg>
+  ),
+  RECORDING_STUDIO: (
+    <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="2" className="h-8 w-8">
+      <rect x="12" y="4" width="8" height="14" rx="4" />
+      <path d="M8 14v2a8 8 0 0016 0v-2" />
+      <path d="M16 24v4" />
+      <path d="M10 28h12" />
+    </svg>
+  ),
+};
+
 // Types d'espaces disponibles sur Lok'Room
 const SPACE_TYPES = [
   {
     id: "APARTMENT",
-    icon: "🏢",
+    icon: SpaceIcons.APARTMENT,
     title: "Appartement",
     description: "Logement complet ou chambre privée",
   },
   {
     id: "HOUSE",
-    icon: "🏠",
+    icon: SpaceIcons.HOUSE,
     title: "Maison",
     description: "Maison entière ou partie de maison",
   },
   {
     id: "ROOM",
-    icon: "🛏️",
+    icon: SpaceIcons.ROOM,
     title: "Chambre",
     description: "Chambre privée chez l'habitant",
   },
   {
     id: "STUDIO",
-    icon: "🎬",
+    icon: SpaceIcons.STUDIO,
     title: "Studio créatif",
     description: "Studio photo, vidéo ou d'enregistrement",
   },
   {
     id: "OFFICE",
-    icon: "💼",
+    icon: SpaceIcons.OFFICE,
     title: "Bureau",
     description: "Espace de travail privé",
   },
   {
     id: "COWORKING",
-    icon: "👥",
+    icon: SpaceIcons.COWORKING,
     title: "Coworking",
     description: "Espace de travail partagé",
   },
   {
     id: "MEETING_ROOM",
-    icon: "📊",
+    icon: SpaceIcons.MEETING_ROOM,
     title: "Salle de réunion",
     description: "Pour vos meetings et présentations",
   },
   {
     id: "PARKING",
-    icon: "🚗",
+    icon: SpaceIcons.PARKING,
     title: "Parking",
     description: "Place de stationnement",
   },
   {
     id: "GARAGE",
-    icon: "🔧",
+    icon: SpaceIcons.GARAGE,
     title: "Garage",
     description: "Pour bricolage, mécanique ou stockage",
   },
   {
     id: "STORAGE",
-    icon: "📦",
+    icon: SpaceIcons.STORAGE,
     title: "Stockage",
     description: "Espace de rangement sécurisé",
   },
   {
     id: "EVENT_SPACE",
-    icon: "🎉",
+    icon: SpaceIcons.EVENT_SPACE,
     title: "Espace événementiel",
     description: "Pour fêtes, séminaires, shootings",
   },
   {
     id: "RECORDING_STUDIO",
-    icon: "🎤",
+    icon: SpaceIcons.RECORDING_STUDIO,
     title: "Studio d'enregistrement",
     description: "Pour musique, podcast, voix-off",
   },
@@ -215,9 +317,9 @@ export default function BecomeHostPage() {
               {isHost ? "Créer une nouvelle annonce" : "Deviens hôte sur Lok'Room"}
             </h1>
             <p className="mt-4 text-lg text-gray-600">
-              Loue n'importe quel espace : logement, bureau, parking, studio...
+              Loue n&apos;importe quel espace : logement, bureau, parking, studio...
               <br />
-              Tu fixes les règles, on s'occupe du paiement sécurisé.
+              Tu fixes les règles, on s&apos;occupe du paiement sécurisé.
             </p>
 
             <div className="mt-12 grid gap-6 text-left md:grid-cols-3">
@@ -225,7 +327,7 @@ export default function BecomeHostPage() {
                 <div className="mb-4 text-3xl">💰</div>
                 <h3 className="font-semibold text-gray-900">Revenus flexibles</h3>
                 <p className="mt-2 text-sm text-gray-600">
-                  Loue à l'heure ou à la journée. Tu choisis tes tarifs et tes disponibilités.
+                  Loue à l&apos;heure ou à la journée. Tu choisis tes tarifs et tes disponibilités.
                 </p>
               </div>
               <div className="rounded-2xl border border-gray-200 p-6">
@@ -239,7 +341,7 @@ export default function BecomeHostPage() {
                 <div className="mb-4 text-3xl">✅</div>
                 <h3 className="font-semibold text-gray-900">Voyageurs vérifiés</h3>
                 <p className="mt-2 text-sm text-gray-600">
-                  Tous les utilisateurs sont vérifiés avec leur pièce d'identité.
+                  Tous les utilisateurs sont vérifiés avec leur pièce d&apos;identité.
                 </p>
               </div>
             </div>
@@ -249,7 +351,7 @@ export default function BecomeHostPage() {
         {step === "space-type" && (
           <div>
             <h1 className="text-3xl font-semibold text-gray-900 md:text-4xl">
-              Quel type d'espace veux-tu proposer ?
+              Quel type d&apos;espace veux-tu proposer ?
             </h1>
             <p className="mt-2 text-gray-600">
               Choisis la catégorie qui correspond le mieux à ton espace.

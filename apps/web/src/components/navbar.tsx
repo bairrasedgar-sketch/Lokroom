@@ -517,11 +517,11 @@ export default function Navbar() {
         {/* Panneau mobile */}
         {open && (
           <div className="border-t bg-white md:hidden">
-            <nav className="mx-auto flex max-w-5xl flex-col gap-2 px-4 py-3">
+            <nav className="mx-auto flex max-w-5xl flex-col gap-1 px-4 py-3">
               <Link
                 href="/listings"
-                className={`py-1 ${
-                  pathname?.startsWith("/listings") ? "underline" : ""
+                className={`rounded-lg px-3 py-2 hover:bg-gray-100 ${
+                  pathname?.startsWith("/listings") ? "font-semibold" : ""
                 }`}
               >
                 {t.navListings}
@@ -531,24 +531,94 @@ export default function Navbar() {
                 <>
                   <Link
                     href="/bookings"
-                    className={`py-1 ${
-                      pathname === "/bookings" ? "underline" : ""
+                    className={`rounded-lg px-3 py-2 hover:bg-gray-100 ${
+                      pathname === "/bookings" ? "font-semibold" : ""
                     }`}
                   >
                     {t.navBookings}
                   </Link>
                   <Link
                     href="/profile"
-                    className={`py-1 ${
-                      pathname === "/profile" ? "underline" : ""
+                    className={`rounded-lg px-3 py-2 hover:bg-gray-100 ${
+                      pathname === "/profile" ? "font-semibold" : ""
                     }`}
                   >
                     {t.navProfile}
                   </Link>
+
+                  <div className="my-2 border-t border-gray-100" />
+
+                  {/* Liens supplémentaires pour utilisateurs connectés */}
+                  <Link
+                    href="/favorites"
+                    className="rounded-lg px-3 py-2 hover:bg-gray-100"
+                  >
+                    Favoris
+                  </Link>
+                  <Link
+                    href="/messages"
+                    className="rounded-lg px-3 py-2 hover:bg-gray-100"
+                  >
+                    Messages
+                  </Link>
+                  <Link
+                    href="/account"
+                    className="rounded-lg px-3 py-2 hover:bg-gray-100"
+                  >
+                    Paramètres
+                  </Link>
+
+                  <div className="my-2 border-t border-gray-100" />
+
+                  {/* Boutons hôte */}
+                  {isHost ? (
+                    <>
+                      <Link
+                        href="/listings/new"
+                        className="rounded-lg px-3 py-2 font-medium hover:bg-gray-100"
+                      >
+                        {t.createListing || "Créer une annonce"}
+                      </Link>
+                      <Link
+                        href="/host/listings"
+                        className="rounded-lg px-3 py-2 hover:bg-gray-100"
+                      >
+                        Mes annonces
+                      </Link>
+                      <Link
+                        href="/host/wallet"
+                        className="rounded-lg px-3 py-2 hover:bg-gray-100"
+                      >
+                        Portefeuille
+                      </Link>
+                      {isOnHostArea ? (
+                        <Link
+                          href="/"
+                          className="rounded-lg bg-gray-100 px-3 py-2 font-medium"
+                        >
+                          {t.travelerMode}
+                        </Link>
+                      ) : (
+                        <Link
+                          href="/host"
+                          className="rounded-lg bg-gray-100 px-3 py-2 font-medium"
+                        >
+                          {t.hostMode}
+                        </Link>
+                      )}
+                    </>
+                  ) : (
+                    <Link
+                      href="/become-host"
+                      className="rounded-lg bg-gray-100 px-3 py-2 font-medium"
+                    >
+                      {t.becomeHost}
+                    </Link>
+                  )}
                 </>
               )}
 
-              <div className="mt-2 flex items-center gap-2">
+              <div className="mt-3 flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setLocaleModalOpen(true)}
