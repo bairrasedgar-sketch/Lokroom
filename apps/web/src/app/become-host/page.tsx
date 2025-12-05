@@ -192,7 +192,6 @@ export default function BecomeHostPage() {
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [activatingHost, setActivatingHost] = useState(false);
-  const [kycStatus, setKycStatus] = useState<string | null>(null);
 
   // Vérifier si l'utilisateur est déjà hôte
   const isHost = (session?.user as { role?: string })?.role === "HOST" ||
@@ -229,8 +228,6 @@ export default function BecomeHostPage() {
           if (!res.ok) {
             throw new Error(data.error || "Erreur activation");
           }
-
-          setKycStatus(data.identityStatus);
         } catch (err) {
           console.error(err);
           alert(err instanceof Error ? err.message : "Erreur inconnue");
@@ -243,28 +240,9 @@ export default function BecomeHostPage() {
       // Vérifier le statut KYC
       setStep("check-kyc");
     } else if (step === "check-kyc") {
-      // Vérifier le KYC avant de continuer
+      // Aller directement créer l'annonce - la vérification KYC se fera à la publication
       setLoading(true);
-      try {
-        // Récupérer le statut KYC actuel
-        const res = await fetch("/api/account/security/status");
-        const data = await res.json();
-        const currentKycStatus = data.identityStatus || kycStatus;
-
-        if (currentKycStatus !== "VERIFIED") {
-          // KYC pas validé - rediriger vers onboarding pour compléter
-          router.push("/onboarding?from=become-host");
-        } else {
-          // KYC validé - aller créer l'annonce
-          router.push("/listings/new");
-        }
-      } catch (err) {
-        console.error(err);
-        // En cas d'erreur, essayer quand même
-        router.push("/listings/new");
-      } finally {
-        setLoading(false);
-      }
+      router.push("/listings/new");
     }
   };
 
@@ -357,25 +335,27 @@ export default function BecomeHostPage() {
               Choisis la catégorie qui correspond le mieux à ton espace.
             </p>
 
-            <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {SPACE_TYPES.map((type) => (
-                <button
-                  key={type.id}
-                  type="button"
-                  onClick={() => setSelectedType(type.id)}
-                  className={`flex items-start gap-4 rounded-xl border-2 p-4 text-left transition-all hover:border-gray-400 ${
-                    selectedType === type.id
-                      ? "border-gray-900 bg-gray-50"
-                      : "border-gray-200"
-                  }`}
-                >
-                  <span className="text-2xl">{type.icon}</span>
-                  <div>
-                    <div className="font-medium text-gray-900">{type.title}</div>
-                    <div className="text-sm text-gray-500">{type.description}</div>
-                  </div>
-                </button>
-              ))}
+            <div className="mt-8 max-h-[50vh] overflow-y-auto pb-4">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {SPACE_TYPES.map((type) => (
+                  <button
+                    key={type.id}
+                    type="button"
+                    onClick={() => setSelectedType(type.id)}
+                    className={`flex items-start gap-4 rounded-xl border-2 p-4 text-left transition-all hover:border-gray-400 ${
+                      selectedType === type.id
+                        ? "border-gray-900 bg-gray-50"
+                        : "border-gray-200"
+                    }`}
+                  >
+                    <span className="text-2xl">{type.icon}</span>
+                    <div>
+                      <div className="font-medium text-gray-900">{type.title}</div>
+                      <div className="text-sm text-gray-500">{type.description}</div>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
 
             {activatingHost && (

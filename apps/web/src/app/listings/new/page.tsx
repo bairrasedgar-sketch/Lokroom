@@ -202,6 +202,18 @@ export default function NewListingPage() {
     setFormData((prev) => ({ ...prev, currency: cookieCurrency }));
   }, []);
 
+  // Récupérer le type pré-sélectionné depuis become-host
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedType = sessionStorage.getItem("lokroom_listing_type");
+      if (savedType && LISTING_TYPES.some(t => t.value === savedType)) {
+        setFormData((prev) => ({ ...prev, type: savedType as ListingType }));
+        setCurrentStep("location");
+        sessionStorage.removeItem("lokroom_listing_type");
+      }
+    }
+  }, []);
+
   // Check if Google Maps is already loaded
   useEffect(() => {
     if (typeof window !== "undefined") {
