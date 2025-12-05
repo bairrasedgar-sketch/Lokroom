@@ -21,7 +21,8 @@
       "Bash(npx prisma studio)",
       "Bash(npx tsx:*)",
       "Bash(npx prisma db push:*)",
-      "Bash(git fetch:*)"
+      "Bash(git fetch:*)",
+      "Bash(xargs:*)"
     ],
     "deny": [],
     "ask": []

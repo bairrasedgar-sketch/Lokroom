@@ -443,9 +443,10 @@ export default function NewListingPage() {
   const [citySuggestions, setCitySuggestions] = useState<any[]>([]);
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
 
-  // Draft choice modal
+  // Draft choice modal - supports multiple drafts
   const [showDraftModal, setShowDraftModal] = useState(false);
-  const [pendingDraft, setPendingDraft] = useState<{ formData: FormData; currentStep: Step; lastSaved: string } | null>(null);
+  const [availableDrafts, setAvailableDrafts] = useState<Array<{ id: string; formData: FormData; currentStep: Step; lastSaved: string; createdAt: string }>>([]);
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
 
   // Images
   const [images, setImages] = useState<LocalImage[]>([]);
@@ -471,10 +472,11 @@ export default function NewListingPage() {
   const [showIdentityModal, setShowIdentityModal] = useState(false);
   const [loadingIdentity, setLoadingIdentity] = useState(false);
 
-  // Draft management
+  // Draft management - supports multiple drafts
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [savingDraft, setSavingDraft] = useState(false);
-  const DRAFT_KEY = "lokroom_listing_draft";
+  const DRAFTS_KEY = "lokroom_listing_drafts";
+  const DRAFT_EXPIRY_DAYS = 90;
 
   // Auto-animate
   const [filesParent] = useAutoAnimate<HTMLDivElement>({ duration: 300 });
@@ -505,58 +507,89 @@ export default function NewListingPage() {
     }
   }, [status]);
 
-  // Load draft from localStorage - show modal instead of auto-restore
+  // Load drafts from localStorage - show modal if drafts exist
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const savedDraft = localStorage.getItem(DRAFT_KEY);
-      if (savedDraft) {
+      const savedDrafts = localStorage.getItem(DRAFTS_KEY);
+      if (savedDrafts) {
         try {
-          const parsed = JSON.parse(savedDraft);
-          if (parsed.formData && (parsed.formData.type || parsed.formData.title || parsed.formData.city)) {
-            // Ensure spaceFeatures is always an array
-            if (!Array.isArray(parsed.formData.spaceFeatures)) {
-              parsed.formData.spaceFeatures = [];
+          const parsed = JSON.parse(savedDrafts);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            // Filter out expired drafts (older than 90 days)
+            const now = new Date();
+            const validDrafts = parsed.filter((draft: any) => {
+              if (!draft.createdAt) return false;
+              const createdDate = new Date(draft.createdAt);
+              const daysDiff = (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
+              return daysDiff < DRAFT_EXPIRY_DAYS;
+            }).map((draft: any) => ({
+              ...draft,
+              formData: {
+                ...draft.formData,
+                spaceFeatures: Array.isArray(draft.formData?.spaceFeatures) ? draft.formData.spaceFeatures : [],
+              },
+            }));
+
+            // Update localStorage with only valid drafts
+            if (validDrafts.length !== parsed.length) {
+              localStorage.setItem(DRAFTS_KEY, JSON.stringify(validDrafts));
             }
-            setPendingDraft(parsed);
-            setShowDraftModal(true);
+
+            if (validDrafts.length > 0) {
+              setAvailableDrafts(validDrafts);
+              setShowDraftModal(true);
+            }
           }
         } catch (e) {
-          console.error("Error loading draft:", e);
-          localStorage.removeItem(DRAFT_KEY);
+          console.error("Error loading drafts:", e);
+          localStorage.removeItem(DRAFTS_KEY);
         }
       }
     }
   }, []);
 
-  // Restore draft from modal
-  const handleRestoreDraft = useCallback(() => {
-    if (pendingDraft) {
+  // Restore a specific draft from the modal
+  const handleRestoreDraft = useCallback((draftId: string) => {
+    const selectedDraft = availableDrafts.find(d => d.id === draftId);
+    if (selectedDraft) {
       // Ensure spaceFeatures is an array before restoring
       const safeFormData = {
-        ...pendingDraft.formData,
-        spaceFeatures: Array.isArray(pendingDraft.formData.spaceFeatures) ? pendingDraft.formData.spaceFeatures : [],
+        ...selectedDraft.formData,
+        spaceFeatures: Array.isArray(selectedDraft.formData.spaceFeatures) ? selectedDraft.formData.spaceFeatures : [],
       };
       setFormData(safeFormData);
-      if (pendingDraft.currentStep) {
-        setCurrentStep(pendingDraft.currentStep);
+      setCurrentDraftId(draftId);
+      if (selectedDraft.currentStep) {
+        setCurrentStep(selectedDraft.currentStep);
       }
-      if (pendingDraft.lastSaved) {
-        setLastSaved(new Date(pendingDraft.lastSaved));
+      if (selectedDraft.lastSaved) {
+        setLastSaved(new Date(selectedDraft.lastSaved));
       }
       toast.success("Brouillon restauré !");
     }
     setShowDraftModal(false);
-    setPendingDraft(null);
-  }, [pendingDraft]);
+  }, [availableDrafts]);
 
-  // Start fresh - clear draft
+  // Start fresh - create new draft without deleting existing ones
   const handleStartFresh = useCallback(() => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem(DRAFT_KEY);
-    }
+    // Generate new draft ID for the new listing
+    const newDraftId = createId();
+    setCurrentDraftId(newDraftId);
     setShowDraftModal(false);
-    setPendingDraft(null);
   }, []);
+
+  // Delete a specific draft
+  const handleDeleteDraft = useCallback((draftId: string) => {
+    const updatedDrafts = availableDrafts.filter(d => d.id !== draftId);
+    setAvailableDrafts(updatedDrafts);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(DRAFTS_KEY, JSON.stringify(updatedDrafts));
+    }
+    toast.success("Brouillon supprimé");
+    if (updatedDrafts.length === 0) {
+      setShowDraftModal(false);
+    }
+  }, [availableDrafts]);
 
   // Auto-save draft every 30 seconds
   useEffect(() => {
@@ -566,20 +599,51 @@ export default function NewListingPage() {
       }
     }, 30000);
     return () => clearInterval(interval);
-  }, [formData, currentStep]);
+  }, [formData, currentStep, currentDraftId]);
 
-  // Save draft function
+  // Save draft function - saves to array of drafts
   const saveDraft = useCallback(() => {
     if (typeof window !== "undefined") {
-      const draft = {
+      const now = new Date().toISOString();
+      const draftId = currentDraftId || createId();
+
+      // If we don't have a draft ID yet, set it
+      if (!currentDraftId) {
+        setCurrentDraftId(draftId);
+      }
+
+      const newDraft = {
+        id: draftId,
         formData,
         currentStep,
-        lastSaved: new Date().toISOString(),
+        lastSaved: now,
+        createdAt: availableDrafts.find(d => d.id === draftId)?.createdAt || now,
       };
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+
+      // Get existing drafts from localStorage
+      let existingDrafts: typeof availableDrafts = [];
+      try {
+        const stored = localStorage.getItem(DRAFTS_KEY);
+        if (stored) {
+          existingDrafts = JSON.parse(stored);
+        }
+      } catch {
+        existingDrafts = [];
+      }
+
+      // Update or add the draft
+      const draftIndex = existingDrafts.findIndex(d => d.id === draftId);
+      if (draftIndex >= 0) {
+        existingDrafts[draftIndex] = newDraft;
+      } else {
+        existingDrafts.push(newDraft);
+      }
+
+      localStorage.setItem(DRAFTS_KEY, JSON.stringify(existingDrafts));
+      setAvailableDrafts(existingDrafts);
       setLastSaved(new Date());
     }
-  }, [formData, currentStep]);
+  }, [formData, currentStep, currentDraftId, availableDrafts]);
 
   // Manual save draft
   const handleSaveDraft = useCallback(() => {
@@ -589,12 +653,22 @@ export default function NewListingPage() {
     setTimeout(() => setSavingDraft(false), 500);
   }, [saveDraft]);
 
-  // Clear draft after successful publish
+  // Clear current draft after successful publish
   const clearDraft = useCallback(() => {
-    if (typeof window !== "undefined") {
-      localStorage.removeItem(DRAFT_KEY);
+    if (typeof window !== "undefined" && currentDraftId) {
+      try {
+        const stored = localStorage.getItem(DRAFTS_KEY);
+        if (stored) {
+          const drafts = JSON.parse(stored);
+          const updatedDrafts = drafts.filter((d: any) => d.id !== currentDraftId);
+          localStorage.setItem(DRAFTS_KEY, JSON.stringify(updatedDrafts));
+          setAvailableDrafts(updatedDrafts);
+        }
+      } catch {
+        // Ignore errors
+      }
     }
-  }, []);
+  }, [currentDraftId]);
 
   // Start identity verification
   const handleStartIdentity = async () => {
@@ -2288,69 +2362,90 @@ export default function NewListingPage() {
         </footer>
       </div>
 
-      {/* Draft Choice Modal */}
-      {showDraftModal && pendingDraft && (
+      {/* Draft Choice Modal - Multi-draft support */}
+      {showDraftModal && availableDrafts.length > 0 && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl max-h-[80vh] overflow-hidden flex flex-col">
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
               <svg className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
               </svg>
             </div>
             <h3 className="text-lg font-semibold text-gray-900">
-              Tu as une annonce en cours
+              {availableDrafts.length === 1 ? "Tu as un brouillon en cours" : `Tu as ${availableDrafts.length} brouillons`}
             </h3>
             <p className="mt-2 text-sm text-gray-600">
-              Un brouillon a été trouvé. Que souhaites-tu faire ?
+              {availableDrafts.length === 1
+                ? "Souhaites-tu continuer ce brouillon ou créer une nouvelle annonce ?"
+                : "Sélectionne un brouillon pour le continuer ou crée une nouvelle annonce."}
             </p>
 
-            {/* Draft preview */}
-            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-200">
-                  <svg className="h-5 w-5 text-amber-700" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-                  </svg>
+            {/* Drafts list */}
+            <div className="mt-4 space-y-2 overflow-y-auto flex-1 max-h-[300px]">
+              {availableDrafts.map((draft) => (
+                <div
+                  key={draft.id}
+                  className="rounded-xl border border-gray-200 bg-gray-50 p-4 hover:border-amber-300 hover:bg-amber-50 transition-colors group"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-200 group-hover:bg-amber-300 transition-colors">
+                      <svg className="h-5 w-5 text-amber-700" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 truncate">
+                        {draft.formData.title || "Annonce sans titre"}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {draft.formData.type ? LISTING_TYPES.find(t => t.value === draft.formData.type)?.label : "Type non défini"}
+                        {draft.formData.city && ` · ${draft.formData.city}`}
+                      </p>
+                      <p className="mt-1 text-xs text-gray-500">
+                        Étape : {STEPS.find(s => s.key === draft.currentStep)?.title || draft.currentStep}
+                        {draft.lastSaved && (
+                          <> · Modifié le {new Date(draft.lastSaved).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</>
+                        )}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteDraft(draft.id)}
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Supprimer ce brouillon"
+                      >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRestoreDraft(draft.id)}
+                        className="px-3 py-1.5 text-sm font-medium text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors"
+                      >
+                        Continuer
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 truncate">
-                    {pendingDraft.formData.title || "Annonce sans titre"}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    {pendingDraft.formData.type ? LISTING_TYPES.find(t => t.value === pendingDraft.formData.type)?.label : "Type non défini"}
-                    {pendingDraft.formData.city && ` · ${pendingDraft.formData.city}`}
-                  </p>
-                  <p className="mt-1 text-xs text-amber-700">
-                    Étape : {STEPS.find(s => s.key === pendingDraft.currentStep)?.title || pendingDraft.currentStep}
-                    {pendingDraft.lastSaved && (
-                      <> · Sauvegardé le {new Date(pendingDraft.lastSaved).toLocaleDateString("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</>
-                    )}
-                  </p>
-                </div>
-              </div>
+              ))}
             </div>
 
-            <div className="mt-6 grid grid-cols-2 gap-3">
+            <div className="mt-6 pt-4 border-t border-gray-200">
               <button
                 type="button"
                 onClick={handleStartFresh}
-                className="flex items-center justify-center gap-2 rounded-xl border border-gray-300 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                className="w-full flex items-center justify-center gap-2 rounded-xl bg-gray-900 px-4 py-3 text-sm font-medium text-white hover:bg-black transition-colors"
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
-                Nouvelle annonce
+                Créer une nouvelle annonce
               </button>
-              <button
-                type="button"
-                onClick={handleRestoreDraft}
-                className="flex items-center justify-center gap-2 rounded-xl bg-amber-600 px-4 py-3 text-sm font-medium text-white hover:bg-amber-700 transition-colors"
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                </svg>
-                Continuer
-              </button>
+              <p className="mt-2 text-xs text-gray-500 text-center">
+                Les brouillons sont automatiquement supprimés après 90 jours
+              </p>
             </div>
           </div>
         </div>

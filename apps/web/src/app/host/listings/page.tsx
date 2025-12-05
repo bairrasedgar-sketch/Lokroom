@@ -44,6 +44,7 @@ type Listing = {
 };
 
 type Draft = {
+  id: string;
   formData: {
     type: string | null;
     title: string;
@@ -53,6 +54,7 @@ type Draft = {
   };
   currentStep: string;
   lastSaved: string;
+  createdAt: string;
 };
 
 type Stats = {
@@ -102,23 +104,45 @@ export default function HostListingsPage() {
     }
   }
 
+  const DRAFTS_KEY = "lokroom_listing_drafts";
+  const DRAFT_EXPIRY_DAYS = 90;
+
   function loadDrafts() {
     if (typeof window === "undefined") return;
-    const savedDraft = localStorage.getItem("lokroom_listing_draft");
-    if (savedDraft) {
+    const savedDrafts = localStorage.getItem(DRAFTS_KEY);
+    if (savedDrafts) {
       try {
-        const draft = JSON.parse(savedDraft) as Draft;
-        setDrafts([draft]);
+        const parsed = JSON.parse(savedDrafts);
+        if (Array.isArray(parsed)) {
+          // Filter out expired drafts (older than 90 days)
+          const now = new Date();
+          const validDrafts = parsed.filter((draft: Draft) => {
+            if (!draft.createdAt) return false;
+            const createdDate = new Date(draft.createdAt);
+            const daysDiff = (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
+            return daysDiff < DRAFT_EXPIRY_DAYS;
+          });
+
+          // Update localStorage if some drafts were filtered out
+          if (validDrafts.length !== parsed.length) {
+            localStorage.setItem(DRAFTS_KEY, JSON.stringify(validDrafts));
+          }
+
+          setDrafts(validDrafts);
+        } else {
+          setDrafts([]);
+        }
       } catch {
         setDrafts([]);
       }
     }
   }
 
-  function deleteDraft() {
+  function deleteDraft(draftId: string) {
     if (typeof window !== "undefined") {
-      localStorage.removeItem("lokroom_listing_draft");
-      setDrafts([]);
+      const updatedDrafts = drafts.filter(d => d.id !== draftId);
+      localStorage.setItem(DRAFTS_KEY, JSON.stringify(updatedDrafts));
+      setDrafts(updatedDrafts);
     }
   }
 
@@ -371,9 +395,12 @@ export default function HostListingsPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {drafts.map((draft, index) => (
+              <p className="text-sm text-gray-500">
+                {drafts.length} brouillon{drafts.length > 1 ? "s" : ""} · Les brouillons sont automatiquement supprimés après 90 jours
+              </p>
+              {drafts.map((draft) => (
                 <div
-                  key={index}
+                  key={draft.id}
                   className="group flex gap-4 rounded-xl border border-amber-200 bg-amber-50 p-4 transition hover:border-amber-300"
                 >
                   {/* Draft icon */}
@@ -401,7 +428,10 @@ export default function HostListingsPage() {
                         {draft.formData.city && ` · ${draft.formData.city}`}
                       </p>
                       <p className="mt-1 text-xs text-gray-500">
-                        Sauvegardé {formatDraftDate(draft.lastSaved)}
+                        Modifié {formatDraftDate(draft.lastSaved)}
+                        {draft.createdAt && (
+                          <> · Créé le {new Date(draft.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}</>
+                        )}
                       </p>
                     </div>
 
@@ -424,7 +454,7 @@ export default function HostListingsPage() {
                       Continuer
                     </Link>
                     <button
-                      onClick={deleteDraft}
+                      onClick={() => deleteDraft(draft.id)}
                       className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-white"
                     >
                       Supprimer
