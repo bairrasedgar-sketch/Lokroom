@@ -19,6 +19,7 @@ type UserData = {
   identityStatus: string;
   hasStripeConnect: boolean;
   payoutsEnabled: boolean;
+  hasPassword: boolean;
 };
 
 export default async function OnboardingPage({
@@ -43,6 +44,7 @@ export default async function OnboardingPage({
     select: {
       role: true,
       identityStatus: true,
+      passwordHash: true,
       profile: {
         select: {
           firstName: true,
@@ -80,6 +82,7 @@ export default async function OnboardingPage({
     identityStatus: user?.identityStatus || "UNVERIFIED",
     hasStripeConnect: !!user?.hostProfile?.stripeAccountId,
     payoutsEnabled: user?.hostProfile?.payoutsEnabled || false,
+    hasPassword: !!user?.passwordHash,
   };
 
   // Déterminer si on revient de Stripe

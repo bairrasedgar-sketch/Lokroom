@@ -101,6 +101,13 @@ model User {
   name          String?
   emailVerified DateTime?
 
+  /// Mot de passe hashé (bcrypt) - null si compte créé via OAuth uniquement
+  passwordHash  String?
+
+  /// Token de réinitialisation de mot de passe
+  resetToken          String?   @unique
+  resetTokenExpiresAt DateTime?
+
   role        Role         @default(GUEST)
   country     String?
   createdAt   DateTime     @default(now())
@@ -126,7 +133,7 @@ model User {
   /// Avis écrits par cet utilisateur
   reviewsWritten Review[] @relation("ReviewAuthor")
 
-  /// Avis reçus par cet utilisateur (en tant qu’hôte ou guest)
+  /// Avis reçus par cet utilisateur (en tant qu'hôte ou guest)
   reviewsReceived Review[] @relation("ReviewTarget")
 
   hostProfile  HostProfile?

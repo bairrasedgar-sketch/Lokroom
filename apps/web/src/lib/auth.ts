@@ -3,8 +3,10 @@ import type { NextAuthOptions } from "next-auth";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import GoogleProvider from "next-auth/providers/google";
 import EmailProvider from "next-auth/providers/email";
+import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/db";
 import { sendEmail, magicLinkEmail } from "@/lib/email";
+import { verifyPassword } from "@/lib/password";
 
 /**
  * Options NextAuth partagées (exportées) pour:
@@ -14,8 +16,8 @@ import { sendEmail, magicLinkEmail } from "@/lib/email";
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
 
-  // Tu restes en "database" comme avant
-  session: { strategy: "database" },
+  // Changé en JWT pour supporter le Credentials provider
+  session: { strategy: "jwt" },
 
   providers: [
     // 🔐 Connexion avec Google
@@ -45,6 +47,65 @@ export const authOptions: NextAuthOptions = {
         }
       },
     }),
+
+    // 🔑 Connexion avec email + mot de passe
+    CredentialsProvider({
+      id: "credentials",
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Mot de passe", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null;
+        }
+
+        const email = credentials.email.trim().toLowerCase();
+
+        const user = await prisma.user.findUnique({
+          where: { email },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            passwordHash: true,
+            role: true,
+            emailVerified: true,
+            profile: {
+              select: {
+                firstName: true,
+                lastName: true,
+                avatarUrl: true,
+              },
+            },
+          },
+        });
+
+        if (!user || !user.passwordHash) {
+          return null;
+        }
+
+        const isValid = await verifyPassword(credentials.password, user.passwordHash);
+        if (!isValid) {
+          return null;
+        }
+
+        // Mettre à jour la dernière connexion
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { lastLoginAt: new Date() },
+        });
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name || `${user.profile?.firstName || ""} ${user.profile?.lastName || ""}`.trim() || null,
+          image: user.profile?.avatarUrl || null,
+          role: user.role,
+        };
+      },
+    }),
   ],
 
   pages: {
@@ -56,15 +117,20 @@ export const authOptions: NextAuthOptions = {
 
   callbacks: {
     async jwt({ token, user }) {
-      if (user?.id) token.sub = user.id;
+      if (user?.id) {
+        token.sub = user.id;
+        token.email = user.email;
+      }
       return token;
     },
 
-    async session({ session }) {
-      if (!session.user?.email) return session;
+    async session({ session, token }) {
+      // Récupérer l'email depuis le token JWT
+      const email = token.email as string | undefined;
+      if (!email) return session;
 
       const dbUser = await prisma.user.findUnique({
-        where: { email: session.user.email },
+        where: { email },
         select: {
           id: true,
           role: true,

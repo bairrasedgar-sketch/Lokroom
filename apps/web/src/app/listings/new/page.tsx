@@ -1,68 +1,43 @@
 "use client";
 
-import {
-  useForm,
-  SubmitHandler,
-  Resolver,
-  Controller,
-} from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  useMemo,
-  useState,
-  useCallback,
-  useEffect,
-  type DragEvent,
-} from "react";
-import Cropper from "react-easy-crop";
+import { useState, useCallback, useEffect, useMemo, type DragEvent } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Script from "next/script";
+import Cropper from "react-easy-crop";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import {
-  getCroppedImage,
-  type PixelCrop,
-} from "@/lib/cropImage";
-import { useTranslation } from "@/hooks/useTranslation";
+import { getCroppedImage, type PixelCrop } from "@/lib/cropImage";
 
-// ---------- Config upload ----------
-const MAX_FILES = 10;
-const MAX_SIZE_MB = 8;
+// ============================================================================
+// TYPES
+// ============================================================================
 
-// ---------- Validation ----------
-const schema = z.object({
-  title: z.string().min(3, "Min 3 caractères").max(120),
-  description: z.string().min(10, "Min 10 caractères").max(2000),
-  price: z.coerce
-    .number()
-    .min(2, "Prix minimum 2 (EUR ou CAD)")
-    .refine(Number.isFinite, "Prix requis"),
-  currency: z.enum(["EUR", "CAD"]),
-  country: z.enum(["France", "Canada"]),
-  city: z.string().min(1, "Ville requise"),
-  addressFull: z.string().min(5, "Adresse exacte requise"),
-});
-type FormValues = z.infer<typeof schema>;
+type ListingType =
+  | "ROOM"
+  | "STUDIO"
+  | "APARTMENT"
+  | "HOUSE"
+  | "OFFICE"
+  | "COWORKING"
+  | "MEETING_ROOM"
+  | "PARKING"
+  | "GARAGE"
+  | "STORAGE"
+  | "EVENT_SPACE"
+  | "RECORDING_STUDIO"
+  | "OTHER";
 
-// ---------- Helpers ----------
-async function jsonOrThrow(res: Response) {
-  const text = await res.text();
-  try {
-    return JSON.parse(text);
-  } catch {
-    const snippet = text.slice(0, 120);
-    throw new Error(
-      `Réponse non-JSON (${res.status}). Corps: ${snippet || "<vide>"}`
-    );
-  }
-}
+type PricingMode = "HOURLY" | "DAILY" | "BOTH";
 
-const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as
-  | string
-  | undefined;
+type Step =
+  | "type"
+  | "location"
+  | "details"
+  | "photos"
+  | "description"
+  | "pricing"
+  | "review";
 
-// ---------- Type pour les images locales ----------
 type LocalImage = {
   id: string;
   file: File;
@@ -71,192 +46,160 @@ type LocalImage = {
   height?: number;
 };
 
+type FormData = {
+  type: ListingType | null;
+  country: "France" | "Canada";
+  city: string;
+  addressFull: string;
+  lat: number | null;
+  lng: number | null;
+  latPublic: number | null;
+  lngPublic: number | null;
+  maxGuests: number;
+  title: string;
+  description: string;
+  pricingMode: PricingMode;
+  price: number;
+  hourlyPrice: number | null;
+  currency: "EUR" | "CAD";
+  isInstantBook: boolean;
+  minNights: number | null;
+  maxNights: number | null;
+};
+
+// ============================================================================
+// CONFIG
+// ============================================================================
+
+const MAX_FILES = 10;
+const MAX_SIZE_MB = 8;
+
+const LISTING_TYPES: { value: ListingType; label: string; icon: string; description: string }[] = [
+  { value: "APARTMENT", label: "Appartement", icon: "🏢", description: "Un appartement entier ou une partie" },
+  { value: "HOUSE", label: "Maison", icon: "🏠", description: "Une maison entière ou des chambres" },
+  { value: "ROOM", label: "Chambre", icon: "🛏️", description: "Une chambre privée chez un hôte" },
+  { value: "STUDIO", label: "Studio", icon: "🎨", description: "Un studio de création ou artistique" },
+  { value: "OFFICE", label: "Bureau", icon: "💼", description: "Un espace de travail privé" },
+  { value: "COWORKING", label: "Coworking", icon: "👥", description: "Un espace de travail partagé" },
+  { value: "MEETING_ROOM", label: "Salle de réunion", icon: "📊", description: "Pour vos réunions et présentations" },
+  { value: "RECORDING_STUDIO", label: "Studio d'enregistrement", icon: "🎙️", description: "Pour la musique et les podcasts" },
+  { value: "EVENT_SPACE", label: "Espace événementiel", icon: "🎉", description: "Pour vos événements et fêtes" },
+  { value: "PARKING", label: "Parking", icon: "🅿️", description: "Une place de stationnement" },
+  { value: "GARAGE", label: "Garage", icon: "🚗", description: "Un garage ou box fermé" },
+  { value: "STORAGE", label: "Stockage", icon: "📦", description: "Un espace de rangement" },
+  { value: "OTHER", label: "Autre", icon: "✨", description: "Un autre type d'espace" },
+];
+
+const STEPS: { key: Step; title: string; subtitle: string }[] = [
+  { key: "type", title: "Type d'espace", subtitle: "Quel type d'espace proposez-vous ?" },
+  { key: "location", title: "Localisation", subtitle: "Où se trouve votre espace ?" },
+  { key: "details", title: "Caractéristiques", subtitle: "Décrivez les détails de votre espace" },
+  { key: "photos", title: "Photos", subtitle: "Ajoutez des photos de votre espace" },
+  { key: "description", title: "Description", subtitle: "Donnez envie aux voyageurs" },
+  { key: "pricing", title: "Tarification", subtitle: "Définissez vos prix" },
+  { key: "review", title: "Vérification", subtitle: "Vérifiez et publiez votre annonce" },
+];
+
+const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
 const createId = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
-// ---------- Autocomplete des villes FR/CA ----------
-type CityAutocompleteProps = {
-  value: string;
-  onChange: (value: string) => void;
-  mapsReady: boolean;
-};
+// ============================================================================
+// HELPERS
+// ============================================================================
 
-function CityAutocomplete({
-  value,
-  onChange,
-  mapsReady,
-}: CityAutocompleteProps) {
-  const [input, setInput] = useState(value || "");
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    setInput(value || "");
-  }, [value]);
-
-  useEffect(() => {
-    if (!mapsReady) return;
-    if (!input.trim()) {
-      setSuggestions([]);
-      return;
-    }
-
-    const g = (window as any).google;
-    const svc = g?.maps?.places?.AutocompleteService
-      ? new g.maps.places.AutocompleteService()
-      : null;
-    if (!svc) return;
-
-    let active = true;
-    setLoading(true);
-
-    svc.getPlacePredictions(
-      {
-        input,
-        types: ["(cities)"],
-        componentRestrictions: { country: ["fr", "ca"] },
-      },
-      (preds: any[], status: string) => {
-        if (!active) return;
-        setLoading(false);
-
-        if (!preds || status !== g.maps.places.PlacesServiceStatus.OK) {
-          setSuggestions([]);
-          return;
-        }
-
-        setSuggestions(preds.slice(0, 6).map((p: any) => p.description));
-      }
-    );
-
-    return () => {
-      active = false;
-    };
-  }, [input, mapsReady]);
-
-  return (
-    <div className="relative">
-      <input
-        className="w-full rounded-md border px-3 py-2"
-        placeholder="Ville (France ou Canada)"
-        value={input}
-        onChange={(e) => {
-          setInput(e.target.value);
-          onChange(e.target.value);
-        }}
-      />
-
-      {loading && (
-        <div className="pointer-events-none absolute right-3 top-2 text-xs text-gray-400">
-          …
-        </div>
-      )}
-
-      {suggestions.length > 0 && (
-        <ul className="absolute z-10 mt-1 max-h-52 w-full overflow-auto rounded-md border bg-white text-sm shadow-lg">
-          {suggestions.map((s) => (
-            <li
-              key={s}
-              className="cursor-pointer px-3 py-1 hover:bg-gray-100"
-              onMouseDown={(e) => {
-                e.preventDefault();
-                onChange(s);
-                setInput(s);
-                setSuggestions([]);
-              }}
-            >
-              {s}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
+async function jsonOrThrow(res: Response) {
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`Réponse non-JSON (${res.status})`);
+  }
 }
+
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
 
 export default function NewListingPage() {
   const router = useRouter();
-  const { t } = useTranslation();
 
+  // Current step
+  const [currentStep, setCurrentStep] = useState<Step>("type");
+
+  // Form data
+  const [formData, setFormData] = useState<FormData>({
+    type: null,
+    country: "France",
+    city: "",
+    addressFull: "",
+    lat: null,
+    lng: null,
+    latPublic: null,
+    lngPublic: null,
+    maxGuests: 1,
+    title: "",
+    description: "",
+    pricingMode: "DAILY",
+    price: 0,
+    hourlyPrice: null,
+    currency: "EUR",
+    isInstantBook: false,
+    minNights: null,
+    maxNights: null,
+  });
+
+  // Images
   const [images, setImages] = useState<LocalImage[]>([]);
-  const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
+  // Crop modal
   const [cropOpen, setCropOpen] = useState(false);
   const [cropIndex, setCropIndex] = useState<number | null>(null);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] =
-    useState<PixelCrop | null>(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<PixelCrop | null>(null);
 
+  // Maps
   const [mapsReady, setMapsReady] = useState(false);
-  const [geo, setGeo] = useState<{
-    lat: number;
-    lng: number;
-    latPublic: number;
-    lngPublic: number;
-  } | null>(null);
 
-  // auto-animate pour le panneau d’images
-  const [filesParent] = useAutoAnimate<HTMLDivElement>({
-    duration: 450,
-    easing: "cubic-bezier(0.22, 0.61, 0.36, 1)",
-  });
+  // Loading
+  const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
+  // Auto-animate
+  const [filesParent] = useAutoAnimate<HTMLDivElement>({ duration: 300 });
   const [dragFileIndex, setDragFileIndex] = useState<number | null>(null);
 
-  const resolver = zodResolver(schema) as Resolver<FormValues>;
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-    setValue,
-    control,
-  } = useForm<FormValues>({
-    resolver,
-    defaultValues: {
-      price: 0,
-      currency: "EUR",
-      country: "France",
-      city: "",
-      addressFull: "",
-    },
-  });
-
-  // Google déjà chargé ?
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const g = (window as any).google;
-    if (g?.maps?.places) {
-      setMapsReady(true);
-    }
-  }, []);
-
-  // devise depuis cookie
+  // Currency from cookie
   useEffect(() => {
     const m = document.cookie.match(/(?:^|;\s*)currency=([^;]+)/);
     const cookieCurrency = (m?.[1] as "EUR" | "CAD" | undefined) || "EUR";
-    setValue("currency", cookieCurrency, {
-      shouldValidate: true,
-      shouldDirty: false,
-    });
-  }, [setValue]);
+    setFormData((prev) => ({ ...prev, currency: cookieCurrency }));
+  }, []);
 
-  // Autocomplete adresse exacte
+  // Check if Google Maps is already loaded
   useEffect(() => {
-    if (!mapsReady) return;
-    if (typeof window === "undefined") return;
+    if (typeof window !== "undefined") {
+      const g = (window as any).google;
+      if (g?.maps?.places) {
+        setMapsReady(true);
+      }
+    }
+  }, []);
 
-    const g = (window as any).google as any;
+  // Setup address autocomplete
+  useEffect(() => {
+    if (!mapsReady || currentStep !== "location") return;
+
+    const g = (window as any).google;
     if (!g?.maps?.places?.Autocomplete) return;
 
-    const input = document.getElementById(
-      "addressFull"
-    ) as HTMLInputElement | null;
+    const input = document.getElementById("addressFull") as HTMLInputElement | null;
     if (!input) return;
 
     const autocomplete = new g.maps.places.Autocomplete(input, {
@@ -266,79 +209,65 @@ export default function NewListingPage() {
 
     autocomplete.addListener("place_changed", () => {
       const place = autocomplete.getPlace();
-      if (!place.geometry || !place.geometry.location) {
-        toast.error(
-          "Impossible de récupérer la position pour cette adresse."
-        );
+      if (!place.geometry?.location) {
+        toast.error("Impossible de récupérer la position pour cette adresse.");
         return;
       }
 
-      const loc = place.geometry.location;
-      const lat = loc.lat();
-      const lng = loc.lng();
-
+      const lat = place.geometry.location.lat();
+      const lng = place.geometry.location.lng();
       const latPublic = Math.round(lat * 1000) / 1000;
       const lngPublic = Math.round(lng * 1000) / 1000;
 
-      setGeo({ lat, lng, latPublic, lngPublic });
-
-      if (place.formatted_address) {
-        setValue("addressFull", place.formatted_address, {
-          shouldValidate: true,
-        });
-      }
+      setFormData((prev) => ({
+        ...prev,
+        addressFull: place.formatted_address || prev.addressFull,
+        lat,
+        lng,
+        latPublic,
+        lngPublic,
+      }));
     });
 
     return () => {
       g.maps.event.clearInstanceListeners(autocomplete);
     };
-  }, [mapsReady, setValue]);
+  }, [mapsReady, currentStep]);
 
-  // --------- gestion fichiers ----------
+  // ============================================================================
+  // IMAGE HANDLERS
+  // ============================================================================
+
   function addFiles(incoming: File[]) {
     const imagesOnly = incoming.filter((f) => f.type.startsWith("image/"));
-    const tooBig = imagesOnly.filter(
-      (f) => f.size > MAX_SIZE_MB * 1024 * 1024
-    );
-    if (tooBig.length)
-      toast.error(t.newListing.imageTooBig.replace("{size}", String(MAX_SIZE_MB)));
-    const ok = imagesOnly.filter(
-      (f) => f.size <= MAX_SIZE_MB * 1024 * 1024
-    );
+    const tooBig = imagesOnly.filter((f) => f.size > MAX_SIZE_MB * 1024 * 1024);
+    if (tooBig.length) {
+      toast.error(`Certaines images dépassent ${MAX_SIZE_MB} Mo`);
+    }
+    const ok = imagesOnly.filter((f) => f.size <= MAX_SIZE_MB * 1024 * 1024);
 
     const mapped: LocalImage[] = ok.map((file) => ({
       id: createId(),
       file,
       previewUrl: URL.createObjectURL(file),
-      width: undefined,
-      height: undefined,
     }));
 
     setImages((prev) => {
       const merged = [...prev, ...mapped].slice(0, MAX_FILES);
       if (merged.length < prev.length + mapped.length) {
-        toast.message(t.newListing.limitReached.replace("{max}", String(MAX_FILES)));
+        toast.message(`Maximum ${MAX_FILES} photos`);
       }
       return merged;
     });
   }
 
-  function removeAt(index: number) {
+  function removeImage(index: number) {
     setImages((prev) => {
       const copy = [...prev];
       const removed = copy.splice(index, 1)[0];
-      if (removed) {
-        URL.revokeObjectURL(removed.previewUrl);
-      }
+      if (removed) URL.revokeObjectURL(removed.previewUrl);
       return copy;
     });
-  }
-
-  function clearAll() {
-    if (!images.length) return;
-    if (!confirm(t.newListing.removeAllConfirm)) return;
-    images.forEach((img) => URL.revokeObjectURL(img.previewUrl));
-    setImages([]);
   }
 
   function onDrop(e: DragEvent<HTMLDivElement>) {
@@ -347,16 +276,7 @@ export default function NewListingPage() {
     addFiles(Array.from(e.dataTransfer.files || []));
   }
 
-  const totalSizeMb = useMemo(
-    () =>
-      (
-        images.reduce((acc, img) => acc + img.file.size, 0) /
-        (1024 * 1024)
-      ).toFixed(1),
-    [images]
-  );
-
-  const openCropper = async (index: number) => {
+  const openCropper = (index: number) => {
     const img = images[index];
     if (!img) return;
     setCropIndex(index);
@@ -368,53 +288,39 @@ export default function NewListingPage() {
   };
 
   const saveCrop = useCallback(async () => {
-    if (!cropOpen || cropIndex === null || !cropSrc || !croppedAreaPixels)
-      return;
+    if (!cropOpen || cropIndex === null || !cropSrc || !croppedAreaPixels) return;
+
     try {
       const current = images[cropIndex];
       if (!current) return;
 
       const { blob, width, height } = await getCroppedImage(
         cropSrc,
-        croppedAreaPixels as PixelCrop,
+        croppedAreaPixels,
         current.file.type || "image/jpeg",
-        {
-          maxWidth: 2560,
-          maxHeight: 2560,
-          quality: 0.92,
-        }
+        { maxWidth: 2560, maxHeight: 2560, quality: 0.92 }
       );
 
-      const croppedFile = new File([blob], current.file.name, {
-        type: current.file.type,
-      });
+      const croppedFile = new File([blob], current.file.name, { type: current.file.type });
       const newPreviewUrl = URL.createObjectURL(croppedFile);
 
       setImages((prev) =>
         prev.map((img, i) => {
           if (i !== cropIndex) return img;
           URL.revokeObjectURL(img.previewUrl);
-          return {
-            ...img,
-            file: croppedFile,
-            previewUrl: newPreviewUrl,
-            width,
-            height,
-          };
+          return { ...img, file: croppedFile, previewUrl: newPreviewUrl, width, height };
         })
       );
-      toast.success(t.newListing.imageCropped);
+      toast.success("Image recadrée");
     } catch {
-      toast.error(t.newListing.cropFailed);
+      toast.error("Erreur lors du recadrage");
     } finally {
       setCropOpen(false);
       setCropSrc(null);
       setCropIndex(null);
-      setCroppedAreaPixels(null);
     }
   }, [cropOpen, cropIndex, cropSrc, croppedAreaPixels, images]);
 
-  // passe une image en couverture = la mettre en index 0
   function makeCover(index: number) {
     setImages((prev) => {
       if (index <= 0 || index >= prev.length) return prev;
@@ -425,20 +331,11 @@ export default function NewListingPage() {
     });
   }
 
-  // ---- drag & drop des vignettes ----
-  const handleFileDragStart = (
-    e: DragEvent<HTMLDivElement>,
-    index: number
-  ) => {
+  // Drag & drop reorder
+  const handleFileDragStart = (e: DragEvent<HTMLDivElement>, index: number) => {
     setDragFileIndex(index);
     if (e.dataTransfer) {
       e.dataTransfer.effectAllowed = "move";
-      const target = e.currentTarget;
-      e.dataTransfer.setDragImage(
-        target,
-        target.clientWidth / 2,
-        target.clientHeight / 2
-      );
     }
   };
 
@@ -447,60 +344,95 @@ export default function NewListingPage() {
       setDragFileIndex(null);
       return;
     }
-
     setImages((prev) => {
-      if (
-        dragFileIndex === null ||
-        dragFileIndex < 0 ||
-        dragFileIndex >= prev.length ||
-        index < 0 ||
-        index >= prev.length
-      ) {
-        return prev;
-      }
       const copy = [...prev];
       const [moved] = copy.splice(dragFileIndex, 1);
       if (!moved) return prev;
       copy.splice(index, 0, moved);
       return copy;
     });
-
     setDragFileIndex(null);
   };
 
-  const handleFileDragEnd = () => {
-    setDragFileIndex(null);
-  };
+  // ============================================================================
+  // NAVIGATION
+  // ============================================================================
 
-  // --------- submit ----------
-  const onValid: SubmitHandler<FormValues> = async (values) => {
-    if (values.price < 2) {
-      toast.error("Le prix minimum est de 2 (EUR ou CAD).");
+  const stepIndex = STEPS.findIndex((s) => s.key === currentStep);
+  const isFirstStep = stepIndex === 0;
+  const isLastStep = stepIndex === STEPS.length - 1;
+
+  function canProceed(): boolean {
+    switch (currentStep) {
+      case "type":
+        return formData.type !== null;
+      case "location":
+        return formData.city.trim().length > 0 && formData.addressFull.trim().length >= 5;
+      case "details":
+        return formData.maxGuests >= 1;
+      case "photos":
+        return images.length >= 3;
+      case "description":
+        return formData.title.trim().length >= 3 && formData.description.trim().length >= 10;
+      case "pricing":
+        return formData.price >= 2;
+      case "review":
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  function handleNext() {
+    if (!canProceed()) {
+      toast.error("Veuillez compléter cette étape");
       return;
     }
-    if (images.length < 3) {
-      toast.error("Ajoute au moins 3 photos (minimum 3).");
-      return;
+    if (!isLastStep) {
+      setCurrentStep(STEPS[stepIndex + 1].key);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
+  }
 
-    const payload: any = {
-      title: values.title,
-      description: values.description,
-      price: values.price,
-      currency: values.currency,
-      country: values.country,
-      city: values.city.trim(),
-      addressFull: values.addressFull.trim(),
-    };
-
-    if (geo) {
-      payload.lat = geo.lat;
-      payload.lng = geo.lng;
-      payload.latPublic = geo.latPublic;
-      payload.lngPublic = geo.lngPublic;
+  function handleBack() {
+    if (!isFirstStep) {
+      setCurrentStep(STEPS[stepIndex - 1].key);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
+  }
+
+  // ============================================================================
+  // SUBMIT
+  // ============================================================================
+
+  async function handleSubmit() {
+    if (!canProceed()) return;
+
+    setSubmitting(true);
 
     try {
+      // Create listing
+      const payload = {
+        title: formData.title,
+        description: formData.description,
+        type: formData.type,
+        price: formData.price,
+        hourlyPrice: formData.hourlyPrice,
+        pricingMode: formData.pricingMode,
+        currency: formData.currency,
+        country: formData.country,
+        city: formData.city.trim(),
+        addressFull: formData.addressFull.trim(),
+        lat: formData.lat,
+        lng: formData.lng,
+        latPublic: formData.latPublic,
+        lngPublic: formData.lngPublic,
+        maxGuests: formData.maxGuests,
+        isInstantBook: formData.isInstantBook,
+        minNights: formData.minNights,
+        maxNights: formData.maxNights,
+      };
+
       const res = await fetch("/api/listings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -509,485 +441,677 @@ export default function NewListingPage() {
 
       if (!res.ok) {
         const j = await res.json().catch(() => null);
-
-        // ⛔️ non connecté
-        if (res.status === 401) {
-          throw new Error(t.newListing.loginRequired);
-        }
-
-        // ⛔️ pas hôte
-        if (res.status === 403) {
-          throw new Error(
-            j?.error || t.newListing.hostRequired
-          );
-        }
-
-        throw new Error(j?.error || t.newListing.serverError);
+        if (res.status === 401) throw new Error("Vous devez être connecté");
+        if (res.status === 403) throw new Error(j?.error || "Vous devez être hôte");
+        throw new Error(j?.error || "Erreur serveur");
       }
 
       const data = await res.json();
-      const listingId: string | undefined = data?.listing?.id;
-      if (!listingId) throw new Error(t.newListing.missingId);
+      const listingId = data?.listing?.id;
+      if (!listingId) throw new Error("ID de l'annonce manquant");
 
-      if (images.length) setUploading(true);
+      // Upload images
+      if (images.length) {
+        setUploading(true);
 
-      // On envoie les images dans l'ordre du tableau `images`
-      for (const img of images) {
-        const file = img.file;
+        for (const img of images) {
+          const p = await fetch("/api/upload/presign-listing", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              listingId,
+              filename: img.file.name,
+              contentType: img.file.type || "application/octet-stream",
+              fileSize: img.file.size,
+            }),
+          });
 
-        const p = await fetch("/api/upload/presign-listing", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            listingId,
-            filename: file.name,
-            contentType: file.type || "application/octet-stream",
-            fileSize: file.size,
-          }),
-        });
-        if (!p.ok) {
-          const body = await p.text();
-          throw new Error(
-            `${t.newListing.presignFailed} (${p.status}). ${body.slice(0, 120)}`
-          );
-        }
-        const presign = await jsonOrThrow(p);
-        if (!presign?.uploadUrl || !presign?.publicUrl) {
-          throw new Error(t.newListing.invalidPresignResponse);
-        }
+          if (!p.ok) throw new Error("Erreur lors de la préparation de l'upload");
+          const presign = await jsonOrThrow(p);
 
-        const put = await fetch(presign.uploadUrl, {
-          method: "PUT",
-          headers: {
-            "Content-Type": file.type || "application/octet-stream",
-          },
-          body: file,
-        });
-        if (!put.ok) {
-          const body = await put.text().catch(() => "");
-          throw new Error(`${t.newListing.uploadFailed} (${put.status}). ${body}`);
-        }
+          const put = await fetch(presign.uploadUrl, {
+            method: "PUT",
+            headers: { "Content-Type": img.file.type || "application/octet-stream" },
+            body: img.file,
+          });
 
-        const saveBody: any = {
-          url: presign.publicUrl,
-        };
-        if (
-          typeof img.width === "number" &&
-          typeof img.height === "number"
-        ) {
-          saveBody.width = img.width;
-          saveBody.height = img.height;
-        }
+          if (!put.ok) throw new Error("Erreur lors de l'upload de l'image");
 
-        const save = await fetch(`/api/listings/${listingId}/images`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(saveBody),
-        });
-        if (!save.ok) {
-          const body = await save.text().catch(() => "");
-          throw new Error(`${t.newListing.saveImageFailed} (${save.status}). ${body}`);
+          await fetch(`/api/listings/${listingId}/images`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              url: presign.publicUrl,
+              width: img.width,
+              height: img.height,
+            }),
+          });
         }
       }
 
-      toast.success(t.newListing.listingCreated);
+      toast.success("Annonce créée avec succès !");
       images.forEach((img) => URL.revokeObjectURL(img.previewUrl));
-      setImages([]);
       router.push(`/listings/${listingId}`);
-      router.refresh();
     } catch (e) {
-      toast.error(
-        e instanceof Error
-          ? e.message
-          : t.newListing.createFailed
-      );
+      toast.error(e instanceof Error ? e.message : "Erreur lors de la création");
     } finally {
+      setSubmitting(false);
       setUploading(false);
     }
-  };
+  }
+
+  // ============================================================================
+  // RENDER
+  // ============================================================================
+
+  const totalSizeMb = useMemo(
+    () => (images.reduce((acc, img) => acc + img.file.size, 0) / (1024 * 1024)).toFixed(1),
+    [images]
+  );
 
   return (
     <>
-      {/* 🔧 Override auto-animate : uniquement le déplacement (pas de fade) */}
-      <style jsx global>{`
-        [data-auto-animate] > * {
-          transition-property: transform !important;
-          transition-duration: 450ms !important;
-          transition-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1) !important;
-        }
-      `}</style>
-
       {apiKey && (
         <Script
           src={`https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`}
           strategy="afterInteractive"
           onLoad={() => setMapsReady(true)}
-          onError={(e) => {
-            console.error("Erreur chargement Google Maps (new listing)", e);
-            toast.error("Google Maps n'a pas pu se charger (autocomplete).");
-          }}
         />
       )}
 
-      <section className="mx-auto max-w-3xl space-y-6">
-        <h1 className="text-2xl font-semibold">{t.newListing.title}</h1>
-
-        {/* uploader */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <label className="block text-sm font-medium">
-              {t.newListing.imagesLabel.replace("{max}", String(MAX_FILES))} · {t.newListing.imagesSelected.replace("{count}", String(images.length))}
-              {images.length ? ` · ${totalSizeMb} Mo` : ""}
-            </label>
+      <div className="min-h-screen bg-white">
+        {/* Header */}
+        <header className="sticky top-0 z-40 border-b border-gray-200 bg-white">
+          <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
             <button
-              type="button"
-              onClick={clearAll}
-              className="text-xs underline disabled:opacity-50"
-              disabled={!images.length}
-              title={t.newListing.removeAllConfirm}
+              onClick={() => router.push("/host/listings")}
+              className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
             >
-              {t.newListing.removeAll}
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Quitter
             </button>
-          </div>
 
-          {/* dropzone */}
-          <div
-            onDragOver={(e) => {
-              e.preventDefault();
-              setDragOver(true);
-            }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={onDrop}
-            className={`rounded-md border border-dashed p-4 text-center text-sm transition ${
-              dragOver ? "bg-gray-100" : "bg-gray-50"
-            }`}
-          >
-            {t.newListing.dropzone}
-            <span className="mx-2 text-gray-400">{t.common.or}</span>
-            <label className="cursor-pointer underline">
-              {t.newListing.chooseFiles}
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(e) => addFiles(Array.from(e.target.files || []))}
-                className="hidden"
-              />
-            </label>
-            <div className="mt-2 text-xs text-gray-500">
-              {t.newListing.imageFormats.replace("{size}", String(MAX_SIZE_MB))}
+            {/* Progress bar */}
+            <div className="flex items-center gap-2">
+              {STEPS.map((s, i) => (
+                <div
+                  key={s.key}
+                  className={`h-1.5 w-8 rounded-full transition-colors ${
+                    i <= stepIndex ? "bg-gray-900" : "bg-gray-200"
+                  }`}
+                />
+              ))}
             </div>
+
+            <div className="w-16" />
+          </div>
+        </header>
+
+        {/* Main content */}
+        <main className="mx-auto max-w-2xl px-4 py-8">
+          {/* Step title */}
+          <div className="mb-8 text-center">
+            <p className="text-sm font-medium text-gray-500">
+              Étape {stepIndex + 1} sur {STEPS.length}
+            </p>
+            <h1 className="mt-2 text-2xl font-semibold text-gray-900 sm:text-3xl">
+              {STEPS[stepIndex].title}
+            </h1>
+            <p className="mt-1 text-gray-500">{STEPS[stepIndex].subtitle}</p>
           </div>
 
-          {/* panneau d'images */}
-          {images.length > 0 && (
-            <div className="mt-2 rounded-2xl bg-gray-100 px-4 py-4 text-sm text-gray-900 shadow-sm ring-1 ring-gray-200">
-              <p className="mb-3 text-xs text-gray-700 sm:text-sm">
-                {t.newListing.coverImageNote}
-              </p>
-
-              <div ref={filesParent} className="flex flex-wrap gap-3">
-                {images.map((img, i) => {
-                  const isCover = i === 0;
-                  const isDragging = i === dragFileIndex;
-                  return (
-                    <div
-                      key={img.id}
-                      className={`group relative h-28 w-36 cursor-grab overflow-hidden rounded-lg border bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-md ${
-                        isDragging
-                          ? "ring-2 ring-black/60 scale-[1.02]"
-                          : "border-gray-200"
-                      }`}
-                      draggable
-                      onDragStart={(e) => handleFileDragStart(e, i)}
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={() => handleFileDrop(i)}
-                      onDragEnd={handleFileDragEnd}
-                    >
-                      <img
-                        src={img.previewUrl}
-                        className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03]"
-                        alt=""
-                      />
-
-                      {/* bouton Rogner */}
-                      <div className="absolute left-1 top-1 flex gap-1">
-                        <button
-                          type="button"
-                          onClick={() => openCropper(i)}
-                          className="rounded bg-black/75 px-1 text-[11px] text-white shadow"
-                          title={t.newListing.crop}
-                        >
-                          {t.newListing.crop}
-                        </button>
-                      </div>
-
-                      {/* Couverture / Mettre en couverture */}
-                      <div className="absolute inset-x-0 bottom-0 flex justify-center pb-1">
-                        {isCover ? (
-                          <span className="pointer-events-none inline-flex rounded-full bg-black/85 px-2 py-0.5 text-[11px] font-medium text-white shadow">
-                            {t.newListing.cover}
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => makeCover(i)}
-                            className="inline-flex rounded-full bg-black/75 px-2 py-0.5 text-[11px] text-white shadow transition hover:bg-black"
-                            title={t.newListing.setAsCover}
-                          >
-                            {t.newListing.setAsCover}
-                          </button>
-                        )}
-                      </div>
-
-                      {/* close */}
-                      <button
-                        type="button"
-                        onClick={() => removeAt(i)}
-                        className="absolute right-1 top-1 rounded-full bg-black/80 px-1 text-xs text-white shadow transition hover:bg-black"
-                        title={t.newListing.remove}
-                      >
-                        ×
-                      </button>
+          {/* ========== STEP: TYPE ========== */}
+          {currentStep === "type" && (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {LISTING_TYPES.map((t) => (
+                <button
+                  key={t.value}
+                  type="button"
+                  onClick={() => setFormData((prev) => ({ ...prev, type: t.value }))}
+                  className={`group flex items-start gap-4 rounded-xl border-2 p-4 text-left transition-all hover:border-gray-400 ${
+                    formData.type === t.value
+                      ? "border-gray-900 bg-gray-50"
+                      : "border-gray-200"
+                  }`}
+                >
+                  <span className="text-3xl">{t.icon}</span>
+                  <div>
+                    <span className="font-medium text-gray-900">{t.label}</span>
+                    <p className="mt-0.5 text-sm text-gray-500">{t.description}</p>
+                  </div>
+                  {formData.type === t.value && (
+                    <div className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-900">
+                      <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
                     </div>
-                  );
-                })}
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* ========== STEP: LOCATION ========== */}
+          {currentStep === "location" && (
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Pays</label>
+                <div className="grid grid-cols-2 gap-3">
+                  {(["France", "Canada"] as const).map((country) => (
+                    <button
+                      key={country}
+                      type="button"
+                      onClick={() => setFormData((prev) => ({
+                        ...prev,
+                        country,
+                        currency: country === "Canada" ? "CAD" : "EUR",
+                      }))}
+                      className={`rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all ${
+                        formData.country === country
+                          ? "border-gray-900 bg-gray-50"
+                          : "border-gray-200 hover:border-gray-400"
+                      }`}
+                    >
+                      {country === "France" ? "🇫🇷 France" : "🇨🇦 Canada"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="city" className="text-sm font-medium text-gray-700">
+                  Ville
+                </label>
+                <input
+                  id="city"
+                  type="text"
+                  value={formData.city}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, city: e.target.value }))}
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                  placeholder="Paris, Lyon, Montréal..."
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="addressFull" className="text-sm font-medium text-gray-700">
+                  Adresse exacte
+                </label>
+                <input
+                  id="addressFull"
+                  type="text"
+                  value={formData.addressFull}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, addressFull: e.target.value }))}
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                  placeholder="123 rue de la Paix, 75001 Paris"
+                />
+                <p className="text-xs text-gray-500">
+                  L&apos;adresse exacte ne sera visible que par les voyageurs ayant réservé.
+                </p>
+                {formData.lat && formData.lng && (
+                  <p className="flex items-center gap-1 text-xs text-green-600">
+                    <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    Position détectée
+                  </p>
+                )}
               </div>
             </div>
           )}
-        </div>
 
-        {/* Formulaire texte */}
-        <form onSubmit={handleSubmit(onValid)} className="space-y-4">
-          <div>
-            <label htmlFor="title" className="mb-1 block text-sm">
-              {t.newListing.titleLabel}
-            </label>
-            <input
-              id="title"
-              className="w-full rounded-md border px-3 py-2"
-              {...register("title")}
-            />
-            {errors.title && (
-              <p className="text-sm text-red-600">{errors.title.message}</p>
-            )}
-          </div>
+          {/* ========== STEP: DETAILS ========== */}
+          {currentStep === "details" && (
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Capacité d&apos;accueil
+                </label>
+                <div className="flex items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, maxGuests: Math.max(1, prev.maxGuests - 1) }))}
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:border-gray-900"
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
+                    </svg>
+                  </button>
+                  <span className="w-16 text-center text-lg font-medium">
+                    {formData.maxGuests} {formData.maxGuests > 1 ? "personnes" : "personne"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, maxGuests: Math.min(50, prev.maxGuests + 1) }))}
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:border-gray-900"
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
 
-          <div>
-            <label htmlFor="description" className="mb-1 block text-sm">
-              {t.newListing.descriptionLabel}
-            </label>
-            <textarea
-              id="description"
-              className="w-full rounded-md border px-3 py-2"
-              rows={5}
-              {...register("description")}
-            />
-            {errors.description && (
-              <p className="text-sm text-red-600">
-                {errors.description.message}
-              </p>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="sm:col-span-2">
-              <label htmlFor="price" className="mb-1 block text-sm">
-                {t.newListing.priceLabel}
-              </label>
-              <input
-                id="price"
-                type="number"
-                step="0.01"
-                className="w-full rounded-md border px-3 py-2"
-                {...register("price", { valueAsNumber: true })}
-              />
-              {errors.price && (
-                <p className="text-sm text-red-600">
-                  {errors.price.message}
-                </p>
-              )}
-              <p className="mt-1 text-xs text-gray-500">
-                {t.newListing.priceHint}
-              </p>
-            </div>
-
-            <div>
-              <label htmlFor="currency" className="mb-1 block text.sm">
-                {t.newListing.currencyLabel}
-              </label>
-              <select
-                id="currency"
-                className="w-full rounded-md border px-3 py-2"
-                {...register("currency")}
-              >
-                <option value="EUR">EUR €</option>
-                <option value="CAD">CAD $</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="country" className="mb-1 block text-sm">
-                {t.newListing.countryLabel}
-              </label>
-              <select
-                id="country"
-                className="w-full rounded-md border px-3 py-2"
-                {...register("country")}
-              >
-                <option value="France">France</option>
-                <option value="Canada">Canada</option>
-              </select>
-              {errors.country && (
-                <p className="text-sm text-red-600">
-                  {errors.country.message}
-                </p>
-              )}
-            </div>
-            <div>
-              <label htmlFor="city" className="mb-1 block text-sm">
-                {t.newListing.cityLabel}
-              </label>
-              <Controller
-                name="city"
-                control={control}
-                render={({ field }) => (
-                  <CityAutocomplete
-                    value={field.value || ""}
-                    onChange={field.onChange}
-                    mapsReady={mapsReady}
-                  />
-                )}
-              />
-              {errors.city && (
-                <p className="text-sm text-red-600">
-                  {errors.city.message}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="addressFull" className="mb-1 block text-sm">
-              {t.newListing.addressLabel}
-            </label>
-            <input
-              id="addressFull"
-              className="w-full rounded-md border px-3 py-2"
-              placeholder={t.newListing.addressPlaceholder}
-              {...register("addressFull")}
-            />
-            {errors.addressFull && (
-              <p className="text-sm text-red-600">
-                {errors.addressFull.message}
-              </p>
-            )}
-            <p className="mt-1 text-xs text-gray-500">
-              {t.newListing.addressHint}
-            </p>
-            {geo && (
-              <p className="mt-1 text-xs text-gray-400">
-                {t.newListing.coordinatesDetected
-                  .replace("{lat}", geo.lat.toFixed(5))
-                  .replace("{lng}", geo.lng.toFixed(5))
-                  .replace("{latPublic}", String(geo.latPublic))
-                  .replace("{lngPublic}", String(geo.lngPublic))}
-              </p>
-            )}
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              type="submit"
-              disabled={isSubmitting || uploading}
-              className="rounded bg-black px-4 py-2 text-sm text-white disabled:opacity-60"
-            >
-              {isSubmitting || uploading ? t.newListing.createAndUpload : t.newListing.create}
-            </button>
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="rounded border px-4 py-2 text-sm"
-            >
-              {t.common.cancel}
-            </button>
-          </div>
-        </form>
-
-        {/* modale crop pleine page blanche */}
-        {cropOpen && cropSrc && (
-          <div className="fixed inset-0 z-50 bg-white">
-            <div className="flex h-full w-full flex-col items-center justify-center px-4">
-              <div className="w-full max-w-4xl rounded-2xl border border-gray-200 bg-white p-5 shadow-2xl sm:p-6">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <div>
-                    <h3 className="text-base font-semibold">{t.newListing.cropImage}</h3>
-                    <p className="mt-0.5 text-xs text-gray-500">
-                      {t.newListing.cropInstructions}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Réservation instantanée
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setFormData((prev) => ({ ...prev, isInstantBook: !prev.isInstantBook }))}
+                  className={`flex w-full items-center justify-between rounded-xl border-2 p-4 transition-all ${
+                    formData.isInstantBook ? "border-gray-900 bg-gray-50" : "border-gray-200"
+                  }`}
+                >
+                  <div className="text-left">
+                    <span className="font-medium text-gray-900">Activer la réservation instantanée</span>
+                    <p className="mt-0.5 text-sm text-gray-500">
+                      Les voyageurs peuvent réserver sans attendre votre approbation
                     </p>
                   </div>
-                </div>
+                  <div className={`h-6 w-11 rounded-full transition-colors ${formData.isInstantBook ? "bg-gray-900" : "bg-gray-200"}`}>
+                    <div className={`h-5 w-5 translate-y-0.5 rounded-full bg-white shadow transition-transform ${formData.isInstantBook ? "translate-x-5" : "translate-x-0.5"}`} />
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
 
-                <div className="relative mx-auto w-full max-h-[70vh] overflow-hidden rounded-xl bg-white">
-                  <div className="relative aspect-[4/3] w-full">
-                    <Cropper
-                      image={cropSrc}
-                      crop={crop}
-                      zoom={zoom}
-                      aspect={4 / 3}
-                      cropShape="rect"
-                      showGrid={false}
-                      objectFit="contain"
-                      onCropChange={setCrop}
-                      onZoomChange={setZoom}
-                      onCropComplete={(_, areaPixels) =>
-                        setCroppedAreaPixels(areaPixels as PixelCrop)
-                      }
-                    />
+          {/* ========== STEP: PHOTOS ========== */}
+          {currentStep === "photos" && (
+            <div className="space-y-4">
+              {/* Dropzone */}
+              <div
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={onDrop}
+                className={`flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-8 text-center transition-colors ${
+                  dragOver ? "border-gray-900 bg-gray-50" : "border-gray-300"
+                }`}
+              >
+                <svg className="mb-4 h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                </svg>
+                <p className="text-gray-600">Glissez vos photos ici</p>
+                <p className="mt-1 text-sm text-gray-400">ou</p>
+                <label className="mt-3 cursor-pointer rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black">
+                  Parcourir les fichiers
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) => addFiles(Array.from(e.target.files || []))}
+                    className="hidden"
+                  />
+                </label>
+                <p className="mt-4 text-xs text-gray-400">
+                  JPG, PNG ou WebP · Max {MAX_SIZE_MB} Mo par image · {images.length}/{MAX_FILES} photos
+                </p>
+              </div>
+
+              {/* Images grid */}
+              {images.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">
+                      {images.length} photo{images.length > 1 ? "s" : ""} · {totalSizeMb} Mo
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      Glissez pour réorganiser
+                    </span>
+                  </div>
+
+                  <div ref={filesParent} className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                    {images.map((img, i) => {
+                      const isCover = i === 0;
+                      const isDragging = i === dragFileIndex;
+                      return (
+                        <div
+                          key={img.id}
+                          className={`group relative aspect-[4/3] cursor-grab overflow-hidden rounded-xl border-2 bg-gray-100 transition-all ${
+                            isDragging ? "scale-105 ring-2 ring-gray-900" : "border-gray-200"
+                          } ${isCover ? "sm:col-span-2 sm:row-span-2" : ""}`}
+                          draggable
+                          onDragStart={(e) => handleFileDragStart(e, i)}
+                          onDragOver={(e) => e.preventDefault()}
+                          onDrop={() => handleFileDrop(i)}
+                          onDragEnd={() => setDragFileIndex(null)}
+                        >
+                          <img
+                            src={img.previewUrl}
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
+
+                          {/* Cover badge */}
+                          {isCover && (
+                            <span className="absolute left-2 top-2 rounded-full bg-white px-2 py-1 text-xs font-medium shadow">
+                              Photo de couverture
+                            </span>
+                          )}
+
+                          {/* Actions overlay */}
+                          <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                            <button
+                              type="button"
+                              onClick={() => openCropper(i)}
+                              className="rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-gray-900"
+                            >
+                              Recadrer
+                            </button>
+                            {!isCover && (
+                              <button
+                                type="button"
+                                onClick={() => makeCover(i)}
+                                className="rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-gray-900"
+                              >
+                                Couverture
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Remove button */}
+                          <button
+                            type="button"
+                            onClick={() => removeImage(i)}
+                            className="absolute right-2 top-2 rounded-full bg-white p-1.5 shadow opacity-0 transition-opacity group-hover:opacity-100"
+                          >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
+              )}
 
-                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex items-center gap-3 sm:w-1/2">
-                    <span className="text-xs text-gray-500">{t.newListing.zoom}</span>
+              {images.length < 3 && (
+                <p className="text-center text-sm text-amber-600">
+                  Ajoutez au moins 3 photos pour continuer
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* ========== STEP: DESCRIPTION ========== */}
+          {currentStep === "description" && (
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label htmlFor="title" className="text-sm font-medium text-gray-700">
+                  Titre de l&apos;annonce
+                </label>
+                <input
+                  id="title"
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
+                  maxLength={120}
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                  placeholder="Ex: Studio lumineux au cœur de Paris"
+                />
+                <p className="text-right text-xs text-gray-400">{formData.title.length}/120</p>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="description" className="text-sm font-medium text-gray-700">
+                  Description
+                </label>
+                <textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                  rows={6}
+                  maxLength={2000}
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                  placeholder="Décrivez votre espace : ce qui le rend unique, les équipements disponibles, l&apos;ambiance, le quartier..."
+                />
+                <p className="text-right text-xs text-gray-400">{formData.description.length}/2000</p>
+              </div>
+            </div>
+          )}
+
+          {/* ========== STEP: PRICING ========== */}
+          {currentStep === "pricing" && (
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Mode de tarification</label>
+                <div className="grid grid-cols-3 gap-3">
+                  {([
+                    { value: "DAILY", label: "À la journée" },
+                    { value: "HOURLY", label: "À l&apos;heure" },
+                    { value: "BOTH", label: "Les deux" },
+                  ] as const).map((mode) => (
+                    <button
+                      key={mode.value}
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, pricingMode: mode.value }))}
+                      className={`rounded-xl border-2 px-3 py-2.5 text-sm font-medium transition-all ${
+                        formData.pricingMode === mode.value
+                          ? "border-gray-900 bg-gray-50"
+                          : "border-gray-200 hover:border-gray-400"
+                      }`}
+                    >
+                      {mode.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {(formData.pricingMode === "DAILY" || formData.pricingMode === "BOTH") && (
+                <div className="space-y-2">
+                  <label htmlFor="price" className="text-sm font-medium text-gray-700">
+                    Prix par jour/nuit ({formData.currency})
+                  </label>
+                  <div className="relative">
                     <input
-                      type="range"
+                      id="price"
+                      type="number"
+                      min={2}
+                      step={1}
+                      value={formData.price || ""}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                      className="w-full rounded-xl border border-gray-300 px-4 py-3 pr-16 text-lg font-medium focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                      placeholder="0"
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
+                      {formData.currency === "EUR" ? "€" : "$"} / jour
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {(formData.pricingMode === "HOURLY" || formData.pricingMode === "BOTH") && (
+                <div className="space-y-2">
+                  <label htmlFor="hourlyPrice" className="text-sm font-medium text-gray-700">
+                    Prix par heure ({formData.currency})
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="hourlyPrice"
+                      type="number"
                       min={1}
-                      max={3}
-                      step={0.1}
-                      value={zoom}
-                      onChange={(e) => setZoom(Number(e.target.value))}
-                      className="h-1 w-full cursor-pointer"
+                      step={1}
+                      value={formData.hourlyPrice || ""}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, hourlyPrice: parseFloat(e.target.value) || null }))}
+                      className="w-full rounded-xl border border-gray-300 px-4 py-3 pr-16 text-lg font-medium focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                      placeholder="0"
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
+                      {formData.currency === "EUR" ? "€" : "$"} / h
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <div className="rounded-xl bg-gray-50 p-4">
+                <p className="text-sm text-gray-600">
+                  <span className="font-medium">Conseil :</span> Regardez les prix des espaces similaires dans votre région pour rester compétitif.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* ========== STEP: REVIEW ========== */}
+          {currentStep === "review" && (
+            <div className="space-y-6">
+              <div className="overflow-hidden rounded-2xl border border-gray-200">
+                {/* Preview image */}
+                {images[0] && (
+                  <div className="aspect-[16/9] bg-gray-100">
+                    <img
+                      src={images[0].previewUrl}
+                      alt=""
+                      className="h-full w-full object-cover"
                     />
                   </div>
+                )}
 
-                  <div className="flex justify-end gap-2">
-                    <button
-                      onClick={() => {
-                        setCropOpen(false);
-                        setCropSrc(null);
-                        setCropIndex(null);
-                        setCroppedAreaPixels(null);
-                      }}
-                      className="rounded-md border px-3 py-1.5 text-sm"
-                    >
-                      {t.common.cancel}
-                    </button>
-                    <button
-                      className="rounded-md bg-black px-3 py-1.5 text-sm font-medium text-white"
-                      onClick={saveCrop}
-                    >
-                      {t.common.save}
-                    </button>
+                <div className="p-4">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {formData.title || "Titre de l&apos;annonce"}
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {formData.city}, {formData.country}
+                  </p>
+                  <p className="mt-2 text-lg font-semibold">
+                    {formData.price} {formData.currency === "EUR" ? "€" : "$"} / jour
+                    {formData.hourlyPrice && (
+                      <span className="ml-2 text-sm font-normal text-gray-500">
+                        ou {formData.hourlyPrice} {formData.currency === "EUR" ? "€" : "$"} / h
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              {/* Summary */}
+              <div className="space-y-3 rounded-xl bg-gray-50 p-4">
+                <h4 className="font-medium text-gray-900">Récapitulatif</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Type d&apos;espace</span>
+                    <span className="font-medium">{LISTING_TYPES.find((t) => t.value === formData.type)?.label}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Capacité</span>
+                    <span className="font-medium">{formData.maxGuests} personne{formData.maxGuests > 1 ? "s" : ""}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Photos</span>
+                    <span className="font-medium">{images.length} photo{images.length > 1 ? "s" : ""}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Réservation instantanée</span>
+                    <span className="font-medium">{formData.isInstantBook ? "Oui" : "Non"}</span>
                   </div>
                 </div>
               </div>
+
+              <p className="text-center text-sm text-gray-500">
+                En publiant, vous acceptez nos conditions d&apos;utilisation et notre politique de confidentialité.
+              </p>
+            </div>
+          )}
+        </main>
+
+        {/* Footer navigation */}
+        <footer className="sticky bottom-0 border-t border-gray-200 bg-white">
+          <div className="mx-auto flex h-20 max-w-2xl items-center justify-between px-4">
+            <button
+              type="button"
+              onClick={handleBack}
+              disabled={isFirstStep}
+              className="text-sm font-medium text-gray-900 underline disabled:invisible"
+            >
+              Retour
+            </button>
+
+            {isLastStep ? (
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={submitting || uploading || !canProceed()}
+                className="rounded-lg bg-gradient-to-r from-pink-500 to-rose-500 px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+              >
+                {submitting || uploading ? (
+                  <span className="flex items-center gap-2">
+                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    {uploading ? "Upload des photos..." : "Publication..."}
+                  </span>
+                ) : (
+                  "Publier l&apos;annonce"
+                )}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleNext}
+                disabled={!canProceed()}
+                className="rounded-lg bg-gray-900 px-6 py-3 text-sm font-semibold text-white transition-opacity hover:bg-black disabled:opacity-50"
+              >
+                Suivant
+              </button>
+            )}
+          </div>
+        </footer>
+      </div>
+
+      {/* Crop modal */}
+      {cropOpen && cropSrc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <div className="w-full max-w-3xl rounded-2xl bg-white p-6">
+            <h3 className="mb-4 text-lg font-semibold">Recadrer l&apos;image</h3>
+
+            <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-900">
+              <Cropper
+                image={cropSrc}
+                crop={crop}
+                zoom={zoom}
+                aspect={4 / 3}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={(_, areaPixels) => setCroppedAreaPixels(areaPixels as PixelCrop)}
+              />
+            </div>
+
+            <div className="mt-4 flex items-center gap-4">
+              <span className="text-sm text-gray-500">Zoom</span>
+              <input
+                type="range"
+                min={1}
+                max={3}
+                step={0.1}
+                value={zoom}
+                onChange={(e) => setZoom(Number(e.target.value))}
+                className="flex-1"
+              />
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => { setCropOpen(false); setCropSrc(null); setCropIndex(null); }}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={saveCrop}
+                className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white"
+              >
+                Appliquer
+              </button>
             </div>
           </div>
-        )}
-      </section>
+        </div>
+      )}
     </>
   );
 }

@@ -1,9 +1,10 @@
 // apps/web/src/app/onboarding/OnboardingForm.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import useTranslation from "@/hooks/useTranslation";
+import PasswordInput, { validatePassword } from "@/components/PasswordInput";
 
 type UserData = {
   firstName: string;
@@ -18,6 +19,7 @@ type UserData = {
   identityStatus: string;
   hasStripeConnect: boolean;
   payoutsEnabled: boolean;
+  hasPassword: boolean;
 };
 
 type Props = {
@@ -78,6 +80,17 @@ export default function OnboardingForm({ email, initialData, returnFromStripe }:
   const [city, setCity] = useState(initialData?.city || "");
   const [postalCode, setPostalCode] = useState(initialData?.postalCode || "");
   const [country, setCountry] = useState(initialData?.country || "");
+
+  // États pour le mot de passe
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [savingPassword, setSavingPassword] = useState(false);
+  const hasExistingPassword = initialData?.hasPassword || false;
+
+  // Validation du mot de passe en temps réel
+  const passwordValidation = useMemo(() => validatePassword(password), [password]);
+  const passwordsMatch = password === confirmPassword;
 
   // Animation pour le retour de Stripe
   const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
@@ -159,14 +172,53 @@ export default function OnboardingForm({ email, initialData, returnFromStripe }:
   }
 
   // Navigation entre les étapes
-  function handleNext() {
+  async function handleNext() {
     setError(null);
+    setPasswordError(null);
 
     if (step === "identity") {
       if (!firstName.trim() || !lastName.trim()) {
         setError(t.errorRequired);
         return;
       }
+
+      // Validation du mot de passe (sauf si l'utilisateur en a déjà un)
+      if (!hasExistingPassword) {
+        if (!password) {
+          setPasswordError("Le mot de passe est requis");
+          return;
+        }
+        if (!passwordValidation.isValid) {
+          setPasswordError("Le mot de passe ne respecte pas les critères de sécurité");
+          return;
+        }
+        if (!passwordsMatch) {
+          setPasswordError("Les mots de passe ne correspondent pas");
+          return;
+        }
+
+        // Sauvegarder le mot de passe via l'API
+        setSavingPassword(true);
+        try {
+          const res = await fetch("/api/auth/password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password }),
+          });
+
+          if (!res.ok) {
+            const data = await res.json();
+            setPasswordError(data.error || "Erreur lors de la création du mot de passe");
+            return;
+          }
+        } catch {
+          setPasswordError("Erreur de connexion au serveur");
+          return;
+        } finally {
+          setSavingPassword(false);
+        }
+      }
+
       setStep("role");
     } else if (step === "role") {
       if (!role) {
@@ -410,6 +462,33 @@ export default function OnboardingForm({ email, initialData, returnFromStripe }:
                 autoComplete="off"
               />
             </div>
+
+            {/* Création du mot de passe (seulement si l'utilisateur n'en a pas) */}
+            {!hasExistingPassword && (
+              <div className="border-t border-gray-100 pt-3">
+                <PasswordInput
+                  value={password}
+                  onChange={setPassword}
+                  label="Crée ton mot de passe"
+                  placeholder="Ton mot de passe sécurisé"
+                  showValidation={true}
+                  confirmValue={confirmPassword}
+                  confirmLabel="Confirme ton mot de passe"
+                  onConfirmChange={setConfirmPassword}
+                  error={passwordError}
+                />
+              </div>
+            )}
+
+            {/* Message si l'utilisateur a déjà un mot de passe */}
+            {hasExistingPassword && (
+              <div className="flex items-center gap-2 rounded-lg bg-green-50 p-3">
+                <svg className="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <span className="text-sm text-green-700">Mot de passe déjà configuré</span>
+              </div>
+            )}
 
             <p className="text-[11px] text-gray-500">
               {t.identityHint}
@@ -793,9 +872,10 @@ export default function OnboardingForm({ email, initialData, returnFromStripe }:
             <button
               type="button"
               onClick={handleNext}
-              className="flex-1 rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-black"
+              disabled={savingPassword}
+              className="flex-1 rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-black disabled:opacity-60"
             >
-              {t.next || "Continuer"}
+              {savingPassword ? "Création en cours..." : (t.next || "Continuer")}
             </button>
           )}
 

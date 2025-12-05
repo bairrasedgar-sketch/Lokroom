@@ -525,3 +525,73 @@ export async function sendNewMessageNotification(
   const { html, text, subject } = newMessageEmail(data);
   return sendEmail({ to, subject, html, text });
 }
+
+/**
+ * Email de réinitialisation de mot de passe avec code
+ */
+export function passwordResetEmail(data: {
+  firstName?: string;
+  code: string;
+}): { html: string; text: string; subject: string } {
+  const greeting = data.firstName ? `${data.firstName},` : "Bonjour,";
+
+  const html = emailLayout(`
+    ${emailHeader()}
+    <div style="padding:32px;">
+      <h1 style="margin:0 0 16px;font-size:22px;font-weight:600;color:#111111;">
+        Réinitialisation de mot de passe
+      </h1>
+      <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#444444;">
+        ${greeting} tu as demandé à réinitialiser ton mot de passe.
+        Utilise le code ci-dessous pour continuer :
+      </p>
+
+      <div style="background:#f9f9f9;border-radius:16px;padding:24px;margin:24px 0;text-align:center;">
+        <p style="margin:0 0 8px;font-size:12px;color:#888888;text-transform:uppercase;letter-spacing:1px;">
+          Ton code de vérification
+        </p>
+        <p style="margin:0;font-size:36px;font-weight:700;color:#111111;letter-spacing:8px;font-family:monospace;">
+          ${data.code}
+        </p>
+        <p style="margin:16px 0 0;font-size:13px;color:#888888;">
+          Ce code expire dans 15 minutes
+        </p>
+      </div>
+
+      <p style="margin:0;font-size:14px;color:#666666;">
+        Si tu n'as pas demandé cette réinitialisation, tu peux ignorer cet e-mail.
+        Ton compte reste sécurisé.
+      </p>
+
+      <div style="border-top:1px solid #eeeeee;padding-top:20px;margin-top:24px;">
+        <p style="margin:0;font-size:12px;color:#999999;">
+          Pour ta sécurité, ne partage jamais ce code avec qui que ce soit.
+          L'équipe Lok'Room ne te demandera jamais ce code.
+        </p>
+      </div>
+    </div>
+  `);
+
+  const text = `Réinitialisation de mot de passe\n\n${greeting} tu as demandé à réinitialiser ton mot de passe.\n\nTon code de vérification : ${data.code}\n\nCe code expire dans 15 minutes.\n\nSi tu n'as pas demandé cette réinitialisation, ignore cet e-mail.`;
+
+  return {
+    html,
+    text,
+    subject: `${data.code} - Code de réinitialisation Lok'Room`,
+  };
+}
+
+/**
+ * Envoie un email de réinitialisation de mot de passe
+ */
+export async function sendPasswordResetEmail(data: {
+  to: string;
+  firstName?: string;
+  code: string;
+}): Promise<EmailResult> {
+  const { html, text, subject } = passwordResetEmail({
+    firstName: data.firstName,
+    code: data.code,
+  });
+  return sendEmail({ to: data.to, subject, html, text });
+}
