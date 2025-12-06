@@ -9,6 +9,7 @@ import { formatMoneyAsync, type Currency } from "@/lib/currency";
 import { getOrigin } from "@/lib/origin";
 import Map, { type MapMarker } from "@/components/Map";
 import FiltersBar from "@/components/listings/FiltersBar";
+import ActiveFilters from "@/components/listings/ActiveFilters";
 import { getServerDictionary } from "@/lib/i18n.server";
 
 export const revalidate = 0;
@@ -27,6 +28,7 @@ type ListingItem = {
   currency: Currency;
   country: string;
   city: string | null;
+  maxGuests: number | null;
   latPublic: number | null;
   lngPublic: number | null;
   createdAt: string;
@@ -58,6 +60,9 @@ type SearchParams = {
   sort?: string;
   page?: string;
   pageSize?: string;
+  startDate?: string;
+  endDate?: string;
+  guests?: string;
   [key: string]: string | string[] | undefined;
 };
 
@@ -162,6 +167,9 @@ export default async function ListingsPage({
   const minRating = (searchParams?.minRating as string) ?? "";
   const sort = (searchParams?.sort as string) ?? "newest";
   const hasPhoto = searchParams?.hasPhoto === "1";
+  const startDate = (searchParams?.startDate as string) ?? "";
+  const endDate = (searchParams?.endDate as string) ?? "";
+  const guests = (searchParams?.guests as string) ?? "";
 
   // Pré-formatage des prix
   const listingsWithPrice = await Promise.all(
@@ -230,7 +238,19 @@ export default async function ListingsPage({
         minRating={minRating}
         sort={sort}
         hasPhoto={hasPhoto}
+        startDate={startDate}
+        endDate={endDate}
+        guests={guests}
         locale={locale}
+      />
+
+      {/* Filtres actifs */}
+      <ActiveFilters
+        q={q}
+        startDate={startDate}
+        endDate={endDate}
+        guests={guests}
+        searchParams={searchParams}
       />
 
       {/* Résumé + pagination */}

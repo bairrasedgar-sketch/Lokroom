@@ -6,6 +6,7 @@ import { useEffect, useState, FormEvent } from "react";
 import Image from "next/image";
 import { signIn, useSession } from "next-auth/react";
 import { UserMenu } from "./layout/UserMenu";
+import { useSearchBarSafe } from "@/contexts/SearchBarContext";
 
 type LocaleOption = {
   code: string;
@@ -301,15 +302,38 @@ type SessionUser = {
   isHost?: boolean;
 };
 
+// Helper pour obtenir l'emoji de chaque catégorie
+function getCategoryEmoji(key: string): string {
+  const emojis: Record<string, string> = {
+    APARTMENT: "🏢",
+    HOUSE: "🏠",
+    STUDIO: "🎨",
+    OFFICE: "💼",
+    COWORKING: "👥",
+    PARKING: "🚗",
+    EVENT_SPACE: "🎉",
+    RECORDING_STUDIO: "🎤",
+  };
+  return emojis[key] || "🏠";
+}
+
 export default function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
 
   const [localeModalOpen, setLocaleModalOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
   const [currentLocale, setCurrentLocale] = useState<LocaleCode>("fr");
   const [currentCurrency, setCurrentCurrency] = useState<string>("EUR");
+
+  // Récupérer les catégories et l'état du scroll depuis le contexte
+  const searchBarContext = useSearchBarSafe();
+  const categories = searchBarContext?.categories || [];
+  const showSearchBar = searchBarContext?.showInNavbar || false;
+  const activeCategory = searchBarContext?.activeCategory || null;
+  const setActiveCategory = searchBarContext?.setActiveCategory || (() => {});
 
   const { data: session, status } = useSession();
   const typedUser = session?.user as SessionUser | undefined;
@@ -369,128 +393,173 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <Link href="/" className="font-semibold text-lg">
-            Lokroom
+      <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
+        <div className="relative flex items-center justify-between px-6 py-4 max-w-[1760px] mx-auto">
+          {/* Logo à gauche */}
+          <Link href="/" className="flex-shrink-0 z-10">
+            <Image
+              src="/logo.svg"
+              alt="Lok'Room"
+              width={130}
+              height={85}
+              style={{ height: '36px', width: 'auto' }}
+              priority
+              unoptimized
+            />
           </Link>
 
-          {/* Desktop nav */}
-          <nav className="hidden items-center gap-4 md:flex">
-            <Link
-              href="/listings"
-              className={pathname?.startsWith("/listings") ? "underline" : ""}
-            >
-              {t.navListings}
-            </Link>
-
-            {isLoggedIn && (
-              <>
-                <Link
-                  href="/bookings"
-                  className={pathname === "/bookings" ? "underline" : ""}
+          {/* Centre : Tous + Recherche (visible quand scrollé) - Centrage absolu */}
+          <div className={`hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center justify-center transition-all duration-500 ${showSearchBar ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+            {/* Container pour Tous + Recherche */}
+            <div className="flex items-center gap-3">
+              {/* Bouton Tous avec catégories qui se déploient à gauche (scrollable) */}
+              <div className={`flex items-center flex-row-reverse rounded-full border border-gray-300 bg-white shadow-sm transition-all duration-500 ease-out ${
+                categoriesOpen ? "shadow-md" : "hover:shadow-md"
+              }`}>
+                {/* Bouton Tous (à droite grâce à flex-row-reverse) */}
+                <button
+                  type="button"
+                  onClick={() => setCategoriesOpen(!categoriesOpen)}
+                  className="flex items-center gap-1.5 px-3 py-2 transition-all duration-300 flex-shrink-0 group"
                 >
-                  {t.navBookings}
-                </Link>
-                <Link
-                  href="/profile"
-                  className={pathname === "/profile" ? "underline" : ""}
-                >
-                  {t.navProfile}
-                </Link>
-              </>
-            )}
+                  <div className={`transition-transform duration-500 ${categoriesOpen ? "rotate-90 scale-110" : "group-hover:scale-110"}`}>
+                    <svg className="h-3.5 w-3.5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="3" width="7" height="7" rx="1" />
+                      <rect x="14" y="3" width="7" height="7" rx="1" />
+                      <rect x="3" y="14" width="7" height="7" rx="1" />
+                      <rect x="14" y="14" width="7" height="7" rx="1" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Tous</span>
+                  <svg className={`h-3 w-3 text-gray-400 transition-transform duration-300 ${categoriesOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
 
-            <div className="ml-4 flex items-center gap-2">
-              {/* Globe langue/devise avec indicateur */}
+                {/* Séparateur */}
+                <div className={`w-px h-5 bg-gray-200 transition-all duration-300 flex-shrink-0 ${categoriesOpen ? "opacity-100" : "opacity-0"}`} />
+
+                {/* Catégories avec largeur max et scroll */}
+                <div className={`flex items-center transition-all duration-500 ease-out overflow-hidden ${
+                  categoriesOpen ? "opacity-100 max-w-[280px]" : "opacity-0 max-w-0"
+                }`}>
+                  <div className="flex items-center gap-1 overflow-x-auto px-2 scrollbar-thin-horizontal">
+                    {categories.map((cat, index) => (
+                      <button
+                        key={cat.key}
+                        onClick={() => setActiveCategory(activeCategory === cat.key ? null : cat.key)}
+                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full transition-all duration-300 flex-shrink-0 whitespace-nowrap text-xs font-medium ${
+                          activeCategory === cat.key
+                            ? "bg-gray-900 text-white"
+                            : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+                        }`}
+                        style={{
+                          animationDelay: categoriesOpen ? `${index * 40}ms` : '0ms',
+                          animation: categoriesOpen ? 'category-pill-in 0.3s ease-out forwards' : 'none',
+                          opacity: categoriesOpen ? 1 : 0
+                        }}
+                      >
+                        <span className="text-sm">{getCategoryEmoji(cat.key)}</span>
+                        <span>{cat.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Barre de recherche compacte */}
               <button
                 type="button"
-                onClick={() => setLocaleModalOpen(true)}
-                className="flex items-center gap-1.5 rounded-full border border-gray-300 bg-white px-3 py-2 transition hover:bg-gray-100 hover:shadow-md"
-                aria-label="Choisir la langue et la devise"
+                onClick={() => {
+                  // Rediriger vers la page d'accueil avec le paramètre pour ouvrir le modal
+                  if (typeof window !== "undefined") {
+                    if (window.location.pathname === "/") {
+                      // Si on est sur la home, dispatch un event pour ouvrir le modal
+                      window.dispatchEvent(new CustomEvent("openSearchModal"));
+                    } else {
+                      window.location.href = "/?search=open";
+                    }
+                  }
+                }}
+                className="flex items-center rounded-full border border-gray-300 bg-white shadow-sm hover:shadow-md transition-all py-1.5 px-1.5"
               >
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  className="h-5 w-5 text-gray-700"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M2 12h20" />
-                  <path d="M12 2a15 15 0 0 1 0 20" />
-                  <path d="M12 2a15 15 0 0 0 0 20" />
-                </svg>
-                <span className="text-sm font-medium text-gray-700">
-                  {currentLocale.toUpperCase()} {CURRENCY_SYMBOLS[currentCurrency] || "€"}
-                </span>
+                <div className="px-3 py-1 border-r border-gray-200 text-left">
+                  <p className="text-sm font-medium text-gray-900">Destination</p>
+                </div>
+                <div className="px-3 py-1 border-r border-gray-200 text-left">
+                  <p className="text-sm font-medium text-gray-900">Dates</p>
+                </div>
+                <div className="px-3 py-1 text-left">
+                  <p className="text-sm text-gray-500">Voyageurs</p>
+                </div>
+                <div className="flex items-center justify-center h-8 w-8 rounded-full bg-gray-900 ml-1">
+                  <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                  </svg>
+                </div>
               </button>
-
-              {/* Pas connecté */}
-              {!isLoggedIn && (
-                <>
-                  <Link
-                    href="/become-host"
-                    className="inline-flex items-center rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50"
-                  >
-                    {t.becomeHost}
-                  </Link>
-
-                  <button
-                    type="button"
-                    onClick={() => setAuthModalOpen(true)}
-                    className="inline-flex items-center rounded-full bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800"
-                  >
-                    {t.loginCta}
-                  </button>
-                </>
-              )}
-
-              {/* Connecté mais pas hôte */}
-              {isLoggedIn && !isHost && (
-                <>
-                  <Link
-                    href="/become-host"
-                    className="inline-flex items-center rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50"
-                  >
-                    {t.becomeHost}
-                  </Link>
-
-                  <UserMenu />
-                </>
-              )}
-
-              {/* Connecté + hôte */}
-              {isLoggedIn && isHost && (
-                <>
-                  <Link
-                    href="/listings/new"
-                    className="inline-flex items-center rounded-full border border-gray-200 px-4 py-2 text-sm font-medium text-gray-800 transition hover:bg-gray-50"
-                  >
-                    {t.createListing || "Créer une annonce"}
-                  </Link>
-
-                  {isOnHostArea ? (
-                    <Link
-                      href="/"
-                      className="inline-flex items-center rounded-full bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200"
-                    >
-                      {t.travelerMode}
-                    </Link>
-                  ) : (
-                    <Link
-                      href="/host"
-                      className="inline-flex items-center rounded-full bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-200"
-                    >
-                      {t.hostMode}
-                    </Link>
-                  )}
-
-                  <UserMenu />
-                </>
-              )}
             </div>
-          </nav>
+          </div>
+
+          {/* Menu à droite - Plus d'espace */}
+          <div className="hidden md:flex items-center gap-3 z-10">
+            {/* Mode hôte ou Devenir hôte */}
+            {isHost ? (
+              <Link
+                href={isOnHostArea ? "/" : "/host"}
+                className="px-4 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                {isOnHostArea ? t.travelerMode : t.hostMode}
+              </Link>
+            ) : (
+              <Link
+                href="/become-host"
+                className="px-4 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                {t.becomeHost}
+              </Link>
+            )}
+
+            {/* Globe pour langue/devise avec abréviation */}
+            <button
+              type="button"
+              onClick={() => setLocaleModalOpen(true)}
+              className="flex items-center gap-1.5 px-3 py-2 hover:bg-gray-100 rounded-full transition-colors"
+              aria-label="Choisir la langue et la devise"
+            >
+              <svg className="h-5 w-5 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M2 12h20" />
+                <path d="M12 2a15 15 0 0 1 0 20" />
+                <path d="M12 2a15 15 0 0 0 0 20" />
+              </svg>
+              <span className="text-xs font-medium text-gray-700">
+                {currentLocale.toUpperCase()} {CURRENCY_SYMBOLS[currentCurrency] || "€"}
+              </span>
+            </button>
+
+            {/* Menu utilisateur avec hamburger + profil */}
+            {isLoggedIn ? (
+              <UserMenu />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setAuthModalOpen(true)}
+                className="flex items-center gap-3 rounded-full border border-gray-300 bg-white pl-3.5 pr-2 py-2 hover:shadow-md transition-shadow"
+              >
+                {/* Icône hamburger (3 barres) */}
+                <svg className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+                {/* Icône profil */}
+                <div className="flex items-center justify-center h-8 w-8 rounded-full bg-gray-500">
+                  <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                  </svg>
+                </div>
+              </button>
+            )}
+          </div>
 
           {/* Burger mobile */}
           <button

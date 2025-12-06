@@ -1,30 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(tree:*)",
+      "Bash(taskkill:*)",
       "Bash(npx tsc:*)",
-      "Bash(npx next build)",
-      "Bash(curl:*)",
-      "Bash(npm run build)",
-      "Bash(npm run lint:*)",
-      "Bash(wc:*)",
-      "Bash(cat:*)",
       "Bash(npx prisma migrate:*)",
-      "Bash(npx prisma generate:*)",
-      "mcp__ide__getDiagnostics",
-      "Bash(npm install:*)",
-      "Bash(npm uninstall:*)",
+      "Bash(npm run build:*)",
       "Bash(git add:*)",
-      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: add Resend email service with magic link auth\n\n- Add centralized email service using Resend API\n- Implement professional email templates (magic link, welcome, booking, etc.)\n- Update NextAuth EmailProvider to use Resend for magic links\n- Send welcome email after user onboarding\n- Add StripeEvent model for webhook idempotency\n- Fix typo: payements -> payments\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git push:*)",
-      "Bash(git commit:*)",
-      "Bash(npx prisma studio)",
-      "Bash(npx tsx:*)",
-      "Bash(npx prisma db push:*)",
-      "Bash(git fetch:*)",
-      "Bash(xargs:*)",
-      "WebFetch(domain:www.airbnb.com)",
-      "Bash(Voyageurs\"\n- Click on compact bar to expand back to full search\n- Categories stay visible at all times (no collapse animation)\n- Cleaner, simpler UX matching Airbnb''s pattern\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

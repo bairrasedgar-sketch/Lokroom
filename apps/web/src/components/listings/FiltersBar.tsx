@@ -14,6 +14,9 @@ type FiltersBarProps = {
   minRating: string;
   sort: string;
   hasPhoto: boolean;
+  startDate?: string;
+  endDate?: string;
+  guests?: string;
   locale?: SupportedLocale;
 };
 
@@ -423,16 +426,20 @@ export default function FiltersBar(props: FiltersBarProps) {
     minRating,
     sort,
     hasPhoto,
+    startDate: initialStartDate = "",
+    endDate: initialEndDate = "",
+    guests: initialGuests = "",
     locale = "fr",
   } = props;
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // États pour dates/heures
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  // États pour dates/heures - initialisés avec les valeurs de l'URL
+  const [startDate, setStartDate] = useState(initialStartDate);
+  const [endDate, setEndDate] = useState(initialEndDate);
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
+  const [guests, setGuests] = useState(initialGuests);
 
   const t = getDictionaryForLocale(locale);
   const fb = t.components.filtersBar;
@@ -490,17 +497,23 @@ export default function FiltersBar(props: FiltersBarProps) {
             {/* Voyageurs */}
             <div className="flex flex-[0.9] items-center gap-3 lg:px-4">
               <div className="hidden h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-sm sm:flex">
-                <span className="h-4 w-4 rounded-full border border-gray-400" />
+                <svg className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
               </div>
               <div className="flex-1">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                   {fb.travelers}
                 </p>
                 <input
-                  type="text"
-                  readOnly
+                  type="number"
+                  name="guests"
+                  min={1}
+                  max={16}
+                  value={guests}
+                  onChange={(e) => setGuests(e.target.value)}
                   placeholder={fb.travelersPlaceholder}
-                  className="w-full cursor-not-allowed border-none bg-transparent text-sm text-gray-400 focus:outline-none focus:ring-0"
+                  className="w-full border-none bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-0"
                 />
               </div>
 

@@ -52,7 +52,9 @@ function clampPageSize(n: number | null | undefined): number {
  *
  * - startDate: YYYY-MM-DD
  * - endDate: YYYY-MM-DD
- *   → on exclut les annonces déjà réservées sur ce créneau
+ *   → on exclut les annonces déjà réservées ou bloquées sur ce créneau
+ *
+ * - guests: number (nombre de voyageurs, filtre sur maxGuests)
  *
  * - minRating: 1–5 (filtre sur les annonces ayant au moins un avis >= minRating)
  * - hasPhoto: "1" (obliger au moins 1 image)
@@ -85,6 +87,9 @@ export async function GET(req: NextRequest) {
 
   const startDate = parseDate(sp.get("startDate"));
   const endDate = parseDate(sp.get("endDate"));
+
+  // Nombre de voyageurs
+  const guests = safeInt(sp.get("guests"));
 
   const neLat = safeFloat(sp.get("neLat"));
   const neLng = safeFloat(sp.get("neLng"));
@@ -169,13 +174,28 @@ export async function GET(req: NextRequest) {
     };
   }
 
-  // Filtre disponibilité (pas de booking qui chevauche les dates)
+  // Filtre par nombre de voyageurs (maxGuests doit être >= au nombre demandé)
+  if (guests && guests > 0) {
+    where.maxGuests = {
+      gte: guests,
+    };
+  }
+
+  // Filtre disponibilité (pas de booking ni de blocage qui chevauche les dates)
   if (startDate && endDate && endDate > startDate) {
+    // Exclure les listings avec des bookings qui chevauchent
     where.bookings = {
       none: {
         status: { in: ["PENDING", "CONFIRMED"] },
         startDate: { lt: endDate },
         endDate: { gt: startDate },
+      },
+    };
+    // Exclure aussi les listings avec des blocages calendrier
+    where.calendar = {
+      none: {
+        start: { lt: endDate },
+        end: { gt: startDate },
       },
     };
   }
@@ -264,6 +284,7 @@ export async function GET(req: NextRequest) {
         currency: l.currency,
         country: l.country,
         city: l.city,
+        maxGuests: l.maxGuests,
         latPublic: l.latPublic,
         lngPublic: l.lngPublic,
         createdAt: l.createdAt,

@@ -1,9 +1,12 @@
 "use client";
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchBar } from "@/contexts/SearchBarContext";
+import SearchModal from "./SearchModal";
 
 // ============================================================================
 // TYPES
@@ -1024,39 +1027,74 @@ function CategoryButton({
 // MAIN COMPONENT
 // ============================================================================
 
+// Helper pour obtenir l'emoji de chaque catégorie
+function getCategoryEmoji(key: string): string {
+  const emojis: Record<string, string> = {
+    APARTMENT: "🏢",
+    HOUSE: "🏠",
+    STUDIO: "🎨",
+    OFFICE: "💼",
+    COWORKING: "👥",
+    PARKING: "🚗",
+    EVENT_SPACE: "🎉",
+    RECORDING_STUDIO: "🎤",
+  };
+  return emojis[key] || "🏠";
+}
+
 export default function HomeClient({ cards, categories }: HomeClientProps) {
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [categoriesCollapsed, setCategoriesCollapsed] = useState(false);
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
+  const searchParams = useSearchParams();
+
+  // Context pour partager la SearchBar et les catégories avec la Navbar
+  const {
+    setSearchBarElement,
+    setShowInNavbar,
+    setCategories,
+    activeCategory,
+    setActiveCategory
+  } = useSearchBar();
+
+  // Ouvrir le modal si ?search=open dans l'URL
+  useEffect(() => {
+    if (searchParams.get("search") === "open") {
+      setIsSearchModalOpen(true);
+    }
+  }, [searchParams]);
+
+  // Écouter l'événement pour ouvrir le modal depuis la navbar
+  useEffect(() => {
+    const handleOpenSearchModal = () => setIsSearchModalOpen(true);
+    window.addEventListener("openSearchModal", handleOpenSearchModal);
+    return () => window.removeEventListener("openSearchModal", handleOpenSearchModal);
+  }, []);
 
   useEffect(() => {
     setIsLoaded(true);
-  }, []);
+    // Envoyer les catégories au contexte
+    setCategories(categories);
+  }, [categories, setCategories]);
 
-  // Scroll detection pour la barre de recherche et les catégories
+  // Synchroniser l'état du scroll avec le contexte pour la Navbar
   useEffect(() => {
-    let lastScrollY = 0;
+    setShowInNavbar(isScrolled);
+  }, [isScrolled, setShowInNavbar]);
 
+  // Ne plus envoyer de SearchBar au contexte (elle est maintenant dans HomeClient)
+  useEffect(() => {
+    setSearchBarElement(null);
+  }, [setSearchBarElement]);
+
+  // Scroll detection pour la barre de recherche
+  useEffect(() => {
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-
       if (heroRef.current) {
         const heroBottom = heroRef.current.getBoundingClientRect().bottom;
         setIsScrolled(heroBottom < 80);
       }
-
-      // Collapse categories quand on scroll vers le bas après 150px
-      if (currentScrollY > 150 && currentScrollY > lastScrollY) {
-        setCategoriesCollapsed(true);
-      }
-      // Expand categories quand on remonte près du top
-      else if (currentScrollY < 100) {
-        setCategoriesCollapsed(false);
-      }
-
-      lastScrollY = currentScrollY;
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -1392,7 +1430,7 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
       `}</style>
 
       {/* HERO SECTION */}
-      <section ref={heroRef} className="bg-[#FAFAFA] pb-6 pt-8">
+      <section ref={heroRef} className="bg-[#FAFAFA] pt-8">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Hero Content */}
           <div className={`mx-auto max-w-3xl text-center transition-all duration-700 ${isLoaded ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}>
@@ -1408,91 +1446,107 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
         </div>
       </section>
 
-      {/* STICKY HEADER - Barre de recherche style Airbnb */}
+      {/* SEARCH BAR - Sous le héro, disparaît quand scrollé */}
       <div
-        className={`sticky z-50 transition-all duration-300 ${
+        className={`transition-all duration-700 ease-out ${
           isScrolled
-            ? "top-0 bg-white/95 backdrop-blur-md shadow-md border-b border-gray-200"
-            : "top-0 bg-[#FAFAFA]"
+            ? "opacity-0 max-h-0 overflow-hidden py-0"
+            : "opacity-100 max-h-40 bg-[#FAFAFA] py-6"
         }`}
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className={`flex items-center justify-center transition-all duration-300 ${isScrolled ? "py-3" : "py-4"}`}>
-            {/* Barre de recherche - Grande barre → Bouton compact au scroll */}
-            <div className={`w-full transition-all duration-500 ${isLoaded ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}>
-              <SearchBar isCompact={isScrolled} />
+          <div className="flex items-center justify-center">
+            {/* Barre de recherche grande - Desktop */}
+            <div className="hidden sm:block w-full max-w-3xl">
+              <button
+                type="button"
+                onClick={() => setIsSearchModalOpen(true)}
+                className="flex items-center rounded-full border border-gray-300 bg-white shadow-lg hover:shadow-xl transition-all py-2 px-2 w-full"
+              >
+                {/* Section Destination */}
+                <div className="flex-1 px-6 py-3 border-r border-gray-200 text-left">
+                  <p className="text-xs font-medium text-gray-900">Destination</p>
+                  <p className="text-sm text-gray-500 mt-0.5">Rechercher une destination</p>
+                </div>
+
+                {/* Section Dates */}
+                <div className="flex-1 px-6 py-3 border-r border-gray-200 text-left">
+                  <p className="text-xs font-medium text-gray-900">Quand</p>
+                  <p className="text-sm text-gray-500 mt-0.5">Ajouter des dates</p>
+                </div>
+
+                {/* Section Voyageurs */}
+                <div className="flex-1 px-6 py-3 text-left">
+                  <p className="text-xs font-medium text-gray-900">Voyageurs</p>
+                  <p className="text-sm text-gray-500 mt-0.5">Ajouter des voyageurs</p>
+                </div>
+
+                {/* Bouton recherche */}
+                <div className="flex items-center justify-center h-12 w-12 rounded-full bg-gray-900 hover:bg-black transition-colors flex-shrink-0">
+                  <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                  </svg>
+                </div>
+              </button>
+            </div>
+
+            {/* Barre de recherche - Mobile */}
+            <div className="sm:hidden w-full">
+              <button
+                type="button"
+                onClick={() => setIsSearchModalOpen(true)}
+                className="flex items-center gap-3 w-full rounded-full border border-gray-300 bg-white shadow-lg hover:shadow-xl transition-all py-3 px-4"
+              >
+                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-gray-900 flex-shrink-0">
+                  <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                  </svg>
+                </div>
+                <div className="flex-1 text-left">
+                  <p className="text-sm font-medium text-gray-900">Rechercher</p>
+                  <p className="text-xs text-gray-500">Destination, dates, voyageurs</p>
+                </div>
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* CATEGORIES - Animation premium où elles rentrent dans "Tous" */}
+      {/* CATEGORIES - Visible seulement quand pas scrollé */}
       <section
-        className={`border-b border-gray-200 bg-white sticky z-40 transition-all duration-300 ${
-          isScrolled ? "top-[56px]" : "top-[72px]"
+        className={`border-b border-gray-200 bg-white transition-all duration-300 ${
+          isScrolled ? "opacity-0 h-0 overflow-hidden" : ""
         }`}
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-1 overflow-x-auto py-2 scrollbar-hide">
-            {/* Bouton "Tous" - S'agrandit quand les catégories sont collapsed */}
-            <div className="relative">
-              <button
-                onClick={() => {
-                  setActiveCategory(null);
-                  if (categoriesCollapsed) {
-                    setCategoriesCollapsed(false);
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }
-                }}
-                className={`flex items-center gap-2 px-4 py-3 transition-all duration-500 ease-out ${
-                  activeCategory === null
-                    ? "border-b-2 border-gray-900"
-                    : "border-b-2 border-transparent opacity-60 hover:opacity-100"
-                } ${categoriesCollapsed ? "bg-gray-900 rounded-full text-white border-none px-5" : ""}`}
-              >
-                <div className={`relative transition-all duration-300 ${categoriesCollapsed ? "scale-90" : ""}`}>
-                  <CategoryIcon category="ALL" isActive={!categoriesCollapsed && activeCategory === null} isAnimating={false} />
-                </div>
-                <span className={`whitespace-nowrap text-xs font-medium transition-all duration-300 ${
-                  categoriesCollapsed ? "text-white" : activeCategory === null ? "text-gray-900" : "text-gray-600"
-                }`}>
-                  Tous
-                </span>
-                {/* Badge avec le nombre de catégories */}
-                <span
-                  className={`flex items-center justify-center rounded-full text-xs font-bold transition-all duration-500 ${
-                    categoriesCollapsed
-                      ? "h-5 w-5 bg-white text-gray-900 opacity-100 scale-100"
-                      : "h-0 w-0 opacity-0 scale-0"
-                  }`}
-                >
-                  {categories.length}
-                </span>
-              </button>
-            </div>
+          <div className="flex items-center gap-1 overflow-x-auto py-3 scrollbar-hide">
+            {/* Bouton "Tous" - toujours visible et actif par défaut */}
+            <button
+              onClick={() => setActiveCategory(null)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
+                activeCategory === null
+                  ? "bg-gray-900 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              <svg className={`h-4 w-4 ${activeCategory === null ? "text-white" : "text-gray-700"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="7" height="7" rx="1" />
+                <rect x="14" y="3" width="7" height="7" rx="1" />
+                <rect x="3" y="14" width="7" height="7" rx="1" />
+                <rect x="14" y="14" width="7" height="7" rx="1" />
+              </svg>
+              <span className="whitespace-nowrap text-sm font-medium">Tous</span>
+            </button>
 
-            {/* Autres catégories - Animation de slide/fade vers "Tous" */}
-            {categories.map((cat, index) => (
-              <div
+            {/* Autres catégories */}
+            {categories.map((cat) => (
+              <CategoryButton
                 key={cat.key}
-                className="transition-all duration-500 ease-out"
-                style={{
-                  opacity: categoriesCollapsed ? 0 : 1,
-                  transform: categoriesCollapsed
-                    ? `translateX(-${(index + 1) * 40}px) scale(0.5)`
-                    : "translateX(0) scale(1)",
-                  maxWidth: categoriesCollapsed ? 0 : "200px",
-                  overflow: "hidden",
-                  transitionDelay: categoriesCollapsed ? `${index * 30}ms` : `${(categories.length - index) * 30}ms`,
-                }}
-              >
-                <CategoryButton
-                  category={cat.key}
-                  label={cat.label}
-                  isActive={activeCategory === cat.key}
-                  onClick={() => setActiveCategory(cat.key === activeCategory ? null : cat.key)}
-                />
-              </div>
+                category={cat.key}
+                label={cat.label}
+                isActive={activeCategory === cat.key}
+                onClick={() => setActiveCategory(cat.key === activeCategory ? null : cat.key)}
+              />
             ))}
           </div>
         </div>
@@ -1670,6 +1724,12 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
           </div>
         </div>
       </section>
+
+      {/* SEARCH MODAL */}
+      <SearchModal
+        isOpen={isSearchModalOpen}
+        onClose={() => setIsSearchModalOpen(false)}
+      />
     </main>
   );
 }
