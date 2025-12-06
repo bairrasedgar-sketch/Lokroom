@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense, useEffect } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
@@ -202,7 +202,6 @@ type Payment = {
 };
 
 function PaymentsHistory() {
-  const { t } = useTranslation();
   const [filter, setFilter] = useState<"all" | "past" | "upcoming">("all");
 
   // Données simulées
@@ -400,7 +399,7 @@ function PayoutStripeCard() {
             </div>
             <div>
               <p className="text-sm font-medium text-gray-900">Fonds disponibles après le check-in</p>
-              <p className="text-xs text-gray-500">24h après l'arrivée du voyageur</p>
+              <p className="text-xs text-gray-500">24h après l&apos;arrivée du voyageur</p>
             </div>
           </div>
 

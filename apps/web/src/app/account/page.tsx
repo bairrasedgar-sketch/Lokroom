@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, useMemo, type ReactNode } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import PaymentsPage from "./payments/page";
 import useTranslation from "@/hooks/useTranslation";
@@ -140,6 +140,7 @@ function maskName(name: string): string {
 // ---------- Carte "Connexion & sécurité" AMÉLIORÉE ----------
 function SecurityTabContent({ t }: { t: AccountTranslations }) {
   const secT = t.securitySection;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const extT = t.securityExtended || {} as any;
   const [status, setStatus] = useState<IdentityStatus | null>(null);
   const [lastVerifiedAt, setLastVerifiedAt] = useState<string | null>(null);
@@ -664,6 +665,7 @@ function SecurityTabContent({ t }: { t: AccountTranslations }) {
 // ---------- Contenu Données personnelles AMÉLIORÉ ----------
 function PersonalTabContent({ t }: { t: AccountTranslations }) {
   const pT = t.personal;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const extT = t.personalExtended || {} as any;
 
   // Données simulées (à remplacer par des vraies données API)
@@ -817,12 +819,14 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
 
 // ---------- Contenu Notifications style Airbnb ----------
 function NotificationsTabContent({ t }: { t: AccountTranslations }) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const nT = t.notificationsSection || {} as any;
   const [unsubscribeAll, setUnsubscribeAll] = useState(false);
   const [saved, setSaved] = useState(false);
 
   type NotificationPref = "email" | "sms" | "push" | "none";
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [prefs, setPrefs] = useState<Record<string, NotificationPref>>({
     rewardsAchievements: "email",
     tipsAndTricks: "email",
@@ -1288,44 +1292,44 @@ export default function AccountSettingsPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // 🔹 chaque tab a une icône React
-  const tabs: { id: TabId; label: string; icon: ReactNode }[] = [
+  // 🔹 chaque tab a une icône React - mémorisé pour éviter les re-renders
+  const tabs = useMemo(() => [
     {
-      id: "personal",
+      id: "personal" as TabId,
       label: t.tabs.personal,
       icon: <UserIcon className="h-5 w-5" />,
     },
     {
-      id: "security",
+      id: "security" as TabId,
       label: t.tabs.security,
       icon: <ShieldCheckIcon className="h-5 w-5" />,
     },
     {
-      id: "privacy",
+      id: "privacy" as TabId,
       label: t.tabs.privacy,
       icon: <LockClosedIcon className="h-5 w-5" />,
     },
     {
-      id: "notifications",
+      id: "notifications" as TabId,
       label: t.tabs.notifications,
       icon: <BellIcon className="h-5 w-5" />,
     },
     {
-      id: "taxes",
+      id: "taxes" as TabId,
       label: t.tabs.taxes,
       icon: <DocumentTextIcon className="h-5 w-5" />,
     },
     {
-      id: "payments",
+      id: "payments" as TabId,
       label: t.tabs.payments,
       icon: <CreditCardIcon className="h-5 w-5" />,
     },
     {
-      id: "language",
+      id: "language" as TabId,
       label: t.tabs.language,
       icon: <GlobeAltIcon className="h-5 w-5" />,
     },
-  ];
+  ], [t.tabs]);
 
   const tabLabels: Record<TabId, string> = {
     personal: t.tabs.personal,
