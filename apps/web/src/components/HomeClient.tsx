@@ -1106,7 +1106,7 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
     : cards;
 
   return (
-    <main className="min-h-screen bg-[#FAF9F6]">
+    <main className="min-h-screen bg-white">
       {/* Premium Animation Styles */}
       <style jsx global>{`
         /* ============================================
@@ -1430,7 +1430,7 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
       `}</style>
 
       {/* HERO SECTION */}
-      <section ref={heroRef} className="bg-[#FAF9F6] pt-8">
+      <section ref={heroRef} className="bg-white pt-8">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Hero Content */}
           <div className={`mx-auto max-w-3xl text-center transition-all duration-700 ${isLoaded ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}>
@@ -1451,7 +1451,7 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
         className={`transition-all duration-700 ease-out ${
           isScrolled
             ? "opacity-0 max-h-0 overflow-hidden py-0"
-            : "opacity-100 max-h-40 bg-[#FAF9F6] py-6"
+            : "opacity-100 max-h-40 bg-white py-6"
         }`}
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -1695,7 +1695,7 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
       </section>
 
       {/* CTA SECTION */}
-      <section className="bg-[#FAF9F6] py-16">
+      <section className="bg-gray-50 py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="rounded-2xl bg-gray-900 px-8 py-12 text-center sm:px-12">
             <h2 className="text-2xl font-semibold text-white sm:text-3xl">
