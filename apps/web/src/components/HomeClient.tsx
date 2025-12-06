@@ -590,7 +590,7 @@ function SearchBar({ isCompact }: { isCompact: boolean }) {
           <div className={`transition-all duration-300 ${showCompact ? "pr-1" : "pr-2"}`}>
             <button
               onClick={(e) => { e.stopPropagation(); handleSearch(); }}
-              className={`flex items-center justify-center rounded-full bg-[#E85D4C] text-white transition-all duration-300 hover:bg-[#D14836] active:scale-95 ${
+              className={`flex items-center justify-center rounded-full bg-gray-900 text-white transition-all duration-300 hover:bg-gray-800 active:scale-95 ${
                 showCompact ? "h-8 w-8" : "h-12 w-12"
               }`}
             >
@@ -823,7 +823,7 @@ function SearchBar({ isCompact }: { isCompact: boolean }) {
                 </div>
                 <button
                   onClick={handleSearch}
-                  className="w-full rounded-xl bg-[#E85D4C] py-3 font-medium text-white transition-all hover:bg-[#D14836]"
+                  className="w-full rounded-xl bg-gray-900 py-3 font-medium text-white transition-all hover:bg-black"
                 >
                   Rechercher
                 </button>
@@ -929,7 +929,7 @@ function ListingCard({ card, index }: { card: ListingCard; index: number }) {
           >
             <svg
               className={`h-6 w-6 drop-shadow-md transition-colors ${
-                isFavorited ? "fill-[#E85D4C] text-[#E85D4C]" : "fill-black/30 text-white"
+                isFavorited ? "fill-gray-900 text-gray-900" : "fill-black/30 text-white"
               }`}
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -942,7 +942,7 @@ function ListingCard({ card, index }: { card: ListingCard; index: number }) {
           {/* Instant Book Badge */}
           {card.isInstantBook && (
             <div className="absolute left-3 top-3 flex items-center gap-1 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-900 shadow-md">
-              <svg className="h-3 w-3 text-[#FFB400]" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="h-3 w-3 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
               </svg>
               Instantané
@@ -1482,7 +1482,7 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
                 </div>
 
                 {/* Bouton recherche */}
-                <div className="flex items-center justify-center h-12 w-12 rounded-full bg-[#E85D4C] hover:bg-[#D14836] transition-colors flex-shrink-0">
+                <div className="flex items-center justify-center h-12 w-12 rounded-full bg-gray-900 hover:bg-black transition-colors flex-shrink-0">
                   <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                   </svg>
@@ -1497,7 +1497,7 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
                 onClick={() => setIsSearchModalOpen(true)}
                 className="flex items-center gap-3 w-full rounded-full border border-gray-300 bg-white shadow-lg hover:shadow-xl transition-all py-3 px-4"
               >
-                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-[#E85D4C] flex-shrink-0">
+                <div className="flex items-center justify-center h-10 w-10 rounded-full bg-gray-900 flex-shrink-0">
                   <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                   </svg>
@@ -1697,17 +1697,17 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
       {/* CTA SECTION */}
       <section className="bg-[#FAFAFA] py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="rounded-2xl bg-gradient-to-br from-[#E85D4C] to-[#D14836] px-8 py-12 text-center sm:px-12">
+          <div className="rounded-2xl bg-gray-900 px-8 py-12 text-center sm:px-12">
             <h2 className="text-2xl font-semibold text-white sm:text-3xl">
               Vous avez un espace à louer ?
             </h2>
-            <p className="mt-3 text-white/80">
+            <p className="mt-3 text-gray-400">
               Rejoignez notre communauté d&apos;hôtes et commencez à générer des revenus.
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
                 href="/become-host"
-                className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 font-medium text-[#E85D4C] transition-all hover:bg-gray-100"
+                className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 font-medium text-gray-900 transition-all hover:bg-gray-100"
               >
                 Devenir hôte
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -1716,7 +1716,7 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
               </Link>
               <Link
                 href="/listings"
-                className="inline-flex items-center gap-2 rounded-lg border border-white/40 px-6 py-3 font-medium text-white transition-all hover:bg-white/10"
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-600 px-6 py-3 font-medium text-white transition-all hover:bg-gray-800"
               >
                 Explorer les espaces
               </Link>

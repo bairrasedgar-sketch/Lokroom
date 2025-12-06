@@ -4,25 +4,6 @@
 
 :root {
   color-scheme: light;
-
-  /* Palette Lok'Room - Couleurs chaudes et conviviales */
-  --lokroom-primary: #E85D4C;        /* Corail chaud - CTA principal */
-  --lokroom-primary-dark: #D14836;   /* Corail foncé - hover */
-  --lokroom-primary-light: #FEF2F0;  /* Corail très clair - backgrounds */
-
-  --lokroom-secondary: #00A699;      /* Teal/Turquoise - accents */
-  --lokroom-secondary-dark: #008F84; /* Teal foncé */
-  --lokroom-secondary-light: #E6F7F6; /* Teal très clair */
-
-  --lokroom-accent: #FFB400;         /* Jaune doré - badges, favoris */
-  --lokroom-accent-light: #FFF8E6;   /* Jaune très clair */
-
-  --lokroom-purple: #914EF7;         /* Violet - premium, special */
-  --lokroom-purple-light: #F5F0FF;   /* Violet très clair */
-
-  --lokroom-success: #00C853;        /* Vert succès */
-  --lokroom-warning: #FF9800;        /* Orange warning */
-  --lokroom-error: #E53935;          /* Rouge erreur */
 }
 
 /* Bulle de prix Lok'Room sur la carte (Overlay perso) */
@@ -200,61 +181,3 @@
     transform: rotate(90deg) scale(1);
   }
 }
-
-/* =============================================
-   CLASSES UTILITAIRES LOK'ROOM COLORS
-   ============================================= */
-
-/* Bouton principal corail */
-.btn-primary {
-  background-color: var(--lokroom-primary);
-  color: white;
-  transition: all 0.2s ease;
-}
-.btn-primary:hover {
-  background-color: var(--lokroom-primary-dark);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(232, 93, 76, 0.3);
-}
-
-/* Bouton secondaire teal */
-.btn-secondary {
-  background-color: var(--lokroom-secondary);
-  color: white;
-  transition: all 0.2s ease;
-}
-.btn-secondary:hover {
-  background-color: var(--lokroom-secondary-dark);
-}
-
-/* Badge accent doré */
-.badge-accent {
-  background-color: var(--lokroom-accent-light);
-  color: #B7791F;
-  border: 1px solid var(--lokroom-accent);
-}
-
-/* Gradient hero */
-.gradient-hero {
-  background: linear-gradient(135deg, var(--lokroom-primary-light) 0%, #FFF9F0 50%, var(--lokroom-secondary-light) 100%);
-}
-
-/* Card avec hover coloré */
-.card-hover-primary:hover {
-  border-color: var(--lokroom-primary);
-  box-shadow: 0 4px 20px rgba(232, 93, 76, 0.15);
-}
-
-/* Text colors */
-.text-lokroom-primary { color: var(--lokroom-primary); }
-.text-lokroom-secondary { color: var(--lokroom-secondary); }
-.text-lokroom-accent { color: var(--lokroom-accent); }
-.text-lokroom-purple { color: var(--lokroom-purple); }
-
-/* Background colors */
-.bg-lokroom-primary { background-color: var(--lokroom-primary); }
-.bg-lokroom-primary-light { background-color: var(--lokroom-primary-light); }
-.bg-lokroom-secondary { background-color: var(--lokroom-secondary); }
-.bg-lokroom-secondary-light { background-color: var(--lokroom-secondary-light); }
-.bg-lokroom-accent-light { background-color: var(--lokroom-accent-light); }
-.bg-lokroom-purple-light { background-color: var(--lokroom-purple-light); }
