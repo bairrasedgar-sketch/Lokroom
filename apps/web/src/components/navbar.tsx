@@ -492,7 +492,7 @@ export default function Navbar() {
                 <div className="px-3 py-1 text-left">
                   <p className="text-sm text-gray-500">Voyageurs</p>
                 </div>
-                <div className="flex items-center justify-center h-8 w-8 rounded-full bg-gray-900 ml-1">
+                <div className="flex items-center justify-center h-8 w-8 rounded-full bg-[#E85D4C] ml-1">
                   <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                   </svg>
@@ -854,7 +854,7 @@ export default function Navbar() {
 
                 <button
                   type="submit"
-                  className="mt-2 w-full rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-black"
+                  className="mt-2 w-full rounded-lg bg-[#E85D4C] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#D14836]"
                 >
                   {t.phoneContinue}
                 </button>
