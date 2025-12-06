@@ -1430,23 +1430,8 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
       `}</style>
 
       {/* HERO SECTION */}
-      <section ref={heroRef} className="relative bg-white pt-8 overflow-hidden">
-        {/* Background decorative elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {/* Gradient orb top right */}
-          <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 blur-3xl opacity-60" />
-          {/* Gradient orb left */}
-          <div className="absolute top-20 -left-32 w-[400px] h-[400px] rounded-full bg-gradient-to-br from-rose-50 via-orange-50 to-amber-50 blur-3xl opacity-50" />
-          {/* Subtle grid pattern */}
-          <div
-            className="absolute inset-0 opacity-[0.015]"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-            }}
-          />
-        </div>
-
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <section ref={heroRef} className="bg-white pt-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Hero Content */}
           <div className={`mx-auto max-w-3xl text-center transition-all duration-700 ${isLoaded ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}>
             <h1 className="text-3xl font-semibold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
@@ -1606,13 +1591,8 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
       </section>
 
       {/* DECORATIVE VISUAL SECTION */}
-      <section className="relative py-16 overflow-hidden">
-        {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white via-gray-50/50 to-white pointer-events-none" />
-        {/* Decorative blob */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full bg-gradient-to-br from-blue-50/40 via-purple-50/30 to-pink-50/40 blur-3xl opacity-60 pointer-events-none" />
-
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <section className="py-16 overflow-hidden">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Text Content */}
             <div>
@@ -1715,26 +1695,16 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
       </section>
 
       {/* CTA SECTION */}
-      <section className="relative bg-gray-50 py-16 overflow-hidden">
-        {/* Subtle pattern background */}
-        <div className="absolute inset-0 opacity-[0.02] pointer-events-none"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23000000' fill-opacity='1' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='1.5'/%3E%3C/g%3E%3C/svg%3E")`,
-          }}
-        />
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="relative rounded-2xl bg-gray-900 px-8 py-12 text-center sm:px-12 overflow-hidden">
-            {/* Gradient accent in CTA */}
-            <div className="absolute -top-24 -right-24 w-64 h-64 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 blur-3xl" />
-            <div className="absolute -bottom-24 -left-24 w-64 h-64 rounded-full bg-gradient-to-br from-rose-500/20 to-orange-500/20 blur-3xl" />
-
-            <h2 className="relative text-2xl font-semibold text-white sm:text-3xl">
+      <section className="bg-gray-50 py-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="rounded-2xl bg-gray-900 px-8 py-12 text-center sm:px-12">
+            <h2 className="text-2xl font-semibold text-white sm:text-3xl">
               Vous avez un espace à louer ?
             </h2>
-            <p className="relative mt-3 text-gray-400">
+            <p className="mt-3 text-gray-400">
               Rejoignez notre communauté d&apos;hôtes et commencez à générer des revenus.
             </p>
-            <div className="relative mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
                 href="/become-host"
                 className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 font-medium text-gray-900 transition-all hover:bg-gray-100"
