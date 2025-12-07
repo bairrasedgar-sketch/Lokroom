@@ -192,30 +192,14 @@ export function UserMenu() {
               Taxes
             </Link>
 
-            {/* Bouton qui se transforme selon le statut hôte */}
-            {isHost ? (
-              <Link
-                href="/listings/new"
-                onClick={() => setOpen(false)}
-                className="block px-4 py-2 font-medium text-gray-900 hover:bg-gray-50"
-              >
-                Créer une annonce
-              </Link>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  setOpen(false);
-                  void handleBecomeHost();
-                }}
-                disabled={hostLoading}
-                className="block w-full px-4 py-2 text-left text-sm font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-60"
-              >
-                {hostLoading
-                  ? "Redirection vers Stripe…"
-                  : "Devenir hôte Lok'Room"}
-              </button>
-            )}
+            {/* Bouton unique : texte change selon statut hôte, destination toujours /listings/new */}
+            <Link
+              href="/listings/new"
+              onClick={() => setOpen(false)}
+              className="block px-4 py-2 font-medium text-gray-900 hover:bg-gray-50"
+            >
+              {isHost ? "Créer une annonce" : "Devenir hôte Lok'Room"}
+            </Link>
 
             <div className="my-1 border-t border-gray-100" />
 

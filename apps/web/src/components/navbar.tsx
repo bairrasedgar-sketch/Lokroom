@@ -503,22 +503,13 @@ export default function Navbar() {
 
           {/* Menu à droite - Plus d'espace */}
           <div className="hidden md:flex items-center gap-3 z-10">
-            {/* Mode hôte ou Devenir hôte */}
-            {isHost ? (
-              <Link
-                href={isOnHostArea ? "/" : "/host"}
-                className="px-4 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                {isOnHostArea ? t.travelerMode : t.hostMode}
-              </Link>
-            ) : (
-              <Link
-                href="/become-host"
-                className="px-4 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                {t.becomeHost}
-              </Link>
-            )}
+            {/* Bouton unique : texte change selon statut hôte, destination toujours /listings/new */}
+            <Link
+              href="/listings/new"
+              className="px-4 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              {isHost ? t.createListing : t.becomeHost}
+            </Link>
 
             {/* Globe pour langue/devise avec abréviation */}
             <button
@@ -636,15 +627,17 @@ export default function Navbar() {
 
                   <div className="my-2 border-t border-gray-100" />
 
-                  {/* Boutons hôte */}
-                  {isHost ? (
+                  {/* Bouton unique : texte change selon statut hôte */}
+                  <Link
+                    href="/listings/new"
+                    className="rounded-lg px-3 py-2 font-medium hover:bg-gray-100"
+                  >
+                    {isHost ? (t.createListing || "Créer une annonce") : t.becomeHost}
+                  </Link>
+
+                  {/* Liens supplémentaires pour hôtes */}
+                  {isHost && (
                     <>
-                      <Link
-                        href="/listings/new"
-                        className="rounded-lg px-3 py-2 font-medium hover:bg-gray-100"
-                      >
-                        {t.createListing || "Créer une annonce"}
-                      </Link>
                       <Link
                         href="/host/listings"
                         className="rounded-lg px-3 py-2 hover:bg-gray-100"
@@ -657,29 +650,7 @@ export default function Navbar() {
                       >
                         Portefeuille
                       </Link>
-                      {isOnHostArea ? (
-                        <Link
-                          href="/"
-                          className="rounded-lg bg-gray-100 px-3 py-2 font-medium"
-                        >
-                          {t.travelerMode}
-                        </Link>
-                      ) : (
-                        <Link
-                          href="/host"
-                          className="rounded-lg bg-gray-100 px-3 py-2 font-medium"
-                        >
-                          {t.hostMode}
-                        </Link>
-                      )}
                     </>
-                  ) : (
-                    <Link
-                      href="/become-host"
-                      className="rounded-lg bg-gray-100 px-3 py-2 font-medium"
-                    >
-                      {t.becomeHost}
-                    </Link>
                   )}
                 </>
               )}
