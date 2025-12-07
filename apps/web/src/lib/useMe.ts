@@ -45,9 +45,10 @@ export function useMe() {
 
       const data: MeResponse = await res.json();
       setUser(data.user ?? null);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      setError(e?.message || "Erreur inconnue");
+      const error = e as { message?: string };
+      setError(error?.message || "Erreur inconnue");
       setUser(null);
     } finally {
       setLoading(false);

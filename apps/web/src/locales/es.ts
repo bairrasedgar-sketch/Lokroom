@@ -228,6 +228,7 @@ const es = {
     cancelled: "Canceladas",
     pending: "Pendiente",
     confirmed: "Confirmada",
+    status: "Estado",
     noBookings: "No hay reservas por el momento.",
     bookNow: "Reservar",
     checkIn: "Llegada",

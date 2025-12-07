@@ -253,6 +253,7 @@ const fr = {
     cancelled: "Annulées",
     pending: "En attente",
     confirmed: "Confirmée",
+    status: "Statut",
     noBookings: "Aucune réservation pour le moment.",
     bookNow: "Réserver",
     checkIn: "Arrivée",

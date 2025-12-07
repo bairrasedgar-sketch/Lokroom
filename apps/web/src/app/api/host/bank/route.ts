@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   try {
     const { session } = await requireHost();
 
-    const userId = (session.user as any).id as string | undefined;
+    const userId = session.user?.id as string | undefined;
 
     // 🚦 Rate limit basique : 20 requêtes / minute par host
     const rlKey = userId
@@ -123,14 +123,15 @@ export async function POST(req: Request) {
       payoutsEnabled,
       externalAccountsCount: updated.external_accounts?.data?.length ?? 0,
     });
-  } catch (e: any) {
-    if (e?.message === "UNAUTHORIZED") {
+  } catch (e: unknown) {
+    const error = e as { message?: string; raw?: { message?: string } };
+    if (error?.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     }
-    if (e?.message === "FORBIDDEN_HOST_ONLY") {
+    if (error?.message === "FORBIDDEN_HOST_ONLY") {
       return NextResponse.json({ error: "forbidden" }, { status: 403 });
     }
-    const msg = e?.raw?.message || e?.message || "attach_bank_failed";
+    const msg = error?.raw?.message || error?.message || "attach_bank_failed";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

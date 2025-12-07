@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createListingSchema, validateRequestBody } from "@/lib/validations";
+import type { ProvinceCA } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -241,7 +242,7 @@ export async function POST(req: NextRequest) {
         addressFull: data.addressFull,
         addressLine1: data.addressLine1 ?? undefined,
         postalCode: data.postalCode ?? undefined,
-        province: data.province as any ?? undefined,
+        province: (data.province as ProvinceCA | null) ?? undefined,
         regionFR: data.regionFR ?? undefined,
         type: data.type,
         customType: data.customType ?? undefined,

@@ -10,6 +10,62 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { getCroppedImage, type PixelCrop } from "@/lib/cropImage";
 
 // ============================================================================
+// GOOGLE MAPS TYPES (simplified for TypeScript compatibility)
+// ============================================================================
+/* eslint-disable @typescript-eslint/no-explicit-any */
+type GoogleMapsAPI = {
+  maps: {
+    Map: new (container: HTMLElement, options: Record<string, unknown>) => GoogleMap;
+    Marker: new (options: Record<string, unknown>) => GoogleMarker;
+    Size: new (width: number, height: number) => unknown;
+    Point: new (x: number, y: number) => unknown;
+    Animation: { DROP: unknown };
+    event: {
+      clearInstanceListeners: (instance: unknown) => void;
+      trigger: (instance: unknown, event: string) => void;
+    };
+    places: {
+      Autocomplete: new (input: HTMLInputElement, options: Record<string, unknown>) => GoogleAutocomplete;
+      AutocompleteService: new () => GoogleAutocompleteService;
+      PlacesServiceStatus: { OK: string };
+    };
+  };
+};
+
+type GoogleMap = {
+  setCenter: (pos: { lat: number; lng: number }) => void;
+  setZoom: (zoom: number) => void;
+  getZoom: () => number;
+  addListener: (event: string, handler: (e: { latLng?: { lat: () => number; lng: () => number } }) => void) => void;
+};
+
+type GoogleMarker = {
+  setPosition: (pos: unknown) => void;
+  getPosition: () => { lat: () => number; lng: () => number } | null;
+  addListener: (event: string, handler: () => void) => void;
+};
+
+type GoogleAutocomplete = {
+  addListener: (event: string, handler: () => void) => void;
+  getPlace: () => {
+    geometry?: { location?: { lat: () => number; lng: () => number } };
+    formatted_address?: string;
+    address_components?: Array<{ types: string[]; long_name: string }>;
+  };
+};
+
+type GoogleAutocompleteService = {
+  getPlacePredictions: (
+    request: { input: string; types: string[]; componentRestrictions: { country: string | string[] } },
+    callback: (predictions: Array<{ place_id: string; description: string; structured_formatting?: { main_text?: string; secondary_text?: string } }> | null, status: string) => void
+  ) => void;
+};
+
+type WindowWithGoogle = Window & { google?: GoogleMapsAPI };
+type MapElementWithGmap = HTMLElement & { __gmap?: GoogleMap };
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+// ============================================================================
 // TYPES
 // ============================================================================
 
@@ -382,7 +438,9 @@ export default function NewListingPage() {
   const { data: session, status, update: updateSession } = useSession();
 
   // Vérifier si l'utilisateur est hôte
-  const isHost = (session?.user as any)?.isHost || (session?.user as any)?.role === "HOST" || (session?.user as any)?.role === "BOTH";
+  type SessionUser = { isHost?: boolean; role?: string };
+  const sessionUser = session?.user as SessionUser | undefined;
+  const isHost = sessionUser?.isHost || sessionUser?.role === "HOST" || sessionUser?.role === "BOTH";
 
   // État pour vérification de permission côté serveur
   const [permissionChecked, setPermissionChecked] = useState(false);
@@ -480,7 +538,15 @@ export default function NewListingPage() {
   });
 
   // City suggestions for autocomplete
-  const [citySuggestions, setCitySuggestions] = useState<any[]>([]);
+  type CitySuggestion = {
+    place_id: string;
+    description: string;
+    structured_formatting?: {
+      main_text?: string;
+      secondary_text?: string;
+    };
+  };
+  const [citySuggestions, setCitySuggestions] = useState<CitySuggestion[]>([]);
   const [showCitySuggestions, setShowCitySuggestions] = useState(false);
 
   // Draft choice modal - supports multiple drafts
@@ -561,13 +627,21 @@ export default function NewListingPage() {
         if (Array.isArray(parsed) && parsed.length > 0) {
           // Filter out expired drafts (older than 90 days)
           const now = new Date();
-          const validDrafts = parsed.filter((draft: any) => {
+          type DraftData = {
+            id: string;
+            formData: FormData;
+            currentStep: Step;
+            lastSaved: string;
+            createdAt?: string;
+          };
+          const validDrafts = parsed.filter((draft: DraftData) => {
             if (!draft.createdAt) return false;
             const createdDate = new Date(draft.createdAt);
             const daysDiff = (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
             return daysDiff < DRAFT_EXPIRY_DAYS;
-          }).map((draft: any) => ({
+          }).map((draft: DraftData) => ({
             ...draft,
+            createdAt: draft.createdAt!, // We know it exists after the filter
             formData: {
               ...draft.formData,
               spaceFeatures: Array.isArray(draft.formData?.spaceFeatures) ? draft.formData.spaceFeatures : [],
@@ -632,17 +706,7 @@ export default function NewListingPage() {
     if (updatedDrafts.length === 0) {
       setShowDraftModal(false);
     }
-  }, [availableDrafts]);
-
-  // Auto-save draft every 30 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (formData.type || formData.city || formData.title) {
-        saveDraft();
-      }
-    }, 30000);
-    return () => clearInterval(interval);
-  }, [formData, currentStep, currentDraftId]);
+  }, [availableDrafts, DRAFTS_KEY]);
 
   // Save draft function - saves to array of drafts
   const saveDraft = useCallback(() => {
@@ -686,7 +750,17 @@ export default function NewListingPage() {
       setAvailableDrafts(existingDrafts);
       setLastSaved(new Date());
     }
-  }, [formData, currentStep, currentDraftId, availableDrafts]);
+  }, [formData, currentStep, currentDraftId, availableDrafts, DRAFTS_KEY]);
+
+  // Auto-save draft every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (formData.type || formData.city || formData.title) {
+        saveDraft();
+      }
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [formData, saveDraft]);
 
   // Manual save draft
   const handleSaveDraft = useCallback(() => {
@@ -705,16 +779,16 @@ export default function NewListingPage() {
       try {
         const stored = localStorage.getItem(DRAFTS_KEY);
         if (stored) {
-          const drafts = JSON.parse(stored);
-          const updatedDrafts = drafts.filter((d: any) => d.id !== currentDraftId);
+          const drafts = JSON.parse(stored) as Array<{ id: string }>;
+          const updatedDrafts = drafts.filter((d) => d.id !== currentDraftId);
           localStorage.setItem(DRAFTS_KEY, JSON.stringify(updatedDrafts));
-          setAvailableDrafts(updatedDrafts);
+          setAvailableDrafts(updatedDrafts as typeof availableDrafts);
         }
       } catch {
         // Ignore errors
       }
     }
-  }, [currentDraftId]);
+  }, [currentDraftId, DRAFTS_KEY]);
 
   // Start identity verification
   const handleStartIdentity = async () => {
@@ -751,7 +825,7 @@ export default function NewListingPage() {
   // Check if Google Maps is already loaded
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const g = (window as any).google;
+      const g = (window as { google?: { maps?: { places?: unknown } } }).google;
       if (g?.maps?.places) {
         setMapsReady(true);
       }
@@ -762,7 +836,7 @@ export default function NewListingPage() {
   useEffect(() => {
     if (!mapsReady || currentStep !== "map") return;
 
-    const g = (window as any).google;
+    const g = (window as WindowWithGoogle).google;
     if (!g?.maps?.places?.Autocomplete) return;
 
     const input = document.getElementById("addressSearch") as HTMLInputElement | null;
@@ -813,8 +887,8 @@ export default function NewListingPage() {
 
       // Update map view
       const mapElement = document.getElementById("google-map");
-      if (mapElement && (mapElement as any).__gmap) {
-        const map = (mapElement as any).__gmap;
+      if (mapElement && (mapElement as MapElementWithGmap).__gmap) {
+        const map = (mapElement as MapElementWithGmap).__gmap!;
         map.setCenter({ lat, lng });
         map.setZoom(15);
       }
@@ -829,7 +903,7 @@ export default function NewListingPage() {
   useEffect(() => {
     if (!mapsReady || (currentStep !== "map" && currentStep !== "confirmLocation")) return;
 
-    const g = (window as any).google;
+    const g = (window as WindowWithGoogle).google;
     if (!g?.maps) return;
 
     const containerId = currentStep === "map" ? "google-map" : "confirm-google-map";
@@ -895,7 +969,7 @@ export default function NewListingPage() {
     });
 
     // Store map reference
-    (container as any).__gmap = map;
+    (container as MapElementWithGmap).__gmap = map;
 
     // Custom marker icon
     const customIcon = {
@@ -932,7 +1006,7 @@ export default function NewListingPage() {
     });
 
     // Update map when clicking
-    map.addListener("click", (e: any) => {
+    map.addListener("click", (e: { latLng?: { lat: () => number; lng: () => number } }) => {
       if (e.latLng) {
         marker.setPosition(e.latLng);
         g.maps.event.trigger(marker, "dragend");
@@ -943,6 +1017,8 @@ export default function NewListingPage() {
       g.maps.event.clearInstanceListeners(map);
       g.maps.event.clearInstanceListeners(marker);
     };
+    // Note: formData.lat/lng are intentionally excluded to avoid recreating the map on every position change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapsReady, currentStep, formData.country]);
 
   // ============================================================================
@@ -1491,8 +1567,8 @@ export default function NewListingPage() {
                         type="button"
                         onClick={() => {
                           const mapElement = document.getElementById("google-map");
-                          if (mapElement && (mapElement as any).__gmap) {
-                            const map = (mapElement as any).__gmap;
+                          if (mapElement && (mapElement as MapElementWithGmap).__gmap) {
+                            const map = (mapElement as MapElementWithGmap).__gmap!;
                             map.setZoom(map.getZoom() + 1);
                           }
                         }}
@@ -1507,8 +1583,8 @@ export default function NewListingPage() {
                         type="button"
                         onClick={() => {
                           const mapElement = document.getElementById("google-map");
-                          if (mapElement && (mapElement as any).__gmap) {
-                            const map = (mapElement as any).__gmap;
+                          if (mapElement && (mapElement as MapElementWithGmap).__gmap) {
+                            const map = (mapElement as MapElementWithGmap).__gmap!;
                             map.setZoom(map.getZoom() - 1);
                           }
                         }}
@@ -1581,7 +1657,7 @@ export default function NewListingPage() {
                     setFormData((prev) => ({ ...prev, city: e.target.value }));
                     // Trigger city autocomplete
                     if (mapsReady && e.target.value.length >= 2) {
-                      const g = (window as any).google;
+                      const g = (window as WindowWithGoogle).google;
                       if (g?.maps?.places?.AutocompleteService) {
                         const service = new g.maps.places.AutocompleteService();
                         service.getPlacePredictions(
@@ -1590,7 +1666,7 @@ export default function NewListingPage() {
                             types: ["(cities)"],
                             componentRestrictions: { country: formData.country === "France" ? "fr" : "ca" },
                           },
-                          (predictions: any[] | null) => {
+                          (predictions: CitySuggestion[] | null) => {
                             setCitySuggestions(predictions || []);
                             setShowCitySuggestions(true);
                           }
@@ -1721,8 +1797,8 @@ export default function NewListingPage() {
                         type="button"
                         onClick={() => {
                           const mapElement = document.getElementById("confirm-google-map");
-                          if (mapElement && (mapElement as any).__gmap) {
-                            const map = (mapElement as any).__gmap;
+                          if (mapElement && (mapElement as MapElementWithGmap).__gmap) {
+                            const map = (mapElement as MapElementWithGmap).__gmap!;
                             map.setZoom(map.getZoom() + 1);
                           }
                         }}
@@ -1737,8 +1813,8 @@ export default function NewListingPage() {
                         type="button"
                         onClick={() => {
                           const mapElement = document.getElementById("confirm-google-map");
-                          if (mapElement && (mapElement as any).__gmap) {
-                            const map = (mapElement as any).__gmap;
+                          if (mapElement && (mapElement as MapElementWithGmap).__gmap) {
+                            const map = (mapElement as MapElementWithGmap).__gmap!;
                             map.setZoom(map.getZoom() - 1);
                           }
                         }}

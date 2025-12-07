@@ -15,22 +15,15 @@ export async function GET() {
     );
   }
 
-  // On force un typage large pour éviter les erreurs de select
-  const user = (await prisma.user.findUnique({
+  // On récupère les infos de sécurité de l'utilisateur
+  const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    // TS peut hurler ici → on cast en any
     select: {
       email: true,
       identityStatus: true,
       identityLastVerifiedAt: true,
-    } as any,
-  })) as
-    | {
-        email: string;
-        identityStatus: string;
-        identityLastVerifiedAt: Date | null;
-      }
-    | null;
+    },
+  });
 
   if (!user) {
     return NextResponse.json(

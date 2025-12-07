@@ -39,11 +39,12 @@ export async function GET() {
       balanceCents: wallet?.balanceCents ?? 0,
       ledger,
     });
-  } catch (e: any) {
-    if (e?.message === "UNAUTHORIZED") {
+  } catch (e: unknown) {
+    const error = e as { message?: string };
+    if (error?.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     }
-    if (e?.message === "FORBIDDEN_HOST_ONLY") {
+    if (error?.message === "FORBIDDEN_HOST_ONLY") {
       return NextResponse.json({ error: "forbidden" }, { status: 403 });
     }
     return NextResponse.json({ error: "error" }, { status: 500 });

@@ -21,14 +21,19 @@ export const SUPPORTED_LOCALES = [
 
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 
-const DICTS: Record<SupportedLocale, any> = {
+// Type du dictionnaire complet basé sur la locale française (référence)
+type LocaleDictionary = typeof fr;
+
+// On utilise Partial pour permettre des traductions manquantes dans les autres locales
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const DICTS: Record<SupportedLocale, LocaleDictionary> = {
   fr,
-  en,
-  es,
-  de,
-  it,
-  pt,
-  zh,
+  en: en as LocaleDictionary,
+  es: es as LocaleDictionary,
+  de: de as LocaleDictionary,
+  it: it as LocaleDictionary,
+  pt: pt as LocaleDictionary,
+  zh: zh as LocaleDictionary,
 };
 
 // 🔎 Lit le cookie `locale` côté client

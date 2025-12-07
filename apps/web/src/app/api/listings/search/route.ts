@@ -1,7 +1,7 @@
 // apps/web/src/app/api/listings/search/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import type { Prisma } from "@prisma/client";
+import type { Prisma, ProvinceCA } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -112,7 +112,7 @@ export async function GET(req: NextRequest) {
   }
   if (province) {
     // on compare en insensible à la casse, pratique si tu passes "QC" ou "qc"
-    where.province = province as any;
+    where.province = province as ProvinceCA;
   }
   if (city) {
     where.city = { contains: city, mode: "insensitive" };

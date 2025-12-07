@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import useTranslation from "@/hooks/useTranslation";
 
@@ -44,7 +44,7 @@ export default function HostBookingsPage() {
   const [from, setFrom] = useState<string>("");
   const [to, setTo] = useState<string>("");
 
-  async function fetchBookings() {
+  const fetchBookings = useCallback(async () => {
     setLoading(true);
 
     const params = new URLSearchParams();
@@ -59,11 +59,11 @@ export default function HostBookingsPage() {
 
     setData(json);
     setLoading(false);
-  }
+  }, [page, status, from, to]);
 
   useEffect(() => {
     fetchBookings();
-  }, [page, status, from, to]);
+  }, [fetchBookings]);
 
   function getStatusLabel(s: string): string {
     switch (s) {

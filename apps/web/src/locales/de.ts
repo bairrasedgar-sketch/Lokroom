@@ -228,6 +228,7 @@ const de = {
     cancelled: "Stornierte",
     pending: "Ausstehend",
     confirmed: "Bestätigt",
+    status: "Status",
     noBookings: "Noch keine Buchungen.",
     bookNow: "Buchen",
     checkIn: "Check-in",

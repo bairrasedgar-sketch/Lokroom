@@ -52,8 +52,8 @@ export async function POST(req: Request) {
       );
     }
 
-    // on caste le profile en any pour ne pas se battre avec Prisma
-    const profile: any = host.profile ?? undefined;
+    // Récupérer les infos du profil pour pré-remplir Stripe
+    const profile = host.profile;
 
     // On s'assure qu'il a bien un HostProfile (côté Lok'Room)
     const hostProfile =

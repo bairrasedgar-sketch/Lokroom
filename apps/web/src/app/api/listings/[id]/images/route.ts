@@ -2,16 +2,23 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { Prisma } from "@prisma/client";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { s3, S3_BUCKET, S3_PUBLIC_BASE } from "@/lib/s3";
 
+type ImageBody = {
+  url?: string;
+  width?: number;
+  height?: number;
+};
+
 /**
  * POST /api/listings/:id/images
- * Enregistre une nouvelle image pour l’annonce.
+ * Enregistre une nouvelle image pour l'annonce.
  * - position = dernière position + 1
- * - si aucune image de couverture n’existe encore -> isCover = true
+ * - si aucune image de couverture n'existe encore -> isCover = true
  */
 export async function POST(
   req: Request,
@@ -23,17 +30,14 @@ export async function POST(
   }
 
   const listingId = params.id;
-  const { url, width, height } = (await req.json().catch(() => ({} as any))) as {
-    url?: string;
-    width?: number;
-    height?: number;
-  };
+  const body: ImageBody = await req.json().catch(() => ({}));
+  const { url, width, height } = body;
 
   if (!url || typeof url !== "string") {
     return NextResponse.json({ error: "Missing url" }, { status: 400 });
   }
 
-  // 🔒 Vérifie que l’URL vient bien de ton CDN / R2
+  // 🔒 Vérifie que l'URL vient bien de ton CDN / R2
   if (S3_PUBLIC_BASE) {
     const baseWithSlash = S3_PUBLIC_BASE.endsWith("/")
       ? S3_PUBLIC_BASE
@@ -62,15 +66,14 @@ export async function POST(
   // Dernière position actuelle
   const lastImage = await prisma.listingImage.findFirst({
     where: { listingId },
-    orderBy: { position: "desc" } as any,
+    orderBy: { position: "desc" },
   });
 
-  const lastImageAny = lastImage as any;
-  const nextPosition = (lastImageAny?.position ?? -1) + 1;
+  const nextPosition = (lastImage?.position ?? -1) + 1;
 
-  // Est-ce qu’une cover existe déjà ?
+  // Est-ce qu'une cover existe déjà ?
   const existingCover = await prisma.listingImage.findFirst({
-    where: { listingId, isCover: true } as any,
+    where: { listingId, isCover: true },
   });
 
   const image = await prisma.listingImage.create({
@@ -81,7 +84,7 @@ export async function POST(
       isCover: !existingCover, // si aucune cover -> la première devient couverture
       width: typeof width === "number" ? Math.round(width) : null,
       height: typeof height === "number" ? Math.round(height) : null,
-    } as any,
+    },
   });
 
   return NextResponse.json({ image }, { status: 201 });
@@ -126,7 +129,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // --- Définir l’image de couverture ---
+  // --- Définir l'image de couverture ---
   if (body.action === "setCover") {
     const imageId = body.imageId;
     if (!imageId) {
@@ -144,11 +147,11 @@ export async function PATCH(
     await prisma.$transaction([
       prisma.listingImage.updateMany({
         where: { listingId: params.id },
-        data: { isCover: false } as any,
+        data: { isCover: false },
       }),
       prisma.listingImage.update({
         where: { id: imageId },
-        data: { isCover: true, position: 0 } as any,
+        data: { isCover: true, position: 0 },
       }),
       // On remet les autres positions proprement (0,1,2…)
       ...listing.images
@@ -156,7 +159,7 @@ export async function PATCH(
         .map((img, index) =>
           prisma.listingImage.update({
             where: { id: img.id },
-            data: { position: index + 1 } as any,
+            data: { position: index + 1 },
           })
         ),
     ]);
@@ -188,26 +191,26 @@ export async function PATCH(
       );
     }
 
-    const queries: any[] = order.map((id, index) =>
+    const queries: Prisma.PrismaPromise<unknown>[] = order.map((id, index) =>
       prisma.listingImage.update({
         where: { id },
-        data: { position: index } as any,
+        data: { position: index },
       })
     );
 
-    // 👉 On force la première image de l’ordre à devenir la cover
+    // 👉 On force la première image de l'ordre à devenir la cover
     const firstId = order[0];
     if (firstId) {
       queries.push(
         prisma.listingImage.updateMany({
           where: { listingId: params.id },
-          data: { isCover: false } as any,
+          data: { isCover: false },
         })
       );
       queries.push(
         prisma.listingImage.update({
           where: { id: firstId },
-          data: { isCover: true } as any,
+          data: { isCover: true },
         })
       );
     }
@@ -222,9 +225,9 @@ export async function PATCH(
 
 /**
  * DELETE /api/listings/:id/images?imageId=xxx
- * Supprime l’image :
+ * Supprime l'image :
  *  - en DB
- *  - et essaie aussi de supprimer l’objet dans R2 (best effort)
+ *  - et essaie aussi de supprimer l'objet dans R2 (best effort)
  */
 export async function DELETE(
   req: Request,
@@ -241,7 +244,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Missing imageId" }, { status: 400 });
   }
 
-  // Récupère l’image + listing
+  // Récupère l'image + listing
   const image = await prisma.listingImage.findUnique({
     where: { id: imageId },
     include: { listing: { include: { owner: true } } },
@@ -263,17 +266,17 @@ export async function DELETE(
   // 1.bis) On renumérote les positions restantes et on garantit une cover
   const remaining = await prisma.listingImage.findMany({
     where: { listingId: params.id },
-    orderBy: { position: "asc" } as any,
+    orderBy: { position: "asc" },
   });
 
   if (remaining.length > 0) {
-    const queries: any[] = [];
+    const queries: Prisma.PrismaPromise<unknown>[] = [];
 
     // tout le monde isCover = false puis on remet la première à true
     queries.push(
       prisma.listingImage.updateMany({
         where: { listingId: params.id },
-        data: { isCover: false } as any,
+        data: { isCover: false },
       })
     );
 
@@ -284,7 +287,7 @@ export async function DELETE(
           data: {
             position: index,
             isCover: index === 0,
-          } as any,
+          },
         })
       );
     });
@@ -318,7 +321,7 @@ export async function DELETE(
         );
       } else {
         console.warn(
-          "[images DELETE] Impossible de déduire la key R2 depuis l’URL :",
+          "[images DELETE] Impossible de déduire la key R2 depuis l'URL :",
           url
         );
       }

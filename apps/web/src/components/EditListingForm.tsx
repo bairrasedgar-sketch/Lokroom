@@ -58,7 +58,20 @@ setSuggestions([]);
 return;
 }
 
-const g = (window as any).google;
+type GoogleMaps = {
+  maps?: {
+    places?: {
+      AutocompleteService?: new () => {
+        getPlacePredictions: (
+          request: { input: string; types: string[]; componentRestrictions: { country: string[] } },
+          callback: (predictions: { description: string }[] | null, status: string) => void
+        ) => void;
+      };
+      PlacesServiceStatus?: { OK: string };
+    };
+  };
+};
+const g = (window as { google?: GoogleMaps }).google;
 const svc = g?.maps?.places?.AutocompleteService
 ? new g.maps.places.AutocompleteService()
 : null;
@@ -74,19 +87,19 @@ types: ["(cities)"],
 // On limite aux villes France + Canada
 componentRestrictions: { country: ["fr", "ca"] },
 },
-(preds: any[], status: string) => {
+(preds: { description: string }[] | null, status: string) => {
 if (!active) return;
 setLoading(false);
 
 if (
 !preds ||
-status !== g.maps.places.PlacesServiceStatus.OK
+status !== g?.maps?.places?.PlacesServiceStatus?.OK
 ) {
 setSuggestions([]);
 return;
 }
 
-setSuggestions(preds.slice(0, 6).map((p: any) => p.description));
+setSuggestions(preds.slice(0, 6).map((p) => p.description));
 }
 );
 
@@ -155,7 +168,7 @@ const [mapsReady, setMapsReady] = useState(false);
 // Si le script Google Maps est déjà chargé
 useEffect(() => {
 if (typeof window === "undefined") return;
-const g = (window as any).google;
+const g = (window as { google?: { maps?: { places?: unknown } } }).google;
 if (g?.maps?.places) {
 setMapsReady(true);
 }

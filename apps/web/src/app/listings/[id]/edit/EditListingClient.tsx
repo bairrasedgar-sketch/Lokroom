@@ -10,6 +10,53 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { getCroppedImage, type PixelCrop } from "@/lib/cropImage";
 
 // ============================================================================
+// GOOGLE MAPS TYPES (simplified for TypeScript compatibility)
+// ============================================================================
+/* eslint-disable @typescript-eslint/no-explicit-any */
+type GoogleMapsAPI = {
+  maps: {
+    Map: new (container: HTMLElement, options: Record<string, unknown>) => GoogleMap;
+    Marker: new (options: Record<string, unknown>) => GoogleMarker;
+    Size: new (width: number, height: number) => unknown;
+    Point: new (x: number, y: number) => unknown;
+    Animation: { DROP: unknown };
+    event: {
+      clearInstanceListeners: (instance: unknown) => void;
+      trigger: (instance: unknown, event: string) => void;
+    };
+    places?: {
+      Autocomplete: new (input: HTMLInputElement, options: Record<string, unknown>) => GoogleAutocomplete;
+    };
+  };
+};
+
+type GoogleMap = {
+  setCenter: (pos: { lat: number; lng: number }) => void;
+  setZoom: (zoom: number) => void;
+  getZoom: () => number;
+  addListener: (event: string, handler: (e: { latLng?: { lat: () => number; lng: () => number } }) => void) => void;
+};
+
+type GoogleMarker = {
+  setPosition: (pos: unknown) => void;
+  getPosition: () => { lat: () => number; lng: () => number } | null;
+  addListener: (event: string, handler: () => void) => void;
+};
+
+type GoogleAutocomplete = {
+  addListener: (event: string, handler: () => void) => void;
+  getPlace: () => {
+    geometry?: { location?: { lat: () => number; lng: () => number } };
+    formatted_address?: string;
+    address_components?: Array<{ types: string[]; long_name: string }>;
+  };
+};
+
+type WindowWithGoogle = Window & { google?: GoogleMapsAPI };
+type MapElementWithGmap = HTMLElement & { __gmap?: GoogleMap };
+/* eslint-enable @typescript-eslint/no-explicit-any */
+
+// ============================================================================
 // TYPES
 // ============================================================================
 
@@ -316,7 +363,7 @@ export default function EditListingClient({ listing }: { listing: ListingData })
   // Check if Google Maps is already loaded
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const g = (window as any).google;
+      const g = (window as WindowWithGoogle).google;
       if (g?.maps?.places) {
         setMapsReady(true);
       }
@@ -327,7 +374,7 @@ export default function EditListingClient({ listing }: { listing: ListingData })
   useEffect(() => {
     if (!mapsReady || activeSection !== "location") return;
 
-    const g = (window as any).google;
+    const g = (window as WindowWithGoogle).google;
     if (!g?.maps) return;
 
     const container = document.getElementById("edit-map");
@@ -356,7 +403,7 @@ export default function EditListingClient({ listing }: { listing: ListingData })
       styles: mapStyles,
     });
 
-    (container as any).__gmap = map;
+    (container as MapElementWithGmap).__gmap = map;
 
     const customIcon = {
       url: "/location-pin.png",
@@ -387,7 +434,7 @@ export default function EditListingClient({ listing }: { listing: ListingData })
       }
     });
 
-    map.addListener("click", (e: any) => {
+    map.addListener("click", (e: { latLng?: { lat: () => number; lng: () => number } }) => {
       if (e.latLng) {
         marker.setPosition(e.latLng);
         g.maps.event.trigger(marker, "dragend");
@@ -398,6 +445,8 @@ export default function EditListingClient({ listing }: { listing: ListingData })
       g.maps.event.clearInstanceListeners(map);
       g.maps.event.clearInstanceListeners(marker);
     };
+    // Note: formData.lat/lng are intentionally excluded to avoid recreating the map on every position change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapsReady, activeSection]);
 
   // ============================================================================
@@ -1036,8 +1085,8 @@ export default function EditListingClient({ listing }: { listing: ListingData })
                               type="button"
                               onClick={() => {
                                 const mapEl = document.getElementById("edit-map");
-                                if (mapEl && (mapEl as any).__gmap) {
-                                  (mapEl as any).__gmap.setZoom((mapEl as any).__gmap.getZoom() + 1);
+                                if (mapEl && (mapEl as MapElementWithGmap).__gmap) {
+                                  (mapEl as MapElementWithGmap).__gmap!.setZoom((mapEl as MapElementWithGmap).__gmap!.getZoom() + 1);
                                 }
                               }}
                               className="flex h-9 w-9 items-center justify-center rounded-lg bg-white shadow-md border border-gray-200 hover:bg-gray-50"
@@ -1050,8 +1099,8 @@ export default function EditListingClient({ listing }: { listing: ListingData })
                               type="button"
                               onClick={() => {
                                 const mapEl = document.getElementById("edit-map");
-                                if (mapEl && (mapEl as any).__gmap) {
-                                  (mapEl as any).__gmap.setZoom((mapEl as any).__gmap.getZoom() - 1);
+                                if (mapEl && (mapEl as MapElementWithGmap).__gmap) {
+                                  (mapEl as MapElementWithGmap).__gmap!.setZoom((mapEl as MapElementWithGmap).__gmap!.getZoom() - 1);
                                 }
                               }}
                               className="flex h-9 w-9 items-center justify-center rounded-lg bg-white shadow-md border border-gray-200 hover:bg-gray-50"
@@ -1083,7 +1132,8 @@ export default function EditListingClient({ listing }: { listing: ListingData })
                       <div className="space-y-6">
                         {CAPACITY_CONFIG[formData.type].fields.map((field) => {
                           const label = CAPACITY_CONFIG[formData.type].labels[field];
-                          const value = (formData as any)[field] || 1;
+                          const fieldKey = field as keyof typeof formData;
+                          const value = (formData[fieldKey] as number | null) || 1;
 
                           return (
                             <div key={field} className="flex items-center justify-between rounded-xl border border-gray-200 p-4">

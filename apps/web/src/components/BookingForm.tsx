@@ -210,7 +210,7 @@ export default function BookingForm({
         }),
       });
 
-      const data = await res.json().catch(() => null as any);
+      const data = await res.json().catch(() => null) as { booking?: { id?: string }; error?: string } | null;
 
       if (!res.ok) {
         const msg = mapServerErrorToMessage(data?.error);

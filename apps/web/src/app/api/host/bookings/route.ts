@@ -1,6 +1,6 @@
-// apps/web/src/app/api/host/bookings/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { Prisma } from "@prisma/client";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
   const toDate = parseDate(search.get("to")); // inclusive
 
   // 🔍 Filtre de base : toutes les bookings dont l'annonce appartient à ce host
-  const where: any = {
+  const where: Prisma.BookingWhereInput = {
     listing: {
       ownerId: me.id,
     },
@@ -72,11 +72,11 @@ export async function GET(req: NextRequest) {
   if (fromDate || toDate) {
     where.startDate = {};
     if (fromDate) {
-      (where.startDate as any).gte = fromDate;
+      (where.startDate as Prisma.DateTimeFilter).gte = fromDate;
     }
     if (toDate) {
       // on prend la fin de journée si seulement la date est fournie
-      (where.startDate as any).lte = toDate;
+      (where.startDate as Prisma.DateTimeFilter).lte = toDate;
     }
   }
 

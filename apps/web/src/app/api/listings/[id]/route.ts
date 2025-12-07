@@ -157,9 +157,10 @@ export async function PUT(
     try {
       assertValidCoordinates({ country, lat, lng });
       assertValidCoordinates({ country, lat: latPublic, lng: lngPublic });
-    } catch (coordError: any) {
+    } catch (coordError: unknown) {
+      const error = coordError as { message?: string };
       return NextResponse.json(
-        { error: coordError?.message ?? "Coordonnées invalides." },
+        { error: error?.message ?? "Coordonnées invalides." },
         { status: 400 }
       );
     }
@@ -252,7 +253,7 @@ export async function PUT(
 
     // Array fields
     const spaceFeatures = Array.isArray(body.spaceFeatures)
-      ? body.spaceFeatures.filter((f: any) => typeof f === "string")
+      ? body.spaceFeatures.filter((f: unknown) => typeof f === "string")
       : listing.spaceFeatures;
 
     const updated = await prisma.listing.update({

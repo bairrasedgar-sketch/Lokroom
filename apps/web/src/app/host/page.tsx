@@ -11,7 +11,7 @@ export default async function HostPage() {
     redirect("/login");
   }
 
-  const user = session.user as any;
+  const user = session.user as { isHost?: boolean; email?: string | null };
 
   // Connecté mais pas hôte → on renvoie vers /profile (ou /become-host)
   if (!user.isHost) {

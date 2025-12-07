@@ -14,10 +14,11 @@ export function UserMenu() {
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   // Vérifier si l'utilisateur est hôte
+  const sessionUser = session?.user as { isHost?: boolean; role?: string } | undefined;
   const isHost =
-    (session?.user as any)?.isHost === true ||
-    (session?.user as any)?.role === "HOST" ||
-    (session?.user as any)?.role === "BOTH";
+    sessionUser?.isHost === true ||
+    sessionUser?.role === "HOST" ||
+    sessionUser?.role === "BOTH";
 
   // 🔒 Ferme le menu dès que l'URL / la page change
   useEffect(() => {

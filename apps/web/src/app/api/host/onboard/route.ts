@@ -69,9 +69,10 @@ export async function POST() {
       url: accountLinks.url,
       stripeAccountId: host.stripeAccountId,
     });
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error("host/onboard error:", e);
-    const msg = e?.raw?.message || e?.message || "onboard_failed";
+    const error = e as { raw?: { message?: string }; message?: string };
+    const msg = error?.raw?.message || error?.message || "onboard_failed";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

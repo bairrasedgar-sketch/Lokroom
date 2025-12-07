@@ -2,7 +2,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type Img = { id?: string; url: string };
 
@@ -30,8 +30,8 @@ export default function ListingGallery({
     if (idx > total - 1) setIdx(0);
   }, [total, idx]);
 
-  const prev = () => canNav && setIdx((i) => (i - 1 + total) % total);
-  const next = () => canNav && setIdx((i) => (i + 1) % total);
+  const prev = useCallback(() => canNav && setIdx((i) => (i - 1 + total) % total), [canNav, total]);
+  const next = useCallback(() => canNav && setIdx((i) => (i + 1) % total), [canNav, total]);
 
   // Navigation clavier ← →
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function ListingGallery({
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [canNav, total]);
+  }, [canNav, prev, next]);
 
   // Swipe mobile
   const startX = useRef<number | null>(null);

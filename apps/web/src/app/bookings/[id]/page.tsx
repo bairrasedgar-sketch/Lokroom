@@ -168,7 +168,7 @@ export default function BookingPaymentPage({
 
         if (!res.ok || !data || !(data as CreateIntentResponse).clientSecret) {
           const msg =
-            (data as any)?.error ?? t.payment.initPaymentError;
+            (data as { error?: string })?.error ?? t.payment.initPaymentError;
           setError(msg);
           setLoading(false);
           return;

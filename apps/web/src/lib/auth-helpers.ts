@@ -3,6 +3,15 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import type { Session } from "next-auth";
 
+// Type étendu pour le user avec les champs personnalisés
+interface ExtendedUser {
+  role?: string;
+  isHost?: boolean;
+  id?: string;
+  email?: string | null;
+  name?: string | null;
+}
+
 export async function getCurrentSession(): Promise<Session | null> {
   const session = await getServerSession(authOptions);
   return session;
@@ -30,8 +39,8 @@ export async function requireHost() {
     throw new Error("UNAUTHORIZED");
   }
 
-  const user = session.user as any;
-  const role = user.role as string | undefined;
+  const user = session.user as ExtendedUser;
+  const role = user.role;
   const isHost = Boolean(user.isHost);
 
   const isHostRole = role === "HOST" || role === "BOTH";
@@ -51,8 +60,8 @@ export async function requireAdmin() {
     throw new Error("UNAUTHORIZED");
   }
 
-  const user = session.user as any;
-  const role = user.role as string | undefined;
+  const user = session.user as ExtendedUser;
+  const role = user.role;
 
   if (role !== "ADMIN") {
     throw new Error("FORBIDDEN_ADMIN_ONLY");

@@ -228,6 +228,7 @@ const it = {
     cancelled: "Annullate",
     pending: "In attesa",
     confirmed: "Confermata",
+    status: "Stato",
     noBookings: "Nessuna prenotazione al momento.",
     bookNow: "Prenota",
     checkIn: "Check-in",

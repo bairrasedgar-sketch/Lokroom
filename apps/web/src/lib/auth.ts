@@ -144,9 +144,18 @@ export const authOptions: NextAuthOptions = {
 
       if (!dbUser) return session;
 
-      (session.user as any).id = dbUser.id;
-      (session.user as any).role = dbUser.role;
-      (session.user as any).isHost =
+      // Extend session.user with custom fields
+      const extendedUser = session.user as {
+        id?: string;
+        role?: string;
+        isHost?: boolean;
+        email?: string | null;
+        name?: string | null;
+        image?: string | null;
+      };
+      extendedUser.id = dbUser.id;
+      extendedUser.role = dbUser.role;
+      extendedUser.isHost =
         dbUser.role === "HOST" ||
         dbUser.role === "BOTH" ||
         !!dbUser.hostProfile?.payoutsEnabled;

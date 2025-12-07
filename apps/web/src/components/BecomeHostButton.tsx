@@ -13,7 +13,7 @@ async function startHostOnboarding(setLoading?: (v: boolean) => void) {
 
     // on lit d'abord le texte, puis on essaie du JSON
     const text = await res.text();
-    let data: any = null;
+    let data: { error?: string; url?: string } | null = null;
     try {
       data = text ? JSON.parse(text) : null;
     } catch {
@@ -76,9 +76,10 @@ export function CreateListingMenuItem() {
   const [loading, setLoading] = useState(false);
 
   const isLoggedIn = !!session?.user;
+  const sessionUser = session?.user as { isHost?: boolean; role?: string } | undefined;
   const isHost =
-    (session?.user as any)?.isHost === true ||
-    (session?.user as any)?.role === "HOST";
+    sessionUser?.isHost === true ||
+    sessionUser?.role === "HOST";
 
   async function handleClick() {
     if (status === "loading" || loading) return;
@@ -123,9 +124,10 @@ export function BecomeHostMenuItem() {
   const { data: session, status } = useSession();
   const [loading, setLoading] = useState(false);
 
+  const sessionUser = session?.user as { isHost?: boolean; role?: string } | undefined;
   const isHost =
-    (session?.user as any)?.isHost === true ||
-    (session?.user as any)?.role === "HOST";
+    sessionUser?.isHost === true ||
+    sessionUser?.role === "HOST";
 
   // Si on ne sait pas encore ou si déjà hôte → ne rien afficher
   if (status === "loading" || isHost) {

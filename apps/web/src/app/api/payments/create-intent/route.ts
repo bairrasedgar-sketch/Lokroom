@@ -100,14 +100,14 @@ export async function POST(req: NextRequest) {
 
   // Région pour le moteur de fees (FR vs provinces CA)
   const region = inferRegion({
-    currency: currency as any, // cast pour matcher le type attendu dans fees.ts
+    currency: currency as "EUR" | "CAD",
     country: booking.listing.country,
     provinceCode: booking.listing.province,
   });
 
   const fees = computeFees({
     priceCents,
-    currency: currency as any, // idem ici
+    currency: currency as "EUR" | "CAD",
     region,
   });
 

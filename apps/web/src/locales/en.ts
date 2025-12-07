@@ -253,6 +253,7 @@ const en = {
     cancelled: "Cancelled",
     pending: "Pending",
     confirmed: "Confirmed",
+    status: "Status",
     noBookings: "No bookings yet.",
     bookNow: "Book",
     checkIn: "Check-in",

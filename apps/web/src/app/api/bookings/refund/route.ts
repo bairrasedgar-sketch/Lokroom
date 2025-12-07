@@ -190,8 +190,9 @@ export async function POST(req: NextRequest) {
         refundAmountCents: amountToRefund,
       },
     });
-  } catch (e: any) {
-    const msg = e?.raw?.message || e?.message || "refund_failed";
+  } catch (e: unknown) {
+    const error = e as { raw?: { message?: string }; message?: string };
+    const msg = error?.raw?.message || error?.message || "refund_failed";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

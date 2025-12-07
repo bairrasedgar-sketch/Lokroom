@@ -1,7 +1,7 @@
 // apps/web/src/app/host/listings/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
@@ -80,19 +80,7 @@ export default function HostListingsPage() {
   const DRAFTS_KEY = userEmail ? `lokroom_listing_drafts_${userEmail}` : "";
   const DRAFT_EXPIRY_DAYS = 90;
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login?redirect=/host/listings");
-      return;
-    }
-
-    if (status === "authenticated") {
-      fetchListings();
-      loadDrafts();
-    }
-  }, [status, router]);
-
-  async function fetchListings() {
+  const fetchListings = useCallback(async () => {
     try {
       const res = await fetch("/api/host/listings");
       if (!res.ok) {
@@ -124,9 +112,9 @@ export default function HostListingsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
-  function loadDrafts() {
+  const loadDrafts = useCallback(() => {
     if (typeof window === "undefined" || !DRAFTS_KEY) return;
     const savedDrafts = localStorage.getItem(DRAFTS_KEY);
     if (savedDrafts) {
@@ -155,7 +143,19 @@ export default function HostListingsPage() {
         setDrafts([]);
       }
     }
-  }
+  }, [DRAFTS_KEY]);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login?redirect=/host/listings");
+      return;
+    }
+
+    if (status === "authenticated") {
+      fetchListings();
+      loadDrafts();
+    }
+  }, [status, router, fetchListings, loadDrafts]);
 
   function deleteDraft(draftId: string) {
     if (typeof window !== "undefined") {

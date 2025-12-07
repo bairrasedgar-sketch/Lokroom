@@ -30,7 +30,7 @@ export async function POST(req: Request) {
     const url = new URL(req.url);
     const devMode = url.searchParams.get("dev") === "1"; // ▶️ ?dev=1 pour émuler le virement
 
-    const userId = (session.user as any).id as string;
+    const userId = session.user?.id as string;
 
     // 🚦 Rate limit : max 10 releases par heure par host
     const { ok } = await rateLimit(`host-release:${userId}`, 10, 60 * 60 * 1000);
@@ -181,11 +181,12 @@ export async function POST(req: Request) {
       errors,
       platformBalance: { eur: platformBalance.EUR, cad: platformBalance.CAD },
     });
-  } catch (e: any) {
-    if (e?.message === "UNAUTHORIZED") {
+  } catch (e: unknown) {
+    const error = e as { message?: string };
+    if (error?.message === "UNAUTHORIZED") {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     }
-    if (e?.message === "FORBIDDEN_HOST_ONLY") {
+    if (error?.message === "FORBIDDEN_HOST_ONLY") {
       return NextResponse.json({ error: "forbidden" }, { status: 403 });
     }
     return NextResponse.json({ error: "error" }, { status: 500 });

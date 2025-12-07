@@ -552,12 +552,14 @@ export async function POST(req: Request) {
 
     // ==========================================================
     // 2) Stripe Identity – on sort du switch pour éviter les bugs TS
+    //    (les types Stripe Identity ne sont pas entièrement exportés)
     // ==========================================================
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     if (
-      event.type === ("identity.verification_session.updated" as any)
+      event.type === ("identity.verification_session.updated" as string)
     ) {
-      const vs = (event as any)
-        .data.object as Stripe.Identity.VerificationSession;
+      const vs = (event as { data: { object: Stripe.Identity.VerificationSession } })
+        .data.object;
 
       const lokroomUserId =
         (vs.metadata?.lokroom_user_id as string | undefined) ?? undefined;
@@ -567,7 +569,7 @@ export async function POST(req: Request) {
       if (lokroomUserId) {
         where = { id: lokroomUserId };
       } else {
-        where = { identityStripeSessionId: vs.id ?? undefined } as any;
+        where = { identityStripeSessionId: vs.id ?? undefined };
       }
 
       let newStatus:
@@ -599,7 +601,7 @@ export async function POST(req: Request) {
           break;
       }
 
-      await (prisma.user as any).updateMany({
+      await prisma.user.updateMany({
         where,
         data: {
           identityStatus: newStatus,
@@ -607,6 +609,7 @@ export async function POST(req: Request) {
         },
       });
     }
+    /* eslint-enable @typescript-eslint/no-explicit-any */
 
     // L'événement a déjà été marqué comme traité en début de fonction
     return NextResponse.json({ received: true });

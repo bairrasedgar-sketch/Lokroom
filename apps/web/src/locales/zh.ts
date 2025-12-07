@@ -228,6 +228,7 @@ const zh = {
     cancelled: "已取消",
     pending: "待处理",
     confirmed: "已确认",
+    status: "状态",
     noBookings: "目前没有预订。",
     bookNow: "预订",
     checkIn: "入住",
