@@ -9,7 +9,6 @@ import { signOut, useSession } from "next-auth/react";
 export function UserMenu() {
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
-  const [hostLoading, setHostLoading] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
   const pathname = usePathname();
   const menuRef = useRef<HTMLDivElement | null>(null);
@@ -42,48 +41,6 @@ export function UserMenu() {
     return () =>
       document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
-
-  // 🚀 Onboarding Stripe pour devenir hôte
-  async function handleBecomeHost() {
-    if (hostLoading) return;
-    setHostLoading(true);
-    try {
-      const res = await fetch("/api/host/onboard", { method: "POST" });
-
-      const text = await res.text();
-      let data: unknown = null;
-
-      try {
-        data = text ? JSON.parse(text) : null;
-      } catch {
-        // pas du JSON, on garde le texte brut
-      }
-
-      if (!res.ok) {
-        const parsed = data as { error?: string } | null;
-        const msg = parsed?.error || text || `HTTP ${res.status}`;
-        throw new Error(msg);
-      }
-
-      const parsed = data as { url?: string } | null;
-      const url = parsed?.url;
-
-      if (!url) {
-        throw new Error("Stripe onboarding URL manquante dans la réponse.");
-      }
-
-      window.location.href = url;
-    } catch (err) {
-      console.error(err);
-      alert(
-        err instanceof Error
-          ? err.message
-          : "Erreur inconnue lors de l'onboarding hôte"
-      );
-    } finally {
-      setHostLoading(false);
-    }
-  }
 
   // 🔴 Déconnexion complète via NextAuth
   async function handleLogout() {

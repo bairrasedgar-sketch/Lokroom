@@ -344,8 +344,6 @@ export default function Navbar() {
   const isHost =
     typedUser?.isHost || userRole === "HOST" || userRole === "BOTH";
 
-  const isOnHostArea = pathname?.startsWith("/host") ?? false;
-
   // Fermer le menu mobile quand on change de page
   useEffect(() => {
     setOpen(false);
