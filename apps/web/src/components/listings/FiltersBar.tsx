@@ -1,9 +1,283 @@
 // apps/web/src/components/listings/FiltersBar.tsx
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { getDictionaryForLocale, type SupportedLocale } from "@/lib/i18n.client";
-import { CalendarDaysIcon, ClockIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { CalendarDaysIcon, ClockIcon, XMarkIcon, MapPinIcon } from "@heroicons/react/24/outline";
+
+// ────────────────────────────────────────────────────────────────────────────
+// Types Google Maps (simplified)
+// ────────────────────────────────────────────────────────────────────────────
+type GoogleMapsAPI = {
+  maps: {
+    places: {
+      AutocompleteService: new () => GoogleAutocompleteService;
+      PlacesServiceStatus: { OK: string };
+    };
+  };
+};
+
+type GoogleAutocompleteService = {
+  getPlacePredictions: (
+    request: { input: string; types: string[]; componentRestrictions?: { country: string | string[] } },
+    callback: (predictions: GooglePrediction[] | null, status: string) => void
+  ) => void;
+};
+
+type GooglePrediction = {
+  place_id: string;
+  description: string;
+  structured_formatting?: {
+    main_text?: string;
+    secondary_text?: string;
+  };
+};
+
+type WindowWithGoogle = Window & { google?: GoogleMapsAPI };
+
+// ────────────────────────────────────────────────────────────────────────────
+// Composant LocationAutocomplete (style Airbnb)
+// ────────────────────────────────────────────────────────────────────────────
+type LocationAutocompleteProps = {
+  value: string;
+  onChange: (value: string) => void;
+  onSelect: (place: { description: string; mainText: string; secondaryText: string }) => void;
+  placeholder: string;
+  label: string;
+};
+
+function LocationAutocomplete({ value, onChange, onSelect, placeholder, label }: LocationAutocompleteProps) {
+  const [suggestions, setSuggestions] = useState<GooglePrediction[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Villes populaires pour suggestions rapides
+  const popularCities = [
+    { main: "Paris", secondary: "France", icon: "🗼" },
+    { main: "Montréal", secondary: "Canada", icon: "🍁" },
+    { main: "Lyon", secondary: "France", icon: "🦁" },
+    { main: "Toronto", secondary: "Canada", icon: "🏙️" },
+    { main: "Marseille", secondary: "France", icon: "⛵" },
+    { main: "Vancouver", secondary: "Canada", icon: "🌲" },
+  ];
+
+  // Fermer au clic extérieur
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+        setHighlightedIndex(-1);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Recherche Google Places avec debounce
+  const searchPlaces = useCallback((query: string) => {
+    if (query.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    const g = (window as WindowWithGoogle).google;
+    if (!g?.maps?.places?.AutocompleteService) {
+      return;
+    }
+
+    setIsLoading(true);
+    const service = new g.maps.places.AutocompleteService();
+
+    service.getPlacePredictions(
+      {
+        input: query,
+        types: ["(cities)"],
+        componentRestrictions: { country: ["fr", "ca"] }, // France et Canada
+      },
+      (predictions, status) => {
+        setIsLoading(false);
+        if (status === g.maps.places.PlacesServiceStatus.OK && predictions) {
+          setSuggestions(predictions);
+        } else {
+          setSuggestions([]);
+        }
+      }
+    );
+  }, []);
+
+  // Handler pour l'input
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    onChange(newValue);
+    setIsOpen(true);
+    setHighlightedIndex(-1);
+
+    // Debounce la recherche
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    debounceRef.current = setTimeout(() => {
+      searchPlaces(newValue);
+    }, 300);
+  };
+
+  // Sélection d'une suggestion
+  const handleSelect = (prediction: GooglePrediction) => {
+    const mainText = prediction.structured_formatting?.main_text || prediction.description.split(",")[0];
+    const secondaryText = prediction.structured_formatting?.secondary_text || "";
+
+    onChange(mainText);
+    onSelect({
+      description: prediction.description,
+      mainText,
+      secondaryText,
+    });
+    setSuggestions([]);
+    setIsOpen(false);
+    setHighlightedIndex(-1);
+  };
+
+  // Sélection d'une ville populaire
+  const handlePopularSelect = (city: { main: string; secondary: string }) => {
+    onChange(city.main);
+    onSelect({
+      description: `${city.main}, ${city.secondary}`,
+      mainText: city.main,
+      secondaryText: city.secondary,
+    });
+    setIsOpen(false);
+  };
+
+  // Navigation clavier
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    const totalItems = suggestions.length > 0 ? suggestions.length : popularCities.length;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightedIndex((prev) => (prev < totalItems - 1 ? prev + 1 : 0));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : totalItems - 1));
+    } else if (e.key === "Enter" && highlightedIndex >= 0) {
+      e.preventDefault();
+      if (suggestions.length > 0) {
+        handleSelect(suggestions[highlightedIndex]);
+      } else if (value.length < 2) {
+        handlePopularSelect(popularCities[highlightedIndex]);
+      }
+    } else if (e.key === "Escape") {
+      setIsOpen(false);
+      setHighlightedIndex(-1);
+    }
+  };
+
+  const showPopular = isOpen && value.length < 2 && suggestions.length === 0;
+  const showSuggestions = isOpen && suggestions.length > 0;
+
+  return (
+    <div ref={containerRef} className="relative flex-1">
+      <div className="flex-1">
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+          {label}
+        </p>
+        <input
+          ref={inputRef}
+          type="text"
+          value={value}
+          onChange={handleInputChange}
+          onFocus={() => setIsOpen(true)}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          className="w-full border-none bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-0"
+          autoComplete="off"
+        />
+      </div>
+
+      {/* Dropdown des suggestions */}
+      {(showPopular || showSuggestions) && (
+        <div className="absolute left-0 top-full z-50 mt-2 w-[340px] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
+          {/* Loading */}
+          {isLoading && (
+            <div className="flex items-center gap-2 px-4 py-3 text-sm text-gray-500">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-900" />
+              Recherche...
+            </div>
+          )}
+
+          {/* Villes populaires (quand pas de recherche) */}
+          {showPopular && !isLoading && (
+            <div className="py-2">
+              <p className="px-4 py-2 text-xs font-semibold text-gray-500">
+                Destinations populaires
+              </p>
+              {popularCities.map((city, index) => (
+                <button
+                  key={city.main}
+                  type="button"
+                  onClick={() => handlePopularSelect(city)}
+                  className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition ${
+                    highlightedIndex === index
+                      ? "bg-gray-100"
+                      : "hover:bg-gray-50"
+                  }`}
+                >
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-lg">
+                    {city.icon}
+                  </span>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">{city.main}</p>
+                    <p className="text-xs text-gray-500">{city.secondary}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Résultats de recherche Google Places */}
+          {showSuggestions && !isLoading && (
+            <div className="py-2">
+              {suggestions.map((suggestion, index) => (
+                <button
+                  key={suggestion.place_id}
+                  type="button"
+                  onClick={() => handleSelect(suggestion)}
+                  className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition ${
+                    highlightedIndex === index
+                      ? "bg-gray-100"
+                      : "hover:bg-gray-50"
+                  }`}
+                >
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100">
+                    <MapPinIcon className="h-5 w-5 text-gray-600" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      {suggestion.structured_formatting?.main_text || suggestion.description.split(",")[0]}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {suggestion.structured_formatting?.secondary_text || ""}
+                    </p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Aucun résultat */}
+          {!isLoading && value.length >= 2 && suggestions.length === 0 && (
+            <div className="px-4 py-3 text-center text-sm text-gray-500">
+              Aucune ville trouvée pour &quot;{value}&quot;
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 type FiltersBarProps = {
   q: string;
@@ -434,6 +708,11 @@ export default function FiltersBar(props: FiltersBarProps) {
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
+  // État pour la destination (autocomplétion)
+  const [destination, setDestination] = useState(q);
+  const [selectedCity, setSelectedCity] = useState(city);
+  const [selectedCountry, setSelectedCountry] = useState(country);
+
   // États pour dates/heures - initialisés avec les valeurs de l'URL
   const [startDate, setStartDate] = useState(initialStartDate);
   const [endDate, setEndDate] = useState(initialEndDate);
@@ -444,6 +723,18 @@ export default function FiltersBar(props: FiltersBarProps) {
   const t = getDictionaryForLocale(locale);
   const fb = t.components.filtersBar;
 
+  // Handler pour la sélection d'une ville
+  const handleLocationSelect = (place: { description: string; mainText: string; secondaryText: string }) => {
+    setSelectedCity(place.mainText);
+    // Déterminer le pays à partir de la description
+    const desc = place.description.toLowerCase();
+    if (desc.includes("canada")) {
+      setSelectedCountry("Canada");
+    } else if (desc.includes("france")) {
+      setSelectedCountry("France");
+    }
+  };
+
   return (
     <section className="space-y-3">
       {/* ⚠️ Un seul form GET pour tout (barre + gros pop-up filtres) */}
@@ -451,23 +742,22 @@ export default function FiltersBar(props: FiltersBarProps) {
         {/* ====== BARRE PRINCIPALE (destination / dates / heures / voyageurs) ====== */}
         <div className="rounded-3xl border border-gray-200 bg-white px-3 py-3 shadow-sm lg:px-5 lg:py-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-            {/* Destination */}
+            {/* Destination avec autocomplétion */}
             <div className="flex flex-1 items-center gap-3 border-b border-gray-100 pb-3 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-4">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-sm">
-                <span className="inline-block h-2 w-2 rounded-full bg-black" />
+                <MapPinIcon className="h-4 w-4 text-gray-600" />
               </div>
-              <div className="flex-1">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
-                  {fb.whereGoing}
-                </p>
-                <input
-                  type="text"
-                  name="q"
-                  defaultValue={q}
-                  placeholder={fb.locationPlaceholder}
-                  className="w-full border-none bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-0"
-                />
-              </div>
+              <LocationAutocomplete
+                value={destination}
+                onChange={setDestination}
+                onSelect={handleLocationSelect}
+                placeholder={fb.locationPlaceholder}
+                label={fb.whereGoing}
+              />
+              {/* Champs cachés pour le formulaire */}
+              <input type="hidden" name="q" value={destination} />
+              {selectedCity && <input type="hidden" name="city" value={selectedCity} />}
+              {selectedCountry && <input type="hidden" name="country" value={selectedCountry} />}
             </div>
 
             {/* Dates + Heures - Nouveau composant style Airbnb */}
@@ -525,12 +815,6 @@ export default function FiltersBar(props: FiltersBarProps) {
                 {fb.searchButton}
               </button>
             </div>
-
-            {/* On garde country / city si déjà dans l'URL */}
-            {country && (
-              <input type="hidden" name="country" defaultValue={country} />
-            )}
-            {city && <input type="hidden" name="city" defaultValue={city} />}
           </div>
         </div>
 
