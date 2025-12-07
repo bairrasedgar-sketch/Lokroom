@@ -392,7 +392,7 @@ export default function ForgotPasswordPage() {
 
             <button
               type="button"
-              onClick={() => router.push("/login")}
+              onClick={() => router.push(`/login?email=${encodeURIComponent(email.trim().toLowerCase())}`)}
               className="w-full rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-black"
             >
               Se connecter

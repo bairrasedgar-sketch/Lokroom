@@ -13,9 +13,9 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const { status } = useSession();
 
-  // États du formulaire
+  // États du formulaire - pré-remplir l'email si passé en paramètre
   const [step, setStep] = useState<LoginStep>("email");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(searchParams.get("email") || "");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
