@@ -92,6 +92,23 @@ export default function HostListingsPage() {
       const res = await fetch("/api/host/listings");
       if (!res.ok) {
         const data = await res.json();
+
+        // Si accès refusé, tenter d'activer le mode hôte et réessayer
+        if (res.status === 403) {
+          const activateRes = await fetch("/api/host/activate", { method: "POST" });
+          if (activateRes.ok) {
+            // Réessayer de charger les annonces
+            const retryRes = await fetch("/api/host/listings");
+            if (retryRes.ok) {
+              const retryData = await retryRes.json();
+              setListings(retryData.listings);
+              setStats(retryData.stats);
+              setLoading(false);
+              return;
+            }
+          }
+        }
+
         throw new Error(data.error || "Erreur de chargement");
       }
       const data = await res.json();

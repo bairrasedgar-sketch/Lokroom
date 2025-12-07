@@ -685,8 +685,11 @@ export default function NewListingPage() {
     setSavingDraft(true);
     saveDraft();
     toast.success("Brouillon enregistré !");
-    setTimeout(() => setSavingDraft(false), 500);
-  }, [saveDraft]);
+    setTimeout(() => {
+      setSavingDraft(false);
+      router.push("/");
+    }, 500);
+  }, [saveDraft, router]);
 
   // Clear current draft after successful publish
   const clearDraft = useCallback(() => {
@@ -1295,7 +1298,7 @@ export default function NewListingPage() {
         <header className="sticky top-0 z-40 border-b border-gray-200 bg-white">
           <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
             <button
-              onClick={() => router.push("/host/listings")}
+              onClick={() => router.push("/")}
               className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
             >
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
