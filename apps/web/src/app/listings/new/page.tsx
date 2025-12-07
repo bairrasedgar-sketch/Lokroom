@@ -109,6 +109,7 @@ type LocalImage = {
 
 type FormData = {
   type: ListingType | null;
+  additionalTypes: ListingType[];
   customType: string;
   country: "France" | "Canada";
   city: string;
@@ -503,6 +504,7 @@ export default function NewListingPage() {
   // Form data
   const [formData, setFormData] = useState<FormData>({
     type: null,
+    additionalTypes: [],
     customType: "",
     country: "France",
     city: "",
@@ -1237,6 +1239,7 @@ export default function NewListingPage() {
         title: formData.title,
         description: formData.description,
         type: formData.type,
+        additionalTypes: formData.additionalTypes,
         customType: formData.type === "OTHER" ? formData.customType : null,
         price: formData.price,
         hourlyPrice: formData.hourlyPrice,
@@ -1423,35 +1426,125 @@ export default function NewListingPage() {
           {/* ========== STEP: TYPE ========== */}
           {currentStep === "type" && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {LISTING_TYPES.map((t) => (
-                  <button
-                    key={t.value}
-                    type="button"
-                    onClick={() => setFormData((prev) => ({ ...prev, type: t.value, customType: t.value === "OTHER" ? prev.customType : "" }))}
-                    className={`group flex items-start gap-4 rounded-xl border-2 p-4 text-left transition-all hover:border-gray-400 ${
-                      formData.type === t.value
-                        ? "border-gray-900 bg-gray-50"
-                        : "border-gray-200"
-                    }`}
-                  >
-                    <div className={`flex-shrink-0 ${formData.type === t.value ? "text-gray-900" : "text-gray-400"}`}>
-                      {ListingTypeIcons[t.value]}
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-900">{t.label}</span>
-                      <p className="mt-0.5 text-sm text-gray-500">{t.description}</p>
-                    </div>
-                    {formData.type === t.value && (
-                      <div className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gray-900">
-                        <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </div>
-                    )}
-                  </button>
-                ))}
+              <div className="rounded-xl bg-blue-50 border border-blue-200 p-4 mb-4">
+                <p className="text-sm text-blue-800">
+                  <span className="font-medium">Multi-catégorie :</span> Tu peux sélectionner plusieurs types si ton espace combine plusieurs usages (ex: maison avec studio intégré). Le premier sélectionné sera le type principal.
+                </p>
               </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {LISTING_TYPES.map((t) => {
+                  const isPrimary = formData.type === t.value;
+                  const isAdditional = formData.additionalTypes.includes(t.value);
+                  const isSelected = isPrimary || isAdditional;
+
+                  return (
+                    <button
+                      key={t.value}
+                      type="button"
+                      onClick={() => {
+                        setFormData((prev) => {
+                          // Si c'est "OTHER", on ne permet pas de le mettre en type additionnel
+                          if (t.value === "OTHER") {
+                            return {
+                              ...prev,
+                              type: t.value,
+                              additionalTypes: prev.additionalTypes.filter(at => at !== "OTHER"),
+                              customType: prev.customType,
+                            };
+                          }
+
+                          // Si pas encore de type principal, ce sera le type principal
+                          if (!prev.type) {
+                            return { ...prev, type: t.value, customType: "" };
+                          }
+
+                          // Si c'est le type principal actuel, on le retire
+                          if (prev.type === t.value) {
+                            // Le prochain type additionnel devient principal
+                            const newPrimary = prev.additionalTypes[0] || null;
+                            return {
+                              ...prev,
+                              type: newPrimary,
+                              additionalTypes: prev.additionalTypes.slice(1),
+                              customType: "",
+                            };
+                          }
+
+                          // Si c'est déjà un type additionnel, on le retire
+                          if (prev.additionalTypes.includes(t.value)) {
+                            return {
+                              ...prev,
+                              additionalTypes: prev.additionalTypes.filter(at => at !== t.value),
+                            };
+                          }
+
+                          // Sinon, on l'ajoute comme type additionnel (max 3)
+                          if (prev.additionalTypes.length < 3) {
+                            return {
+                              ...prev,
+                              additionalTypes: [...prev.additionalTypes, t.value],
+                            };
+                          }
+
+                          return prev;
+                        });
+                      }}
+                      className={`group relative flex items-start gap-4 rounded-xl border-2 p-4 text-left transition-all hover:border-gray-400 ${
+                        isPrimary
+                          ? "border-gray-900 bg-gray-50"
+                          : isAdditional
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-gray-200"
+                      }`}
+                    >
+                      {/* Badge pour indiquer principal/secondaire */}
+                      {isSelected && (
+                        <span className={`absolute -top-2 -right-2 rounded-full px-2 py-0.5 text-xs font-medium ${
+                          isPrimary ? "bg-gray-900 text-white" : "bg-blue-500 text-white"
+                        }`}>
+                          {isPrimary ? "Principal" : `+${formData.additionalTypes.indexOf(t.value) + 1}`}
+                        </span>
+                      )}
+
+                      <div className={`flex-shrink-0 ${isSelected ? "text-gray-900" : "text-gray-400"}`}>
+                        {ListingTypeIcons[t.value]}
+                      </div>
+                      <div className="flex-1">
+                        <span className="font-medium text-gray-900">{t.label}</span>
+                        <p className="mt-0.5 text-sm text-gray-500">{t.description}</p>
+                      </div>
+                      {isSelected && (
+                        <div className={`ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
+                          isPrimary ? "bg-gray-900" : "bg-blue-500"
+                        }`}>
+                          <svg className="h-4 w-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Résumé des types sélectionnés */}
+              {formData.type && (
+                <div className="rounded-xl bg-gray-50 border border-gray-200 p-4">
+                  <p className="text-sm font-medium text-gray-700 mb-2">Types sélectionnés :</p>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-gray-900 px-3 py-1 text-xs font-medium text-white">
+                      {LISTING_TYPES.find(lt => lt.value === formData.type)?.label}
+                      <span className="text-gray-400">(principal)</span>
+                    </span>
+                    {formData.additionalTypes.map((at) => (
+                      <span key={at} className="inline-flex items-center gap-1 rounded-full bg-blue-500 px-3 py-1 text-xs font-medium text-white">
+                        {LISTING_TYPES.find(lt => lt.value === at)?.label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Custom type input when OTHER is selected */}
               {formData.type === "OTHER" && (

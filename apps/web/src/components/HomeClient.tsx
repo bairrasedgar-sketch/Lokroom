@@ -952,6 +952,13 @@ function ListingCard({ card, index }: { card: ListingCard; index: number }) {
 
         {/* Card Content */}
         <div className="mt-3 space-y-1">
+          {/* Category Badge */}
+          <div className="flex items-center gap-1.5 mb-1">
+            <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+              <span>{getCategoryEmoji(card.type)}</span>
+              {LISTING_TYPE_LABELS[card.type] || card.type}
+            </span>
+          </div>
           <div className="flex items-start justify-between gap-2">
             <h3 className="line-clamp-1 font-medium text-gray-900">
               {card.title}
@@ -1027,17 +1034,39 @@ function CategoryButton({
 // MAIN COMPONENT
 // ============================================================================
 
+// Helper pour obtenir le label de chaque type de listing
+const LISTING_TYPE_LABELS: Record<string, string> = {
+  APARTMENT: "Appartement",
+  HOUSE: "Maison",
+  ROOM: "Chambre",
+  STUDIO: "Studio",
+  OFFICE: "Bureau",
+  COWORKING: "Coworking",
+  MEETING_ROOM: "Salle de réunion",
+  PARKING: "Parking",
+  GARAGE: "Garage",
+  STORAGE: "Stockage",
+  EVENT_SPACE: "Événementiel",
+  RECORDING_STUDIO: "Studio",
+  OTHER: "Autre",
+};
+
 // Helper pour obtenir l'emoji de chaque catégorie
 function getCategoryEmoji(key: string): string {
   const emojis: Record<string, string> = {
     APARTMENT: "🏢",
     HOUSE: "🏠",
+    ROOM: "🛏️",
     STUDIO: "🎨",
     OFFICE: "💼",
     COWORKING: "👥",
+    MEETING_ROOM: "📊",
     PARKING: "🚗",
+    GARAGE: "🚙",
+    STORAGE: "📦",
     EVENT_SPACE: "🎉",
     RECORDING_STUDIO: "🎤",
+    OTHER: "✨",
   };
   return emojis[key] || "🏠";
 }

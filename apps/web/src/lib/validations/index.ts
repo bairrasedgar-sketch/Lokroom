@@ -179,6 +179,7 @@ export const createListingSchema = z.object({
   province: z.string().max(10).optional().nullable(),
   regionFR: z.string().max(10).optional().nullable(),
   type: listingTypeSchema.optional().default("OTHER"),
+  additionalTypes: z.array(listingTypeSchema).max(3).optional().default([]),
   customType: z.string().max(100).optional().nullable(),
   pricingMode: pricingModeSchema.optional().default("DAILY"),
   lat: latitudeSchema.optional(),

@@ -245,6 +245,7 @@ export async function POST(req: NextRequest) {
         province: (data.province as ProvinceCA | null) ?? undefined,
         regionFR: data.regionFR ?? undefined,
         type: data.type,
+        additionalTypes: data.additionalTypes ?? [],
         customType: data.customType ?? undefined,
         pricingMode: data.pricingMode,
         maxGuests: data.maxGuests ?? undefined,

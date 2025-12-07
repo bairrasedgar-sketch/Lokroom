@@ -225,8 +225,11 @@ model Listing {
   title       String
   description String
 
-  /// Type d'espace (chambre, bureau, parking, studio, etc.)
+  /// Type d'espace principal (chambre, bureau, parking, studio, etc.)
   type ListingType @default(OTHER)
+
+  /// Types d'espace additionnels (multi-catégorie, ex: HOUSE + STUDIO)
+  additionalTypes String[] @default([])
 
   /// Type personnalisé si type = OTHER (ex: "Atelier", "Cave", etc.)
   customType String?

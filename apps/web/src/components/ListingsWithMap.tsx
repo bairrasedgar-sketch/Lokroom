@@ -19,6 +19,7 @@ type ListingCardFixed = {
   title: string;
   country: string;
   city: string | null;
+  type: string;
   createdAt: string | Date;
   images: { id: string; url: string }[];
   priceFormatted: string;
@@ -28,6 +29,43 @@ type ListingCardFixed = {
   lat: number | null;
   lng: number | null;
 };
+
+// Helper pour obtenir le label de chaque type de listing
+const LISTING_TYPE_LABELS: Record<string, string> = {
+  APARTMENT: "Appartement",
+  HOUSE: "Maison",
+  ROOM: "Chambre",
+  STUDIO: "Studio",
+  OFFICE: "Bureau",
+  COWORKING: "Coworking",
+  MEETING_ROOM: "Salle de réunion",
+  PARKING: "Parking",
+  GARAGE: "Garage",
+  STORAGE: "Stockage",
+  EVENT_SPACE: "Événementiel",
+  RECORDING_STUDIO: "Studio",
+  OTHER: "Autre",
+};
+
+// Helper pour obtenir l'emoji de chaque catégorie
+function getCategoryEmoji(key: string): string {
+  const emojis: Record<string, string> = {
+    APARTMENT: "🏢",
+    HOUSE: "🏠",
+    ROOM: "🛏️",
+    STUDIO: "🎨",
+    OFFICE: "💼",
+    COWORKING: "👥",
+    MEETING_ROOM: "📊",
+    PARKING: "🚗",
+    GARAGE: "🚙",
+    STORAGE: "📦",
+    EVENT_SPACE: "🎉",
+    RECORDING_STUDIO: "🎤",
+    OTHER: "✨",
+  };
+  return emojis[key] || "🏠";
+}
 
 type Props = {
   cards: ListingCardFixed[];
@@ -265,6 +303,11 @@ export default function ListingsWithMap({ cards, mapMarkers }: Props) {
                         )}
                       </div>
                       <div className="space-y-1 p-3">
+                        {/* Category Badge */}
+                        <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+                          <span>{getCategoryEmoji(l.type)}</span>
+                          {LISTING_TYPE_LABELS[l.type] || l.type}
+                        </span>
                         <h3 className="line-clamp-1 text-sm font-medium">
                           {l.title}
                         </h3>

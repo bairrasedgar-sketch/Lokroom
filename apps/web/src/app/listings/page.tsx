@@ -24,6 +24,7 @@ type ListingItem = {
   id: string;
   title: string;
   description: string;
+  type: string;
   price: number;
   currency: Currency;
   country: string;
@@ -39,6 +40,43 @@ type ListingItem = {
   images: { id: string; url: string }[];
   reviewSummary: ReviewSummary;
 };
+
+// Helper pour obtenir le label de chaque type de listing
+const LISTING_TYPE_LABELS: Record<string, string> = {
+  APARTMENT: "Appartement",
+  HOUSE: "Maison",
+  ROOM: "Chambre",
+  STUDIO: "Studio",
+  OFFICE: "Bureau",
+  COWORKING: "Coworking",
+  MEETING_ROOM: "Salle de réunion",
+  PARKING: "Parking",
+  GARAGE: "Garage",
+  STORAGE: "Stockage",
+  EVENT_SPACE: "Événementiel",
+  RECORDING_STUDIO: "Studio",
+  OTHER: "Autre",
+};
+
+// Helper pour obtenir l'emoji de chaque catégorie
+function getCategoryEmoji(key: string): string {
+  const emojis: Record<string, string> = {
+    APARTMENT: "🏢",
+    HOUSE: "🏠",
+    ROOM: "🛏️",
+    STUDIO: "🎨",
+    OFFICE: "💼",
+    COWORKING: "👥",
+    MEETING_ROOM: "📊",
+    PARKING: "🚗",
+    GARAGE: "🚙",
+    STORAGE: "📦",
+    EVENT_SPACE: "🎉",
+    RECORDING_STUDIO: "🎤",
+    OTHER: "✨",
+  };
+  return emojis[key] || "🏠";
+}
 
 type SearchResponse = {
   page: number;
@@ -346,6 +384,11 @@ export default async function ListingsPage({
 
                       <div className="flex flex-1 flex-col gap-2 p-3">
                         <div className="space-y-1">
+                          {/* Category Badge */}
+                          <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+                            <span>{getCategoryEmoji(listing.type)}</span>
+                            {LISTING_TYPE_LABELS[listing.type] || listing.type}
+                          </span>
                           <p className="line-clamp-1 text-sm font-semibold text-gray-900">
                             {listing.title}
                           </p>

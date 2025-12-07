@@ -280,6 +280,7 @@ export async function GET(req: NextRequest) {
         id: l.id,
         title: l.title,
         description: l.description,
+        type: l.type,
         price: l.price,
         currency: l.currency,
         country: l.country,
