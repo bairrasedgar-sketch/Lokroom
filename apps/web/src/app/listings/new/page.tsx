@@ -384,8 +384,39 @@ export default function NewListingPage() {
   // Vérifier si l'utilisateur est hôte
   const isHost = (session?.user as any)?.isHost || (session?.user as any)?.role === "HOST" || (session?.user as any)?.role === "BOTH";
 
-  // Rediriger les non-hôtes vers la page "devenir hôte"
+  // État pour vérification de permission côté serveur
+  const [permissionChecked, setPermissionChecked] = useState(false);
+  const [hasPermission, setHasPermission] = useState(false);
+
+  // Vérifier les permissions côté serveur (plus fiable que le token client)
   useEffect(() => {
+    async function checkHostPermission() {
+      if (status !== "authenticated") return;
+
+      try {
+        // Vérifier côté serveur si l'utilisateur est vraiment hôte
+        const res = await fetch("/api/host/activate", { method: "POST" });
+        const data = await res.json();
+
+        if (res.ok && (data.success || data.alreadyHost)) {
+          setHasPermission(true);
+        } else {
+          toast.error("Tu dois être hôte pour créer une annonce");
+          router.push("/become-host");
+        }
+      } catch {
+        // En cas d'erreur, utiliser la vérification locale
+        if (isHost) {
+          setHasPermission(true);
+        } else {
+          toast.error("Tu dois être hôte pour créer une annonce");
+          router.push("/become-host");
+        }
+      } finally {
+        setPermissionChecked(true);
+      }
+    }
+
     if (status === "loading") return;
 
     if (status === "unauthenticated") {
@@ -393,9 +424,13 @@ export default function NewListingPage() {
       return;
     }
 
-    if (status === "authenticated" && !isHost) {
-      toast.error("Tu dois être hôte pour créer une annonce");
-      router.push("/become-host");
+    // Si la session dit déjà qu'on est hôte, on peut continuer
+    if (isHost) {
+      setHasPermission(true);
+      setPermissionChecked(true);
+    } else {
+      // Sinon, vérifier côté serveur (la session peut être en retard)
+      checkHostPermission();
     }
   }, [status, isHost, router]);
 
@@ -1224,8 +1259,8 @@ export default function NewListingPage() {
     [images]
   );
 
-  // Afficher un loader pendant la vérification de session
-  if (status === "loading") {
+  // Afficher un loader pendant la vérification de session ou de permission
+  if (status === "loading" || !permissionChecked) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-gray-900" />
@@ -1233,8 +1268,8 @@ export default function NewListingPage() {
     );
   }
 
-  // Ne pas afficher le formulaire si l'utilisateur n'est pas hôte (en attendant la redirection)
-  if (status === "unauthenticated" || !isHost) {
+  // Ne pas afficher le formulaire si l'utilisateur n'a pas la permission (en attendant la redirection)
+  if (status === "unauthenticated" || !hasPermission) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">

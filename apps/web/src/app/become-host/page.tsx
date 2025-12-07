@@ -187,7 +187,7 @@ type Step = "welcome" | "space-type" | "check-kyc";
 
 export default function BecomeHostPage() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const [step, setStep] = useState<Step>("welcome");
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -228,6 +228,13 @@ export default function BecomeHostPage() {
           if (!res.ok) {
             throw new Error(data.error || "Erreur activation");
           }
+
+          // Rafraîchir la session pour mettre à jour le token JWT avec le nouveau rôle
+          // Attendre un court délai pour s'assurer que la DB est à jour
+          await new Promise(resolve => setTimeout(resolve, 500));
+          await update();
+          // Forcer le rafraîchissement du routeur pour propager la nouvelle session
+          router.refresh();
         } catch (err) {
           console.error(err);
           alert(err instanceof Error ? err.message : "Erreur inconnue");
