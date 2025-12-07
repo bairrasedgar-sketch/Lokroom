@@ -4,14 +4,21 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { signOut } from "next-auth/react"; // ⬅️ NEW : on utilise NextAuth pour logout
+import { signOut, useSession } from "next-auth/react";
 
 export function UserMenu() {
+  const { data: session } = useSession();
   const [open, setOpen] = useState(false);
   const [hostLoading, setHostLoading] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
   const pathname = usePathname();
   const menuRef = useRef<HTMLDivElement | null>(null);
+
+  // Vérifier si l'utilisateur est hôte
+  const isHost =
+    (session?.user as any)?.isHost === true ||
+    (session?.user as any)?.role === "HOST" ||
+    (session?.user as any)?.role === "BOTH";
 
   // 🔒 Ferme le menu dès que l'URL / la page change
   useEffect(() => {
@@ -194,19 +201,22 @@ export function UserMenu() {
               Créer une annonce
             </Link>
 
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(false);
-                void handleBecomeHost();
-              }}
-              disabled={hostLoading}
-              className="block w-full px-4 py-2 text-left text-sm text-gray-800 hover:bg-gray-50 disabled:opacity-60"
-            >
-              {hostLoading
-                ? "Redirection vers Stripe…"
-                : "Devenir hôte Lok’Room"}
-            </button>
+            {/* Afficher "Devenir hôte" seulement si pas encore hôte */}
+            {!isHost && (
+              <button
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  void handleBecomeHost();
+                }}
+                disabled={hostLoading}
+                className="block w-full px-4 py-2 text-left text-sm text-gray-800 hover:bg-gray-50 disabled:opacity-60"
+              >
+                {hostLoading
+                  ? "Redirection vers Stripe…"
+                  : "Devenir hôte Lok'Room"}
+              </button>
+            )}
 
             <div className="my-1 border-t border-gray-100" />
 
