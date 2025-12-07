@@ -379,7 +379,7 @@ async function jsonOrThrow(res: Response) {
 
 export default function NewListingPage() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { data: session, status, update: updateSession } = useSession();
 
   // Vérifier si l'utilisateur est hôte
   const isHost = (session?.user as any)?.isHost || (session?.user as any)?.role === "HOST" || (session?.user as any)?.role === "BOTH";
@@ -400,6 +400,8 @@ export default function NewListingPage() {
 
         if (res.ok && (data.success || data.alreadyHost)) {
           setHasPermission(true);
+          // Rafraîchir la session pour mettre à jour le statut hôte côté client
+          await updateSession();
         } else {
           toast.error("Tu dois être hôte pour créer une annonce");
           router.push("/become-host");
@@ -432,7 +434,7 @@ export default function NewListingPage() {
       // Sinon, vérifier côté serveur (la session peut être en retard)
       checkHostPermission();
     }
-  }, [status, isHost, router]);
+  }, [status, isHost, router, updateSession]);
 
   // Current step
   const [currentStep, setCurrentStep] = useState<Step>("type");
