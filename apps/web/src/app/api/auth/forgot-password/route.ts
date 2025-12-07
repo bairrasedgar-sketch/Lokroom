@@ -3,10 +3,13 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { generateVerificationCode, validatePassword, hashPassword } from "@/lib/password";
+import { generateVerificationCode, validatePassword, hashPassword, verifyPassword } from "@/lib/password";
 import { sendPasswordResetEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
+
+// Nombre maximum d'anciens mots de passe à vérifier
+const PASSWORD_HISTORY_LIMIT = 5;
 
 /**
  * POST /api/auth/forgot-password
@@ -96,6 +99,7 @@ export async function PUT(req: NextRequest) {
       where: { email: normalizedEmail },
       select: {
         id: true,
+        passwordHash: true,
         resetToken: true,
         resetTokenExpiresAt: true,
       },
@@ -124,8 +128,61 @@ export async function PUT(req: NextRequest) {
       }, { status: 400 });
     }
 
+    // ====== SÉCURITÉ: Vérifier que le nouveau mot de passe n'est pas identique à l'actuel ======
+    if (user.passwordHash) {
+      const isSameAsCurrent = await verifyPassword(newPassword, user.passwordHash);
+      if (isSameAsCurrent) {
+        return NextResponse.json({
+          error: "Le nouveau mot de passe doit être différent de l'actuel.",
+          code: "SAME_PASSWORD",
+        }, { status: 400 });
+      }
+    }
+
+    // ====== SÉCURITÉ: Vérifier l'historique des mots de passe ======
+    const passwordHistory = await prisma.passwordHistory.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      take: PASSWORD_HISTORY_LIMIT,
+      select: { passwordHash: true },
+    });
+
+    for (const oldPassword of passwordHistory) {
+      const matchesOld = await verifyPassword(newPassword, oldPassword.passwordHash);
+      if (matchesOld) {
+        return NextResponse.json({
+          error: "Ce mot de passe a déjà été utilisé. Veuillez en choisir un différent.",
+          code: "PASSWORD_REUSED",
+        }, { status: 400 });
+      }
+    }
+
     // Hasher le nouveau mot de passe
     const passwordHash = await hashPassword(newPassword);
+
+    // Sauvegarder l'ancien mot de passe dans l'historique (si existant)
+    if (user.passwordHash) {
+      await prisma.passwordHistory.create({
+        data: {
+          userId: user.id,
+          passwordHash: user.passwordHash,
+        },
+      });
+
+      // Nettoyer l'historique ancien (garder seulement les N derniers)
+      const oldEntries = await prisma.passwordHistory.findMany({
+        where: { userId: user.id },
+        orderBy: { createdAt: "desc" },
+        skip: PASSWORD_HISTORY_LIMIT,
+        select: { id: true },
+      });
+
+      if (oldEntries.length > 0) {
+        await prisma.passwordHistory.deleteMany({
+          where: { id: { in: oldEntries.map(e => e.id) } },
+        });
+      }
+    }
 
     // Mettre à jour le mot de passe et effacer le token
     await prisma.user.update({

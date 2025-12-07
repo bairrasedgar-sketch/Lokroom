@@ -6,6 +6,7 @@ import PaymentsPage from "./payments/page";
 import useTranslation from "@/hooks/useTranslation";
 import { SUPPORTED_LANGS, type SupportedLang } from "@/locales";
 import type { Currency } from "@/lib/currency";
+import PasswordInput, { validatePassword } from "@/components/PasswordInput";
 
 // Heroicons outline (icônes propres style Airbnb)
 import {
@@ -678,30 +679,21 @@ function SecurityTabContent({ t }: { t: AccountTranslations }) {
               <>
                 <p className="mt-1 text-sm text-gray-500">Choisissez votre nouveau mot de passe.</p>
                 <div className="mt-6 space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">{extT.newPassword || "Nouveau mot de passe"}</label>
-                    <input
-                      type="password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder={extT.newPasswordPlaceholder || "Votre nouveau mot de passe"}
-                      className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">{extT.confirmPassword || "Confirmer"}</label>
-                    <input
-                      type="password"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      placeholder={extT.confirmPasswordPlaceholder || "Confirmez"}
-                      className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
-                    />
-                  </div>
+                  <PasswordInput
+                    value={newPassword}
+                    onChange={setNewPassword}
+                    label={extT.newPassword || "Nouveau mot de passe"}
+                    placeholder={extT.newPasswordPlaceholder || "Votre nouveau mot de passe"}
+                    showValidation={true}
+                    confirmValue={confirmPassword}
+                    confirmLabel={extT.confirmPassword || "Confirmer le mot de passe"}
+                    onConfirmChange={setConfirmPassword}
+                    autoFocus
+                  />
                   <button
                     type="button"
                     onClick={handleUpdatePassword}
-                    disabled={!newPassword || !confirmPassword || updatingPassword}
+                    disabled={!newPassword || !confirmPassword || newPassword !== confirmPassword || !validatePassword(newPassword).isValid || updatingPassword}
                     className="w-full rounded-full bg-gray-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-black disabled:bg-gray-300 disabled:cursor-not-allowed"
                   >
                     {updatingPassword ? (extT.updating || "Mise à jour...") : (extT.updatePassword || "Mettre à jour")}

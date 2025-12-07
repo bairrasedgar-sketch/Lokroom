@@ -147,6 +147,20 @@ model User {
 
   /// Historique de recherche
   searchHistory SearchHistory[]
+
+  /// Historique des mots de passe (sécurité - empêcher réutilisation)
+  passwordHistory PasswordHistory[]
+}
+
+/// Historique des mots de passe pour empêcher la réutilisation
+model PasswordHistory {
+  id           String   @id @default(cuid())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
 }
 
 model UserProfile {
