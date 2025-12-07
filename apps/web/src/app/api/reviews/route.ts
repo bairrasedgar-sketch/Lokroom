@@ -6,10 +6,15 @@ import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
+// Constantes de validation
+const MAX_COMMENT_LENGTH = 2000; // Limite raisonnable pour un avis
+const MIN_RATING = 1;
+const MAX_RATING = 5;
+
 function clampRating(raw: unknown): number | null {
   const n = Number(raw);
   if (!Number.isFinite(n)) return null;
-  if (n < 1 || n > 5) return null;
+  if (n < MIN_RATING || n > MAX_RATING) return null;
   return Math.round(n);
 }
 
@@ -89,10 +94,18 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const comment =
-    typeof body.comment === "string" && body.comment.trim().length > 0
-      ? body.comment.trim()
-      : null;
+  // Validation du commentaire: longueur max pour éviter les abus
+  let comment: string | null = null;
+  if (typeof body.comment === "string" && body.comment.trim().length > 0) {
+    const trimmed = body.comment.trim();
+    if (trimmed.length > MAX_COMMENT_LENGTH) {
+      return NextResponse.json(
+        { error: `comment_too_long_max_${MAX_COMMENT_LENGTH}_chars` },
+        { status: 400 },
+      );
+    }
+    comment = trimmed;
+  }
 
   const booking = await prisma.booking.findUnique({
     where: { id: body.bookingId },

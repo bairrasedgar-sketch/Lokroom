@@ -5,17 +5,17 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 
-export async function GET() {
-  // 👉 permet de vérifier que la route est bien montée (doit répondre 405 si tu fais un POST ailleurs)
-  return NextResponse.json({ ok: true, route: "/api/bookings/pay" });
-}
+// SÉCURITÉ: Pas de GET - ne pas exposer la structure de l'API
+// Les routes non autorisées renvoient automatiquement 405 Method Not Allowed
 
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const userId = session.user.id;
 
     const body = (await req.json().catch(() => null)) as { bookingId?: string } | null;
     if (!body?.bookingId) {
@@ -28,6 +28,12 @@ export async function POST(req: Request) {
       include: { listing: { select: { id: true, ownerId: true, currency: true } } },
     });
     if (!booking) return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+
+    // SÉCURITÉ: Seul le guest peut payer sa propre réservation
+    if (booking.guestId !== userId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     if (booking.status !== "PENDING") {
       return NextResponse.json({ error: "Booking not payable" }, { status: 400 });
     }
@@ -39,12 +45,12 @@ export async function POST(req: Request) {
       amount: amountCents,
       currency,
       automatic_payment_methods: { enabled: true },
-      // ⚠️ ton webhook actuel lit ces metadata
+      // Metadata pour le webhook - ne pas exposer dans la réponse
       metadata: {
         bookingId: booking.id,
         listingId: booking.listingId,
         hostUserId: booking.listing.ownerId,
-        currency: booking.currency, // "EUR" | "CAD"
+        currency: booking.currency,
       },
     });
 

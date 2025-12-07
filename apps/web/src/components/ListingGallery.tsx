@@ -10,10 +10,12 @@ export default function ListingGallery({
   images,
   aspect = 4 / 3,
   objectFit = "contain", // "cover" si tu veux remplir la zone
+  title = "Photo de l'annonce", // Pour l'accessibilité
 }: {
   images: Img[];
   aspect?: number;
   objectFit?: "contain" | "cover";
+  title?: string;
 }) {
   const safeImages = useMemo<Img[]>(
     () => (Array.isArray(images) ? images.filter(Boolean) : []),
@@ -66,7 +68,7 @@ export default function ListingGallery({
           <Image
             key={safeImages[idx].url}
             src={safeImages[idx].url}
-            alt=""
+            alt={`${title} - Photo ${idx + 1} sur ${total}`}
             fill
             priority
             sizes="(max-width: 768px) 100vw, 768px"
@@ -139,7 +141,7 @@ export default function ListingGallery({
             >
               <Image
                 src={img.url}
-                alt=""
+                alt={`${title} - Miniature ${i + 1}`}
                 fill
                 sizes="100px"
                 className="object-contain bg-gray-50"
