@@ -192,17 +192,16 @@ export function UserMenu() {
               Taxes
             </Link>
 
-            {/* ➕ Sous Taxes */}
-            <Link
-              href="/listings/new"
-              onClick={() => setOpen(false)}
-              className="block px-4 py-2 font-medium text-gray-900 hover:bg-gray-50"
-            >
-              Créer une annonce
-            </Link>
-
-            {/* Afficher "Devenir hôte" seulement si pas encore hôte */}
-            {!isHost && (
+            {/* Bouton qui se transforme selon le statut hôte */}
+            {isHost ? (
+              <Link
+                href="/listings/new"
+                onClick={() => setOpen(false)}
+                className="block px-4 py-2 font-medium text-gray-900 hover:bg-gray-50"
+              >
+                Créer une annonce
+              </Link>
+            ) : (
               <button
                 type="button"
                 onClick={() => {
@@ -210,7 +209,7 @@ export function UserMenu() {
                   void handleBecomeHost();
                 }}
                 disabled={hostLoading}
-                className="block w-full px-4 py-2 text-left text-sm text-gray-800 hover:bg-gray-50 disabled:opacity-60"
+                className="block w-full px-4 py-2 text-left text-sm font-medium text-gray-900 hover:bg-gray-50 disabled:opacity-60"
               >
                 {hostLoading
                   ? "Redirection vers Stripe…"
