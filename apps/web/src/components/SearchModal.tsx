@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import LocationAutocomplete, { type LocationAutocompletePlace } from "./LocationAutocomplete";
 
 type SearchHistory = {
   id: string;
@@ -43,6 +44,8 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
 
   const [activeTab, setActiveTab] = useState<"destination" | "dates" | "guests">(initialTab);
   const [destination, setDestination] = useState("");
+  const [selectedCity, setSelectedCity] = useState("");
+  const [selectedCountry, setSelectedCountry] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [guests, setGuests] = useState(1);
@@ -92,6 +95,8 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
     const params = new URLSearchParams();
 
     if (destination) params.set("q", destination);
+    if (selectedCity) params.set("city", selectedCity);
+    if (selectedCountry) params.set("country", selectedCountry);
     if (startDate) params.set("startDate", startDate);
     if (endDate) params.set("endDate", endDate);
     if (guests > 1) params.set("guests", guests.toString());
@@ -113,8 +118,16 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
     router.push(`/listings?${params.toString()}`);
   };
 
-  const handleDestinationSelect = (city: string) => {
-    setDestination(city);
+  // Handler pour la sélection d'une ville via autocomplete
+  const handleLocationSelect = (place: LocationAutocompletePlace) => {
+    setSelectedCity(place.mainText);
+    // Déterminer le pays à partir de la description
+    const desc = place.description.toLowerCase();
+    if (desc.includes("canada")) {
+      setSelectedCountry("Canada");
+    } else if (desc.includes("france")) {
+      setSelectedCountry("France");
+    }
     setActiveTab("dates");
   };
 
@@ -216,34 +229,23 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
         <div className="p-4 sm:p-6 min-h-[300px] max-h-[calc(100vh-220px)] sm:max-h-[60vh] overflow-y-auto">
           {activeTab === "destination" && (
             <div className="space-y-6">
-              {/* Champ de recherche */}
+              {/* Champ de recherche avec autocomplete */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Où allez-vous ?
                 </label>
-                <div className="relative">
-                  <svg className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <input
-                    type="text"
-                    value={destination}
-                    onChange={(e) => setDestination(e.target.value)}
-                    placeholder="Rechercher une ville, un pays..."
-                    className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-                    autoFocus
-                  />
-                  {destination && (
-                    <button
-                      onClick={() => setDestination("")}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
+                <LocationAutocomplete
+                  value={destination}
+                  onChange={setDestination}
+                  onSelect={handleLocationSelect}
+                  placeholder="Rechercher une ville, un pays..."
+                  autoFocus
+                  popularCities={POPULAR_DESTINATIONS.map(d => ({
+                    main: d.city,
+                    secondary: d.country,
+                    icon: d.emoji,
+                  }))}
+                />
               </div>
 
               {/* Historique de recherche (si connecté) */}
@@ -274,28 +276,6 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
                   </div>
                 </div>
               )}
-
-              {/* Destinations populaires */}
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                  Destinations populaires
-                </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {POPULAR_DESTINATIONS.map((dest) => (
-                    <button
-                      key={dest.city}
-                      onClick={() => handleDestinationSelect(dest.city)}
-                      className="flex items-center gap-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors text-left"
-                    >
-                      <span className="text-2xl">{dest.emoji}</span>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{dest.city}</p>
-                        <p className="text-xs text-gray-500">{dest.country}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
           )}
 

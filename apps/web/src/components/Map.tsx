@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import Script from "next/script";
 import Link from "next/link";
 import Image from "next/image";
@@ -13,7 +13,7 @@ export type MapMarker = {
   lng: number;
   label?: string; // ex: "120 €"
 
-  // Infos optionnelles pour l’aperçu façon Airbnb
+  // Infos optionnelles pour l'aperçu façon Airbnb
   title?: string;
   city?: string | null;
   country?: string;
@@ -66,8 +66,26 @@ export default function Map({
   const hoveredIdRef = useRef<string | null>(null);
   const overlaysRef = useRef<any[]>([]);
 
-  // Sélection interne pour l’aperçu intégré (si aucun onMarkerClick externe)
+  // Sélection interne pour l'aperçu intégré (si aucun onMarkerClick externe)
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // État pour savoir si la souris est sur la carte (pour activer le scroll zoom)
+  const [isMouseOver, setIsMouseOver] = useState(false);
+
+  // Activer/désactiver le scroll zoom selon la position de la souris
+  const handleMouseEnter = useCallback(() => {
+    setIsMouseOver(true);
+    if (mapRef.current) {
+      mapRef.current.setOptions({ gestureHandling: "greedy" });
+    }
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsMouseOver(false);
+    if (mapRef.current) {
+      mapRef.current.setOptions({ gestureHandling: "none" });
+    }
+  }, []);
 
   useEffect(() => {
     hoveredIdRef.current = hoveredId ?? null;
@@ -122,9 +140,9 @@ export default function Map({
       mapTypeId: "roadmap",
       disableDefaultUI: true,
       zoomControl: true,
-      // ✅ scroll pour zoom quand la souris est sur la carte
-      gestureHandling: "greedy",
-      scrollwheel: true,
+      // ❌ Désactiver le scroll par défaut - sera activé au mouseenter
+      gestureHandling: "none",
+      scrollwheel: false,
       clickableIcons: false, // désactive les popups de POI (parcs, restos, etc.)
       styles: [
         {
@@ -369,8 +387,28 @@ export default function Map({
       <div
         className="relative h-full w-full rounded-3xl"
         style={{ minHeight: 360 }}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         <div ref={containerRef} className="h-full w-full rounded-3xl" />
+
+        {/* Indicateur de zoom (apparaît brièvement au survol) */}
+        <style jsx>{`
+          @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            85% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+          }
+        `}</style>
+        {isMouseOver && (
+          <div
+            className="pointer-events-none absolute left-1/2 top-3 z-10 rounded-full bg-black/75 px-3 py-1.5 text-xs font-medium text-white shadow-lg"
+            style={{ animation: "fadeInOut 2.5s ease-in-out forwards" }}
+          >
+            Molette pour zoomer
+          </div>
+        )}
 
         {/* Aperçu intégré façon Airbnb (desktop & mobile) */}
         {selectedMarker && (
