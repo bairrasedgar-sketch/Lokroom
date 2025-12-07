@@ -67,13 +67,18 @@ type Tab = "published" | "drafts";
 
 export default function HostListingsPage() {
   const router = useRouter();
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const [listings, setListings] = useState<Listing[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("published");
   const [drafts, setDrafts] = useState<Draft[]>([]);
+
+  // Clé unique par utilisateur pour isoler les brouillons
+  const userEmail = session?.user?.email || "";
+  const DRAFTS_KEY = userEmail ? `lokroom_listing_drafts_${userEmail}` : "";
+  const DRAFT_EXPIRY_DAYS = 90;
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -121,11 +126,8 @@ export default function HostListingsPage() {
     }
   }
 
-  const DRAFTS_KEY = "lokroom_listing_drafts";
-  const DRAFT_EXPIRY_DAYS = 90;
-
   function loadDrafts() {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || !DRAFTS_KEY) return;
     const savedDrafts = localStorage.getItem(DRAFTS_KEY);
     if (savedDrafts) {
       try {

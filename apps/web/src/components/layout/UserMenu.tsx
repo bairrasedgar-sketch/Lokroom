@@ -121,7 +121,7 @@ export function UserMenu() {
               Paiements
             </Link>
             <Link
-              href="/account/payments?tab=payouts"
+              href="/account?tab=payments"
               onClick={() => setOpen(false)}
               className="block px-4 py-2 hover:bg-gray-50"
             >

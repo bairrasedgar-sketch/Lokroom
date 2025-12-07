@@ -515,7 +515,9 @@ export default function NewListingPage() {
   // Draft management - supports multiple drafts
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [savingDraft, setSavingDraft] = useState(false);
-  const DRAFTS_KEY = "lokroom_listing_drafts";
+  // Clé unique par utilisateur pour isoler les brouillons
+  const userEmail = session?.user?.email || "";
+  const DRAFTS_KEY = userEmail ? `lokroom_listing_drafts_${userEmail}` : "";
   const DRAFT_EXPIRY_DAYS = 90;
 
   // Auto-animate
@@ -549,44 +551,45 @@ export default function NewListingPage() {
 
   // Load drafts from localStorage - show modal if drafts exist
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedDrafts = localStorage.getItem(DRAFTS_KEY);
-      if (savedDrafts) {
-        try {
-          const parsed = JSON.parse(savedDrafts);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            // Filter out expired drafts (older than 90 days)
-            const now = new Date();
-            const validDrafts = parsed.filter((draft: any) => {
-              if (!draft.createdAt) return false;
-              const createdDate = new Date(draft.createdAt);
-              const daysDiff = (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
-              return daysDiff < DRAFT_EXPIRY_DAYS;
-            }).map((draft: any) => ({
-              ...draft,
-              formData: {
-                ...draft.formData,
-                spaceFeatures: Array.isArray(draft.formData?.spaceFeatures) ? draft.formData.spaceFeatures : [],
-              },
-            }));
+    // Attendre d'avoir l'email de l'utilisateur pour isoler les brouillons
+    if (typeof window === "undefined" || !DRAFTS_KEY) return;
 
-            // Update localStorage with only valid drafts
-            if (validDrafts.length !== parsed.length) {
-              localStorage.setItem(DRAFTS_KEY, JSON.stringify(validDrafts));
-            }
+    const savedDrafts = localStorage.getItem(DRAFTS_KEY);
+    if (savedDrafts) {
+      try {
+        const parsed = JSON.parse(savedDrafts);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Filter out expired drafts (older than 90 days)
+          const now = new Date();
+          const validDrafts = parsed.filter((draft: any) => {
+            if (!draft.createdAt) return false;
+            const createdDate = new Date(draft.createdAt);
+            const daysDiff = (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
+            return daysDiff < DRAFT_EXPIRY_DAYS;
+          }).map((draft: any) => ({
+            ...draft,
+            formData: {
+              ...draft.formData,
+              spaceFeatures: Array.isArray(draft.formData?.spaceFeatures) ? draft.formData.spaceFeatures : [],
+            },
+          }));
 
-            if (validDrafts.length > 0) {
-              setAvailableDrafts(validDrafts);
-              setShowDraftModal(true);
-            }
+          // Update localStorage with only valid drafts
+          if (validDrafts.length !== parsed.length) {
+            localStorage.setItem(DRAFTS_KEY, JSON.stringify(validDrafts));
           }
-        } catch (e) {
-          console.error("Error loading drafts:", e);
-          localStorage.removeItem(DRAFTS_KEY);
+
+          if (validDrafts.length > 0) {
+            setAvailableDrafts(validDrafts);
+            setShowDraftModal(true);
+          }
         }
+      } catch (e) {
+        console.error("Error loading drafts:", e);
+        localStorage.removeItem(DRAFTS_KEY);
       }
     }
-  }, []);
+  }, [DRAFTS_KEY]);
 
   // Restore a specific draft from the modal
   const handleRestoreDraft = useCallback((draftId: string) => {
