@@ -117,18 +117,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     // estimation grossière des frais Stripe : 2.9% + 30 cents
     const stripeFeeEstimateCents = Math.round(priceCents * 0.029) + 30;
 
-    const platformNetCents = Math.max(
-      0,
-      hostFeeCents + guestFeeCents + taxOnGuestFeeCents - stripeFeeEstimateCents
-    );
-
     const currency = booking.currency.toLowerCase() as "eur" | "cad";
-
-    const regionParts: string[] = [];
-    if (booking.listing.country) regionParts.push(booking.listing.country);
-    if (booking.listing.province) regionParts.push(booking.listing.province);
-    if (booking.listing.city) regionParts.push(booking.listing.city);
-    const region = regionParts.join(" / ") || "unknown";
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: priceCents,
