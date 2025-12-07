@@ -20,11 +20,13 @@ export async function GET() {
     where: { id: session.user.id },
     // TS peut hurler ici → on cast en any
     select: {
+      email: true,
       identityStatus: true,
       identityLastVerifiedAt: true,
     } as any,
   })) as
     | {
+        email: string;
         identityStatus: string;
         identityLastVerifiedAt: Date | null;
       }

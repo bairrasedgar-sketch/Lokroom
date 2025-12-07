@@ -164,6 +164,8 @@ function SecurityTabContent({ t }: { t: AccountTranslations }) {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [updatingPassword, setUpdatingPassword] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   // Charger le statut et synchroniser si nécessaire
   useEffect(() => {
@@ -172,7 +174,7 @@ function SecurityTabContent({ t }: { t: AccountTranslations }) {
         setLoadingStatus(true);
         const res = await fetch("/api/account/security/status");
         if (!res.ok) return;
-        const data = (await res.json()) as IdentityStatusResponse & { phone?: string; phoneVerified?: boolean };
+        const data = (await res.json()) as IdentityStatusResponse & { phone?: string; phoneVerified?: boolean; email?: string };
         const currentStatus = data.identityStatus ?? "UNVERIFIED";
         setStatus(currentStatus);
         setLastVerifiedAt(
@@ -181,6 +183,9 @@ function SecurityTabContent({ t }: { t: AccountTranslations }) {
         if (data.phone) {
           setPhone(data.phone);
           setPhoneVerified(data.phoneVerified ?? false);
+        }
+        if (data.email) {
+          setUserEmail(data.email);
         }
 
         // Si le statut est PENDING, essayer de synchroniser avec Stripe
@@ -261,32 +266,75 @@ function SecurityTabContent({ t }: { t: AccountTranslations }) {
   };
 
   const handleSendEmailCode = async () => {
+    if (!userEmail) {
+      setPasswordError("Email non disponible");
+      return;
+    }
     setUpdatingPassword(true);
-    // Simulation - à remplacer par un vrai appel API
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setUpdatingPassword(false);
-    setPasswordStep("code");
+    setPasswordError(null);
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: userEmail }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setPasswordStep("code");
+      } else {
+        setPasswordError(data.error || "Erreur lors de l'envoi du code");
+      }
+    } catch (e) {
+      console.error("Erreur envoi code:", e);
+      setPasswordError("Erreur réseau");
+    } finally {
+      setUpdatingPassword(false);
+    }
   };
 
   const handleVerifyEmailCode = async () => {
-    // Simulation - passer à l'étape nouveau mot de passe
+    // Passer à l'étape nouveau mot de passe (la vérification se fait au moment de la mise à jour)
     setPasswordStep("new");
   };
 
   const handleUpdatePassword = async () => {
     if (newPassword !== confirmPassword) {
-      alert("Les mots de passe ne correspondent pas");
+      setPasswordError("Les mots de passe ne correspondent pas");
+      return;
+    }
+    if (!userEmail) {
+      setPasswordError("Email non disponible");
       return;
     }
     setUpdatingPassword(true);
-    // Simulation - à remplacer par un vrai appel API
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setUpdatingPassword(false);
-    setShowPasswordModal(false);
-    setPasswordStep("email");
-    setEmailCode("");
-    setNewPassword("");
-    setConfirmPassword("");
+    setPasswordError(null);
+    try {
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: userEmail,
+          code: emailCode,
+          newPassword: newPassword,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setShowPasswordModal(false);
+        setPasswordStep("email");
+        setEmailCode("");
+        setNewPassword("");
+        setConfirmPassword("");
+        alert("Mot de passe mis à jour avec succès !");
+      } else {
+        setPasswordError(data.error || "Erreur lors de la mise à jour");
+      }
+    } catch (e) {
+      console.error("Erreur mise à jour mot de passe:", e);
+      setPasswordError("Erreur réseau");
+    } finally {
+      setUpdatingPassword(false);
+    }
   };
 
   const label = formatIdentityStatusLabel(status, secT);
@@ -576,6 +624,12 @@ function SecurityTabContent({ t }: { t: AccountTranslations }) {
             </button>
 
             <h3 className="text-lg font-semibold text-gray-900">{extT.passwordModalTitle || "Modifier votre mot de passe"}</h3>
+
+            {passwordError && (
+              <div className="mt-2 rounded-lg bg-red-50 p-3 text-sm text-red-600">
+                {passwordError}
+              </div>
+            )}
 
             {passwordStep === "email" && (
               <>
