@@ -1444,24 +1444,9 @@ export default function NewListingPage() {
                       type="button"
                       onClick={() => {
                         setFormData((prev) => {
-                          // Si c'est "OTHER", on ne permet pas de le mettre en type additionnel
-                          if (t.value === "OTHER") {
-                            return {
-                              ...prev,
-                              type: t.value,
-                              additionalTypes: prev.additionalTypes.filter(at => at !== "OTHER"),
-                              customType: prev.customType,
-                            };
-                          }
-
-                          // Si pas encore de type principal, ce sera le type principal
-                          if (!prev.type) {
-                            return { ...prev, type: t.value, customType: "" };
-                          }
-
-                          // Si c'est le type principal actuel, on le retire
+                          // Si c'est le type principal actuel, on le désélectionne
                           if (prev.type === t.value) {
-                            // Le prochain type additionnel devient principal
+                            // Le prochain type additionnel devient principal (ou null si aucun)
                             const newPrimary = prev.additionalTypes[0] || null;
                             return {
                               ...prev,
@@ -1477,6 +1462,21 @@ export default function NewListingPage() {
                               ...prev,
                               additionalTypes: prev.additionalTypes.filter(at => at !== t.value),
                             };
+                          }
+
+                          // Si c'est "OTHER", on le met en type principal uniquement
+                          if (t.value === "OTHER") {
+                            return {
+                              ...prev,
+                              type: t.value,
+                              additionalTypes: prev.additionalTypes.filter(at => at !== "OTHER"),
+                              customType: prev.customType,
+                            };
+                          }
+
+                          // Si pas encore de type principal, ce sera le type principal
+                          if (!prev.type) {
+                            return { ...prev, type: t.value, customType: "" };
                           }
 
                           // Sinon, on l'ajoute comme type additionnel (max 3)
