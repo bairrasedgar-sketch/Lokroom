@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -72,7 +73,7 @@ type Message = {
   };
 };
 
-type ViewMode = "all" | "host" | "guest";
+type ViewMode = "all" | "host" | "guest" | "support";
 
 // Bot message type
 type BotMessage = {
@@ -85,6 +86,7 @@ type BotMessage = {
 
 export default function MessagesPage() {
   const { data: session, status } = useSession();
+  const searchParams = useSearchParams();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -101,6 +103,16 @@ export default function MessagesPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const currentUserId = session?.user?.id;
+
+  // Auto-open support bot if ?support=true
+  useEffect(() => {
+    const supportParam = searchParams.get("support");
+    if (supportParam === "true") {
+      setViewMode("support");
+      setSelectedConvId(SUPPORT_BOT_ID);
+      setShowMobileChat(true);
+    }
+  }, [searchParams]);
 
   // Fetch conversations
   const fetchConversations = useCallback(async () => {
@@ -295,6 +307,7 @@ Posez-moi vos questions sur :
     // View mode filter
     if (viewMode === "host" && !conv.isHost) return false;
     if (viewMode === "guest" && conv.isHost) return false;
+    if (viewMode === "support") return false; // Support mode shows only bot
 
     // Search filter
     if (searchQuery) {
@@ -436,6 +449,7 @@ Posez-moi vos questions sur :
                 { id: "all" as ViewMode, label: "Tout", count: conversations.length },
                 { id: "host" as ViewMode, label: "En tant qu'hôte", count: hostCount },
                 { id: "guest" as ViewMode, label: "En tant que voyageur", count: guestCount },
+                { id: "support" as ViewMode, label: "Support", count: 1 },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -476,6 +490,37 @@ Posez-moi vos questions sur :
             {loading ? (
               <div className="flex h-64 items-center justify-center">
                 <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-gray-900" />
+              </div>
+            ) : viewMode === "support" ? (
+              <div className="space-y-1 pb-4">
+                {/* Support Bot - Only in support mode */}
+                <button
+                  onClick={() => {
+                    setSelectedConvId(SUPPORT_BOT_ID);
+                    setShowMobileChat(true);
+                  }}
+                  className={`group flex w-full items-start gap-3 rounded-2xl p-3 text-left transition-all ${
+                    selectedConvId === SUPPORT_BOT_ID
+                      ? "bg-gradient-to-r from-violet-50 to-purple-50"
+                      : "hover:bg-gray-50"
+                  }`}
+                >
+                  <div className="relative flex-shrink-0">
+                    <div className="flex h-13 w-13 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600">
+                      <SparklesIcon className="h-6 w-6 text-white" />
+                    </div>
+                    <span className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full border-2 border-white bg-emerald-500" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-gray-900">Assistant Lok&apos;Room</h3>
+                      <span className="text-xs text-emerald-600">En ligne</span>
+                    </div>
+                    <p className="mt-0.5 text-sm text-gray-500">
+                      FAQ, aide et support 24/7
+                    </p>
+                  </div>
+                </button>
               </div>
             ) : filteredConversations.length === 0 ? (
               <div className="flex h-64 flex-col items-center justify-center px-4 text-center">

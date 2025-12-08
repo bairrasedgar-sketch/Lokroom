@@ -567,7 +567,7 @@ export default function HelpCenterPage() {
             </div>
             <div className="mt-4 sm:ml-auto sm:mt-0">
               <Link
-                href="/messages"
+                href="/messages?support=true"
                 className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 font-medium text-gray-900 transition-colors hover:bg-gray-100"
               >
                 Contacter le support
