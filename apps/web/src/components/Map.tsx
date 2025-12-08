@@ -38,6 +38,12 @@ type MapProps = {
 
   /** Est-ce qu'on déplace la carte quand hoveredId change ? */
   panOnHover?: boolean;
+
+  /** Callback quand les bounds de la carte changent (zoom/pan) */
+  onBoundsChange?: (bounds: { north: number; south: number; east: number; west: number }) => void;
+
+  /** Limiter la carte à certaines bounds (France/Canada) */
+  restrictBounds?: boolean;
 };
 
 const DEFAULT_CENTER = { lat: 45.5019, lng: -73.5674 }; // Montréal
@@ -49,6 +55,8 @@ export default function Map({
   onMarkerHover,
   onMarkerClick,
   panOnHover = true,
+  onBoundsChange,
+  restrictBounds = false,
 }: MapProps) {
   const { isLoaded: scriptLoaded, loadError: scriptError } = useGoogleMaps();
 
@@ -122,16 +130,25 @@ export default function Map({
       ? { lat: first.lat, lng: first.lng }
       : DEFAULT_CENTER;
 
-    const map = new g.maps.Map(containerRef.current, {
+    // Limites pour France + Canada (approximatif)
+    const FRANCE_CANADA_BOUNDS = {
+      north: 72,   // Nord du Canada
+      south: 41,   // Sud de la France
+      west: -141,  // Ouest du Canada (Yukon)
+      east: 10,    // Est de la France
+    };
+
+    const mapOptions: any = {
       center,
-      zoom: first ? 12 : 4,
+      zoom: first ? 12 : 5,
       mapTypeId: "roadmap",
       disableDefaultUI: true,
-      zoomControl: false, // On va créer nos propres boutons
-      // Activer le scroll zoom directement
+      zoomControl: false,
       gestureHandling: "greedy",
       scrollwheel: true,
-      clickableIcons: false, // désactive les popups de POI (parcs, restos, etc.)
+      clickableIcons: false,
+      minZoom: 3,
+      maxZoom: 18,
       styles: [
         {
           featureType: "all",
@@ -164,14 +181,42 @@ export default function Map({
           stylers: [{ color: "#dbeafe" }],
         },
       ],
-    });
+    };
+
+    // Ajouter restriction si demandée
+    if (restrictBounds) {
+      mapOptions.restriction = {
+        latLngBounds: FRANCE_CANADA_BOUNDS,
+        strictBounds: false, // Permet un peu de dépassement pour le confort
+      };
+    }
+
+    const map = new g.maps.Map(containerRef.current, mapOptions);
 
     mapRef.current = map;
 
     // Pour nettoyer les overlays & markers à l'unmount
     const overlays: any[] = [];
     const markersInstances: any[] = [];
+    const listeners: any[] = [];
 
+    // --- Listener pour les changements de bounds ---
+    if (onBoundsChange) {
+      const boundsListener = map.addListener("idle", () => {
+        const bounds = map.getBounds();
+        if (bounds) {
+          const ne = bounds.getNorthEast();
+          const sw = bounds.getSouthWest();
+          onBoundsChange({
+            north: ne.lat(),
+            south: sw.lat(),
+            east: ne.lng(),
+            west: sw.lng(),
+          });
+        }
+      });
+      listeners.push(boundsListener);
+    }
     // --- Gestion du zoom / centrage ---
     if (markers.length === 1) {
       // Vue "quartier" pour une seule annonce
@@ -304,6 +349,7 @@ export default function Map({
     return () => {
       overlays.forEach((o) => o.setMap(null));
       markersInstances.forEach((m: any) => m.setMap(null));
+      listeners.forEach((l) => g.maps.event.removeListener(l));
       overlaysRef.current = [];
     };
   }, [
@@ -313,6 +359,8 @@ export default function Map({
     useLogoIcon,
     onMarkerHover,
     onMarkerClick,
+    onBoundsChange,
+    restrictBounds,
   ]);
 
   // 🎯 Quand on survole une carte dans la liste OU qu'on clique une bulle

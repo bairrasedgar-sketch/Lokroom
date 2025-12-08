@@ -123,6 +123,7 @@ model User {
   sessions  Session[]
   Listing   Listing[]
   favorites Favorite[]
+  wishlists Wishlist[]
 
   /// Réservations où l'user est le voyageur (guest)
   bookings Booking[] @relation("BookingGuest")
@@ -362,8 +363,27 @@ model Favorite {
   listingId String
   createdAt DateTime @default(now())
 
+  // Lien optionnel vers une liste de favoris
+  wishlistId String?
+  wishlist   Wishlist? @relation(fields: [wishlistId], references: [id], onDelete: SetNull)
+
   @@unique([userId, listingId])
   @@index([listingId])
+  @@index([userId])
+  @@index([wishlistId])
+}
+
+// Liste de favoris (dossiers) style Airbnb
+model Wishlist {
+  id        String   @id @default(cuid())
+  name      String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  favorites Favorite[]
+
   @@index([userId])
 }
 

@@ -212,24 +212,20 @@ export default async function ListingsPage({
 
   return (
     <>
-      {/* Contenu principal - prend 62% à gauche sur desktop */}
-      <main className="pb-12 pt-6 lg:mr-[38%]">
-        <div className="mx-auto max-w-4xl space-y-6 px-4">
-          <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold sm:text-3xl">{t.title}</h1>
-              <p className="text-sm text-gray-600">{t.subtitle}</p>
-            </div>
+      {/* Contenu principal - prend 55% à gauche sur desktop (xl) */}
+      <main className="min-h-screen pb-12 pt-6 xl:mr-[45%]">
+        <div className="mx-auto max-w-6xl space-y-6 px-6">
+          {/* Header simple comme Airbnb */}
+          <header className="flex items-center justify-between">
+            <p className="text-sm text-gray-600">
+              {resultLabel}
+            </p>
 
-            <div className="text-xs text-gray-500">
-              {session ? (
-                <span>
-                  {t.connectedAs} {session.user?.email}
-                </span>
-              ) : (
-                <span>{t.loginHint}</span>
-              )}
-            </div>
+            {session && (
+              <span className="text-xs text-gray-500">
+                {t.connectedAs} {session.user?.email}
+              </span>
+            )}
           </header>
 
           {/* 🔍 Barre de recherche + Filtres (client) */}
@@ -257,46 +253,42 @@ export default async function ListingsPage({
             searchParams={searchParams}
           />
 
-          {/* Résumé + pagination */}
-          <section className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
-            <p className="text-xs text-gray-600">{resultLabel}</p>
+          {/* Pagination en haut */}
+          {pageCount > 1 && (
+            <div className="flex items-center justify-end gap-2 text-xs text-gray-600">
+              <span>
+                Page {page} / {pageCount}
+              </span>
 
-            {pageCount > 1 && (
-              <div className="flex items-center gap-2 text-xs text-gray-600">
-                <span>
-                  Page {page} / {pageCount}
-                </span>
+              <div className="flex gap-1">
+                {page > 1 && (
+                  <Link
+                    href={`/listings?${withUpdatedParam(
+                      searchParams,
+                      "page",
+                      String(page - 1)
+                    )}`}
+                    className="rounded-full border border-gray-300 px-2 py-1 hover:border-black"
+                  >
+                    {t.prevPage}
+                  </Link>
+                )}
 
-                <div className="flex gap-1">
-                  {page > 1 && (
-                    <Link
-                      href={`/listings?${withUpdatedParam(
-                        searchParams,
-                        "page",
-                        String(page - 1)
-                      )}`}
-                      className="rounded-full border border-gray-300 px-2 py-1 hover:border-black"
-                    >
-                      {t.prevPage}
-                    </Link>
-                  )}
-
-                  {page < pageCount && (
-                    <Link
-                      href={`/listings?${withUpdatedParam(
-                        searchParams,
-                        "page",
-                        String(page + 1)
-                      )}`}
-                      className="rounded-full border border-gray-300 px-2 py-1 hover:border-black"
-                    >
-                      {t.nextPage}
-                    </Link>
-                  )}
-                </div>
+                {page < pageCount && (
+                  <Link
+                    href={`/listings?${withUpdatedParam(
+                      searchParams,
+                      "page",
+                      String(page + 1)
+                    )}`}
+                    className="rounded-full border border-gray-300 px-2 py-1 hover:border-black"
+                  >
+                    {t.nextPage}
+                  </Link>
+                )}
               </div>
-            )}
-          </section>
+            </div>
+          )}
 
           {/* Liste des annonces */}
           {listingsWithPrice.length === 0 ? (

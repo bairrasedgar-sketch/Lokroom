@@ -24,9 +24,9 @@ export async function GET(
   return NextResponse.json({ ok: true, favorited: !!fav });
 }
 
-// Ajouter en favoris
+// Ajouter en favoris (optionnellement dans une wishlist)
 export async function POST(
-  _req: Request,
+  req: Request,
   { params }: { params: { listingId: string } }
 ) {
   const session = await getServerSession(authOptions);
@@ -38,6 +38,25 @@ export async function POST(
   const listing = await prisma.listing.findUnique({ where: { id: params.listingId } });
   if (!listing) return NextResponse.json({ error: "Listing not found" }, { status: 404 });
 
+  // Récupérer le wishlistId optionnel du body
+  let wishlistId: string | null = null;
+  try {
+    const body = await req.json();
+    wishlistId = body.wishlistId || null;
+  } catch {
+    // Pas de body JSON, c'est OK
+  }
+
+  // Si wishlistId fourni, vérifier qu'il appartient à l'utilisateur
+  if (wishlistId) {
+    const wishlist = await prisma.wishlist.findFirst({
+      where: { id: wishlistId, userId: session.user.id },
+    });
+    if (!wishlist) {
+      return NextResponse.json({ error: "Wishlist not found" }, { status: 404 });
+    }
+  }
+
   const fav = await prisma.favorite.upsert({
     where: {
       userId_listingId: {
@@ -45,10 +64,11 @@ export async function POST(
         listingId: params.listingId,
       },
     },
-    update: {},
+    update: { wishlistId },
     create: {
       userId: session.user.id,
       listingId: params.listingId,
+      wishlistId,
     },
   });
 
