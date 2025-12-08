@@ -212,9 +212,9 @@ export default async function ListingsPage({
 
   return (
     <>
-      {/* Contenu principal - prend 55% à gauche sur desktop (xl) */}
-      <main className="min-h-screen pb-12 pt-6 xl:mr-[45%]">
-        <div className="mx-auto max-w-6xl space-y-6 px-6">
+      {/* Contenu principal - prend 60% à gauche sur desktop (lg) */}
+      <main className="min-h-screen pb-12 pt-6 lg:mr-[40%]">
+        <div className="mx-auto max-w-5xl space-y-4 px-6">
           {/* Header simple comme Airbnb */}
           <header className="flex items-center justify-between">
             <p className="text-sm text-gray-600">
@@ -302,7 +302,6 @@ export default async function ListingsPage({
                 priceLabel,
               }))}
               markers={markers}
-              locale={locale}
               translations={{
                 noImage: t.noImage,
                 perNight: t.perNight,
