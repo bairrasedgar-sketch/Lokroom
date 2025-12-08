@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import Map, { type MapMarker } from "@/components/Map";
@@ -42,6 +42,9 @@ type ListingCardData = {
     avgRating: number | null;
   };
   priceLabel: string;
+  latPublic?: number | null;
+  lngPublic?: number | null;
+  currency?: string;
 };
 
 type ListingsWithMapProps = {
@@ -55,6 +58,8 @@ type ListingsWithMapProps = {
     defaultHostName: string;
     publishedOnPrefix: string;
   };
+  searchParams?: Record<string, string>;
+  displayCurrency?: string;
 };
 
 // Composant pour la carte d'annonce style Airbnb
@@ -175,10 +180,10 @@ function ListingCard({
         )}
       </div>
 
-      {/* Infos de l'annonce - plus compact */}
-      <Link href={`/listings/${listing.id}`} className="flex flex-col gap-0.5 pt-2">
+      {/* Infos de l'annonce - hauteur fixe pour cohérence */}
+      <Link href={`/listings/${listing.id}`} className="flex flex-col pt-2 h-[72px]">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="line-clamp-1 text-sm font-medium text-gray-900">
+          <h3 className="line-clamp-1 text-sm font-medium text-gray-900 flex-1 min-w-0">
             {locationLabel || listing.title}
           </h3>
           {rev.count > 0 && rev.avgRating != null && (
@@ -191,11 +196,11 @@ function ListingCard({
           )}
         </div>
 
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 truncate">
           {LISTING_TYPE_LABELS[listing.type] || listing.type}
         </p>
 
-        <p className="mt-0.5 text-sm">
+        <p className="mt-auto text-sm">
           <span className="font-semibold">{listing.priceLabel}</span>
           <span className="font-normal text-gray-900"> {t.perNight}</span>
         </p>
@@ -205,45 +210,127 @@ function ListingCard({
 }
 
 export default function ListingsWithMap({
-  listings,
-  markers,
+  listings: initialListings,
+  markers: initialMarkers,
   translations: t,
+  searchParams = {},
+  displayCurrency = "EUR",
 }: ListingsWithMapProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [isLoadingMap, setIsLoadingMap] = useState(false);
-  const [mapBounds, setMapBounds] = useState<{
-    north: number;
-    south: number;
-    east: number;
-    west: number;
-  } | null>(null);
+  const [listings, setListings] = useState<ListingCardData[]>(initialListings);
+  const [markers, setMarkers] = useState<MapMarker[]>(initialMarkers);
+  const [totalCount, setTotalCount] = useState(initialListings.length);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const isFirstLoad = useRef(true);
 
-  // Filtrer les annonces selon les bounds de la carte
-  const filteredListings = mapBounds
-    ? listings.filter((listing) => {
-        const marker = markers.find((m) => m.id === listing.id);
-        if (!marker) return true; // Garder si pas de coordonnées
-        return (
-          marker.lat >= mapBounds.south &&
-          marker.lat <= mapBounds.north &&
-          marker.lng >= mapBounds.west &&
-          marker.lng <= mapBounds.east
-        );
-      })
-    : listings;
+  // Update listings when initial data changes (e.g., from server-side filters)
+  useEffect(() => {
+    setListings(initialListings);
+    setMarkers(initialMarkers);
+    setTotalCount(initialListings.length);
+  }, [initialListings, initialMarkers]);
+
+  // Fetch listings based on map bounds
+  const fetchListingsInBounds = useCallback(
+    async (bounds: { north: number; south: number; east: number; west: number }) => {
+      // Cancel previous request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
+      setIsLoadingMap(true);
+
+      try {
+        // Build query params including existing search params
+        const params = new URLSearchParams();
+
+        // Add existing search params
+        for (const [key, value] of Object.entries(searchParams)) {
+          if (value && key !== "page") {
+            params.set(key, value);
+          }
+        }
+
+        // Add bounding box params
+        params.set("neLat", String(bounds.north));
+        params.set("neLng", String(bounds.east));
+        params.set("swLat", String(bounds.south));
+        params.set("swLng", String(bounds.west));
+        params.set("pageSize", "50");
+
+        const response = await fetch(`/api/listings/search?${params.toString()}`, {
+          signal: controller.signal,
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch listings");
+        }
+
+        const data = await response.json();
+
+        // Format prices for display
+        const formattedListings: ListingCardData[] = data.items.map((item: ListingCardData & { currency?: string }) => ({
+          ...item,
+          priceLabel: new Intl.NumberFormat("fr-FR", {
+            style: "currency",
+            currency: displayCurrency,
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          }).format(item.price),
+        }));
+
+        // Create markers from listings
+        const newMarkers: MapMarker[] = formattedListings
+          .filter((l: ListingCardData) => l.latPublic != null && l.lngPublic != null)
+          .map((l: ListingCardData) => ({
+            id: l.id,
+            lat: l.latPublic as number,
+            lng: l.lngPublic as number,
+            label: l.priceLabel,
+            title: l.title,
+            city: l.city,
+            country: l.country,
+            createdAt: l.createdAt,
+            priceFormatted: l.priceLabel,
+            imageUrl: l.images?.[0]?.url ?? null,
+          }));
+
+        setListings(formattedListings);
+        setMarkers(newMarkers);
+        setTotalCount(data.total);
+      } catch (error) {
+        if ((error as Error).name !== "AbortError") {
+          console.error("Error fetching listings:", error);
+        }
+      } finally {
+        setIsLoadingMap(false);
+      }
+    },
+    [searchParams, displayCurrency]
+  );
 
   // Callback quand les bounds de la carte changent
   const handleBoundsChange = useCallback(
     (bounds: { north: number; south: number; east: number; west: number }) => {
-      setIsLoadingMap(true);
+      // Skip first load to use server-rendered data
+      if (isFirstLoad.current) {
+        isFirstLoad.current = false;
+        return;
+      }
 
-      // Petit délai pour montrer le loading
-      setTimeout(() => {
-        setMapBounds(bounds);
-        setIsLoadingMap(false);
-      }, 300);
+      // Debounce the API call
+      const timeoutId = setTimeout(() => {
+        fetchListingsInBounds(bounds);
+      }, 400);
+
+      return () => clearTimeout(timeoutId);
     },
-    []
+    [fetchListingsInBounds]
   );
 
   return (
@@ -260,12 +347,13 @@ export default function ListingsWithMap({
 
       {/* Compteur d'annonces */}
       <p className="mb-4 text-sm text-gray-600">
-        {filteredListings.length} logement{filteredListings.length !== 1 ? "s" : ""} dans la zone de la carte
+        {listings.length} logement{listings.length !== 1 ? "s" : ""} dans cette zone
+        {totalCount > listings.length && ` (${totalCount} au total)`}
       </p>
 
       {/* Grille des annonces - 3 colonnes style Airbnb */}
       <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
-        {filteredListings.map((listing) => (
+        {listings.map((listing) => (
           <ListingCard
             key={listing.id}
             listing={listing}
@@ -278,22 +366,21 @@ export default function ListingsWithMap({
       </div>
 
       {/* Message si aucune annonce */}
-      {filteredListings.length === 0 && (
+      {listings.length === 0 && (
         <div className="py-12 text-center">
           <p className="text-gray-500">Aucune annonce dans cette zone</p>
           <p className="mt-1 text-sm text-gray-400">Déplacez ou dézoomez la carte pour voir plus d&apos;annonces</p>
         </div>
       )}
 
-      {/* Map fixée à droite - desktop only - taille réduite comme Airbnb */}
-      <div className="hidden lg:fixed lg:right-0 lg:top-[64px] lg:block lg:h-[calc(100vh-64px)] lg:w-[40%] lg:border-l lg:border-gray-200">
+      {/* Map fixée à droite - desktop only - plus horizontale avec marges */}
+      <div className="hidden lg:fixed lg:right-4 lg:top-[80px] lg:block lg:h-[calc(100vh-160px)] lg:w-[38%] lg:overflow-hidden lg:rounded-2xl lg:border lg:border-gray-200 lg:shadow-lg">
         <Map
           markers={markers}
           panOnHover={false}
           hoveredId={hoveredId}
           onMarkerHover={setHoveredId}
           onBoundsChange={handleBoundsChange}
-          restrictBounds={false}
         />
       </div>
 
@@ -306,7 +393,6 @@ export default function ListingsWithMap({
             hoveredId={hoveredId}
             onMarkerHover={setHoveredId}
             onBoundsChange={handleBoundsChange}
-            restrictBounds={false}
           />
         </div>
       </section>

@@ -310,6 +310,8 @@ export default async function ListingsPage({
                 defaultHostName: t.defaultHostName,
                 publishedOnPrefix: t.publishedOnPrefix,
               }}
+              searchParams={searchParams as Record<string, string>}
+              displayCurrency={displayCurrency}
             />
           )}
         </div>

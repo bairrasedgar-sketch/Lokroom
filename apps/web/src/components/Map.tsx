@@ -41,9 +41,6 @@ type MapProps = {
 
   /** Callback quand les bounds de la carte changent (zoom/pan) */
   onBoundsChange?: (bounds: { north: number; south: number; east: number; west: number }) => void;
-
-  /** Limiter la carte à certaines bounds (France/Canada) */
-  restrictBounds?: boolean;
 };
 
 const DEFAULT_CENTER = { lat: 45.5019, lng: -73.5674 }; // Montréal
@@ -56,7 +53,6 @@ export default function Map({
   onMarkerClick,
   panOnHover = true,
   onBoundsChange,
-  restrictBounds = false,
 }: MapProps) {
   const { isLoaded: scriptLoaded, loadError: scriptError } = useGoogleMaps();
 
@@ -130,12 +126,12 @@ export default function Map({
       ? { lat: first.lat, lng: first.lng }
       : DEFAULT_CENTER;
 
-    // Limites pour France + Canada (approximatif)
-    const FRANCE_CANADA_BOUNDS = {
-      north: 72,   // Nord du Canada
-      south: 41,   // Sud de la France
-      west: -141,  // Ouest du Canada (Yukon)
-      east: 10,    // Est de la France
+    // Limites du monde entier (empêche de sortir de la carte)
+    const WORLD_BOUNDS = {
+      north: 85,   // Limite nord
+      south: -85,  // Limite sud
+      west: -180,  // Limite ouest
+      east: 180,   // Limite est
     };
 
     const mapOptions: any = {
@@ -147,8 +143,13 @@ export default function Map({
       gestureHandling: "greedy",
       scrollwheel: true,
       clickableIcons: false,
-      minZoom: 3,
+      minZoom: 2,
       maxZoom: 18,
+      // Toujours restreindre aux limites du monde pour éviter de sortir
+      restriction: {
+        latLngBounds: WORLD_BOUNDS,
+        strictBounds: true,
+      },
       styles: [
         {
           featureType: "all",
@@ -183,14 +184,6 @@ export default function Map({
       ],
     };
 
-    // Ajouter restriction si demandée
-    if (restrictBounds) {
-      mapOptions.restriction = {
-        latLngBounds: FRANCE_CANADA_BOUNDS,
-        strictBounds: false, // Permet un peu de dépassement pour le confort
-      };
-    }
-
     const map = new g.maps.Map(containerRef.current, mapOptions);
 
     mapRef.current = map;
@@ -202,7 +195,7 @@ export default function Map({
 
     // --- Listener pour les changements de bounds ---
     if (onBoundsChange) {
-      const boundsListener = map.addListener("idle", () => {
+      const emitBounds = () => {
         const bounds = map.getBounds();
         if (bounds) {
           const ne = bounds.getNorthEast();
@@ -214,8 +207,16 @@ export default function Map({
             west: sw.lng(),
           });
         }
+      };
+
+      // Écouter idle (après zoom/pan), dragend (après déplacement), et zoom_changed
+      const idleListener = map.addListener("idle", emitBounds);
+      const dragEndListener = map.addListener("dragend", emitBounds);
+      const zoomListener = map.addListener("zoom_changed", () => {
+        // Petit délai pour que les bounds soient mis à jour
+        setTimeout(emitBounds, 100);
       });
-      listeners.push(boundsListener);
+      listeners.push(idleListener, dragEndListener, zoomListener);
     }
     // --- Gestion du zoom / centrage ---
     if (markers.length === 1) {
@@ -360,7 +361,6 @@ export default function Map({
     onMarkerHover,
     onMarkerClick,
     onBoundsChange,
-    restrictBounds,
   ]);
 
   // 🎯 Quand on survole une carte dans la liste OU qu'on clique une bulle
