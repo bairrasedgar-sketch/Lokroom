@@ -92,9 +92,37 @@ export default function LocationAutocomplete({
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [googleReady, setGoogleReady] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Vérifier si Google Maps est chargé et réessayer périodiquement
+  useEffect(() => {
+    const checkGoogle = () => {
+      const g = (window as WindowWithGoogle).google;
+      if (g?.maps?.places?.AutocompleteService) {
+        setGoogleReady(true);
+        return true;
+      }
+      return false;
+    };
+
+    // Vérifier immédiatement
+    if (checkGoogle()) return;
+
+    // Réessayer toutes les 500ms jusqu'à 10 secondes
+    let attempts = 0;
+    const maxAttempts = 20;
+    const interval = setInterval(() => {
+      attempts++;
+      if (checkGoogle() || attempts >= maxAttempts) {
+        clearInterval(interval);
+      }
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Fermer au clic extérieur
   useEffect(() => {
@@ -112,6 +140,11 @@ export default function LocationAutocomplete({
   const searchPlaces = useCallback((query: string) => {
     if (query.length < 2) {
       setSuggestions([]);
+      return;
+    }
+
+    // Attendre que Google soit prêt
+    if (!googleReady) {
       return;
     }
 
@@ -138,7 +171,7 @@ export default function LocationAutocomplete({
         }
       }
     );
-  }, []);
+  }, [googleReady]);
 
   // Handler pour l'input
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

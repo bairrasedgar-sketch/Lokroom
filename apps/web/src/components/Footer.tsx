@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 
 // Footer links configuration - adapted for Lok'Room
 const footerSections = [
@@ -40,6 +41,12 @@ const footerSections = [
 
 export default function Footer() {
   const [currentYear] = useState(() => new Date().getFullYear());
+  const pathname = usePathname();
+
+  // Ne pas afficher le footer sur la page listings (carte sticky)
+  if (pathname === "/listings") {
+    return null;
+  }
 
   return (
     <footer className="border-t border-gray-200 bg-gray-50">

@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
 import Link from "next/link";
 import Image from "next/image";
@@ -69,22 +69,25 @@ export default function Map({
   // Sélection interne pour l'aperçu intégré (si aucun onMarkerClick externe)
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  // État pour savoir si la souris est sur la carte (pour activer le scroll zoom)
-  const [isMouseOver, setIsMouseOver] = useState(false);
+  // Ref pour le container de la map
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // Activer/désactiver le scroll zoom selon la position de la souris
-  const handleMouseEnter = useCallback(() => {
-    setIsMouseOver(true);
-    if (mapRef.current) {
-      mapRef.current.setOptions({ gestureHandling: "greedy" });
-    }
-  }, []);
+  // Bloquer le scroll de la page quand la souris est sur la map
+  useEffect(() => {
+    const container = mapContainerRef.current;
+    if (!container) return;
 
-  const handleMouseLeave = useCallback(() => {
-    setIsMouseOver(false);
-    if (mapRef.current) {
-      mapRef.current.setOptions({ gestureHandling: "none" });
-    }
+    const handleWheel = (e: WheelEvent) => {
+      // Empêcher le scroll de la page, la map gère le zoom
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    container.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      container.removeEventListener("wheel", handleWheel);
+    };
   }, []);
 
   useEffect(() => {
@@ -139,10 +142,10 @@ export default function Map({
       zoom: first ? 12 : 4,
       mapTypeId: "roadmap",
       disableDefaultUI: true,
-      zoomControl: true,
-      // ❌ Désactiver le scroll par défaut - sera activé au mouseenter
-      gestureHandling: "none",
-      scrollwheel: false,
+      zoomControl: false, // On va créer nos propres boutons
+      // Activer le scroll zoom directement
+      gestureHandling: "greedy",
+      scrollwheel: true,
       clickableIcons: false, // désactive les popups de POI (parcs, restos, etc.)
       styles: [
         {
@@ -385,10 +388,9 @@ export default function Map({
       )}
 
       <div
+        ref={mapContainerRef}
         className="relative h-full w-full rounded-3xl"
         style={{ minHeight: 360 }}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
       >
         <div ref={containerRef} className="h-full w-full rounded-3xl" />
 
@@ -401,14 +403,36 @@ export default function Map({
             100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
           }
         `}</style>
-        {isMouseOver && (
-          <div
-            className="pointer-events-none absolute left-1/2 top-3 z-10 rounded-full bg-black/75 px-3 py-1.5 text-xs font-medium text-white shadow-lg"
-            style={{ animation: "fadeInOut 2.5s ease-in-out forwards" }}
+
+        {/* Boutons zoom custom */}
+        <div className="absolute bottom-4 left-4 z-10 flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              if (mapRef.current) {
+                const currentZoom = mapRef.current.getZoom() || 12;
+                mapRef.current.setZoom(currentZoom + 1);
+              }
+            }}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg font-medium text-gray-700 shadow-lg transition-all hover:bg-gray-50 hover:shadow-xl active:scale-95"
+            aria-label="Zoom avant"
           >
-            Molette pour zoomer
-          </div>
-        )}
+            +
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (mapRef.current) {
+                const currentZoom = mapRef.current.getZoom() || 12;
+                mapRef.current.setZoom(currentZoom - 1);
+              }
+            }}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg font-medium text-gray-700 shadow-lg transition-all hover:bg-gray-50 hover:shadow-xl active:scale-95"
+            aria-label="Zoom arrière"
+          >
+            −
+          </button>
+        </div>
 
         {/* Aperçu intégré façon Airbnb (desktop & mobile) */}
         {selectedMarker && (

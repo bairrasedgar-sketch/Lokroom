@@ -501,6 +501,19 @@ export default function Navbar() {
 
           {/* Menu à droite - Plus d'espace */}
           <div className="hidden md:flex items-center gap-3 z-10">
+            {/* Lien Favoris - visible si connecté */}
+            {isLoggedIn && (
+              <Link
+                href="/favorites"
+                className="flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M12 21s-6.716-4.145-9.192-7.07C.749 11.62 1.367 8.5 3.757 7.05A5.002 5.002 0 0 1 12 8.278 5.002 5.002 0 0 1 20.243 7.05c2.39 1.45 3.008 4.57.95 6.88C18.716 16.855 12 21 12 21z" />
+                </svg>
+                Favoris
+              </Link>
+            )}
+
             {/* Bouton unique : texte change selon statut hôte, destination toujours /listings/new */}
             <Link
               href="/listings/new"

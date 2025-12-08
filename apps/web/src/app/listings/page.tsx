@@ -1,5 +1,4 @@
 // apps/web/src/app/listings/page.tsx
-import Image from "next/image";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { getServerSession } from "next-auth";
@@ -7,10 +6,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { formatMoneyAsync, type Currency } from "@/lib/currency";
 import { getOrigin } from "@/lib/origin";
-import Map, { type MapMarker } from "@/components/Map";
 import FiltersBar from "@/components/listings/FiltersBar";
 import ActiveFilters from "@/components/listings/ActiveFilters";
+import ListingsWithMap from "@/components/listings/ListingsWithMap";
 import { getServerDictionary } from "@/lib/i18n.server";
+import { type MapMarker } from "@/components/Map";
 
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
@@ -40,43 +40,6 @@ type ListingItem = {
   images: { id: string; url: string }[];
   reviewSummary: ReviewSummary;
 };
-
-// Helper pour obtenir le label de chaque type de listing
-const LISTING_TYPE_LABELS: Record<string, string> = {
-  APARTMENT: "Appartement",
-  HOUSE: "Maison",
-  ROOM: "Chambre",
-  STUDIO: "Studio",
-  OFFICE: "Bureau",
-  COWORKING: "Coworking",
-  MEETING_ROOM: "Salle de réunion",
-  PARKING: "Parking",
-  GARAGE: "Garage",
-  STORAGE: "Stockage",
-  EVENT_SPACE: "Événementiel",
-  RECORDING_STUDIO: "Studio",
-  OTHER: "Autre",
-};
-
-// Helper pour obtenir l'emoji de chaque catégorie
-function getCategoryEmoji(key: string): string {
-  const emojis: Record<string, string> = {
-    APARTMENT: "🏢",
-    HOUSE: "🏠",
-    ROOM: "🛏️",
-    STUDIO: "🎨",
-    OFFICE: "💼",
-    COWORKING: "👥",
-    MEETING_ROOM: "📊",
-    PARKING: "🚗",
-    GARAGE: "🚙",
-    STORAGE: "📦",
-    EVENT_SPACE: "🎉",
-    RECORDING_STUDIO: "🎤",
-    OTHER: "✨",
-  };
-  return emojis[key] || "🏠";
-}
 
 type SearchResponse = {
   page: number;
@@ -248,209 +211,118 @@ export default async function ListingsPage({
         : t.resultMany.replace("{count}", String(total));
 
   return (
-    <main className="mx-auto max-w-6xl space-y-6 px-4 pb-12 pt-6">
-      <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold sm:text-3xl">{t.title}</h1>
-          <p className="text-sm text-gray-600">{t.subtitle}</p>
-        </div>
+    <>
+      {/* Contenu principal - prend 62% à gauche sur desktop */}
+      <main className="pb-12 pt-6 lg:mr-[38%]">
+        <div className="mx-auto max-w-4xl space-y-6 px-4">
+          <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold sm:text-3xl">{t.title}</h1>
+              <p className="text-sm text-gray-600">{t.subtitle}</p>
+            </div>
 
-        <div className="text-xs text-gray-500">
-          {session ? (
-            <span>
-              {t.connectedAs} {session.user?.email}
-            </span>
-          ) : (
-            <span>{t.loginHint}</span>
-          )}
-        </div>
-      </header>
-
-      {/* 🔍 Barre de recherche + Filtres (client) */}
-      <FiltersBar
-        q={q}
-        country={country}
-        city={city}
-        minPrice={minPrice}
-        maxPrice={maxPrice}
-        minRating={minRating}
-        sort={sort}
-        hasPhoto={hasPhoto}
-        startDate={startDate}
-        endDate={endDate}
-        guests={guests}
-        locale={locale}
-      />
-
-      {/* Filtres actifs */}
-      <ActiveFilters
-        q={q}
-        startDate={startDate}
-        endDate={endDate}
-        guests={guests}
-        searchParams={searchParams}
-      />
-
-      {/* Résumé + pagination */}
-      <section className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
-        <p className="text-xs text-gray-600">{resultLabel}</p>
-
-        {pageCount > 1 && (
-          <div className="flex items-center gap-2 text-xs text-gray-600">
-            <span>
-              Page {page} / {pageCount}
-            </span>
-
-            <div className="flex gap-1">
-              {page > 1 && (
-                <Link
-                  href={`/listings?${withUpdatedParam(
-                    searchParams,
-                    "page",
-                    String(page - 1)
-                  )}`}
-                  className="rounded-full border border-gray-300 px-2 py-1 hover:border-black"
-                >
-                  {t.prevPage}
-                </Link>
-              )}
-
-              {page < pageCount && (
-                <Link
-                  href={`/listings?${withUpdatedParam(
-                    searchParams,
-                    "page",
-                    String(page + 1)
-                  )}`}
-                  className="rounded-full border border-gray-300 px-2 py-1 hover:border-black"
-                >
-                  {t.nextPage}
-                </Link>
+            <div className="text-xs text-gray-500">
+              {session ? (
+                <span>
+                  {t.connectedAs} {session.user?.email}
+                </span>
+              ) : (
+                <span>{t.loginHint}</span>
               )}
             </div>
-          </div>
-        )}
-      </section>
+          </header>
 
-      {/* Liste + Carte */}
-      {listingsWithPrice.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
-          {t.emptyState}
-        </div>
-      ) : (
-        <>
-          <section className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1.1fr)] lg:items-start">
-            {/* Colonne gauche : annonces */}
-            <div className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                {listingsWithPrice.map(({ listing, priceLabel }) => {
-                  const cover = listing.images?.[0]?.url;
-                  const rev = listing.reviewSummary;
+          {/* 🔍 Barre de recherche + Filtres (client) */}
+          <FiltersBar
+            q={q}
+            country={country}
+            city={city}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+            minRating={minRating}
+            sort={sort}
+            hasPhoto={hasPhoto}
+            startDate={startDate}
+            endDate={endDate}
+            guests={guests}
+            locale={locale}
+          />
 
-                  const locationLabel = [
-                    listing.city ?? undefined,
-                    listing.country ?? undefined,
-                  ]
-                    .filter(Boolean)
-                    .join(", ");
+          {/* Filtres actifs */}
+          <ActiveFilters
+            q={q}
+            startDate={startDate}
+            endDate={endDate}
+            guests={guests}
+            searchParams={searchParams}
+          />
 
-                  return (
+          {/* Résumé + pagination */}
+          <section className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
+            <p className="text-xs text-gray-600">{resultLabel}</p>
+
+            {pageCount > 1 && (
+              <div className="flex items-center gap-2 text-xs text-gray-600">
+                <span>
+                  Page {page} / {pageCount}
+                </span>
+
+                <div className="flex gap-1">
+                  {page > 1 && (
                     <Link
-                      key={listing.id}
-                      href={`/listings/${listing.id}`}
-                      className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-black hover:shadow-md"
+                      href={`/listings?${withUpdatedParam(
+                        searchParams,
+                        "page",
+                        String(page - 1)
+                      )}`}
+                      className="rounded-full border border-gray-300 px-2 py-1 hover:border-black"
                     >
-                      <div className="relative h-40 w-full bg-gray-100">
-                        {cover ? (
-                          <Image
-                            src={cover}
-                            alt={listing.title}
-                            fill
-                            className="object-cover transition group-hover:scale-[1.02]"
-                            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                          />
-                        ) : (
-                          <div className="absolute inset-0 grid place-items-center text-xs text-gray-400">
-                            {t.noImage}
-                          </div>
-                        )}
-
-                        {rev.count > 0 && rev.avgRating != null && (
-                          <div className="absolute right-2 top-2 rounded-full bg-black/80 px-2 py-0.5 text-[10px] font-medium text-white">
-                            {rev.avgRating.toFixed(1)} ★ ({rev.count})
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex flex-1 flex-col gap-2 p-3">
-                        <div className="space-y-1">
-                          {/* Category Badge */}
-                          <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
-                            <span>{getCategoryEmoji(listing.type)}</span>
-                            {LISTING_TYPE_LABELS[listing.type] || listing.type}
-                          </span>
-                          <p className="line-clamp-1 text-sm font-semibold text-gray-900">
-                            {listing.title}
-                          </p>
-                          <p className="line-clamp-2 text-xs text-gray-600">
-                            {listing.description}
-                          </p>
-                        </div>
-
-                        <div className="mt-auto flex items-end justify-between gap-2 pt-2">
-                          <div className="space-y-1">
-                            <p className="text-sm font-semibold text-gray-900">
-                              {priceLabel}
-                              <span className="text-xs font-normal text-gray-600">
-                                {" "}
-                                {t.perNight}
-                              </span>
-                            </p>
-                            <p className="text-[11px] text-gray-500">
-                              {locationLabel || t.noLocation}
-                            </p>
-                          </div>
-
-                          <div className="flex flex-col items-end text-[11px] text-gray-500">
-                            <span>
-                              {t.hostLabel}{" "}
-                              {listing.owner.name ?? t.defaultHostName}
-                            </span>
-                            <span>
-                              {t.publishedOnPrefix}{" "}
-                              {new Date(listing.createdAt).toLocaleDateString(
-                                locale
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+                      {t.prevPage}
                     </Link>
-                  );
-                })}
-              </div>
-            </div>
+                  )}
 
-            {/* Colonne droite : carte (desktop, map fixe) */}
-            <aside className="hidden lg:block">
-              <div className="sticky top-20 h-[520px] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-                <div className="relative h-full w-full">
-                  <Map markers={markers} panOnHover={false} />
+                  {page < pageCount && (
+                    <Link
+                      href={`/listings?${withUpdatedParam(
+                        searchParams,
+                        "page",
+                        String(page + 1)
+                      )}`}
+                      className="rounded-full border border-gray-300 px-2 py-1 hover:border-black"
+                    >
+                      {t.nextPage}
+                    </Link>
+                  )}
                 </div>
               </div>
-            </aside>
+            )}
           </section>
 
-          {/* Carte mobile */}
-          <section className="lg:hidden">
-            <div className="mt-2 h-80 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-              <div className="relative h-full w-full">
-                <Map markers={markers} panOnHover={false} />
-              </div>
+          {/* Liste des annonces */}
+          {listingsWithPrice.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
+              {t.emptyState}
             </div>
-          </section>
-        </>
-      )}
-    </main>
+          ) : (
+            <ListingsWithMap
+              listings={listingsWithPrice.map(({ listing, priceLabel }) => ({
+                ...listing,
+                priceLabel,
+              }))}
+              markers={markers}
+              locale={locale}
+              translations={{
+                noImage: t.noImage,
+                perNight: t.perNight,
+                noLocation: t.noLocation,
+                hostLabel: t.hostLabel,
+                defaultHostName: t.defaultHostName,
+                publishedOnPrefix: t.publishedOnPrefix,
+              }}
+            />
+          )}
+        </div>
+      </main>
+    </>
   );
 }

@@ -71,12 +71,12 @@ export default function FavoriteButton({
       className={`relative rounded-full bg-white/90 p-1.5 shadow-md hover:shadow-lg transition-shadow ${className}`}
       title={favorited ? "Retirer des favoris" : "Ajouter aux favoris"}
     >
-      {/* Particules de burst */}
+      {/* Particules de burst - rose pastel */}
       <div className="absolute inset-0 pointer-events-none overflow-visible">
         {particles.map((p) => (
           <span
             key={p}
-            className="absolute left-1/2 top-1/2 w-1.5 h-1.5 rounded-full bg-red-400"
+            className="absolute left-1/2 top-1/2 w-1.5 h-1.5 rounded-full bg-rose-300"
             style={{
               animation: `particle-burst-${p} 0.6s ease-out forwards`,
             }}
@@ -84,32 +84,32 @@ export default function FavoriteButton({
         ))}
       </div>
 
-      {/* Ring effect */}
+      {/* Ring effect - rose pastel */}
       {isAnimating && (
         <span
-          className="absolute inset-0 rounded-full border-2 border-red-400 animate-ping-once"
+          className="absolute inset-0 rounded-full border-2 border-rose-300 animate-ping-once"
         />
       )}
 
-      {/* Icône cœur avec animation */}
+      {/* Icône cœur avec animation - rose pastel quand favori */}
       <svg
         width={size}
         height={size}
         viewBox="0 0 24 24"
         className={`relative z-10 transition-all duration-300 ease-out
-          ${favorited ? "fill-red-500 stroke-red-500" : "fill-none stroke-gray-600 hover:stroke-red-400"}
+          ${favorited ? "fill-rose-400 stroke-rose-400" : "fill-none stroke-gray-600 hover:stroke-rose-300"}
           ${isAnimating ? "scale-125" : "scale-100"}
           ${!favorited ? "hover:scale-110" : ""}
         `}
         strokeWidth="1.5"
         style={{
-          filter: favorited ? "drop-shadow(0 2px 4px rgba(239, 68, 68, 0.4))" : "none",
+          filter: favorited ? "drop-shadow(0 2px 6px rgba(251, 113, 133, 0.5))" : "none",
         }}
       >
         <path d="M12 21s-6.716-4.145-9.192-7.07C.749 11.62 1.367 8.5 3.757 7.05A5.002 5.002 0 0 1 12 8.278 5.002 5.002 0 0 1 20.243 7.05c2.39 1.45 3.008 4.57.95 6.88C18.716 16.855 12 21 12 21z" />
       </svg>
 
-      {/* Styles pour les animations */}
+      {/* Styles pour les animations - rose pastel */}
       <style jsx>{`
         @keyframes particle-burst-1 {
           0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }

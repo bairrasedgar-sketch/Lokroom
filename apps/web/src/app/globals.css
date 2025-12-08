@@ -181,3 +181,40 @@
     transform: rotate(90deg) scale(1);
   }
 }
+
+/* Google Maps - Style des boutons de zoom */
+.gm-bundled-control .gmnoprint > div {
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+  border: none !important;
+}
+
+.gm-bundled-control .gmnoprint button {
+  width: 36px !important;
+  height: 36px !important;
+  background: white !important;
+  border: none !important;
+  transition: background-color 0.15s ease !important;
+}
+
+.gm-bundled-control .gmnoprint button:hover {
+  background: #f5f5f5 !important;
+}
+
+.gm-bundled-control .gmnoprint button img {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* Boutons de zoom standalone */
+.gm-control-active {
+  border-radius: 10px !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Container des contrôles de zoom */
+.gmnoprint.gm-bundled-control-on-bottom {
+  right: 12px !important;
+  bottom: 100px !important;
+}
