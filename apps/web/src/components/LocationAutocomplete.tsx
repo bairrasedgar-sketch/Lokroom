@@ -114,7 +114,7 @@ export default function LocationAutocomplete({
 
   // Recherche Google Places avec debounce
   const searchPlaces = useCallback((query: string) => {
-    if (query.length < 2) {
+    if (query.length < 1) {
       setSuggestions([]);
       return;
     }
@@ -158,13 +158,13 @@ export default function LocationAutocomplete({
     setIsOpen(true);
     setHighlightedIndex(-1);
 
-    // Debounce la recherche
+    // Debounce la recherche (150ms pour plus de réactivité)
     if (debounceRef.current) {
       clearTimeout(debounceRef.current);
     }
     debounceRef.current = setTimeout(() => {
       searchPlaces(newValue);
-    }, 300);
+    }, 150);
   };
 
   // Sélection d'une suggestion
@@ -208,7 +208,7 @@ export default function LocationAutocomplete({
       e.preventDefault();
       if (suggestions.length > 0) {
         handleSelect(suggestions[highlightedIndex]);
-      } else if (value.length < 2) {
+      } else if (value.length < 1) {
         handlePopularSelect(popularCities[highlightedIndex]);
       }
     } else if (e.key === "Escape") {
@@ -217,7 +217,7 @@ export default function LocationAutocomplete({
     }
   };
 
-  const showPopular = isOpen && value.length < 2 && suggestions.length === 0;
+  const showPopular = isOpen && value.length < 1 && suggestions.length === 0;
   const showSuggestions = isOpen && suggestions.length > 0;
 
   return (
@@ -293,7 +293,7 @@ export default function LocationAutocomplete({
           )}
 
           {/* Google Maps not loaded warning */}
-          {!googleReady && value.length >= 2 && !isLoading && (
+          {!googleReady && value.length >= 1 && !isLoading && (
             <div className="flex items-center gap-2 px-4 py-3 text-sm text-amber-600">
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-amber-300 border-t-amber-600" />
               Chargement de Google Maps...
@@ -360,7 +360,7 @@ export default function LocationAutocomplete({
           )}
 
           {/* Aucun résultat */}
-          {!isLoading && googleReady && value.length >= 2 && suggestions.length === 0 && (
+          {!isLoading && googleReady && value.length >= 1 && suggestions.length === 0 && (
             <div className="px-4 py-3 text-center text-sm text-gray-500">
               Aucune ville trouvée pour &quot;{value}&quot;
             </div>
