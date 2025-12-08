@@ -21,7 +21,6 @@ import {
   MapPinIcon,
 } from "@heroicons/react/24/outline";
 import { CheckIcon, SparklesIcon } from "@heroicons/react/24/solid";
-import { findFAQResponse, defaultResponse, quickReplies } from "@/lib/faq-bot";
 
 // Support bot ID
 const SUPPORT_BOT_ID = "lokroom-support";
@@ -172,7 +171,7 @@ Posez-moi vos questions sur :
 • 🔒 La sécurité du compte`,
           createdAt: new Date().toISOString(),
           isBot: true,
-          followUp: quickReplies.slice(0, 3),
+          followUp: ["Comment annuler ma réservation ?", "Comment contacter l'hôte ?", "Devenir hôte"],
         },
       ]);
     } else if (selectedConvId) {
@@ -232,24 +231,39 @@ Posez-moi vos questions sur :
       // Show typing indicator
       setBotTyping(true);
 
-      // Simulate bot thinking time
-      setTimeout(() => {
-        const faqResponse = findFAQResponse(messageContent);
-        const response = faqResponse || defaultResponse;
+      // Call Gemini API
+      try {
+        const res = await fetch("/api/support/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: messageContent }),
+        });
+
+        const data = await res.json();
 
         const botReply: BotMessage = {
           id: `bot-${Date.now()}`,
-          content: response.answer,
+          content: data.response || "Désolé, je n'ai pas pu traiter votre demande.",
           createdAt: new Date().toISOString(),
           isBot: true,
-          followUp: response.followUp,
+          followUp: ["Comment annuler ma réservation ?", "Comment contacter l'hôte ?", "Devenir hôte"],
         };
 
         setBotMessages((prev) => [...prev, botReply]);
+      } catch (error) {
+        console.error("Error calling support API:", error);
+        const errorReply: BotMessage = {
+          id: `bot-${Date.now()}`,
+          content: "Désolé, une erreur s'est produite. Veuillez réessayer ou consulter notre centre d'aide.",
+          createdAt: new Date().toISOString(),
+          isBot: true,
+        };
+        setBotMessages((prev) => [...prev, errorReply]);
+      } finally {
         setBotTyping(false);
-      }, 800 + Math.random() * 700);
+        setSending(false);
+      }
 
-      setSending(false);
       return;
     }
 
