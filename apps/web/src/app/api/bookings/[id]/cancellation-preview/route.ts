@@ -91,7 +91,9 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
     role,
     now,
     startDate: booking.startDate,
+    endDate: booking.endDate,
     totalPriceCents,
+    currency: booking.currency,
   });
 
   return NextResponse.json({
@@ -114,7 +116,10 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
       message: decision.message,
       refundRatio: decision.refundRatio, // 0..1
       refundAmountCents: decision.refundAmountCents,
+      serviceFeeRetainedCents: decision.serviceFeeRetainedCents,
+      hostPayoutCents: decision.hostPayoutCents,
       guestPenaltyCents: decision.guestPenaltyCents,
+      policyType: decision.policyType,
     },
   });
 }

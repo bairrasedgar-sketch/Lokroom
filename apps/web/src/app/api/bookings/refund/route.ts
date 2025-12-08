@@ -102,7 +102,9 @@ export async function POST(req: NextRequest) {
     role,
     now,
     startDate: booking.startDate,
+    endDate: booking.endDate,
     totalPriceCents: priceCents,
+    currency: booking.currency,
   });
 
   if (!decision.allowed || decision.refundAmountCents <= 0) {

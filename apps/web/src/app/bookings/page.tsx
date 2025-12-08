@@ -129,6 +129,22 @@ export default function BookingsPage() {
   );
 }
 
+type CancellationPreview = {
+  allowed: boolean;
+  booking: {
+    id: string;
+    totalPriceCents: number;
+    currency: Currency;
+  };
+  policy: {
+    message: string;
+    refundAmountCents: number;
+    serviceFeeRetainedCents: number;
+    guestPenaltyCents: number;
+    policyType: "daily" | "hourly";
+  };
+};
+
 function BookingsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -139,6 +155,8 @@ function BookingsPageContent() {
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [dict, setDict] = useState(getDictionaryForLocale("fr"));
   const [currentLocale, setCurrentLocale] = useState<SupportedLocale>("fr");
+  const [cancelModal, setCancelModal] = useState<CancellationPreview | null>(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
 
   const created = searchParams.get("created");
   const paid = searchParams.get("paid");
@@ -297,15 +315,37 @@ function BookingsPageContent() {
     }
   }
 
-  async function requestRefund(id: string) {
-    const confirmMsg = currentLocale === "en"
-      ? "Do you really want to cancel this confirmed booking? A partial or full refund will be applied according to the cancellation policy."
-      : "Tu veux vraiment annuler cette réservation confirmée ? Un remboursement partiel ou total sera appliqué selon la politique d'annulation.";
-    if (!window.confirm(confirmMsg)) {
-      return;
-    }
-
+  // Fetch cancellation preview before showing modal
+  async function showCancellationPreview(id: string) {
+    setLoadingPreview(true);
     setActionLoadingId(id);
+    try {
+      const res = await fetch(`/api/bookings/${id}/cancellation-preview`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data?.message || data?.error || "Impossible de charger les détails d'annulation");
+        return;
+      }
+
+      setCancelModal(data as CancellationPreview);
+    } catch (err) {
+      console.error(err);
+      toast.error("Erreur lors du chargement");
+    } finally {
+      setLoadingPreview(false);
+      setActionLoadingId(null);
+    }
+  }
+
+  // Confirm cancellation after preview
+  async function confirmCancellation() {
+    if (!cancelModal) return;
+
+    const id = cancelModal.booking.id;
+    setActionLoadingId(id);
+    setCancelModal(null);
+
     try {
       const res = await fetch("/api/bookings/refund", {
         method: "POST",
@@ -556,13 +596,15 @@ function BookingsPageContent() {
 
                         <button
                           type="button"
-                          onClick={() => requestRefund(booking.id)}
+                          onClick={() => showCancellationPreview(booking.id)}
                           disabled={actionLoadingId === booking.id}
-                          className="inline-flex w-full items-center justify-center rounded-full bg-gray-900 px-4 py-2 text-xs font-medium text-white hover:bg-black disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                          className="inline-flex w-full items-center justify-center rounded-full border border-red-200 bg-red-50 px-4 py-2 text-xs font-medium text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                         >
-                          {actionLoadingId === booking.id
-                            ? t.requestInProgress
-                            : t.cancelReservation}
+                          {actionLoadingId === booking.id && loadingPreview
+                            ? "Chargement..."
+                            : actionLoadingId === booking.id
+                              ? t.requestInProgress
+                              : t.cancelReservation}
                         </button>
                       </>
                     )}
@@ -577,6 +619,90 @@ function BookingsPageContent() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Cancellation Modal */}
+      {cancelModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h2 className="text-lg font-semibold text-gray-900">
+              Annuler cette réservation ?
+            </h2>
+
+            <div className="mt-4 rounded-xl bg-gray-50 p-4">
+              <p className="text-sm text-gray-700">{cancelModal.policy.message}</p>
+
+              <div className="mt-4 space-y-2 border-t border-gray-200 pt-4">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Montant remboursé</span>
+                  <span className="font-semibold text-emerald-600">
+                    {formatMoney(cancelModal.policy.refundAmountCents / 100, cancelModal.booking.currency)}
+                  </span>
+                </div>
+                {cancelModal.policy.serviceFeeRetainedCents > 0 && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Frais de service retenus</span>
+                    <span className="text-gray-900">
+                      {formatMoney(cancelModal.policy.serviceFeeRetainedCents / 100, cancelModal.booking.currency)}
+                    </span>
+                  </div>
+                )}
+                {cancelModal.policy.guestPenaltyCents > cancelModal.policy.serviceFeeRetainedCents && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Non remboursé</span>
+                    <span className="text-red-600">
+                      {formatMoney((cancelModal.policy.guestPenaltyCents - cancelModal.policy.serviceFeeRetainedCents) / 100, cancelModal.booking.currency)}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <p className="mt-3 text-xs text-gray-500">
+                {cancelModal.policy.policyType === "daily"
+                  ? "Politique d'annulation pour réservations journée/nuitée"
+                  : "Politique d'annulation pour réservations à l'heure"}
+              </p>
+            </div>
+
+            {!cancelModal.allowed && (
+              <div className="mt-4 rounded-xl bg-red-50 p-3">
+                <p className="text-sm font-medium text-red-700">
+                  Annulation non autorisée
+                </p>
+                <p className="mt-1 text-xs text-red-600">
+                  {cancelModal.policy.message}
+                </p>
+              </div>
+            )}
+
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setCancelModal(null)}
+                className="flex-1 rounded-full border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Annuler
+              </button>
+              {cancelModal.allowed && (
+                <button
+                  type="button"
+                  onClick={confirmCancellation}
+                  disabled={actionLoadingId !== null}
+                  className="flex-1 rounded-full bg-red-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
+                >
+                  {actionLoadingId ? "En cours..." : "Confirmer l'annulation"}
+                </button>
+              )}
+            </div>
+
+            <Link
+              href="/help"
+              className="mt-4 block text-center text-xs text-gray-500 hover:text-gray-700"
+            >
+              Voir la politique d&apos;annulation complète
+            </Link>
+          </div>
         </div>
       )}
     </main>

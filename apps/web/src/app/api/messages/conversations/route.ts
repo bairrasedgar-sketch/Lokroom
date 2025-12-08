@@ -20,15 +20,36 @@ export async function GET() {
       },
       orderBy: { updatedAt: "desc" },
       include: {
-        host: { select: { id: true, name: true } },
-        guest: { select: { id: true, name: true } },
-        listing: { select: { id: true, title: true, city: true, country: true } },
+        host: {
+          select: {
+            id: true,
+            name: true,
+            profile: { select: { avatarUrl: true } },
+          },
+        },
+        guest: {
+          select: {
+            id: true,
+            name: true,
+            profile: { select: { avatarUrl: true } },
+          },
+        },
+        listing: {
+          select: {
+            id: true,
+            title: true,
+            city: true,
+            country: true,
+            images: { take: 1, select: { url: true } },
+          },
+        },
         booking: {
           select: {
             id: true,
             startDate: true,
             endDate: true,
             status: true,
+            totalPrice: true,
           },
         },
         messages: {
@@ -47,26 +68,57 @@ export async function GET() {
     const result = conversations.map((conv) => {
       const lastMessage = conv.messages[0] ?? null;
 
-      const otherUser =
-        conv.hostId === userId ? conv.guest : conv.host;
+      // Déterminer le rôle de l'utilisateur dans cette conversation
+      const isHost = conv.hostId === userId;
+      const otherUser = isHost ? conv.guest : conv.host;
 
       const hasBooking = !!conv.reservationId || !!conv.booking;
-      const isSupport = !conv.listingId && !conv.reservationId;
 
       const isUnread =
         lastMessage && lastMessage.senderId !== userId;
 
       return {
         id: conv.id,
-        title:
-          conv.listing?.title ??
-          `Conversation avec ${otherUser?.name ?? "Utilisateur"}`,
-        otherUserName: otherUser?.name ?? "Utilisateur Lok'Room",
-        lastMessagePreview: lastMessage?.content ?? "",
-        lastMessageAt: lastMessage?.createdAt ?? conv.updatedAt,
+        // Rôle de l'utilisateur
+        userRole: isHost ? "host" : "guest",
+        isHost,
+        // Infos sur l'autre utilisateur
+        otherUser: {
+          id: otherUser?.id ?? "",
+          name: otherUser?.name ?? "Utilisateur",
+          avatarUrl: otherUser?.profile?.avatarUrl ?? null,
+        },
+        // Dernier message
+        lastMessage: lastMessage
+          ? {
+              content: lastMessage.content,
+              createdAt: lastMessage.createdAt,
+              isFromMe: lastMessage.senderId === userId,
+            }
+          : null,
+        updatedAt: conv.updatedAt,
         isUnread: !!isUnread,
         hasBooking,
-        isSupport,
+        // Listing associé
+        listing: conv.listing
+          ? {
+              id: conv.listing.id,
+              title: conv.listing.title,
+              city: conv.listing.city,
+              country: conv.listing.country,
+              imageUrl: conv.listing.images[0]?.url ?? null,
+            }
+          : null,
+        // Réservation associée
+        booking: conv.booking
+          ? {
+              id: conv.booking.id,
+              startDate: conv.booking.startDate,
+              endDate: conv.booking.endDate,
+              status: conv.booking.status,
+              totalPrice: conv.booking.totalPrice,
+            }
+          : null,
       };
     });
 
