@@ -3,9 +3,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useRef, useState } from "react";
-import Script from "next/script";
 import Link from "next/link";
 import Image from "next/image";
+import { useGoogleMaps } from "./GoogleMapsLoader";
 
 export type MapMarker = {
   id: string;
@@ -50,14 +50,11 @@ export default function Map({
   onMarkerClick,
   panOnHover = true,
 }: MapProps) {
-  const apiKey = process.env
-    .NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string | undefined;
+  const { isLoaded: scriptLoaded, loadError: scriptError } = useGoogleMaps();
 
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [scriptLoaded, setScriptLoaded] = useState(false);
-  const [scriptError, setScriptError] = useState<string | null>(null);
 
-  const missingApiKey = !apiKey;
+  const missingApiKey = !process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   // Référence vers la carte pour pouvoir la recentrer depuis un autre effet
   const mapRef = useRef<any | null>(null);
@@ -106,15 +103,6 @@ export default function Map({
     setSelectedId(null);
   }, [markers]);
 
-  // Si on revient sur la page et que Google Maps est déjà chargé
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const g = (window as any).google;
-    if (g?.maps) {
-      setScriptLoaded(true);
-    }
-  }, []);
-
   useEffect(() => {
     if (missingApiKey || !scriptLoaded || !containerRef.current) return;
 
@@ -125,9 +113,6 @@ export default function Map({
         maps: g?.maps,
         mapCtor: g?.maps?.Map,
       });
-      setScriptError(
-        "Google Maps n'a pas pu s'initialiser correctement (voir console).",
-      );
       return;
     }
 
@@ -370,23 +355,6 @@ export default function Map({
 
   return (
     <>
-      {!missingApiKey && (
-        <Script
-          src={`https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`}
-          strategy="afterInteractive"
-          onLoad={() => {
-            console.log("Google Maps JS chargé ✔");
-            setScriptLoaded(true);
-          }}
-          onError={(e) => {
-            console.error("Erreur chargement Google Maps", e);
-            setScriptError(
-              "Impossible de charger Google Maps (voir console)",
-            );
-          }}
-        />
-      )}
-
       <div
         ref={mapContainerRef}
         className="relative h-full w-full rounded-3xl"

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { MapPinIcon } from "@heroicons/react/24/outline";
+import { useGoogleMaps } from "./GoogleMapsLoader";
 
 // ────────────────────────────────────────────────────────────────────────────
 // Types Google Maps (simplified)
@@ -92,37 +93,12 @@ export default function LocationAutocomplete({
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const [googleReady, setGoogleReady] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Vérifier si Google Maps est chargé et réessayer périodiquement
-  useEffect(() => {
-    const checkGoogle = () => {
-      const g = (window as WindowWithGoogle).google;
-      if (g?.maps?.places?.AutocompleteService) {
-        setGoogleReady(true);
-        return true;
-      }
-      return false;
-    };
-
-    // Vérifier immédiatement
-    if (checkGoogle()) return;
-
-    // Réessayer toutes les 500ms jusqu'à 10 secondes
-    let attempts = 0;
-    const maxAttempts = 20;
-    const interval = setInterval(() => {
-      attempts++;
-      if (checkGoogle() || attempts >= maxAttempts) {
-        clearInterval(interval);
-      }
-    }, 500);
-
-    return () => clearInterval(interval);
-  }, []);
+  // Use the global Google Maps context
+  const { isLoaded: googleReady } = useGoogleMaps();
 
   // Fermer au clic extérieur
   useEffect(() => {
@@ -143,13 +119,15 @@ export default function LocationAutocomplete({
       return;
     }
 
-    // Attendre que Google soit prêt
+    // Wait for Google to be ready
     if (!googleReady) {
+      console.log("Google Maps not ready yet, waiting...");
       return;
     }
 
     const g = (window as WindowWithGoogle).google;
     if (!g?.maps?.places?.AutocompleteService) {
+      console.log("AutocompleteService not available");
       return;
     }
 
@@ -314,6 +292,14 @@ export default function LocationAutocomplete({
             </div>
           )}
 
+          {/* Google Maps not loaded warning */}
+          {!googleReady && value.length >= 2 && !isLoading && (
+            <div className="flex items-center gap-2 px-4 py-3 text-sm text-amber-600">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-amber-300 border-t-amber-600" />
+              Chargement de Google Maps...
+            </div>
+          )}
+
           {/* Villes populaires (quand pas de recherche) */}
           {showPopular && !isLoading && (
             <div className="py-2">
@@ -374,7 +360,7 @@ export default function LocationAutocomplete({
           )}
 
           {/* Aucun résultat */}
-          {!isLoading && value.length >= 2 && suggestions.length === 0 && (
+          {!isLoading && googleReady && value.length >= 2 && suggestions.length === 0 && (
             <div className="px-4 py-3 text-center text-sm text-gray-500">
               Aucune ville trouvée pour &quot;{value}&quot;
             </div>
