@@ -72,7 +72,7 @@ export default function Footer() {
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             {/* Copyright and legal links */}
             <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-gray-600">
-              <span>&copy; {currentYear} Lok'Room, Inc.</span>
+              <span>&copy; {currentYear} Lok&apos;Room, Inc.</span>
               <span className="hidden sm:inline">·</span>
               <Link href="/privacy" className="hover:underline">
                 Confidentialité
