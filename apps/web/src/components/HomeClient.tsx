@@ -925,15 +925,19 @@ function ListingCard({ card, index }: { card: ListingCard; index: number }) {
               e.preventDefault();
               setIsFavorited(!isFavorited);
             }}
-            className="absolute right-3 top-3 z-10 transition-transform hover:scale-110 active:scale-95"
+            className={`absolute right-3 top-3 z-10 transition-all duration-300 hover:scale-110 active:scale-95 ${
+              isFavorited ? "animate-heart-pop" : ""
+            }`}
           >
             <svg
-              className={`h-6 w-6 drop-shadow-md transition-colors ${
-                isFavorited ? "fill-gray-900 text-gray-900" : "fill-black/30 text-white"
+              className={`h-6 w-6 drop-shadow-md transition-all duration-300 ${
+                isFavorited ? "fill-rose-400 stroke-rose-400" : "fill-black/30 stroke-white"
               }`}
               viewBox="0 0 24 24"
-              stroke="currentColor"
               strokeWidth={1.5}
+              style={{
+                filter: isFavorited ? "drop-shadow(0 2px 6px rgba(251, 113, 133, 0.5))" : "none",
+              }}
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
             </svg>
@@ -1384,6 +1388,18 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
         .animate-fade-in {
           animation: fade-in 0.4s ease-out forwards;
           opacity: 0;
+        }
+
+        /* Heart pop animation for favorite button */
+        @keyframes heart-pop {
+          0% { transform: scale(1); }
+          25% { transform: scale(1.3); }
+          50% { transform: scale(0.95); }
+          75% { transform: scale(1.1); }
+          100% { transform: scale(1); }
+        }
+        .animate-heart-pop {
+          animation: heart-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
 
         /* ============================================
