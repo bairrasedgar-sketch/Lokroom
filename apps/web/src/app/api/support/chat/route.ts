@@ -29,6 +29,15 @@ function checkRateLimit(ip: string): boolean {
 
 export async function POST(req: NextRequest) {
   try {
+    // Vérifier que la clé API est configurée
+    if (!process.env.GEMINI_API_KEY) {
+      console.error("[Support Chat] GEMINI_API_KEY not configured");
+      return NextResponse.json(
+        { error: "Service non configuré", debug: "GEMINI_API_KEY missing" },
+        { status: 500 }
+      );
+    }
+
     // Rate limiting
     const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
     if (!checkRateLimit(ip)) {
@@ -67,7 +76,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("[Support Chat] Error:", error);
     return NextResponse.json(
-      { error: "Erreur interne du serveur" },
+      { error: "Erreur interne du serveur", debug: String(error) },
       { status: 500 }
     );
   }

@@ -183,9 +183,9 @@ export async function getGeminiResponse(userMessage: string): Promise<string> {
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error("[Gemini] API error:", response.status, errorData);
-      throw new Error(`API error: ${response.status}`);
+      const errorText = await response.text().catch(() => "");
+      console.error("[Gemini] API error:", response.status, errorText);
+      throw new Error(`API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
