@@ -351,8 +351,8 @@ export default function ListingsWithMap({
         {totalCount > listings.length && ` (${totalCount} au total)`}
       </p>
 
-      {/* Grille des annonces - 3 colonnes style Airbnb */}
-      <div className="grid gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Grille des annonces - responsive pour tous écrans */}
+      <div className="grid gap-4 sm:gap-x-6 sm:gap-y-8 grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3 3xl:grid-cols-4">
         {listings.map((listing) => (
           <ListingCard
             key={listing.id}
@@ -373,8 +373,8 @@ export default function ListingsWithMap({
         </div>
       )}
 
-      {/* Map fixée à droite - desktop only - plus horizontale avec marges */}
-      <div className="hidden lg:fixed lg:right-4 lg:top-[80px] lg:block lg:h-[calc(100vh-160px)] lg:w-[38%] lg:overflow-hidden lg:rounded-2xl lg:border lg:border-gray-200 lg:shadow-lg">
+      {/* Map fixée à droite - desktop only - responsive pour grands écrans */}
+      <div className="hidden lg:fixed lg:right-4 xl:right-6 2xl:right-8 lg:top-[80px] lg:block lg:h-[calc(100vh-100px)] lg:w-[38%] xl:w-[40%] 2xl:w-[42%] 3xl:w-[45%] lg:overflow-hidden lg:rounded-2xl lg:border lg:border-gray-200 lg:shadow-lg">
         <Map
           markers={markers}
           panOnHover={false}
@@ -384,9 +384,9 @@ export default function ListingsWithMap({
         />
       </div>
 
-      {/* Carte mobile */}
-      <section className="mt-8 lg:hidden">
-        <div className="h-72 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      {/* Carte mobile et tablette */}
+      <section className="mt-6 sm:mt-8 lg:hidden">
+        <div className="h-64 sm:h-72 md:h-80 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
           <Map
             markers={markers}
             panOnHover={false}

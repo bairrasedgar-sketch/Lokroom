@@ -409,8 +409,8 @@ function BookingsPageContent() {
   );
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-6 lg:py-8">
-      <header className="mb-6 flex flex-col gap-2 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
+    <main className="mx-auto max-w-5xl 2xl:max-w-6xl 3xl:max-w-7xl px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+      <header className="mb-4 sm:mb-6 lg:mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
             {t.title}

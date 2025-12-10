@@ -78,9 +78,9 @@ export default function FavoritesPage() {
   const hasFavorites = favorites.length > 0;
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-10 lg:px-8">
-      <header className="mb-6">
-        <h1 className="text-2xl font-semibold">{t.title}</h1>
+    <main className="mx-auto max-w-6xl 2xl:max-w-7xl 3xl:max-w-[1800px] px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
+      <header className="mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl font-semibold">{t.title}</h1>
         <p className="mt-1 text-sm text-gray-500">
           {t.subtitle}
         </p>
@@ -109,7 +109,7 @@ export default function FavoritesPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:gap-5 grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6">
           {favorites.map((listing) => {
             const imageUrl = listing.images?.[0]?.url ?? null;
             const price =

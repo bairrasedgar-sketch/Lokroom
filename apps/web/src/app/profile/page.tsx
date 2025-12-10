@@ -414,11 +414,11 @@ export default function ProfilePage() {
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 pb-12 pt-10">
+    <main className="mx-auto max-w-6xl 2xl:max-w-7xl px-4 sm:px-6 lg:px-8 pb-8 sm:pb-12 pt-6 sm:pt-10">
       {/* Layout principal */}
-      <div className="flex gap-10">
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-10">
         {/* Colonne gauche – menu comme Airbnb */}
-        <aside className="w-64 shrink-0">
+        <aside className="w-full lg:w-64 shrink-0">
           <h1 className="mb-6 text-2xl font-semibold">{t.title}</h1>
 
           <nav className="space-y-2 text-sm">

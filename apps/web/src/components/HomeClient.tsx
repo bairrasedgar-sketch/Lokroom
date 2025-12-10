@@ -1511,13 +1511,13 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
           </svg>
         </div>
 
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="relative mx-auto max-w-[1800px] 3xl:max-w-[2200px] px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
           {/* Hero Content */}
-          <div className={`mx-auto max-w-3xl text-center transition-all duration-700 ${isLoaded ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}>
-            <h1 className="text-3xl font-semibold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
+          <div className={`mx-auto max-w-3xl lg:max-w-4xl text-center transition-all duration-700 ${isLoaded ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"}`}>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold tracking-tight text-gray-900">
               Trouvez l&apos;espace parfait
             </h1>
-            <p className="mt-4 text-lg text-gray-500">
+            <p className="mt-3 sm:mt-4 text-base sm:text-lg lg:text-xl text-gray-500">
               Appartements, bureaux, studios, espaces événementiels...
               <br className="hidden sm:block" />
               Réservez des espaces uniques en quelques clics.
@@ -1633,10 +1633,10 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
       </section>
 
       {/* LISTINGS GRID */}
-      <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <section className="mx-auto max-w-[1800px] 3xl:max-w-[2200px] 4xl:max-w-[2800px] px-4 py-8 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-900">
               {activeCategory ? categories.find(c => c.key === activeCategory)?.label : "Découvrez nos espaces"}
             </h2>
           </div>
@@ -1662,7 +1662,7 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
             <p className="mt-1 text-sm text-gray-500">Essayez une autre catégorie ou explorez tous nos espaces</p>
           </div>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 4xl:grid-cols-7">
             {filteredCards.map((card, i) => (
               <ListingCard key={card.id} card={card} index={i} />
             ))}
@@ -1671,8 +1671,8 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
       </section>
 
       {/* DECORATIVE VISUAL SECTION */}
-      <section className="py-16 overflow-hidden">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <section className="py-8 sm:py-12 lg:py-16 overflow-hidden">
+        <div className="mx-auto max-w-[1800px] 3xl:max-w-[2200px] px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Text Content */}
             <div>
@@ -1775,8 +1775,8 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
       </section>
 
       {/* CTA SECTION */}
-      <section className="bg-gray-50 py-16">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <section className="bg-gray-50 py-8 sm:py-12 lg:py-16">
+        <div className="mx-auto max-w-[1800px] 3xl:max-w-[2200px] px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
           <div className="rounded-2xl bg-gray-900 px-8 py-12 text-center sm:px-12">
             <h2 className="text-2xl font-semibold text-white sm:text-3xl">
               Vous avez un espace à louer ?

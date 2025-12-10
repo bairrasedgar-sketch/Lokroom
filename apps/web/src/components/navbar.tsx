@@ -392,7 +392,7 @@ export default function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
-        <div className="relative flex items-center justify-between px-6 py-4 max-w-[1760px] mx-auto">
+        <div className="relative flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3 sm:py-4 max-w-[1760px] 3xl:max-w-[2200px] 4xl:max-w-[2800px] mx-auto">
           {/* Logo à gauche */}
           <Link href="/" className="flex-shrink-0 z-10">
             <Image
@@ -400,7 +400,7 @@ export default function Navbar() {
               alt="Lok'Room"
               width={130}
               height={85}
-              style={{ height: '36px', width: 'auto' }}
+              className="h-8 sm:h-9 w-auto"
               priority
               unoptimized
             />

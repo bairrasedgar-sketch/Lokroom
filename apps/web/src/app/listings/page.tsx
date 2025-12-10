@@ -212,9 +212,9 @@ export default async function ListingsPage({
 
   return (
     <>
-      {/* Contenu principal - prend 60% à gauche sur desktop (lg) */}
-      <main className="min-h-screen pb-12 pt-6 lg:mr-[40%]">
-        <div className="mx-auto max-w-5xl space-y-4 px-6">
+      {/* Contenu principal - responsive pour tous écrans */}
+      <main className="min-h-screen pb-8 sm:pb-12 pt-4 sm:pt-6 lg:mr-[40%] xl:mr-[42%] 2xl:mr-[44%] 3xl:mr-[46%]">
+        <div className="mx-auto max-w-5xl 2xl:max-w-6xl 3xl:max-w-7xl space-y-3 sm:space-y-4 px-4 sm:px-6 lg:px-8">
           {/* Header simple comme Airbnb */}
           <header className="flex items-center justify-between">
             <p className="text-sm text-gray-600">

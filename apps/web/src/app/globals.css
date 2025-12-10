@@ -6,6 +6,182 @@
   color-scheme: light;
 }
 
+/* ============================================
+   RESPONSIVE UTILITIES - Adaptation tous écrans
+   ============================================ */
+
+/* Container responsive qui s'adapte à tous les écrans */
+.container-responsive {
+  @apply w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16;
+  max-width: 100%;
+}
+
+@media (min-width: 640px) {
+  .container-responsive {
+    max-width: 640px;
+  }
+}
+
+@media (min-width: 768px) {
+  .container-responsive {
+    max-width: 768px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-responsive {
+    max-width: 1024px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container-responsive {
+    max-width: 1280px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .container-responsive {
+    max-width: 1536px;
+  }
+}
+
+@media (min-width: 1920px) {
+  .container-responsive {
+    max-width: 1800px;
+  }
+}
+
+@media (min-width: 2560px) {
+  .container-responsive {
+    max-width: 2400px;
+  }
+}
+
+/* Grille responsive pour les cards */
+.grid-responsive {
+  @apply grid gap-4 sm:gap-6;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+}
+
+@media (min-width: 480px) {
+  .grid-responsive {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 768px) {
+  .grid-responsive {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid-responsive {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .grid-responsive {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1536px) {
+  .grid-responsive {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1920px) {
+  .grid-responsive {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 2560px) {
+  .grid-responsive {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+}
+
+/* Texte responsive */
+.text-responsive-sm {
+  @apply text-xs sm:text-sm;
+}
+
+.text-responsive-base {
+  @apply text-sm sm:text-base;
+}
+
+.text-responsive-lg {
+  @apply text-base sm:text-lg lg:text-xl;
+}
+
+.text-responsive-xl {
+  @apply text-lg sm:text-xl lg:text-2xl xl:text-3xl;
+}
+
+.text-responsive-2xl {
+  @apply text-xl sm:text-2xl lg:text-3xl xl:text-4xl 2xl:text-5xl;
+}
+
+/* Padding responsive */
+.p-responsive {
+  @apply p-4 sm:p-6 lg:p-8 xl:p-10 2xl:p-12;
+}
+
+.px-responsive {
+  @apply px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12;
+}
+
+.py-responsive {
+  @apply py-4 sm:py-6 lg:py-8 xl:py-10 2xl:py-12;
+}
+
+/* Gap responsive */
+.gap-responsive {
+  @apply gap-4 sm:gap-6 lg:gap-8;
+}
+
+/* Safe area pour les appareils avec notch (iPhone X+) */
+@supports (padding: max(0px)) {
+  .safe-area-inset {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Touch-friendly pour mobile */
+@media (hover: none) and (pointer: coarse) {
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  button, a, [role="button"] {
+    min-height: 44px;
+  }
+}
+
+/* Amélioration du scroll sur iOS */
+.scroll-smooth-ios {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+
+/* Hide scrollbar mais garder le scroll */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Bulle de prix Lok'Room sur la carte (Overlay perso) */
 .lokroom-price-badge {
   position: absolute;
