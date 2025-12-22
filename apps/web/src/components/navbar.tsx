@@ -504,7 +504,7 @@ export default function Navbar() {
             {/* Lien Favoris - visible si connecté */}
             {isLoggedIn && (
               <Link
-                href="/favorites"
+                href="/wishlists"
                 className="flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -618,7 +618,7 @@ export default function Navbar() {
 
                   {/* Liens supplémentaires pour utilisateurs connectés */}
                   <Link
-                    href="/favorites"
+                    href="/wishlists"
                     className="rounded-lg px-3 py-2 hover:bg-gray-100"
                   >
                     Favoris

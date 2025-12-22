@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSearchBar } from "@/contexts/SearchBarContext";
 import SearchModal from "./SearchModal";
+import FavoriteButton from "./FavoriteButton";
 
 // ============================================================================
 // TYPES
@@ -843,7 +844,6 @@ function SearchBar({ isCompact }: { isCompact: boolean }) {
 function ListingCard({ card, index }: { card: ListingCard; index: number }) {
   const [imageIndex, setImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
-  const [isFavorited, setIsFavorited] = useState(false);
 
   const images = card.images || [];
   const hasMultipleImages = images.length > 1;
@@ -855,62 +855,17 @@ function ListingCard({ card, index }: { card: ListingCard; index: number }) {
       onMouseLeave={() => { setIsHovered(false); setImageIndex(0); }}
       style={{ animationDelay: `${index * 50}ms` }}
     >
-      <Link href={`/listings/${card.id}`} className="block">
-        {/* Image Container */}
-        <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-100">
+      {/* Image Container - séparé du Link pour le bouton favori */}
+      <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-100">
+        <Link href={`/listings/${card.id}`} className="block absolute inset-0">
           {images.length > 0 ? (
-            <>
-              <Image
-                src={images[imageIndex]?.url || images[0]?.url}
-                alt={card.title}
-                fill
-                className="object-cover transition-transform duration-500 group-hover:scale-105"
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-              />
-
-              {/* Image Navigation Dots */}
-              {hasMultipleImages && isHovered && (
-                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                  {images.slice(0, 5).map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={(e) => { e.preventDefault(); setImageIndex(i); }}
-                      className={`h-1.5 rounded-full transition-all ${
-                        i === imageIndex ? "w-4 bg-white" : "w-1.5 bg-white/60 hover:bg-white/80"
-                      }`}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Navigation Arrows */}
-              {hasMultipleImages && isHovered && (
-                <>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
-                    }}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-md opacity-0 transition-opacity group-hover:opacity-100 hover:bg-white"
-                  >
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
-                    }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-md opacity-0 transition-opacity group-hover:opacity-100 hover:bg-white"
-                  >
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                </>
-              )}
-            </>
+            <Image
+              src={images[imageIndex]?.url || images[0]?.url}
+              alt={card.title}
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-gray-400">
               <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
@@ -918,71 +873,97 @@ function ListingCard({ card, index }: { card: ListingCard; index: number }) {
               </svg>
             </div>
           )}
+        </Link>
 
-          {/* Favorite Button */}
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              setIsFavorited(!isFavorited);
-            }}
-            className={`absolute right-3 top-3 z-10 transition-all duration-300 hover:scale-110 active:scale-95 ${
-              isFavorited ? "animate-heart-pop" : ""
-            }`}
-          >
-            <svg
-              className={`h-6 w-6 drop-shadow-md transition-all duration-300 ${
-                isFavorited ? "fill-rose-400 stroke-rose-400" : "fill-black/30 stroke-white"
-              }`}
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              style={{
-                filter: isFavorited ? "drop-shadow(0 2px 6px rgba(251, 113, 133, 0.5))" : "none",
+        {/* Image Navigation Dots - en dehors du Link */}
+        {hasMultipleImages && isHovered && (
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+            {images.slice(0, 5).map((_, i) => (
+              <button
+                key={i}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setImageIndex(i); }}
+                className={`h-1.5 rounded-full transition-all ${
+                  i === imageIndex ? "w-4 bg-white" : "w-1.5 bg-white/60 hover:bg-white/80"
+                }`}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Navigation Arrows - en dehors du Link */}
+        {hasMultipleImages && isHovered && (
+          <>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
               }}
+              className="absolute left-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-md opacity-0 transition-opacity group-hover:opacity-100 hover:bg-white z-10"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
-            </svg>
-          </button>
-
-          {/* Instant Book Badge */}
-          {card.isInstantBook && (
-            <div className="absolute left-3 top-3 flex items-center gap-1 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-900 shadow-md">
-              <svg className="h-3 w-3 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
-              Instantané
-            </div>
-          )}
+            </button>
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+              }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-md opacity-0 transition-opacity group-hover:opacity-100 hover:bg-white z-10"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </>
+        )}
+
+        {/* Favorite Button - en dehors du Link */}
+        <div className="absolute right-3 top-3 z-20">
+          <FavoriteButton listingId={card.id} size={24} variant="card" />
         </div>
 
-        {/* Card Content */}
-        <div className="mt-3 space-y-1">
-          {/* Category Badge */}
-          <div className="flex items-center gap-1.5 mb-1">
-            <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
-              <span>{getCategoryEmoji(card.type)}</span>
-              {LISTING_TYPE_LABELS[card.type] || card.type}
-            </span>
+        {/* Instant Book Badge */}
+        {card.isInstantBook && (
+          <div className="absolute left-3 top-3 flex items-center gap-1 rounded-md bg-white px-2 py-1 text-xs font-medium text-gray-900 shadow-md z-10">
+            <svg className="h-3 w-3 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+            </svg>
+            Instantané
           </div>
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="line-clamp-1 font-medium text-gray-900">
-              {card.title}
-            </h3>
-          </div>
-          <p className="text-sm text-gray-500">
-            {card.city ? `${card.city}, ` : ""}{card.country}
-          </p>
-          {(card.maxGuests || card.beds) && (
-            <p className="text-sm text-gray-400">
-              {card.maxGuests && `${card.maxGuests} voyageurs`}
-              {card.maxGuests && card.beds && " · "}
-              {card.beds && `${card.beds} lit${card.beds > 1 ? "s" : ""}`}
-            </p>
-          )}
-          <p className="pt-1">
-            <span className="font-semibold text-gray-900">{card.priceFormatted}</span>
-            <span className="text-gray-500"> / nuit</span>
-          </p>
+        )}
+      </div>
+
+      {/* Card Content */}
+      <Link href={`/listings/${card.id}`} className="block mt-3 space-y-1">
+        {/* Category Badge */}
+        <div className="flex items-center gap-1.5 mb-1">
+          <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
+            <span>{getCategoryEmoji(card.type)}</span>
+            {LISTING_TYPE_LABELS[card.type] || card.type}
+          </span>
         </div>
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="line-clamp-1 font-medium text-gray-900">
+            {card.title}
+          </h3>
+        </div>
+        <p className="text-sm text-gray-500">
+          {card.city ? `${card.city}, ` : ""}{card.country}
+        </p>
+        {(card.maxGuests || card.beds) && (
+          <p className="text-sm text-gray-400">
+            {card.maxGuests && `${card.maxGuests} voyageurs`}
+            {card.maxGuests && card.beds && " · "}
+            {card.beds && `${card.beds} lit${card.beds > 1 ? "s" : ""}`}
+          </p>
+        )}
+        <p className="pt-1">
+          <span className="font-semibold text-gray-900">{card.priceFormatted}</span>
+          <span className="text-gray-500"> / nuit</span>
+        </p>
       </Link>
     </div>
   );

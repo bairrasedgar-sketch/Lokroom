@@ -1182,9 +1182,24 @@ function AboutSection(props: AboutProps) {
                       <input
                         className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
                         value={phone}
-                        onChange={(e) =>
-                          setPhone(e.currentTarget.value)
-                        }
+                        onChange={(e) => {
+                          // N'accepter que les chiffres et le + (pour l'indicatif international)
+                          const value = e.currentTarget.value.replace(/[^0-9+]/g, '');
+                          // Le + ne peut être qu'au début
+                          const sanitized = value.charAt(0) === '+'
+                            ? '+' + value.slice(1).replace(/\+/g, '')
+                            : value.replace(/\+/g, '');
+                          setPhone(sanitized);
+                        }}
+                        onKeyDown={(e) => {
+                          // Bloquer les lettres et caractères spéciaux (sauf + au début)
+                          const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
+                          if (allowedKeys.includes(e.key)) return;
+                          if (e.key === '+' && e.currentTarget.selectionStart === 0 && !phone.includes('+')) return;
+                          if (!/[0-9]/.test(e.key)) {
+                            e.preventDefault();
+                          }
+                        }}
                         placeholder={t.phonePlaceholder}
                       />
                     </div>

@@ -34,6 +34,21 @@ export async function POST(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Vérifier le rôle de l'utilisateur
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true },
+  });
+
+  // Seuls GUEST, BOTH et ADMIN peuvent ajouter aux favoris
+  // HOST pur ne peut pas (il est hôte uniquement, pas voyageur)
+  if (user?.role === "HOST") {
+    return NextResponse.json(
+      { error: "Les hôtes ne peuvent pas ajouter aux favoris. Active le mode voyageur pour ajouter des favoris." },
+      { status: 403 }
+    );
+  }
+
   // vérifie que l'annonce existe
   const listing = await prisma.listing.findUnique({ where: { id: params.listingId } });
   if (!listing) return NextResponse.json({ error: "Listing not found" }, { status: 404 });

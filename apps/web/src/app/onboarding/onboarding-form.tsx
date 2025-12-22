@@ -589,7 +589,24 @@ export default function OnboardingForm({ email, initialData, returnFromStripe }:
               <input
                 type="tel"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => {
+                  // N'accepter que les chiffres et le + (pour l'indicatif international)
+                  const value = e.target.value.replace(/[^0-9+]/g, '');
+                  // Le + ne peut être qu'au début
+                  const sanitized = value.charAt(0) === '+'
+                    ? '+' + value.slice(1).replace(/\+/g, '')
+                    : value.replace(/\+/g, '');
+                  setPhone(sanitized);
+                }}
+                onKeyDown={(e) => {
+                  // Bloquer les lettres et caractères spéciaux (sauf + au début)
+                  const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
+                  if (allowedKeys.includes(e.key)) return;
+                  if (e.key === '+' && e.currentTarget.selectionStart === 0 && !phone.includes('+')) return;
+                  if (!/[0-9]/.test(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 placeholder={t.phonePlaceholder}
                 autoComplete="off"

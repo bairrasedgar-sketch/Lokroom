@@ -18,11 +18,15 @@ export async function GET() {
           listing: {
             select: {
               id: true,
+              title: true,
+              city: true,
+              country: true,
+              price: true,
+              currency: true,
               images: { take: 1, select: { url: true } },
             },
           },
         },
-        take: 4, // Pour les previews
       },
       _count: {
         select: { favorites: true },

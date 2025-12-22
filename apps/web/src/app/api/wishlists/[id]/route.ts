@@ -3,21 +3,20 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
-// GET /api/wishlists/[id] - Récupérer une wishlist avec toutes ses annonces
+// GET /api/wishlists/[id] - Récupérer une liste avec ses favoris
 export async function GET(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
+  const { id } = await params;
+
   const wishlist = await prisma.wishlist.findFirst({
-    where: {
-      id: params.id,
-      userId: session.user.id,
-    },
+    where: { id, userId: session.user.id },
     include: {
       favorites: {
         include: {
@@ -29,10 +28,13 @@ export async function GET(
               country: true,
               price: true,
               currency: true,
-              images: { take: 1, select: { url: true } },
+              images: { take: 1, select: { id: true, url: true } },
             },
           },
         },
+      },
+      _count: {
+        select: { favorites: true },
       },
     },
   });
@@ -44,28 +46,26 @@ export async function GET(
   return NextResponse.json(wishlist);
 }
 
-// PATCH /api/wishlists/[id] - Renommer une wishlist
+// PATCH /api/wishlists/[id] - Modifier le nom d'une liste
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
+  const { id } = await params;
   const { name } = await req.json();
 
   if (!name || typeof name !== "string" || name.trim().length === 0) {
     return NextResponse.json({ error: "Nom requis" }, { status: 400 });
   }
 
-  // Vérifier que la wishlist appartient à l'utilisateur
+  // Vérifier que la liste appartient à l'utilisateur
   const existing = await prisma.wishlist.findFirst({
-    where: {
-      id: params.id,
-      userId: session.user.id,
-    },
+    where: { id, userId: session.user.id },
   });
 
   if (!existing) {
@@ -73,43 +73,37 @@ export async function PATCH(
   }
 
   const wishlist = await prisma.wishlist.update({
-    where: { id: params.id },
+    where: { id },
     data: { name: name.trim() },
   });
 
   return NextResponse.json(wishlist);
 }
 
-// DELETE /api/wishlists/[id] - Supprimer une wishlist
+// DELETE /api/wishlists/[id] - Supprimer une liste
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
-  // Vérifier que la wishlist appartient à l'utilisateur
+  const { id } = await params;
+
+  // Vérifier que la liste appartient à l'utilisateur
   const existing = await prisma.wishlist.findFirst({
-    where: {
-      id: params.id,
-      userId: session.user.id,
-    },
+    where: { id, userId: session.user.id },
   });
 
   if (!existing) {
     return NextResponse.json({ error: "Liste non trouvée" }, { status: 404 });
   }
 
-  // Supprimer d'abord les favoris associés
-  await prisma.favorite.deleteMany({
-    where: { wishlistId: params.id },
-  });
-
-  // Puis supprimer la wishlist
+  // Supprimer la liste (les favoris seront supprimés en cascade)
   await prisma.wishlist.delete({
-    where: { id: params.id },
+    where: { id },
   });
 
   return NextResponse.json({ success: true });

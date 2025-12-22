@@ -69,16 +69,27 @@ function ListingCard({
   onHover,
   onLeave,
   t,
+  index = 0,
 }: {
   listing: ListingCardData;
   isHovered: boolean;
   onHover: () => void;
   onLeave: () => void;
   t: ListingsWithMapProps["translations"];
+  index?: number;
 }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
   const images = listing.images || [];
   const hasMultipleImages = images.length > 1;
+
+  // Animation d'apparition en escalier
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsVisible(true);
+    }, index * 50); // 50ms de délai entre chaque carte
+    return () => clearTimeout(timer);
+  }, [index]);
 
   const nextImage = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -100,11 +111,14 @@ function ListingCard({
 
   return (
     <div
-      className={`group relative flex flex-col overflow-hidden rounded-xl transition-all duration-200 ${
-        isHovered ? "shadow-lg" : ""
-      }`}
+      className={`group relative flex flex-col overflow-hidden rounded-xl transition-all duration-300 ${
+        isHovered ? "shadow-lg scale-[1.02]" : ""
+      } ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
       onMouseEnter={onHover}
       onMouseLeave={onLeave}
+      style={{
+        transitionDelay: isVisible ? "0ms" : `${index * 50}ms`,
+      }}
     >
       {/* Image container avec carousel - aspect ratio 4:3 pour moins de hauteur */}
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-gray-100">
@@ -114,7 +128,7 @@ function ListingCard({
               src={images[currentImageIndex]?.url || ""}
               alt={listing.title}
               fill
-              className="object-cover transition-transform duration-300"
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
               sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
             />
           ) : (
@@ -124,9 +138,9 @@ function ListingCard({
           )}
         </Link>
 
-        {/* Bouton Favori - sans badge qui coupe */}
+        {/* Bouton Favori - style Airbnb en haut à droite */}
         <div className="absolute right-3 top-3 z-10">
-          <FavoriteButton listingId={listing.id} size={24} />
+          <FavoriteButton listingId={listing.id} size={24} variant="card" />
         </div>
 
         {/* Flèches de navigation (visibles au hover) */}
@@ -134,23 +148,23 @@ function ListingCard({
           <>
             <button
               onClick={prevImage}
-              className={`absolute left-2 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md transition-all hover:bg-white hover:scale-105 ${
+              className={`absolute left-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white text-gray-800 shadow-md transition-all hover:scale-110 ${
                 isHovered ? "opacity-100" : "opacity-0"
               }`}
               aria-label="Image précédente"
             >
-              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <button
               onClick={nextImage}
-              className={`absolute right-2 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-md transition-all hover:bg-white hover:scale-105 ${
+              className={`absolute right-12 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white text-gray-800 shadow-md transition-all hover:scale-110 ${
                 isHovered ? "opacity-100" : "opacity-0"
               }`}
               aria-label="Image suivante"
             >
-              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>
@@ -159,7 +173,7 @@ function ListingCard({
 
         {/* Points indicateurs d'images */}
         {hasMultipleImages && (
-          <div className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 gap-1">
+          <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
             {images.slice(0, 5).map((_, idx) => (
               <button
                 key={idx}
@@ -170,8 +184,8 @@ function ListingCard({
                 }}
                 className={`h-1.5 w-1.5 rounded-full transition-all ${
                   idx === currentImageIndex
-                    ? "bg-white"
-                    : "bg-white/50 hover:bg-white/75"
+                    ? "bg-white w-2"
+                    : "bg-white/60 hover:bg-white/80"
                 }`}
                 aria-label={`Voir image ${idx + 1}`}
               />
@@ -181,17 +195,17 @@ function ListingCard({
       </div>
 
       {/* Infos de l'annonce - hauteur fixe pour cohérence */}
-      <Link href={`/listings/${listing.id}`} className="flex flex-col pt-2 h-[72px]">
+      <Link href={`/listings/${listing.id}`} className="flex flex-col pt-3 h-[76px]">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="line-clamp-1 text-sm font-medium text-gray-900 flex-1 min-w-0">
+          <h3 className="line-clamp-1 text-[15px] font-medium text-gray-900 flex-1 min-w-0">
             {locationLabel || listing.title}
           </h3>
           {rev.count > 0 && rev.avgRating != null && (
-            <div className="flex shrink-0 items-center gap-0.5 text-sm">
-              <svg className="h-3 w-3 fill-current" viewBox="0 0 24 24">
+            <div className="flex shrink-0 items-center gap-1 text-sm">
+              <svg className="h-3.5 w-3.5 fill-current" viewBox="0 0 24 24">
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
               </svg>
-              <span>{rev.avgRating.toFixed(1)}</span>
+              <span className="font-medium">{rev.avgRating.toFixed(1)}</span>
             </div>
           )}
         </div>
@@ -200,9 +214,9 @@ function ListingCard({
           {LISTING_TYPE_LABELS[listing.type] || listing.type}
         </p>
 
-        <p className="mt-auto text-sm">
+        <p className="mt-auto text-[15px]">
           <span className="font-semibold">{listing.priceLabel}</span>
-          <span className="font-normal text-gray-900"> {t.perNight}</span>
+          <span className="font-normal text-gray-600"> {t.perNight}</span>
         </p>
       </Link>
     </div>
@@ -314,7 +328,17 @@ export default function ListingsWithMap({
     [searchParams, displayCurrency]
   );
 
+  // État pour les bounds en attente (debounce)
+  const [pendingBounds, setPendingBounds] = useState<{
+    north: number;
+    south: number;
+    east: number;
+    west: number;
+  } | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // Callback quand les bounds de la carte changent
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleBoundsChange = useCallback(
     (bounds: { north: number; south: number; east: number; west: number }) => {
       // Skip first load to use server-rendered data
@@ -323,15 +347,32 @@ export default function ListingsWithMap({
         return;
       }
 
-      // Debounce the API call
-      const timeoutId = setTimeout(() => {
-        fetchListingsInBounds(bounds);
-      }, 400);
-
-      return () => clearTimeout(timeoutId);
+      // Stocker les bounds pour le debounce
+      setPendingBounds(bounds);
     },
-    [fetchListingsInBounds]
+    []
   );
+
+  // Debounce effect: fetch après 400ms d'inactivité
+  useEffect(() => {
+    if (!pendingBounds || isLoadingMap) return;
+
+    // Annuler le timeout précédent
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    // Créer un nouveau timeout
+    timeoutRef.current = setTimeout(() => {
+      fetchListingsInBounds(pendingBounds);
+    }, 400);
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [pendingBounds, isLoadingMap, fetchListingsInBounds]);
 
   return (
     <div className="relative">
@@ -351,9 +392,15 @@ export default function ListingsWithMap({
         {totalCount > listings.length && ` (${totalCount} au total)`}
       </p>
 
+<<<<<<< Updated upstream
       {/* Grille des annonces - responsive pour tous écrans */}
       <div className="grid gap-4 sm:gap-x-6 sm:gap-y-8 grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3 3xl:grid-cols-4">
         {listings.map((listing) => (
+=======
+      {/* Grille des annonces - 3 colonnes style Airbnb */}
+      <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+        {listings.map((listing, index) => (
+>>>>>>> Stashed changes
           <ListingCard
             key={listing.id}
             listing={listing}
@@ -361,6 +408,7 @@ export default function ListingsWithMap({
             onHover={() => setHoveredId(listing.id)}
             onLeave={() => setHoveredId(null)}
             t={t}
+            index={index}
           />
         ))}
       </div>
@@ -380,7 +428,8 @@ export default function ListingsWithMap({
           panOnHover={false}
           hoveredId={hoveredId}
           onMarkerHover={setHoveredId}
-          onBoundsChange={handleBoundsChange}
+          // onBoundsChange désactivé pour éviter la boucle infinie
+          // onBoundsChange={handleBoundsChange}
         />
       </div>
 
@@ -392,7 +441,8 @@ export default function ListingsWithMap({
             panOnHover={false}
             hoveredId={hoveredId}
             onMarkerHover={setHoveredId}
-            onBoundsChange={handleBoundsChange}
+            // onBoundsChange désactivé pour éviter la boucle infinie
+            // onBoundsChange={handleBoundsChange}
           />
         </div>
       </section>

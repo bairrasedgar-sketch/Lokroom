@@ -1,39 +1,33 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useSession, signIn } from "next-auth/react";
 import { toast } from "sonner";
 import WishlistModal from "./WishlistModal";
+import { useFavorites } from "@/contexts/FavoritesContext";
 
 export default function FavoriteButton({
   listingId,
-  size = 28,
+  size = 24,
   className = "",
   showModal = true,
+  variant = "default",
 }: {
   listingId: string;
   size?: number;
   className?: string;
   showModal?: boolean;
+  variant?: "default" | "map" | "card";
 }) {
   const { status } = useSession();
-  const [favorited, setFavorited] = useState(false);
+  const { isFavorited, addFavorite, removeFavorite } = useFavorites();
   const [isPending, startTransition] = useTransition();
   const [isAnimating, setIsAnimating] = useState(false);
   const [particles, setParticles] = useState<number[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Charger l'état initial
-  useEffect(() => {
-    let abort = false;
-    (async () => {
-      const r = await fetch(`/api/favorites/${listingId}`, { cache: "no-store" }).catch(() => null);
-      if (!r?.ok) return;
-      const j = await r.json().catch(() => null);
-      if (!abort && j) setFavorited(!!j.favorited);
-    })();
-    return () => { abort = true; };
-  }, [listingId]);
+  // Utiliser l'état du context
+  const favorited = isFavorited(listingId);
 
   async function handleClick(e: React.MouseEvent) {
     e.preventDefault();
@@ -47,11 +41,16 @@ export default function FavoriteButton({
     // Si déjà en favoris, on retire
     if (favorited) {
       startTransition(async () => {
-        setFavorited(false);
+        // Optimistic update
+        removeFavorite(listingId);
+
         const res = await fetch(`/api/favorites/${listingId}`, { method: "DELETE" });
         if (!res.ok) {
-          setFavorited(true);
-          toast.error("Impossible de retirer le favori");
+          // Rollback en cas d'erreur
+          addFavorite(listingId);
+
+          const errorData = await res.json().catch(() => ({}));
+          toast.error(errorData.error || "Impossible de retirer le favori");
         } else {
           toast.success("Retiré des favoris");
         }
@@ -66,11 +65,16 @@ export default function FavoriteButton({
       // Mode simple sans modal
       triggerAnimation();
       startTransition(async () => {
-        setFavorited(true);
+        // Optimistic update
+        addFavorite(listingId);
+
         const res = await fetch(`/api/favorites/${listingId}`, { method: "POST" });
         if (!res.ok) {
-          setFavorited(false);
-          toast.error("Impossible d'ajouter aux favoris");
+          // Rollback en cas d'erreur
+          removeFavorite(listingId);
+
+          const errorData = await res.json().catch(() => ({}));
+          toast.error(errorData.error || "Impossible d'ajouter aux favoris");
         } else {
           toast.success("Ajouté aux favoris");
         }
@@ -88,10 +92,18 @@ export default function FavoriteButton({
   }
 
   function handleSaved() {
-    setFavorited(true);
+    // Mettre à jour le context
+    addFavorite(listingId);
     triggerAnimation();
     toast.success("Ajouté aux favoris");
   }
+
+  // Style du bouton selon la variante
+  const buttonStyles = {
+    default: "p-1.5",
+    map: "p-1",
+    card: "p-1.5",
+  };
 
   return (
     <>
@@ -99,15 +111,15 @@ export default function FavoriteButton({
         onClick={handleClick}
         aria-label={favorited ? "Retirer des favoris" : "Ajouter aux favoris"}
         disabled={isPending}
-        className={`relative rounded-full bg-white/90 p-1.5 shadow-md hover:shadow-lg transition-shadow ${className}`}
+        className={`lokroom-heart-btn relative rounded-full transition-all duration-200 ${buttonStyles[variant]} ${className}`}
         title={favorited ? "Retirer des favoris" : "Ajouter aux favoris"}
       >
-        {/* Particules de burst - rose pastel */}
+        {/* Particules de burst */}
         <div className="absolute inset-0 pointer-events-none overflow-visible">
           {particles.map((p) => (
             <span
               key={p}
-              className="absolute left-1/2 top-1/2 w-1.5 h-1.5 rounded-full bg-rose-300"
+              className="absolute left-1/2 top-1/2 w-1.5 h-1.5 rounded-full bg-[#FF385C]"
               style={{
                 animation: `particle-burst-${p} 0.6s ease-out forwards`,
               }}
@@ -115,32 +127,35 @@ export default function FavoriteButton({
           ))}
         </div>
 
-        {/* Ring effect - rose pastel */}
+        {/* Ring effect */}
         {isAnimating && (
           <span
-            className="absolute inset-0 rounded-full border-2 border-rose-300 animate-ping-once"
+            className="absolute inset-0 rounded-full border-2 border-[#FF385C] animate-ping-once"
           />
         )}
 
-        {/* Icône cœur avec animation - rose pastel quand favori */}
+        {/* Icône cœur style Airbnb - contour blanc, rempli rouge quand favori */}
         <svg
           width={size}
           height={size}
-          viewBox="0 0 24 24"
-          className={`relative z-10 transition-all duration-300 ease-out
-            ${favorited ? "fill-rose-400 stroke-rose-400" : "fill-none stroke-gray-600 hover:stroke-rose-300"}
+          viewBox="0 0 32 32"
+          className={`relative z-10 transition-all duration-200 ease-out
             ${isAnimating ? "scale-125" : "scale-100"}
             ${!favorited ? "hover:scale-110" : ""}
           `}
-          strokeWidth="1.5"
-          style={{
-            filter: favorited ? "drop-shadow(0 2px 6px rgba(251, 113, 133, 0.5))" : "none",
-          }}
         >
-          <path d="M12 21s-6.716-4.145-9.192-7.07C.749 11.62 1.367 8.5 3.757 7.05A5.002 5.002 0 0 1 12 8.278 5.002 5.002 0 0 1 20.243 7.05c2.39 1.45 3.008 4.57.95 6.88C18.716 16.855 12 21 12 21z" />
+          <path
+            d="M16 28c7-4.73 14-10 14-17a6.98 6.98 0 0 0-7-7c-1.8 0-3.58.68-4.95 2.05L16 8.1l-2.05-2.05a6.98 6.98 0 0 0-9.9 0A6.98 6.98 0 0 0 2 11c0 7 7 12.27 14 17z"
+            className={`transition-all duration-200 ${
+              favorited
+                ? "fill-[#FF385C] stroke-[#FF385C]"
+                : "fill-black/40 stroke-white hover:fill-black/30"
+            }`}
+            strokeWidth="2"
+          />
         </svg>
 
-        {/* Styles pour les animations - rose pastel */}
+        {/* Styles pour les animations */}
         <style jsx>{`
           @keyframes particle-burst-1 {
             0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }

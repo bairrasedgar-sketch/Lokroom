@@ -5,18 +5,7 @@ import { useSession } from "next-auth/react";
 import { XMarkIcon, PlusIcon, HeartIcon } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid";
 import Image from "next/image";
-
-type Wishlist = {
-  id: string;
-  name: string;
-  _count: { favorites: number };
-  favorites: {
-    listing: {
-      id: string;
-      images: { url: string }[];
-    };
-  }[];
-};
+import { useFavorites } from "@/contexts/FavoritesContext";
 
 type WishlistModalProps = {
   isOpen: boolean;
@@ -32,26 +21,18 @@ export default function WishlistModal({
   onSaved,
 }: WishlistModalProps) {
   const { status } = useSession();
-  const [wishlists, setWishlists] = useState<Wishlist[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { wishlists, refreshWishlists, wishlistsLoading } = useFavorites();
   const [creating, setCreating] = useState(false);
   const [newListName, setNewListName] = useState("");
   const [showCreateInput, setShowCreateInput] = useState(false);
   const [savingTo, setSavingTo] = useState<string | null>(null);
 
-  // Charger les wishlists
+  // Rafraîchir les wishlists quand le modal s'ouvre
   useEffect(() => {
-    if (!isOpen || status !== "authenticated") return;
-
-    setLoading(true);
-    fetch("/api/wishlists")
-      .then((res) => res.json())
-      .then((data) => {
-        setWishlists(Array.isArray(data) ? data : []);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [isOpen, status]);
+    if (isOpen && status === "authenticated") {
+      refreshWishlists();
+    }
+  }, [isOpen, status, refreshWishlists]);
 
   // Créer une nouvelle liste
   const handleCreate = async () => {
@@ -67,10 +48,10 @@ export default function WishlistModal({
 
       if (res.ok) {
         const newWishlist = await res.json();
-        // Ajouter immédiatement le favori à cette nouvelle liste
-        await saveToWishlist(newWishlist.id);
         setNewListName("");
         setShowCreateInput(false);
+        // Ajouter immédiatement le favori à cette nouvelle liste
+        await saveToWishlist(newWishlist.id);
       }
     } catch (e) {
       console.error(e);
@@ -88,6 +69,8 @@ export default function WishlistModal({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ wishlistId }),
       });
+      // Rafraîchir les wishlists pour mettre à jour le contexte global
+      await refreshWishlists();
       onSaved();
       onClose();
     } catch (e) {
@@ -100,35 +83,35 @@ export default function WishlistModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       {/* Overlay */}
       <div
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* Modal */}
-      <div className="relative z-10 w-full max-w-lg rounded-2xl bg-white shadow-2xl">
+      {/* Modal - Plus grand et mieux centré */}
+      <div className="relative z-10 w-full max-w-2xl rounded-3xl bg-white shadow-2xl animate-modal-appear">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between border-b border-gray-200 px-8 py-5">
           <button
             onClick={onClose}
-            className="rounded-full p-1 hover:bg-gray-100"
+            className="rounded-full p-2 hover:bg-gray-100 transition-colors"
           >
-            <XMarkIcon className="h-5 w-5" />
+            <XMarkIcon className="h-6 w-6" />
           </button>
-          <h2 className="text-base font-semibold">Ajouter aux favoris</h2>
-          <div className="w-7" />
+          <h2 className="text-xl font-semibold">Ajouter aux favoris</h2>
+          <div className="w-10" />
         </div>
 
         {/* Content */}
-        <div className="max-h-[60vh] overflow-y-auto p-6">
-          {loading ? (
+        <div className="max-h-[70vh] overflow-y-auto p-8">
+          {wishlistsLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-gray-900" />
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
               {/* Listes existantes */}
               {wishlists.map((wishlist) => {
                 const previewImages = wishlist.favorites
@@ -141,7 +124,7 @@ export default function WishlistModal({
                     key={wishlist.id}
                     onClick={() => saveToWishlist(wishlist.id)}
                     disabled={savingTo === wishlist.id}
-                    className="group relative flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white text-left transition hover:border-gray-400 hover:shadow-md"
+                    className="group relative flex flex-col overflow-hidden rounded-2xl border-2 border-gray-200 bg-white text-left transition-all hover:border-gray-400 hover:shadow-lg hover:scale-[1.02]"
                   >
                     {/* Preview images grid */}
                     <div className="relative aspect-square w-full bg-gray-100">
@@ -155,7 +138,7 @@ export default function WishlistModal({
                                   alt=""
                                   fill
                                   className="object-cover"
-                                  sizes="100px"
+                                  sizes="150px"
                                 />
                               )}
                             </div>
@@ -163,24 +146,24 @@ export default function WishlistModal({
                         </div>
                       ) : (
                         <div className="flex h-full w-full items-center justify-center">
-                          <HeartIcon className="h-12 w-12 text-gray-300" />
+                          <HeartIcon className="h-16 w-16 text-gray-300" />
                         </div>
                       )}
 
                       {/* Hover overlay */}
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition group-hover:opacity-100">
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
                         {savingTo === wishlist.id ? (
-                          <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                          <div className="h-8 w-8 animate-spin rounded-full border-3 border-white border-t-transparent" />
                         ) : (
-                          <HeartSolid className="h-8 w-8 text-white" />
+                          <HeartSolid className="h-12 w-12 text-white drop-shadow-lg" />
                         )}
                       </div>
                     </div>
 
                     {/* Info */}
-                    <div className="p-3">
-                      <p className="font-medium text-gray-900">{wishlist.name}</p>
-                      <p className="text-sm text-gray-500">
+                    <div className="p-4">
+                      <p className="font-semibold text-gray-900 text-base">{wishlist.name}</p>
+                      <p className="text-sm text-gray-500 mt-1">
                         {wishlist._count.favorites} annonce{wishlist._count.favorites !== 1 ? "s" : ""}
                       </p>
                     </div>
@@ -191,10 +174,10 @@ export default function WishlistModal({
               {/* Bouton créer nouvelle liste */}
               <button
                 onClick={() => setShowCreateInput(true)}
-                className="flex aspect-square flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 text-gray-500 transition hover:border-gray-400 hover:bg-gray-100"
+                className="flex aspect-square flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 text-gray-500 transition-all hover:border-[#FF385C] hover:bg-[#FF385C]/5 hover:text-[#FF385C] hover:scale-[1.02]"
               >
-                <PlusIcon className="h-8 w-8" />
-                <span className="mt-2 text-sm font-medium">Créer une liste</span>
+                <PlusIcon className="h-12 w-12" />
+                <span className="mt-3 text-base font-semibold">Créer une liste</span>
               </button>
             </div>
           )}
@@ -202,14 +185,15 @@ export default function WishlistModal({
 
         {/* Footer - Create new list input */}
         {showCreateInput && (
-          <div className="border-t border-gray-200 p-4">
-            <div className="flex gap-2">
+          <div className="border-t border-gray-200 p-6">
+            <p className="text-sm font-medium text-gray-700 mb-3">Nom de la nouvelle liste</p>
+            <div className="flex gap-3">
               <input
                 type="text"
                 value={newListName}
                 onChange={(e) => setNewListName(e.target.value)}
-                placeholder="Nom de la liste..."
-                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                placeholder="Ex: Vacances d'été, Week-end..."
+                className="flex-1 rounded-xl border-2 border-gray-200 px-4 py-3 text-base focus:border-gray-900 focus:outline-none transition-colors"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleCreate();
@@ -219,7 +203,7 @@ export default function WishlistModal({
               <button
                 onClick={handleCreate}
                 disabled={creating || !newListName.trim()}
-                className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
+                className="rounded-xl bg-[#FF385C] px-6 py-3 text-base font-semibold text-white hover:bg-[#E31C5F] disabled:opacity-50 transition-colors"
               >
                 {creating ? "..." : "Créer"}
               </button>
@@ -228,7 +212,7 @@ export default function WishlistModal({
                   setShowCreateInput(false);
                   setNewListName("");
                 }}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
+                className="rounded-xl border-2 border-gray-200 px-4 py-3 text-base font-medium hover:bg-gray-50 transition-colors"
               >
                 Annuler
               </button>
@@ -236,6 +220,23 @@ export default function WishlistModal({
           </div>
         )}
       </div>
+
+      {/* Animation CSS */}
+      <style jsx global>{`
+        @keyframes modal-appear {
+          0% {
+            opacity: 0;
+            transform: scale(0.95) translateY(10px);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+        .animate-modal-appear {
+          animation: modal-appear 0.2s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 }
