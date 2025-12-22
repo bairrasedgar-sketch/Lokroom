@@ -392,15 +392,9 @@ export default function ListingsWithMap({
         {totalCount > listings.length && ` (${totalCount} au total)`}
       </p>
 
-<<<<<<< Updated upstream
       {/* Grille des annonces - responsive pour tous écrans */}
       <div className="grid gap-4 sm:gap-x-6 sm:gap-y-8 grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3 3xl:grid-cols-4">
-        {listings.map((listing) => (
-=======
-      {/* Grille des annonces - 3 colonnes style Airbnb */}
-      <div className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
         {listings.map((listing, index) => (
->>>>>>> Stashed changes
           <ListingCard
             key={listing.id}
             listing={listing}
