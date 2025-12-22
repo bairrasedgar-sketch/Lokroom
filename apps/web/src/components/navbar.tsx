@@ -7,6 +7,7 @@ import Image from "next/image";
 import { signIn, useSession } from "next-auth/react";
 import { UserMenu } from "./layout/UserMenu";
 import { useSearchBarSafe } from "@/contexts/SearchBarContext";
+import { COUNTRIES, DEFAULT_COUNTRY, type Country } from "@/data/countries";
 
 type LocaleOption = {
   code: string;
@@ -325,6 +326,7 @@ export default function Navbar() {
   const [localeModalOpen, setLocaleModalOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authPhoneNumber, setAuthPhoneNumber] = useState("");
+  const [selectedCountry, setSelectedCountry] = useState<Country>(DEFAULT_COUNTRY);
 
   const [currentLocale, setCurrentLocale] = useState<LocaleCode>("fr");
   const [currentCurrency, setCurrentCurrency] = useState<string>("EUR");
@@ -812,11 +814,23 @@ export default function Navbar() {
                   <label className="text-xs font-semibold text-gray-700">
                     {t.phoneCountryLabel}
                   </label>
-                  <select className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-0">
-                    <option>Canada (+1)</option>
-                    <option>France (+33)</option>
-                    <option>États-Unis (+1)</option>
-                    <option>Royaume-Uni (+44)</option>
+                  <select
+                    value={selectedCountry.code}
+                    onChange={(e) => {
+                      const country = COUNTRIES.find(c => c.code === e.target.value);
+                      if (country) {
+                        setSelectedCountry(country);
+                        // Auto-remplir l'indicatif dans le champ téléphone
+                        setAuthPhoneNumber(country.dialCode);
+                      }
+                    }}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-0"
+                  >
+                    {COUNTRIES.map((country) => (
+                      <option key={country.code} value={country.code}>
+                        {country.flag} {country.name} ({country.dialCode})
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -846,7 +860,7 @@ export default function Navbar() {
                       }
                     }}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-0"
-                    placeholder={t.phoneNumberLabel}
+                    placeholder={`${selectedCountry.dialCode} ...`}
                   />
                 </div>
 
