@@ -324,6 +324,7 @@ export default function Navbar() {
 
   const [localeModalOpen, setLocaleModalOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authPhoneNumber, setAuthPhoneNumber] = useState("");
 
   const [currentLocale, setCurrentLocale] = useState<LocaleCode>("fr");
   const [currentCurrency, setCurrentCurrency] = useState<string>("EUR");
@@ -825,6 +826,25 @@ export default function Navbar() {
                   </label>
                   <input
                     type="tel"
+                    value={authPhoneNumber}
+                    onChange={(e) => {
+                      // N'accepter que les chiffres et le + (pour l'indicatif international)
+                      const value = e.target.value.replace(/[^0-9+]/g, '');
+                      // Le + ne peut être qu'au début
+                      const sanitized = value.charAt(0) === '+'
+                        ? '+' + value.slice(1).replace(/\+/g, '')
+                        : value.replace(/\+/g, '');
+                      setAuthPhoneNumber(sanitized);
+                    }}
+                    onKeyDown={(e) => {
+                      // Bloquer les lettres et caractères spéciaux (sauf + au début)
+                      const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'Home', 'End'];
+                      if (allowedKeys.includes(e.key)) return;
+                      if (e.key === '+' && e.currentTarget.selectionStart === 0 && !authPhoneNumber.includes('+')) return;
+                      if (!/[0-9]/.test(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-0"
                     placeholder={t.phoneNumberLabel}
                   />
