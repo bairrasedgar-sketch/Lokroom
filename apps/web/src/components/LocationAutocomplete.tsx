@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { MapPinIcon } from "@heroicons/react/24/outline";
 import { useGoogleMaps } from "./GoogleMapsLoader";
 import { CityIllustration } from "./CityIllustrations";
 

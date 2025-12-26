@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useGoogleMaps } from "./GoogleMapsLoader";
@@ -326,7 +326,7 @@ export default function Map({
       } else {
         map.fitBounds(bounds, { top: 40, right: 40, bottom: 40, left: 40 });
         // Limiter le zoom max
-        const listener = g.maps.event.addListenerOnce(map, "idle", () => {
+        g.maps.event.addListenerOnce(map, "idle", () => {
           const currentZoom = map.getZoom();
           if (currentZoom && currentZoom > 14) {
             map.setZoom(14);

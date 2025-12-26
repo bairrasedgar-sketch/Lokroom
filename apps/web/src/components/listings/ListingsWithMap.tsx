@@ -90,7 +90,6 @@ function ListingCard({
   onLeave,
   t,
   index = 0,
-  isUpdating = false,
 }: {
   listing: ListingCardData;
   isHovered: boolean;
@@ -98,7 +97,6 @@ function ListingCard({
   onLeave: () => void;
   t: ListingsWithMapProps["translations"];
   index?: number;
-  isUpdating?: boolean;
 }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
