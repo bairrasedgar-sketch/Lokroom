@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSearchBar } from "@/contexts/SearchBarContext";
 import SearchModal from "./SearchModal";
 import FavoriteButton from "./FavoriteButton";
+import { CityIllustration } from "./CityIllustrations";
 
 // ============================================================================
 // TYPES
@@ -625,12 +626,7 @@ function SearchBar({ isCompact }: { isCompact: boolean }) {
                       }}
                       className="flex items-center gap-3 rounded-xl border border-gray-200 p-3 text-left transition-all hover:border-gray-300 hover:bg-gray-50"
                     >
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100">
-                        <svg className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                        </svg>
-                      </div>
+                      <CityIllustration city={dest.city} className="w-10 h-10 rounded-lg" />
                       <div>
                         <p className="text-sm font-medium text-gray-900">{dest.city}</p>
                         <p className="text-xs text-gray-500">{dest.country}</p>

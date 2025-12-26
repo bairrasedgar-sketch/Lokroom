@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useGoogleMaps } from "./GoogleMapsLoader";
@@ -41,9 +41,56 @@ type MapProps = {
 
   /** Callback quand les bounds de la carte changent (zoom/pan) */
   onBoundsChange?: (bounds: { north: number; south: number; east: number; west: number }) => void;
+
+  /** Si true, ne pas faire fitBounds quand les markers changent (utile après un fetch basé sur la carte) */
+  skipFitBounds?: boolean;
 };
 
 const DEFAULT_CENTER = { lat: 45.5019, lng: -73.5674 }; // Montréal
+
+// Style écologique pour la map
+const MAP_STYLES = [
+  // Fond général - beige chaud et reposant
+  { featureType: "landscape", elementType: "geometry.fill", stylers: [{ color: "#f5efe6" }] },
+  { featureType: "landscape.natural", elementType: "geometry.fill", stylers: [{ color: "#f0e9de" }] },
+  { featureType: "landscape.man_made", elementType: "geometry.fill", stylers: [{ color: "#f7f2ea" }] },
+  // Parcs et espaces verts - vert écologique #a5d8a1
+  { featureType: "poi.park", elementType: "geometry.fill", stylers: [{ color: "#a5d8a1" }] },
+  { featureType: "poi.park", elementType: "labels.text.fill", stylers: [{ color: "#4a7c47" }] },
+  // Forêts et végétation
+  { featureType: "landscape.natural.terrain", elementType: "geometry.fill", stylers: [{ color: "#b8e0b4" }] },
+  { featureType: "landscape.natural.landcover", elementType: "geometry.fill", stylers: [{ color: "#c2e8be" }] },
+  // Autres POI - beige avec touches subtiles
+  { featureType: "poi.attraction", elementType: "geometry.fill", stylers: [{ color: "#ebe4d8" }] },
+  { featureType: "poi.business", elementType: "geometry.fill", stylers: [{ color: "#f5efe6" }] },
+  { featureType: "poi.school", elementType: "geometry.fill", stylers: [{ color: "#f0e9de" }] },
+  { featureType: "poi.medical", elementType: "geometry.fill", stylers: [{ color: "#f7f2ea" }] },
+  { featureType: "poi.sports_complex", elementType: "geometry.fill", stylers: [{ color: "#a5d8a1" }] },
+  { featureType: "poi.government", elementType: "geometry.fill", stylers: [{ color: "#ebe4d8" }] },
+  { featureType: "poi.place_of_worship", elementType: "geometry.fill", stylers: [{ color: "#f0e9de" }] },
+  // Cacher les icônes POI
+  { featureType: "poi", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+  { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#8a7a65" }] },
+  // Eau - bleu doux #cae8f2
+  { featureType: "water", elementType: "geometry.fill", stylers: [{ color: "#cae8f2" }] },
+  { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#5a9aaa" }] },
+  // Routes
+  { featureType: "road.highway", elementType: "geometry.fill", stylers: [{ color: "#ffffff" }] },
+  { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#e8e0d5" }] },
+  { featureType: "road.arterial", elementType: "geometry.fill", stylers: [{ color: "#fdfbf8" }] },
+  { featureType: "road.arterial", elementType: "geometry.stroke", stylers: [{ color: "#ebe4d8" }] },
+  { featureType: "road.local", elementType: "geometry.fill", stylers: [{ color: "#faf7f2" }] },
+  { featureType: "road.local", elementType: "geometry.stroke", stylers: [{ color: "#ebe4d8" }] },
+  { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#8a7a65" }] },
+  // Transit
+  { featureType: "transit.station", elementType: "geometry.fill", stylers: [{ color: "#ebe4d8" }] },
+  { featureType: "transit.line", elementType: "geometry.fill", stylers: [{ color: "#e0d8cc" }] },
+  { featureType: "transit", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+  // Labels
+  { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#5a5045" }] },
+  { featureType: "administrative.neighborhood", elementType: "labels.text.fill", stylers: [{ color: "#7a6a5a" }] },
+  { featureType: "administrative.land_parcel", elementType: "labels.text.fill", stylers: [{ color: "#9a8a7a" }] },
+];
 
 export default function Map({
   markers = [],
@@ -53,19 +100,33 @@ export default function Map({
   onMarkerClick,
   panOnHover = true,
   onBoundsChange,
+  skipFitBounds = false,
 }: MapProps) {
   const { isLoaded: scriptLoaded, loadError: scriptError } = useGoogleMaps();
 
   const containerRef = useRef<HTMLDivElement | null>(null);
-
   const missingApiKey = !process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
-  // Référence vers la carte pour pouvoir la recentrer depuis un autre effet
+  // Référence vers la carte (persistante)
   const mapRef = useRef<any | null>(null);
+  const mapInitializedRef = useRef(false);
 
   // Référence réactive vers l'id survolé (pour les bulles actives)
   const hoveredIdRef = useRef<string | null>(null);
   const overlaysRef = useRef<any[]>([]);
+  const markersInstancesRef = useRef<any[]>([]);
+
+  // Refs pour les callbacks (éviter les re-renders)
+  const onMarkerHoverRef = useRef(onMarkerHover);
+  const onMarkerClickRef = useRef(onMarkerClick);
+  const onBoundsChangeRef = useRef(onBoundsChange);
+
+  // Mettre à jour les refs quand les callbacks changent
+  useEffect(() => {
+    onMarkerHoverRef.current = onMarkerHover;
+    onMarkerClickRef.current = onMarkerClick;
+    onBoundsChangeRef.current = onBoundsChange;
+  }, [onMarkerHover, onMarkerClick, onBoundsChange]);
 
   // Sélection interne pour l'aperçu intégré (si aucun onMarkerClick externe)
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -79,64 +140,42 @@ export default function Map({
     if (!container) return;
 
     const handleWheel = (e: WheelEvent) => {
-      // Empêcher le scroll de la page, la map gère le zoom
       e.preventDefault();
       e.stopPropagation();
     };
 
     container.addEventListener("wheel", handleWheel, { passive: false });
-
-    return () => {
-      container.removeEventListener("wheel", handleWheel);
-    };
+    return () => container.removeEventListener("wheel", handleWheel);
   }, []);
 
+  // Mettre à jour la ref hoveredId et redessiner les overlays
   useEffect(() => {
     hoveredIdRef.current = hoveredId ?? null;
-
-    // 🔁 force un redraw des overlays pour mettre à jour la classe active
     overlaysRef.current.forEach((ov) => {
-      if (typeof ov.draw === "function") {
-        ov.draw();
-      }
+      if (typeof ov.draw === "function") ov.draw();
     });
   }, [hoveredId]);
 
-  // Reset sélection si les markers changent (ex: changement de filtres)
+  // Reset sélection si les markers changent
   useEffect(() => {
     setSelectedId(null);
   }, [markers]);
 
+  // === EFFET 1: Création de la map (UNE SEULE FOIS) ===
   useEffect(() => {
-    if (missingApiKey || !scriptLoaded || !containerRef.current) return;
+    if (missingApiKey || !scriptLoaded || !containerRef.current || mapInitializedRef.current) return;
 
     const g = (window as any).google as any;
     if (!g || !g.maps || typeof g.maps.Map !== "function") {
-      console.error("Google Maps API non prête", {
-        g,
-        maps: g?.maps,
-        mapCtor: g?.maps?.Map,
-      });
+      console.error("Google Maps API non prête");
       return;
     }
 
-    // --- Création de la carte ---
-    const first = markers[0];
-    const center = first
-      ? { lat: first.lat, lng: first.lng }
-      : DEFAULT_CENTER;
-
-    // Limites du monde entier (empêche de sortir de la carte)
-    const WORLD_BOUNDS = {
-      north: 85,   // Limite nord
-      south: -85,  // Limite sud
-      west: -180,  // Limite ouest
-      east: 180,   // Limite est
-    };
+    const WORLD_BOUNDS = { north: 85, south: -85, west: -180, east: 180 };
 
     const mapOptions: any = {
-      center,
-      zoom: first ? 12 : 5,
+      center: DEFAULT_CENTER,
+      zoom: 5,
       mapTypeId: "roadmap",
       disableDefaultUI: true,
       zoomControl: false,
@@ -145,171 +184,109 @@ export default function Map({
       clickableIcons: false,
       minZoom: 2,
       maxZoom: 18,
-      // Toujours restreindre aux limites du monde pour éviter de sortir
-      restriction: {
-        latLngBounds: WORLD_BOUNDS,
-        strictBounds: true,
-      },
-      styles: [
-        {
-          featureType: "all",
-          elementType: "labels.icon",
-          stylers: [{ visibility: "off" }],
-        },
-        {
-          featureType: "poi",
-          elementType: "labels.text.fill",
-          stylers: [{ color: "#6b7280" }],
-        },
-        {
-          featureType: "road",
-          elementType: "geometry",
-          stylers: [{ color: "#e5e7eb" }],
-        },
-        {
-          featureType: "road",
-          elementType: "geometry.stroke",
-          stylers: [{ color: "#d1d5db" }],
-        },
-        {
-          featureType: "landscape",
-          elementType: "geometry",
-          stylers: [{ color: "#f3f4f6" }],
-        },
-        {
-          featureType: "water",
-          elementType: "geometry",
-          stylers: [{ color: "#dbeafe" }],
-        },
-      ],
+      restriction: { latLngBounds: WORLD_BOUNDS, strictBounds: true },
+      styles: MAP_STYLES,
     };
 
     const map = new g.maps.Map(containerRef.current, mapOptions);
-
     mapRef.current = map;
+    mapInitializedRef.current = true;
 
-    // Pour nettoyer les overlays & markers à l'unmount
-    const overlays: any[] = [];
-    const markersInstances: any[] = [];
-    const listeners: any[] = [];
-
-    // --- Listener pour les changements de bounds ---
-    if (onBoundsChange) {
-      const emitBounds = () => {
-        const bounds = map.getBounds();
-        if (bounds) {
-          const ne = bounds.getNorthEast();
-          const sw = bounds.getSouthWest();
-          onBoundsChange({
-            north: ne.lat(),
-            south: sw.lat(),
-            east: ne.lng(),
-            west: sw.lng(),
-          });
-        }
-      };
-
-      // Écouter idle (après zoom/pan), dragend (après déplacement), et zoom_changed
-      const idleListener = map.addListener("idle", emitBounds);
-      const dragEndListener = map.addListener("dragend", emitBounds);
-      const zoomListener = map.addListener("zoom_changed", () => {
-        // Petit délai pour que les bounds soient mis à jour
-        setTimeout(emitBounds, 100);
-      });
-      listeners.push(idleListener, dragEndListener, zoomListener);
-    }
-    // --- Gestion du zoom / centrage ---
-    if (markers.length === 1) {
-      // Vue "quartier" pour une seule annonce
-      const m = markers[0];
-      if (Number.isFinite(m.lat) && Number.isFinite(m.lng)) {
-        map.setCenter({ lat: m.lat, lng: m.lng });
-        map.setZoom(14); // quartier, pas ultra-zoomé
-      }
-    } else if (markers.length > 1) {
-      // Vue large qui englobe toutes les annonces
-      const bounds = new g.maps.LatLngBounds();
-      markers.forEach((m: MapMarker) => {
-        if (!Number.isFinite(m.lat) || !Number.isFinite(m.lng)) return;
-        bounds.extend({ lat: m.lat, lng: m.lng });
-      });
-
-      if (!bounds.isEmpty()) {
-        map.fitBounds(bounds, {
-          top: 40,
-          right: 40,
-          bottom: 40,
-          left: 40,
+    // Listener pour les changements de bounds (PERMANENT)
+    map.addListener("idle", () => {
+      const bounds = map.getBounds();
+      if (bounds && onBoundsChangeRef.current) {
+        const ne = bounds.getNorthEast();
+        const sw = bounds.getSouthWest();
+        onBoundsChangeRef.current({
+          north: ne.lat(),
+          south: sw.lat(),
+          east: ne.lng(),
+          west: sw.lng(),
         });
-
-        // Limite de zoom max pour éviter d'être trop près
-        const currentZoom = map.getZoom();
-        if (currentZoom && currentZoom > 12) {
-          map.setZoom(12);
-        }
       }
-    }
+    });
 
-    // --- Markers --->    
+    // Cleanup on unmount
+    return () => {
+      mapInitializedRef.current = false;
+      mapRef.current = null;
+    };
+  }, [missingApiKey, scriptLoaded]);
+
+  // === EFFET 2: Mise à jour des markers (à chaque changement de markers) ===
+  useEffect(() => {
+    const map = mapRef.current;
+    const g = (window as any).google;
+    if (!map || !g || !g.maps) return;
+
+    // Nettoyer les anciens overlays et markers
+    overlaysRef.current.forEach((o) => o.setMap(null));
+    markersInstancesRef.current.forEach((m) => m.setMap(null));
+    overlaysRef.current = [];
+    markersInstancesRef.current = [];
+
+    if (markers.length === 0) return;
+
+    // Centrer sur les markers (seulement si c'est le premier affichage de ces markers)
+    const bounds = new g.maps.LatLngBounds();
+    let hasValidMarker = false;
+
     markers.forEach((m: MapMarker) => {
       if (!Number.isFinite(m.lat) || !Number.isFinite(m.lng)) return;
+      hasValidMarker = true;
 
       const position = new g.maps.LatLng(m.lat, m.lng);
+      bounds.extend(position);
 
-      // 1) Détail annonce → logo Lok'Room comme repère
+      // Mode logo (page détail)
       if (useLogoIcon) {
         const marker = new g.maps.Marker({
           map,
           position,
-          icon: {
-            url: "/map-marker-lokroom.png",
-            scaledSize: new g.maps.Size(56, 56), // ajuste si tu veux
-          },
+          icon: { url: "/map-marker-lokroom.png", scaledSize: new g.maps.Size(56, 56) },
         });
-        markersInstances.push(marker);
+        markersInstancesRef.current.push(marker);
         return;
       }
 
-      // 2) Liste d'annonces → bulle de prix personnalisée (OverlayView)
+      // Mode bulle de prix (liste)
       const labelText = m.label ?? "";
-
       const overlay = new g.maps.OverlayView();
       (overlay as any).div = null;
+      (overlay as any).markerId = m.id;
 
       overlay.onAdd = function () {
         const div = document.createElement("div");
         div.className = "lokroom-price-badge";
         div.textContent = labelText;
 
-        // clic → apercu (interne si pas de handler externe) + highlight
         div.addEventListener("click", (event) => {
-          event.stopPropagation(); // empêche le clic de remonter à la carte / POI
-
-          if (onMarkerClick) {
-            onMarkerClick(m.id);
+          event.stopPropagation();
+          if (onMarkerClickRef.current) {
+            onMarkerClickRef.current(m.id);
           } else {
             setSelectedId(m.id);
           }
-          if (onMarkerHover) onMarkerHover(m.id);
+          if (onMarkerHoverRef.current) onMarkerHoverRef.current(m.id);
         });
 
         div.addEventListener("mouseenter", () => {
-          if (onMarkerHover) onMarkerHover(m.id);
+          if (onMarkerHoverRef.current) onMarkerHoverRef.current(m.id);
         });
 
         div.addEventListener("mouseleave", () => {
-          if (onMarkerHover) onMarkerHover(null);
+          if (onMarkerHoverRef.current) onMarkerHoverRef.current(null);
         });
 
         (this as any).div = div;
-
         const panes = this.getPanes();
         panes.overlayMouseTarget.appendChild(div);
       };
 
       overlay.draw = function () {
         const projection = this.getProjection();
-        if (!projection) return; // sécurité
+        if (!projection) return;
 
         const point = projection.fromLatLngToDivPixel(position);
         const div = (this as any).div as HTMLDivElement | null;
@@ -319,13 +296,11 @@ export default function Map({
         div.style.left = `${point.x}px`;
         div.style.top = `${point.y}px`;
 
-        // 💡 Mise à jour du style "actif" en fonction du hoveredId courant
         const currentHovered = hoveredIdRef.current;
         const isActive = currentHovered && currentHovered === m.id;
 
         if (isActive) {
           div.classList.add("lokroom-price-badge--active");
-          // 👉 cette bulle passe AU-DESSUS des autres
           div.style.zIndex = "999";
         } else {
           div.classList.remove("lokroom-price-badge--active");
@@ -335,39 +310,35 @@ export default function Map({
 
       overlay.onRemove = function () {
         const div = (this as any).div as HTMLDivElement | null;
-        if (div && div.parentNode) {
-          div.parentNode.removeChild(div);
-        }
+        if (div && div.parentNode) div.parentNode.removeChild(div);
       };
 
       overlay.setMap(map);
-      overlays.push(overlay);
+      overlaysRef.current.push(overlay);
     });
 
-    overlaysRef.current = overlays;
+    // Ajuster la vue sur les markers UNIQUEMENT si on ne skip pas
+    if (hasValidMarker && !bounds.isEmpty() && !skipFitBounds) {
+      if (markers.length === 1) {
+        const m = markers[0];
+        map.setCenter({ lat: m.lat, lng: m.lng });
+        map.setZoom(14);
+      } else {
+        map.fitBounds(bounds, { top: 40, right: 40, bottom: 40, left: 40 });
+        // Limiter le zoom max
+        const listener = g.maps.event.addListenerOnce(map, "idle", () => {
+          const currentZoom = map.getZoom();
+          if (currentZoom && currentZoom > 14) {
+            map.setZoom(14);
+          }
+        });
+      }
+    }
+  }, [markers, useLogoIcon, skipFitBounds]);
 
-    // Cleanup
-    return () => {
-      overlays.forEach((o) => o.setMap(null));
-      markersInstances.forEach((m: any) => m.setMap(null));
-      listeners.forEach((l) => g.maps.event.removeListener(l));
-      overlaysRef.current = [];
-    };
-  }, [
-    missingApiKey,
-    scriptLoaded,
-    markers,
-    useLogoIcon,
-    onMarkerHover,
-    onMarkerClick,
-    onBoundsChange,
-  ]);
-
-  // 🎯 Quand on survole une carte dans la liste OU qu'on clique une bulle
-  // → recentrer la map (optionnel)
+  // === EFFET 3: Pan vers le marker survolé ===
   useEffect(() => {
-    if (!panOnHover) return; // pour /listings : pas de déplacement au survol
-    if (!hoveredId || !mapRef.current) return;
+    if (!panOnHover || !hoveredId || !mapRef.current) return;
 
     const markerData = markers.find((m) => m.id === hoveredId);
     if (!markerData) return;
@@ -375,13 +346,8 @@ export default function Map({
     const { lat, lng } = markerData;
     if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
 
-    const map = mapRef.current;
-    map.panTo({ lat, lng });
-
-    const currentZoom = map.getZoom();
-    if (!currentZoom || currentZoom < 13) {
-      map.setZoom(13);
-    }
+    // Ne pas recentrer si on a panOnHover=false (mode listings)
+    // Le panOnHover est déjà vérifié en haut
   }, [hoveredId, markers, panOnHover]);
 
   if (scriptError) {
@@ -392,9 +358,6 @@ export default function Map({
     );
   }
 
-  // 👉 Aperçu interne seulement si :
-  // - on n’est PAS en mode logo (détail annonce)
-  // - il n’y a PAS de onMarkerClick externe (cas ListingsWithMap)
   const hasExternalClickHandler = !!onMarkerClick;
   const selectedMarker =
     !useLogoIcon && !hasExternalClickHandler && selectedId
@@ -409,16 +372,6 @@ export default function Map({
         style={{ minHeight: 360 }}
       >
         <div ref={containerRef} className="h-full w-full rounded-3xl" />
-
-        {/* Indicateur de zoom (apparaît brièvement au survol) */}
-        <style jsx>{`
-          @keyframes fadeInOut {
-            0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
-            15% { opacity: 1; transform: translateX(-50%) translateY(0); }
-            85% { opacity: 1; transform: translateX(-50%) translateY(0); }
-            100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
-          }
-        `}</style>
 
         {/* Boutons zoom custom */}
         <div className="absolute bottom-4 left-4 z-10 flex flex-col gap-2">
@@ -450,14 +403,14 @@ export default function Map({
           </button>
         </div>
 
-        {/* Aperçu intégré façon Airbnb (desktop & mobile) */}
+        {/* Aperçu intégré façon Airbnb */}
         {selectedMarker && (
           <div className="pointer-events-auto absolute bottom-4 right-4 z-[1000] w-72 max-w-full overflow-hidden rounded-2xl border bg-white text-xs shadow-xl sm:w-80">
             <button
               type="button"
               onClick={() => setSelectedId(null)}
               className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-xs font-bold text-gray-800 shadow"
-              aria-label="Fermer l’aperçu"
+              aria-label="Fermer l'aperçu"
             >
               ×
             </button>
@@ -490,9 +443,7 @@ export default function Map({
                   {selectedMarker.createdAt && (
                     <>
                       {" · "}
-                      {new Date(
-                        selectedMarker.createdAt,
-                      ).toLocaleDateString()}
+                      {new Date(selectedMarker.createdAt).toLocaleDateString()}
                     </>
                   )}
                 </p>

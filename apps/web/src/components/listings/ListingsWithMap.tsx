@@ -62,6 +62,26 @@ type ListingsWithMapProps = {
   displayCurrency?: string;
 };
 
+// Composant Skeleton pour le chargement (style Airbnb)
+function ListingCardSkeleton() {
+  return (
+    <div className="flex flex-col overflow-hidden rounded-xl animate-pulse">
+      {/* Image skeleton */}
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-gray-200" />
+
+      {/* Content skeleton */}
+      <div className="flex flex-col pt-3 space-y-2">
+        <div className="flex items-start justify-between gap-2">
+          <div className="h-4 bg-gray-200 rounded w-3/4" />
+          <div className="h-4 bg-gray-200 rounded w-8" />
+        </div>
+        <div className="h-3 bg-gray-200 rounded w-1/2" />
+        <div className="h-4 bg-gray-200 rounded w-1/3 mt-1" />
+      </div>
+    </div>
+  );
+}
+
 // Composant pour la carte d'annonce style Airbnb
 function ListingCard({
   listing,
@@ -70,6 +90,7 @@ function ListingCard({
   onLeave,
   t,
   index = 0,
+  isUpdating = false,
 }: {
   listing: ListingCardData;
   isHovered: boolean;
@@ -77,6 +98,7 @@ function ListingCard({
   onLeave: () => void;
   t: ListingsWithMapProps["translations"];
   index?: number;
+  isUpdating?: boolean;
 }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
@@ -85,11 +107,13 @@ function ListingCard({
 
   // Animation d'apparition en escalier
   useEffect(() => {
+    // Reset visibility when listing changes (new data from map)
+    setIsVisible(false);
     const timer = setTimeout(() => {
       setIsVisible(true);
-    }, index * 50); // 50ms de délai entre chaque carte
+    }, index * 80); // 80ms de délai entre chaque carte (plus lent)
     return () => clearTimeout(timer);
-  }, [index]);
+  }, [index, listing.id]); // Re-trigger quand l'id change
 
   const nextImage = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -111,14 +135,11 @@ function ListingCard({
 
   return (
     <div
-      className={`group relative flex flex-col overflow-hidden rounded-xl transition-all duration-300 ${
+      className={`group relative flex flex-col overflow-hidden rounded-xl transition-all duration-500 ease-out ${
         isHovered ? "shadow-lg scale-[1.02]" : ""
-      } ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"}`}
+      } ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
       onMouseEnter={onHover}
       onMouseLeave={onLeave}
-      style={{
-        transitionDelay: isVisible ? "0ms" : `${index * 50}ms`,
-      }}
     >
       {/* Image container avec carousel - aspect ratio 4:3 pour moins de hauteur */}
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-gray-100">
@@ -223,6 +244,21 @@ function ListingCard({
   );
 }
 
+// Helper pour comparer les bounds (éviter les re-fetches inutiles)
+function boundsAreEqual(
+  a: { north: number; south: number; east: number; west: number } | null,
+  b: { north: number; south: number; east: number; west: number } | null,
+  threshold = 0.001
+): boolean {
+  if (!a || !b) return false;
+  return (
+    Math.abs(a.north - b.north) < threshold &&
+    Math.abs(a.south - b.south) < threshold &&
+    Math.abs(a.east - b.east) < threshold &&
+    Math.abs(a.west - b.west) < threshold
+  );
+}
+
 export default function ListingsWithMap({
   listings: initialListings,
   markers: initialMarkers,
@@ -233,21 +269,40 @@ export default function ListingsWithMap({
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [isLoadingMap, setIsLoadingMap] = useState(false);
   const [listings, setListings] = useState<ListingCardData[]>(initialListings);
+  const [previousListings, setPreviousListings] = useState<ListingCardData[]>(initialListings); // Garde les anciennes pendant le chargement
   const [markers, setMarkers] = useState<MapMarker[]>(initialMarkers);
   const [totalCount, setTotalCount] = useState(initialListings.length);
+  const [isMapSearchEnabled, setIsMapSearchEnabled] = useState(true);
+  const [skipFitBounds, setSkipFitBounds] = useState(false);
+
   const abortControllerRef = useRef<AbortController | null>(null);
   const isFirstLoad = useRef(true);
+  const lastFetchedBounds = useRef<{ north: number; south: number; east: number; west: number } | null>(null);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Tracker si on a fait un fetch manuel (pour éviter de re-fitBounds)
+  const hasFetchedFromMapRef = useRef(false);
 
   // Update listings when initial data changes (e.g., from server-side filters)
   useEffect(() => {
     setListings(initialListings);
+    setPreviousListings(initialListings);
     setMarkers(initialMarkers);
     setTotalCount(initialListings.length);
+    isFirstLoad.current = true; // Reset pour ne pas refetch au premier bounds change
+    lastFetchedBounds.current = null;
+    hasFetchedFromMapRef.current = false;
+    setSkipFitBounds(false);
   }, [initialListings, initialMarkers]);
 
   // Fetch listings based on map bounds
   const fetchListingsInBounds = useCallback(
     async (bounds: { north: number; south: number; east: number; west: number }) => {
+      // Vérifier si les bounds sont significativement différents
+      if (boundsAreEqual(lastFetchedBounds.current, bounds)) {
+        return; // Éviter les fetches redondants
+      }
+
       // Cancel previous request
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -257,14 +312,15 @@ export default function ListingsWithMap({
       abortControllerRef.current = controller;
 
       setIsLoadingMap(true);
+      lastFetchedBounds.current = bounds;
 
       try {
         // Build query params including existing search params
         const params = new URLSearchParams();
 
-        // Add existing search params
+        // Add existing search params (sauf page et bounds existants)
         for (const [key, value] of Object.entries(searchParams)) {
-          if (value && key !== "page") {
+          if (value && key !== "page" && !key.startsWith("ne") && !key.startsWith("sw")) {
             params.set(key, value);
           }
         }
@@ -315,8 +371,11 @@ export default function ListingsWithMap({
           }));
 
         setListings(formattedListings);
+        setPreviousListings(formattedListings); // Mettre à jour les anciennes aussi
         setMarkers(newMarkers);
         setTotalCount(data.total);
+        hasFetchedFromMapRef.current = true; // Marquer qu'on vient de fetcher
+        setSkipFitBounds(true); // Ne pas re-centrer la map
       } catch (error) {
         if ((error as Error).name !== "AbortError") {
           console.error("Error fetching listings:", error);
@@ -328,89 +387,120 @@ export default function ListingsWithMap({
     [searchParams, displayCurrency]
   );
 
-  // État pour les bounds en attente (debounce)
-  const [pendingBounds, setPendingBounds] = useState<{
-    north: number;
-    south: number;
-    east: number;
-    west: number;
-  } | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Callback quand les bounds de la carte changent
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // Callback quand les bounds de la carte changent (avec debounce intégré)
   const handleBoundsChange = useCallback(
     (bounds: { north: number; south: number; east: number; west: number }) => {
-      // Skip first load to use server-rendered data
+      // Skip si désactivé ou premier chargement
+      if (!isMapSearchEnabled) return;
+
       if (isFirstLoad.current) {
         isFirstLoad.current = false;
         return;
       }
 
-      // Stocker les bounds pour le debounce
-      setPendingBounds(bounds);
+      // Annuler le timeout précédent
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+
+      // Debounce de 500ms pour éviter trop de requêtes
+      debounceTimeoutRef.current = setTimeout(() => {
+        fetchListingsInBounds(bounds);
+      }, 500);
     },
-    []
+    [isMapSearchEnabled, fetchListingsInBounds]
   );
 
-  // Debounce effect: fetch après 400ms d'inactivité
+  // Cleanup timeout on unmount
   useEffect(() => {
-    if (!pendingBounds || isLoadingMap) return;
-
-    // Annuler le timeout précédent
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-
-    // Créer un nouveau timeout
-    timeoutRef.current = setTimeout(() => {
-      fetchListingsInBounds(pendingBounds);
-    }, 400);
-
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
     };
-  }, [pendingBounds, isLoadingMap, fetchListingsInBounds]);
+  }, []);
 
   return (
     <div className="relative">
       {/* Indicateur de chargement */}
       {isLoadingMap && (
         <div className="fixed left-1/2 top-24 z-50 -translate-x-1/2">
-          <div className="flex items-center gap-2 rounded-full bg-white px-4 py-2 shadow-lg">
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-200 border-t-gray-900" />
-            <span className="text-sm font-medium">Chargement...</span>
+          <div className="flex items-center gap-2 rounded-full bg-white px-4 py-2 shadow-lg border border-gray-200">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-900" />
+            <span className="text-sm font-medium text-gray-700">Recherche en cours...</span>
           </div>
         </div>
       )}
 
-      {/* Compteur d'annonces */}
-      <p className="mb-4 text-sm text-gray-600">
-        {listings.length} logement{listings.length !== 1 ? "s" : ""} dans cette zone
-        {totalCount > listings.length && ` (${totalCount} au total)`}
-      </p>
+      {/* Compteur d'annonces + Toggle recherche sur carte */}
+      <div className="mb-4 flex items-center justify-between">
+        <p className="text-sm text-gray-600">
+          {listings.length} logement{listings.length !== 1 ? "s" : ""} dans cette zone
+          {totalCount > listings.length && ` (${totalCount} au total)`}
+        </p>
 
-      {/* Grille des annonces - responsive pour tous écrans */}
-      <div className="grid gap-4 sm:gap-x-6 sm:gap-y-8 grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3 3xl:grid-cols-4">
-        {listings.map((listing, index) => (
-          <ListingCard
-            key={listing.id}
-            listing={listing}
-            isHovered={hoveredId === listing.id}
-            onHover={() => setHoveredId(listing.id)}
-            onLeave={() => setHoveredId(null)}
-            t={t}
-            index={index}
-          />
-        ))}
+        {/* Toggle pour activer/désactiver la recherche sur carte */}
+        <button
+          onClick={() => setIsMapSearchEnabled(!isMapSearchEnabled)}
+          className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+            isMapSearchEnabled
+              ? "bg-gray-900 text-white"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
+        >
+          <svg
+            className="h-3.5 w-3.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+          </svg>
+          {isMapSearchEnabled ? "Recherche sur carte activée" : "Recherche sur carte désactivée"}
+        </button>
       </div>
 
+      {/* Grille des annonces - responsive pour tous écrans */}
+      {/* Pendant le chargement, afficher les skeletons */}
+      {isLoadingMap && (
+        <div className="grid gap-4 sm:gap-x-6 sm:gap-y-8 grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3 3xl:grid-cols-4">
+          {Array.from({ length: Math.max(previousListings.length, 6) }).map((_, index) => (
+            <ListingCardSkeleton key={`skeleton-${index}`} />
+          ))}
+        </div>
+      )}
+
+      {/* Nouvelles annonces avec animation escalier */}
+      {!isLoadingMap && listings.length > 0 && (
+        <div className="grid gap-4 sm:gap-x-6 sm:gap-y-8 grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3 3xl:grid-cols-4">
+          {listings.map((listing, index) => (
+            <ListingCard
+              key={listing.id}
+              listing={listing}
+              isHovered={hoveredId === listing.id}
+              onHover={() => setHoveredId(listing.id)}
+              onLeave={() => setHoveredId(null)}
+              t={t}
+              index={index}
+            />
+          ))}
+        </div>
+      )}
+
       {/* Message si aucune annonce */}
-      {listings.length === 0 && (
+      {listings.length === 0 && !isLoadingMap && (
         <div className="py-12 text-center">
-          <p className="text-gray-500">Aucune annonce dans cette zone</p>
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+            <svg className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+            </svg>
+          </div>
+          <p className="text-gray-600 font-medium">Aucune annonce dans cette zone</p>
           <p className="mt-1 text-sm text-gray-400">Déplacez ou dézoomez la carte pour voir plus d&apos;annonces</p>
         </div>
       )}
@@ -422,9 +512,19 @@ export default function ListingsWithMap({
           panOnHover={false}
           hoveredId={hoveredId}
           onMarkerHover={setHoveredId}
-          // onBoundsChange désactivé pour éviter la boucle infinie
-          // onBoundsChange={handleBoundsChange}
+          onBoundsChange={handleBoundsChange}
+          skipFitBounds={skipFitBounds}
         />
+
+        {/* Indicateur de mode recherche sur la carte */}
+        {isMapSearchEnabled && (
+          <div className="absolute bottom-4 left-4 rounded-full bg-white/95 px-3 py-1.5 text-xs font-medium text-gray-700 shadow-md backdrop-blur-sm">
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+              Déplacez la carte pour actualiser
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Carte mobile et tablette */}
@@ -435,8 +535,8 @@ export default function ListingsWithMap({
             panOnHover={false}
             hoveredId={hoveredId}
             onMarkerHover={setHoveredId}
-            // onBoundsChange désactivé pour éviter la boucle infinie
-            // onBoundsChange={handleBoundsChange}
+            onBoundsChange={handleBoundsChange}
+            skipFitBounds={skipFitBounds}
           />
         </div>
       </section>

@@ -21,14 +21,28 @@ type PopularDestination = {
 };
 
 const POPULAR_DESTINATIONS: PopularDestination[] = [
-  { city: "Paris", country: "France", emoji: "🗼" },
-  { city: "Montréal", country: "Canada", emoji: "🍁" },
-  { city: "Lyon", country: "France", emoji: "🦁" },
-  { city: "Toronto", country: "Canada", emoji: "🏙️" },
-  { city: "Bordeaux", country: "France", emoji: "🍷" },
-  { city: "Nice", country: "France", emoji: "🌴" },
-  { city: "Marseille", country: "France", emoji: "⚓" },
-  { city: "Québec", country: "Canada", emoji: "🏰" },
+  // France
+  { city: "Paris", country: "France", emoji: "" },
+  { city: "Lyon", country: "France", emoji: "" },
+  { city: "Bordeaux", country: "France", emoji: "" },
+  { city: "Nice", country: "France", emoji: "" },
+  { city: "Marseille", country: "France", emoji: "" },
+  { city: "Toulouse", country: "France", emoji: "" },
+  { city: "Nantes", country: "France", emoji: "" },
+  { city: "Strasbourg", country: "France", emoji: "" },
+  { city: "Lille", country: "France", emoji: "" },
+  { city: "Montpellier", country: "France", emoji: "" },
+  { city: "Rennes", country: "France", emoji: "" },
+  // Canada
+  { city: "Montréal", country: "Canada", emoji: "" },
+  { city: "Toronto", country: "Canada", emoji: "" },
+  { city: "Québec", country: "Canada", emoji: "" },
+  { city: "Vancouver", country: "Canada", emoji: "" },
+  { city: "Ottawa", country: "Canada", emoji: "" },
+  { city: "Calgary", country: "Canada", emoji: "" },
+  { city: "Edmonton", country: "Canada", emoji: "" },
+  { city: "Winnipeg", country: "Canada", emoji: "" },
+  { city: "Halifax", country: "Canada", emoji: "" },
 ];
 
 type SearchModalProps = {

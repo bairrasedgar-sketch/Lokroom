@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { MapPinIcon } from "@heroicons/react/24/outline";
 import { useGoogleMaps } from "./GoogleMapsLoader";
+import { CityIllustration } from "./CityIllustrations";
 
 // ────────────────────────────────────────────────────────────────────────────
 // Types Google Maps (simplified)
@@ -67,12 +68,12 @@ export type LocationAutocompleteProps = {
 
 // Villes populaires par défaut
 const DEFAULT_POPULAR_CITIES: PopularCity[] = [
-  { main: "Paris", secondary: "France", icon: "🗼" },
-  { main: "Montréal", secondary: "Canada", icon: "🍁" },
-  { main: "Lyon", secondary: "France", icon: "🦁" },
-  { main: "Toronto", secondary: "Canada", icon: "🏙️" },
-  { main: "Marseille", secondary: "France", icon: "⛵" },
-  { main: "Vancouver", secondary: "Canada", icon: "🌲" },
+  { main: "Paris", secondary: "France", icon: "" },
+  { main: "Montréal", secondary: "Canada", icon: "" },
+  { main: "Lyon", secondary: "France", icon: "" },
+  { main: "Toronto", secondary: "Canada", icon: "" },
+  { main: "Marseille", secondary: "France", icon: "" },
+  { main: "Vancouver", secondary: "Canada", icon: "" },
 ];
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -317,9 +318,7 @@ export default function LocationAutocomplete({
                       : "hover:bg-gray-50"
                   }`}
                 >
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 text-lg">
-                    {city.icon}
-                  </span>
+                  <CityIllustration city={city.main} className="w-10 h-10 rounded-xl" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">{city.main}</p>
                     <p className="text-xs text-gray-500">{city.secondary}</p>
@@ -332,30 +331,31 @@ export default function LocationAutocomplete({
           {/* Résultats de recherche Google Places */}
           {showSuggestions && !isLoading && (
             <div className="py-2">
-              {suggestions.map((suggestion, index) => (
-                <button
-                  key={suggestion.place_id}
-                  type="button"
-                  onClick={() => handleSelect(suggestion)}
-                  className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition ${
-                    highlightedIndex === index
-                      ? "bg-gray-100"
-                      : "hover:bg-gray-50"
-                  }`}
-                >
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100">
-                    <MapPinIcon className="h-5 w-5 text-gray-600" />
-                  </span>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      {suggestion.structured_formatting?.main_text || suggestion.description.split(",")[0]}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {suggestion.structured_formatting?.secondary_text || ""}
-                    </p>
-                  </div>
-                </button>
-              ))}
+              {suggestions.map((suggestion, index) => {
+                const cityName = suggestion.structured_formatting?.main_text || suggestion.description.split(",")[0];
+                return (
+                  <button
+                    key={suggestion.place_id}
+                    type="button"
+                    onClick={() => handleSelect(suggestion)}
+                    className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition ${
+                      highlightedIndex === index
+                        ? "bg-gray-100"
+                        : "hover:bg-gray-50"
+                    }`}
+                  >
+                    <CityIllustration city={cityName} className="w-10 h-10 rounded-xl" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">
+                        {cityName}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {suggestion.structured_formatting?.secondary_text || ""}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           )}
 
