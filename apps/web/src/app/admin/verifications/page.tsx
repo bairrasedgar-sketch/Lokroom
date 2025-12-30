@@ -14,7 +14,6 @@ import {
   CheckCircleIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
-  UserCircleIcon,
   IdentificationIcon,
   DocumentCheckIcon,
   ExclamationTriangleIcon,
@@ -90,6 +89,7 @@ export default function AdminVerificationsPage() {
 
   useEffect(() => {
     fetchVerifications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
 
   const fetchVerifications = async (page = 1) => {

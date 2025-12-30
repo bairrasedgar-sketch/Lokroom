@@ -16,7 +16,7 @@ export async function GET(request: Request) {
   const page = parseInt(searchParams.get("page") || "1");
   const limit = parseInt(searchParams.get("limit") || "20");
   const rating = searchParams.get("rating"); // 1, 2, 3, 4, 5
-  const flagged = searchParams.get("flagged"); // true/false
+  // flagged parameter reserved for future use
   const search = searchParams.get("search");
   const sortBy = searchParams.get("sortBy") || "recent"; // recent, rating_low, rating_high
 

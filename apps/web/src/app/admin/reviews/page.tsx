@@ -7,7 +7,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
-  StarIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
   FlagIcon,
@@ -98,6 +97,7 @@ export default function AdminReviewsPage() {
 
   useEffect(() => {
     fetchReviews();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ratingFilter, sortBy]);
 
   const fetchReviews = async (page = 1) => {

@@ -23,7 +23,6 @@ import {
   UserCircleIcon,
   ChatBubbleLeftRightIcon,
   FlagIcon,
-  PencilIcon,
   DocumentTextIcon,
   PlusIcon,
   XMarkIcon,

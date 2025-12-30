@@ -12,12 +12,11 @@ import {
   CheckCircleIcon,
   ClockIcon,
   ArrowTrendingUpIcon,
-  UserCircleIcon,
   HomeModernIcon,
   FunnelIcon,
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
-import { RevenueAreaChart, COLORS } from "@/components/admin/Charts";
+import { RevenueAreaChart } from "@/components/admin/Charts";
 
 type Payment = {
   id: string;
@@ -108,10 +107,6 @@ export default function AdminPaymentsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
 
-  useEffect(() => {
-    fetchPayments();
-  }, [period, statusFilter]);
-
   const fetchPayments = async (page = 1) => {
     setLoading(true);
     try {
@@ -136,6 +131,11 @@ export default function AdminPaymentsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchPayments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [period, statusFilter]);
 
   const formatCurrency = (cents: number, currency = "EUR") => {
     return new Intl.NumberFormat("fr-FR", {

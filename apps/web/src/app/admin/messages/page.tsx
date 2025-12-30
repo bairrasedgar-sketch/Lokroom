@@ -189,15 +189,6 @@ export default function AdminMessagesPage() {
     setMessage(template.message);
   };
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("fr-FR", {
-      day: "numeric",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
