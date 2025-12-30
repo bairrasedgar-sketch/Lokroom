@@ -36,6 +36,17 @@ type Listing = {
   latPublic: number | null;
   lngPublic: number | null;
 
+  // SEO fields
+  type?: string;
+  maxGuests?: number | null;
+  beds?: number | null;
+  bathrooms?: number | null;
+  amenities?: { key: string; label: string }[];
+  reviewSummary?: {
+    count: number;
+    avgRating: number | null;
+  };
+
   images: { id: string; url: string }[];
   owner: { id: string | null; name: string | null; email: string | null };
 };
@@ -51,7 +62,24 @@ async function getListing(id: string): Promise<Listing | null> {
   return (data.listing ?? null) as Listing | null;
 }
 
-// SEO: generateMetadata pour les meta tags dynamiques
+// Mapping des types vers les labels français pour SEO
+const typeLabels: Record<string, string> = {
+  APARTMENT: "Appartement",
+  HOUSE: "Maison",
+  ROOM: "Chambre",
+  STUDIO: "Studio",
+  OFFICE: "Bureau",
+  COWORKING: "Espace coworking",
+  MEETING_ROOM: "Salle de réunion",
+  PARKING: "Parking",
+  GARAGE: "Garage",
+  STORAGE: "Espace de stockage",
+  EVENT_SPACE: "Espace événementiel",
+  RECORDING_STUDIO: "Studio d'enregistrement",
+  OTHER: "Espace",
+};
+
+// SEO: generateMetadata pour les meta tags dynamiques (niveau Airbnb)
 export async function generateMetadata({
   params,
 }: {
@@ -63,43 +91,119 @@ export async function generateMetadata({
     return {
       title: "Annonce non trouvée | Lok'Room",
       description: "Cette annonce n'existe pas ou a été supprimée.",
+      robots: { index: false, follow: false },
     };
   }
 
-  const locationLabel = [listing.city, listing.country].filter(Boolean).join(", ");
-  const title = `${listing.title} - ${locationLabel} | Lok'Room`;
-  const description = listing.description?.slice(0, 160) || `Louez ${listing.title} à ${locationLabel} sur Lok'Room. Réservation facile et sécurisée.`;
-  const imageUrl = listing.images?.[0]?.url || "/og-image.png";
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.lokroom.com";
+  const typeLabel = typeLabels[listing.type || "OTHER"] || "Espace";
+  const locationLabel = [listing.city, listing.country].filter(Boolean).join(", ");
+
+  // Titre optimisé SEO style Airbnb
+  const title = `${listing.title} - ${typeLabel} à ${locationLabel}`;
+
+  // Description enrichie avec caractéristiques
+  const features: string[] = [];
+  if (listing.maxGuests) features.push(`${listing.maxGuests} voyageur${listing.maxGuests > 1 ? "s" : ""}`);
+  if (listing.beds) features.push(`${listing.beds} lit${listing.beds > 1 ? "s" : ""}`);
+  if (listing.bathrooms) features.push(`${listing.bathrooms} sdb`);
+
+  const featuresText = features.length > 0 ? ` ${features.join(", ")}.` : "";
+  const ratingText = listing.reviewSummary?.avgRating
+    ? ` Note: ${listing.reviewSummary.avgRating}/5 (${listing.reviewSummary.count} avis).`
+    : "";
+
+  const description = listing.description
+    ? `${listing.description.slice(0, 120)}...${featuresText}${ratingText} Réservez sur Lok'Room.`
+    : `Louez ce ${typeLabel.toLowerCase()} à ${locationLabel}.${featuresText}${ratingText} Réservation sécurisée sur Lok'Room.`;
+
+  // Images pour Open Graph (jusqu'à 4 images)
+  const ogImages = (listing.images || []).slice(0, 4).map((img, index) => ({
+    url: img.url,
+    width: 1200,
+    height: 630,
+    alt: index === 0 ? listing.title : `${listing.title} - Photo ${index + 1}`,
+    type: "image/jpeg",
+  }));
+
+  // Si pas d'images, utiliser l'image par défaut
+  if (ogImages.length === 0) {
+    ogImages.push({
+      url: `${baseUrl}/og-image.png`,
+      width: 1200,
+      height: 630,
+      alt: "Lok'Room - Location d'espaces",
+      type: "image/png",
+    });
+  }
 
   return {
     title,
     description,
+
+    // Keywords dynamiques
+    keywords: [
+      "location",
+      typeLabel.toLowerCase(),
+      listing.city || "",
+      listing.country,
+      "réservation",
+      "Lok'Room",
+      "location entre particuliers",
+      listing.type?.toLowerCase().replace("_", " ") || "",
+    ].filter(Boolean),
+
+    // Authors et publisher
+    authors: [{ name: listing.owner.name || "Lok'Room" }],
+    creator: "Lok'Room",
+    publisher: "Lok'Room",
+
+    // Open Graph (Facebook, LinkedIn, WhatsApp)
     openGraph: {
+      type: "website",
+      siteName: "Lok'Room",
+      locale: "fr_FR",
       title,
       description,
       url: `${baseUrl}/listings/${listing.id}`,
-      siteName: "Lok'Room",
-      images: [
-        {
-          url: imageUrl,
-          width: 1200,
-          height: 630,
-          alt: listing.title,
-        },
-      ],
-      locale: "fr_FR",
-      type: "website",
+      images: ogImages,
     },
+
+    // Twitter Card
     twitter: {
       card: "summary_large_image",
+      site: "@lokroom",
+      creator: "@lokroom",
       title,
       description,
-      images: [imageUrl],
+      images: ogImages.slice(0, 1).map(img => img.url),
     },
+
+    // Alternates et canonical
     alternates: {
       canonical: `${baseUrl}/listings/${listing.id}`,
+      languages: {
+        "fr-FR": `${baseUrl}/listings/${listing.id}`,
+        "en-US": `${baseUrl}/en/listings/${listing.id}`,
+      },
     },
+
+    // Robots
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-video-preview": -1,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+      },
+    },
+
+    // Autres meta
+    category: "location",
+    classification: typeLabel,
   };
 }
 
@@ -147,7 +251,7 @@ export default async function ListingDetailPage({
 
   return (
     <>
-      {/* Schema.org JSON-LD pour le SEO */}
+      {/* Schema.org JSON-LD pour le SEO (niveau Airbnb) */}
       <ListingJsonLd
         listing={{
           id: listing.id,
@@ -161,6 +265,13 @@ export default async function ListingDetailPage({
           lat: lat,
           lng: lng,
           ownerName: listing.owner.name,
+          type: listing.type,
+          maxGuests: listing.maxGuests,
+          beds: listing.beds,
+          bathrooms: listing.bathrooms,
+          amenities: listing.amenities,
+          reviewSummary: listing.reviewSummary,
+          createdAt: listing.createdAt,
         }}
       />
 

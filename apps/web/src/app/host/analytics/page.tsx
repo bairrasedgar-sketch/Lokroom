@@ -15,7 +15,18 @@ import {
   ChartBarIcon,
   UsersIcon,
   ClockIcon,
+  ChartPieIcon,
+  ArrowPathIcon,
 } from "@heroicons/react/24/outline";
+
+// Import des graphiques Recharts
+import {
+  HostPerformanceChart,
+  HostOccupancyChart,
+  HostBookingStatusChart,
+  HostRatingBreakdown,
+  HostListingsPerformance,
+} from "@/components/host/HostCharts";
 
 type MonthlyData = {
   month: string;
@@ -29,6 +40,7 @@ type AnalyticsData = {
     totalBookings: number;
     upcomingBookings: number;
     pastBookings: number;
+    cancelledBookings?: number;
     cancellationRate: number;
     averageRating: number;
     totalReviews: number;
@@ -50,8 +62,8 @@ type AnalyticsData = {
     revenue: number;
     currency: string;
     rating: number;
+    occupancy?: number;
   }[];
-  // Nouvelles données avancées
   comparison?: {
     revenueChange: number;
     bookingsChange: number;
@@ -71,10 +83,13 @@ type AnalyticsData = {
     avgStayLength: number;
     avgLeadTime: number;
   };
+  ratingBreakdown?: {
+    stars: number;
+    count: number;
+  }[];
 };
 
 type PeriodFilter = "7d" | "30d" | "90d" | "1y" | "all";
-type ChartView = "revenue" | "bookings" | "occupancy";
 
 export default function HostAnalyticsPage() {
   const router = useRouter();
@@ -83,12 +98,13 @@ export default function HostAnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [period, setPeriod] = useState<PeriodFilter>("30d");
-  const [chartView, setChartView] = useState<ChartView>("revenue");
-  const [showComparison] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const fetchAnalytics = useCallback(async () => {
+  const fetchAnalytics = useCallback(async (showRefresh = false) => {
     try {
-      setLoading(true);
+      if (showRefresh) setRefreshing(true);
+      else setLoading(true);
+
       const res = await fetch(`/api/host/analytics?period=${period}`);
       if (!res.ok) throw new Error("Erreur de chargement");
       const result = await res.json();
@@ -97,6 +113,7 @@ export default function HostAnalyticsPage() {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, [period]);
 
@@ -136,8 +153,8 @@ export default function HostAnalyticsPage() {
         a.download = `analytics-${period}.csv`;
         a.click();
       } else {
-        const data = await res.json();
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+        const jsonData = await res.json();
+        const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: "application/json" });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
@@ -149,10 +166,29 @@ export default function HostAnalyticsPage() {
     }
   }
 
+  // Composant pour afficher le changement en pourcentage
+  const ChangeIndicator = ({ value, showLabel = false }: { value: number; showLabel?: boolean }) => {
+    const isPositive = value >= 0;
+    return (
+      <div className={`inline-flex items-center gap-1 text-xs font-medium ${isPositive ? "text-green-600" : "text-red-600"}`}>
+        {isPositive ? (
+          <ArrowTrendingUpIcon className="h-3.5 w-3.5" />
+        ) : (
+          <ArrowTrendingDownIcon className="h-3.5 w-3.5" />
+        )}
+        <span>{isPositive ? "+" : ""}{value.toFixed(1)}%</span>
+        {showLabel && <span className="text-gray-400 font-normal ml-1">vs période préc.</span>}
+      </div>
+    );
+  };
+
   if (status === "loading" || loading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-gray-900" />
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-gray-900" />
+          <p className="text-sm text-gray-500">Chargement des analytics...</p>
+        </div>
       </div>
     );
   }
@@ -160,12 +196,17 @@ export default function HostAnalyticsPage() {
   if (error) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
-          <p className="text-red-600">{error}</p>
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-8 text-center">
+          <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+            <ChartBarIcon className="w-6 h-6 text-red-600" />
+          </div>
+          <h3 className="text-lg font-semibold text-red-900 mb-2">Erreur de chargement</h3>
+          <p className="text-red-600 mb-4">{error}</p>
           <button
-            onClick={fetchAnalytics}
-            className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+            onClick={() => fetchAnalytics()}
+            className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-700 transition-colors"
           >
+            <ArrowPathIcon className="h-4 w-4" />
             Réessayer
           </button>
         </div>
@@ -180,51 +221,45 @@ export default function HostAnalyticsPage() {
   }, 0) || 0;
 
   const primaryCurrency = data?.monthlyRevenue[0]?.currency || "EUR";
-
-  // Données pour le graphique - multi-vue
   const chartData = data?.monthlyRevenue[0]?.data || [];
-  const maxRevenue = Math.max(...chartData.map((d) => d.revenue), 1);
-  const maxBookings = Math.max(...chartData.map((d) => d.bookings), 1);
-  const maxNights = Math.max(...chartData.map((d) => d.nights), 1);
 
-  // Composant pour afficher le changement en pourcentage
-  const ChangeIndicator = ({ value, label }: { value: number; label?: string }) => {
-    const isPositive = value >= 0;
-    return (
-      <div className={`inline-flex items-center gap-1 text-xs font-medium ${isPositive ? "text-green-600" : "text-red-600"}`}>
-        {isPositive ? (
-          <ArrowTrendingUpIcon className="h-3 w-3" />
-        ) : (
-          <ArrowTrendingDownIcon className="h-3 w-3" />
-        )}
-        <span>{isPositive ? "+" : ""}{value.toFixed(1)}%</span>
-        {label && <span className="text-gray-400 font-normal">vs période préc.</span>}
-      </div>
-    );
-  };
+  // Calcul des bookings cancelled pour le pie chart
+  const confirmedBookings = data?.summary.pastBookings || 0;
+  const pendingBookings = data?.summary.upcomingBookings || 0;
+  const cancelledBookings = data?.summary.cancelledBookings || Math.round((data?.summary.totalBookings || 0) * (data?.summary.cancellationRate || 0));
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Header */}
       <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-            <Link href="/host" className="hover:text-gray-700">Tableau de bord</Link>
+            <Link href="/host" className="hover:text-gray-700 transition-colors">Tableau de bord</Link>
             <span>/</span>
-            <span className="text-gray-900">Analytics</span>
+            <span className="text-gray-900 font-medium">Analytics</span>
           </div>
-          <h1 className="text-2xl font-semibold text-gray-900">Analytics</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Analytics</h1>
           <p className="mt-1 text-sm text-gray-500">
             Performances et statistiques de vos annonces
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Refresh button */}
+          <button
+            onClick={() => fetchAnalytics(true)}
+            disabled={refreshing}
+            className="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            <ArrowPathIcon className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+            Actualiser
+          </button>
+
           {/* Period filter */}
           <select
             value={period}
             onChange={(e) => setPeriod(e.target.value as PeriodFilter)}
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none focus:ring-1 focus:ring-black"
+            className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
           >
             <option value="7d">7 derniers jours</option>
             <option value="30d">30 derniers jours</option>
@@ -237,14 +272,14 @@ export default function HostAnalyticsPage() {
           <div className="flex gap-2">
             <button
               onClick={() => handleExport("csv")}
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
             >
               <ArrowDownTrayIcon className="h-4 w-4" />
               CSV
             </button>
             <button
               onClick={() => handleExport("json")}
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
             >
               <ArrowDownTrayIcon className="h-4 w-4" />
               JSON
@@ -255,249 +290,285 @@ export default function HostAnalyticsPage() {
 
       {data && (
         <>
-          {/* KPI Cards with comparison indicators */}
+          {/* KPI Cards - Niveau Airbnb */}
           <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {/* Total revenue */}
-            <div className="rounded-xl border border-gray-200 bg-white p-5 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-500">Revenus totaux</span>
-                <CurrencyDollarIcon className="h-5 w-5 text-green-500" />
-              </div>
-              <p className="mt-2 text-2xl font-bold text-gray-900">
-                {formatCurrency(totalRevenue, primaryCurrency)}
-              </p>
-              <div className="mt-1 flex items-center justify-between">
-                <span className="text-xs text-gray-500">Sur la période</span>
-                {data.comparison && showComparison && (
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 hover:shadow-lg transition-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
+                  <CurrencyDollarIcon className="h-6 w-6 text-green-600" />
+                </div>
+                {data.comparison && (
                   <ChangeIndicator value={data.comparison.revenueChange} />
                 )}
               </div>
+              <p className="text-sm font-medium text-gray-500 mb-1">Revenus totaux</p>
+              <p className="text-3xl font-bold text-gray-900">
+                {formatCurrency(totalRevenue, primaryCurrency)}
+              </p>
             </div>
 
             {/* Bookings */}
-            <div className="rounded-xl border border-gray-200 bg-white p-5 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-500">Réservations</span>
-                <CalendarDaysIcon className="h-5 w-5 text-blue-500" />
-              </div>
-              <p className="mt-2 text-2xl font-bold text-gray-900">
-                {data.summary.totalBookings}
-              </p>
-              <div className="mt-1 flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="text-green-600">{data.summary.upcomingBookings} à venir</span>
-                  <span className="text-gray-400">·</span>
-                  <span className="text-gray-500">{data.summary.pastBookings} passées</span>
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 hover:shadow-lg transition-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+                  <CalendarDaysIcon className="h-6 w-6 text-blue-600" />
                 </div>
-                {data.comparison && showComparison && (
+                {data.comparison && (
                   <ChangeIndicator value={data.comparison.bookingsChange} />
                 )}
+              </div>
+              <p className="text-sm font-medium text-gray-500 mb-1">Réservations</p>
+              <p className="text-3xl font-bold text-gray-900">
+                {data.summary.totalBookings}
+              </p>
+              <div className="mt-2 flex items-center gap-3 text-xs">
+                <span className="px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">
+                  {data.summary.upcomingBookings} à venir
+                </span>
+                <span className="text-gray-500">{data.summary.pastBookings} passées</span>
               </div>
             </div>
 
             {/* Occupancy */}
-            <div className="rounded-xl border border-gray-200 bg-white p-5 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-500">Taux d&apos;occupation</span>
-                <HomeIcon className="h-5 w-5 text-purple-500" />
-              </div>
-              <p className="mt-2 text-2xl font-bold text-gray-900">
-                {formatPercent(data.occupancy.rate)}
-              </p>
-              <div className="mt-1 flex items-center justify-between">
-                <span className="text-xs text-gray-500">
-                  {data.occupancy.bookedNights} / {data.occupancy.totalCapacity} nuits
-                </span>
-                {data.comparison && showComparison && (
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 hover:shadow-lg transition-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
+                  <HomeIcon className="h-6 w-6 text-purple-600" />
+                </div>
+                {data.comparison && (
                   <ChangeIndicator value={data.comparison.occupancyChange} />
                 )}
               </div>
+              <p className="text-sm font-medium text-gray-500 mb-1">Taux d&apos;occupation</p>
+              <p className="text-3xl font-bold text-gray-900">
+                {formatPercent(data.occupancy.rate)}
+              </p>
+              <p className="mt-2 text-xs text-gray-500">
+                {data.occupancy.bookedNights} / {data.occupancy.totalCapacity} nuits
+              </p>
             </div>
 
             {/* Rating */}
-            <div className="rounded-xl border border-gray-200 bg-white p-5 hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-500">Note moyenne</span>
-                <StarIcon className="h-5 w-5 text-amber-500" />
-              </div>
-              <p className="mt-2 text-2xl font-bold text-gray-900">
-                {data.summary.averageRating > 0 ? data.summary.averageRating.toFixed(1) : "—"}
-              </p>
-              <div className="mt-1 flex items-center justify-between">
-                <span className="text-xs text-gray-500">{data.summary.totalReviews} avis</span>
-                {data.comparison && showComparison && data.comparison.ratingChange !== 0 && (
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 hover:shadow-lg transition-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
+                  <StarIcon className="h-6 w-6 text-amber-600" />
+                </div>
+                {data.comparison && data.comparison.ratingChange !== 0 && (
                   <ChangeIndicator value={data.comparison.ratingChange} />
                 )}
               </div>
+              <p className="text-sm font-medium text-gray-500 mb-1">Note moyenne</p>
+              <div className="flex items-baseline gap-2">
+                <p className="text-3xl font-bold text-gray-900">
+                  {data.summary.averageRating > 0 ? data.summary.averageRating.toFixed(1) : "—"}
+                </p>
+                <div className="flex">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <StarIcon
+                      key={star}
+                      className={`h-4 w-4 ${
+                        star <= Math.round(data.summary.averageRating)
+                          ? "text-amber-400 fill-amber-400"
+                          : "text-gray-300"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+              <p className="mt-2 text-xs text-gray-500">{data.summary.totalReviews} avis</p>
             </div>
           </div>
 
-          {/* Guest Statistics (Airbnb style) */}
+          {/* Guest Statistics - Style Airbnb */}
           {data.guestStats && (
-            <div className="mb-8 grid gap-4 sm:grid-cols-4">
-              <div className="rounded-xl border border-gray-200 bg-gradient-to-br from-blue-50 to-white p-4">
-                <UsersIcon className="h-5 w-5 text-blue-500 mb-2" />
+            <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/50 p-5">
+                <UsersIcon className="h-6 w-6 text-blue-600 mb-3" />
                 <p className="text-2xl font-bold text-gray-900">{data.guestStats.newGuests}</p>
-                <p className="text-xs text-gray-500">Nouveaux voyageurs</p>
+                <p className="text-sm text-gray-600">Nouveaux voyageurs</p>
               </div>
-              <div className="rounded-xl border border-gray-200 bg-gradient-to-br from-green-50 to-white p-4">
-                <UsersIcon className="h-5 w-5 text-green-500 mb-2" />
+              <div className="rounded-2xl bg-gradient-to-br from-green-50 to-green-100/50 border border-green-200/50 p-5">
+                <UsersIcon className="h-6 w-6 text-green-600 mb-3" />
                 <p className="text-2xl font-bold text-gray-900">{data.guestStats.returningGuests}</p>
-                <p className="text-xs text-gray-500">Voyageurs fidèles</p>
+                <p className="text-sm text-gray-600">Voyageurs fidèles</p>
               </div>
-              <div className="rounded-xl border border-gray-200 bg-gradient-to-br from-purple-50 to-white p-4">
-                <ClockIcon className="h-5 w-5 text-purple-500 mb-2" />
+              <div className="rounded-2xl bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-200/50 p-5">
+                <ClockIcon className="h-6 w-6 text-purple-600 mb-3" />
                 <p className="text-2xl font-bold text-gray-900">{data.guestStats.avgStayLength.toFixed(1)}</p>
-                <p className="text-xs text-gray-500">Nuits en moyenne</p>
+                <p className="text-sm text-gray-600">Nuits en moyenne</p>
               </div>
-              <div className="rounded-xl border border-gray-200 bg-gradient-to-br from-amber-50 to-white p-4">
-                <CalendarDaysIcon className="h-5 w-5 text-amber-500 mb-2" />
+              <div className="rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-200/50 p-5">
+                <CalendarDaysIcon className="h-6 w-6 text-amber-600 mb-3" />
                 <p className="text-2xl font-bold text-gray-900">{data.guestStats.avgLeadTime}</p>
-                <p className="text-xs text-gray-500">Jours d&apos;anticipation</p>
+                <p className="text-sm text-gray-600">Jours d&apos;anticipation</p>
               </div>
             </div>
           )}
 
-          {/* Interactive Chart with tabs */}
-          <div className="mb-8 rounded-xl border border-gray-200 bg-white p-6">
+          {/* Main Chart - Performance avec Recharts */}
+          <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-6">
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-              <h2 className="text-lg font-semibold text-gray-900">Évolution des performances</h2>
-
-              {/* Chart view selector */}
-              <div className="inline-flex rounded-lg border border-gray-200 p-1">
-                <button
-                  onClick={() => setChartView("revenue")}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${
-                    chartView === "revenue"
-                      ? "bg-gray-900 text-white"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  Revenus
-                </button>
-                <button
-                  onClick={() => setChartView("bookings")}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${
-                    chartView === "bookings"
-                      ? "bg-gray-900 text-white"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  Réservations
-                </button>
-                <button
-                  onClick={() => setChartView("occupancy")}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-md transition ${
-                    chartView === "occupancy"
-                      ? "bg-gray-900 text-white"
-                      : "text-gray-600 hover:text-gray-900"
-                  }`}
-                >
-                  Occupation
-                </button>
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Évolution des performances</h2>
+                <p className="text-sm text-gray-500 mt-0.5">Revenus, réservations et nuits sur la période</p>
+              </div>
+              <div className="flex items-center gap-4 text-xs">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-green-500" />
+                  <span className="text-gray-600">Revenus</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-blue-500" />
+                  <span className="text-gray-600">Réservations</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-purple-500" />
+                  <span className="text-gray-600">Nuits</span>
+                </div>
               </div>
             </div>
 
             {chartData.length > 0 ? (
-              <div className="space-y-4">
-                {/* Interactive multi-view bar chart */}
-                <div className="flex items-end gap-2 h-56">
-                  {chartData.map((month, idx) => {
-                    // Calculer la valeur selon la vue sélectionnée
-                    let value: number;
-                    let maxValue: number;
-                    let displayValue: string;
-                    let barColor: string;
-
-                    switch (chartView) {
-                      case "revenue":
-                        value = month.revenue;
-                        maxValue = maxRevenue;
-                        displayValue = value > 0 ? formatCurrency(value, primaryCurrency) : "—";
-                        barColor = "from-green-600 to-green-400";
-                        break;
-                      case "bookings":
-                        value = month.bookings;
-                        maxValue = maxBookings;
-                        displayValue = value > 0 ? String(value) : "—";
-                        barColor = "from-blue-600 to-blue-400";
-                        break;
-                      case "occupancy":
-                        value = month.nights;
-                        maxValue = maxNights;
-                        displayValue = value > 0 ? `${value} nuits` : "—";
-                        barColor = "from-purple-600 to-purple-400";
-                        break;
-                    }
-
-                    const height = maxValue > 0 ? (value / maxValue) * 100 : 0;
-
-                    return (
-                      <div
-                        key={idx}
-                        className="flex-1 flex flex-col items-center gap-1 group cursor-pointer"
-                      >
-                        <div className="w-full flex flex-col items-center relative">
-                          {/* Tooltip on hover */}
-                          <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap z-10">
-                            {displayValue}
-                          </div>
-                          <span className="text-[10px] font-medium text-gray-700 mb-1 truncate max-w-full">
-                            {displayValue.length <= 8 ? displayValue : ""}
-                          </span>
-                          <div
-                            className={`w-full bg-gradient-to-t ${barColor} rounded-t transition-all duration-500 hover:opacity-80`}
-                            style={{ height: `${Math.max(height, 4)}%`, minHeight: "4px" }}
-                          />
-                        </div>
-                        <span className="text-[10px] text-gray-500 mt-1">
-                          {new Date(month.month + "-01").toLocaleDateString("fr-FR", { month: "short" })}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Summary stats */}
-                <div className="pt-4 border-t border-gray-100 grid grid-cols-3 gap-4 text-center">
-                  <div className={`p-3 rounded-lg ${chartView === "revenue" ? "bg-green-50" : "bg-gray-50"}`}>
-                    <p className="text-sm font-medium text-gray-500">Revenus totaux</p>
-                    <p className="text-lg font-bold text-gray-900">
-                      {formatCurrency(chartData.reduce((sum, m) => sum + m.revenue, 0), primaryCurrency)}
-                    </p>
-                  </div>
-                  <div className={`p-3 rounded-lg ${chartView === "bookings" ? "bg-blue-50" : "bg-gray-50"}`}>
-                    <p className="text-sm font-medium text-gray-500">Réservations</p>
-                    <p className="text-lg font-bold text-gray-900">
-                      {chartData.reduce((sum, m) => sum + m.bookings, 0)}
-                    </p>
-                  </div>
-                  <div className={`p-3 rounded-lg ${chartView === "occupancy" ? "bg-purple-50" : "bg-gray-50"}`}>
-                    <p className="text-sm font-medium text-gray-500">Nuits réservées</p>
-                    <p className="text-lg font-bold text-gray-900">
-                      {chartData.reduce((sum, m) => sum + m.nights, 0)}
-                    </p>
-                  </div>
+              <HostPerformanceChart
+                data={chartData}
+                currency={primaryCurrency}
+                height={350}
+              />
+            ) : (
+              <div className="flex h-64 items-center justify-center text-gray-500">
+                <div className="text-center">
+                  <ChartBarIcon className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+                  <p>Aucune donnée pour cette période</p>
                 </div>
               </div>
-            ) : (
-              <div className="flex h-48 items-center justify-center text-gray-500">
-                Aucune donnée pour cette période
+            )}
+
+            {/* Summary stats */}
+            {chartData.length > 0 && (
+              <div className="mt-6 pt-6 border-t border-gray-100 grid grid-cols-3 gap-4">
+                <div className="text-center p-4 rounded-xl bg-green-50">
+                  <p className="text-sm font-medium text-gray-600">Revenus totaux</p>
+                  <p className="text-xl font-bold text-gray-900 mt-1">
+                    {formatCurrency(chartData.reduce((sum, m) => sum + m.revenue, 0), primaryCurrency)}
+                  </p>
+                </div>
+                <div className="text-center p-4 rounded-xl bg-blue-50">
+                  <p className="text-sm font-medium text-gray-600">Réservations</p>
+                  <p className="text-xl font-bold text-gray-900 mt-1">
+                    {chartData.reduce((sum, m) => sum + m.bookings, 0)}
+                  </p>
+                </div>
+                <div className="text-center p-4 rounded-xl bg-purple-50">
+                  <p className="text-sm font-medium text-gray-600">Nuits réservées</p>
+                  <p className="text-xl font-bold text-gray-900 mt-1">
+                    {chartData.reduce((sum, m) => sum + m.nights, 0)}
+                  </p>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Top Performers (like Airbnb Insights) */}
+          {/* Two column layout - Occupancy & Status */}
+          <div className="mb-8 grid gap-6 lg:grid-cols-2">
+            {/* Occupancy Donut */}
+            <div className="rounded-2xl border border-gray-200 bg-white p-6">
+              <div className="flex items-center gap-2 mb-6">
+                <ChartPieIcon className="h-5 w-5 text-gray-400" />
+                <h3 className="font-semibold text-gray-900">Taux d&apos;occupation</h3>
+              </div>
+              <HostOccupancyChart
+                rate={data.occupancy.rate}
+                bookedNights={data.occupancy.bookedNights}
+                totalNights={data.occupancy.totalCapacity}
+                height={220}
+              />
+              <div className="mt-4 grid grid-cols-2 gap-4 text-center">
+                <div className="p-3 rounded-xl bg-pink-50">
+                  <p className="text-sm text-gray-600">Nuits réservées</p>
+                  <p className="text-lg font-bold text-gray-900">{data.occupancy.bookedNights}</p>
+                </div>
+                <div className="p-3 rounded-xl bg-gray-50">
+                  <p className="text-sm text-gray-600">Capacité totale</p>
+                  <p className="text-lg font-bold text-gray-900">{data.occupancy.totalCapacity}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Booking Status */}
+            <div className="rounded-2xl border border-gray-200 bg-white p-6">
+              <div className="flex items-center gap-2 mb-6">
+                <CalendarDaysIcon className="h-5 w-5 text-gray-400" />
+                <h3 className="font-semibold text-gray-900">Statut des réservations</h3>
+              </div>
+              <HostBookingStatusChart
+                pending={pendingBookings}
+                confirmed={confirmedBookings}
+                cancelled={cancelledBookings}
+                height={220}
+              />
+              <div className="mt-4">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-gray-50">
+                  <span className="text-sm text-gray-600">Taux d&apos;annulation</span>
+                  <span className={`text-sm font-bold ${
+                    data.summary.cancellationRate > 0.1 ? "text-red-600" : "text-green-600"
+                  }`}>
+                    {formatPercent(data.summary.cancellationRate)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Ratings breakdown */}
+          {data.ratingBreakdown && data.ratingBreakdown.length > 0 && (
+            <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-6">
+              <div className="flex items-center gap-2 mb-6">
+                <StarIcon className="h-5 w-5 text-amber-400" />
+                <h3 className="font-semibold text-gray-900">Répartition des notes</h3>
+              </div>
+              <div className="max-w-md">
+                <HostRatingBreakdown ratings={data.ratingBreakdown} />
+              </div>
+            </div>
+          )}
+
+          {/* Performance par annonce */}
+          {data.listings.length > 0 && (
+            <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <HomeIcon className="h-5 w-5 text-gray-400" />
+                  <h3 className="font-semibold text-gray-900">Performance par annonce</h3>
+                </div>
+                <Link
+                  href="/host/listings"
+                  className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  Voir toutes les annonces →
+                </Link>
+              </div>
+              <HostListingsPerformance
+                listings={data.listings}
+                currency={primaryCurrency}
+              />
+            </div>
+          )}
+
+          {/* Top Performers */}
           {data.topPerformers && data.topPerformers.length > 0 && (
-            <div className="mb-8 rounded-xl border border-gray-200 bg-white p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Meilleures performances</h2>
-                <ChartBarIcon className="h-5 w-5 text-gray-400" />
+            <div className="mb-8 rounded-2xl border border-gray-200 bg-white p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <ChartBarIcon className="h-5 w-5 text-gray-400" />
+                  <h3 className="font-semibold text-gray-900">Meilleures performances</h3>
+                </div>
               </div>
               <div className="space-y-4">
                 {data.topPerformers.map((listing, idx) => (
-                  <div key={listing.id} className="flex items-center gap-4">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                  <div key={listing.id} className="flex items-center gap-4 p-4 rounded-xl hover:bg-gray-50 transition-colors">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${
                       idx === 0 ? "bg-amber-100 text-amber-700" :
                       idx === 1 ? "bg-gray-100 text-gray-700" :
                       idx === 2 ? "bg-orange-100 text-orange-700" :
@@ -509,8 +580,8 @@ export default function HostAnalyticsPage() {
                       <Link href={`/listings/${listing.id}`} className="font-medium text-gray-900 hover:text-blue-600 truncate block">
                         {listing.title}
                       </Link>
-                      <p className="text-xs text-gray-500">
-                        {listing.bookings} réservations
+                      <p className="text-sm text-gray-500">
+                        {listing.bookings} réservation{listing.bookings > 1 ? "s" : ""}
                       </p>
                     </div>
                     <div className="text-right">
@@ -526,136 +597,33 @@ export default function HostAnalyticsPage() {
               </div>
             </div>
           )}
-
-          {/* Performance by listing */}
-          {data.listings.length > 0 && (
-            <div className="mb-8 rounded-xl border border-gray-200 bg-white p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Performance par annonce</h2>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-gray-100">
-                      <th className="py-3 text-left text-xs font-medium text-gray-500 uppercase">Annonce</th>
-                      <th className="py-3 text-right text-xs font-medium text-gray-500 uppercase">Réservations</th>
-                      <th className="py-3 text-right text-xs font-medium text-gray-500 uppercase">Revenus</th>
-                      <th className="py-3 text-right text-xs font-medium text-gray-500 uppercase">Note</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-50">
-                    {data.listings.map((listing) => (
-                      <tr key={listing.id} className="hover:bg-gray-50">
-                        <td className="py-3">
-                          <Link
-                            href={`/listings/${listing.id}`}
-                            className="font-medium text-gray-900 hover:text-blue-600"
-                          >
-                            {listing.title}
-                          </Link>
-                        </td>
-                        <td className="py-3 text-right text-sm text-gray-600">
-                          {listing.bookings}
-                        </td>
-                        <td className="py-3 text-right text-sm font-medium text-gray-900">
-                          {formatCurrency(listing.revenue, listing.currency)}
-                        </td>
-                        <td className="py-3 text-right">
-                          <span className="inline-flex items-center gap-1 text-sm">
-                            <StarIcon className="h-4 w-4 text-amber-500" />
-                            {listing.rating > 0 ? listing.rating.toFixed(1) : "—"}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* Cancellation & occupancy stats */}
-          <div className="grid gap-4 sm:grid-cols-2">
-            {/* Cancellation rate */}
-            <div className="rounded-xl border border-gray-200 bg-white p-6">
-              <h3 className="text-sm font-medium text-gray-500 mb-3">Taux d&apos;annulation</h3>
-              <div className="flex items-center gap-4">
-                <div className="relative h-24 w-24">
-                  <svg className="h-full w-full -rotate-90" viewBox="0 0 36 36">
-                    <circle
-                      cx="18"
-                      cy="18"
-                      r="15.915"
-                      fill="none"
-                      stroke="#e5e7eb"
-                      strokeWidth="3"
-                    />
-                    <circle
-                      cx="18"
-                      cy="18"
-                      r="15.915"
-                      fill="none"
-                      stroke={data.summary.cancellationRate > 0.1 ? "#ef4444" : "#22c55e"}
-                      strokeWidth="3"
-                      strokeDasharray={`${data.summary.cancellationRate * 100}, 100`}
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-xl font-bold">
-                      {formatPercent(data.summary.cancellationRate)}
-                    </span>
-                  </div>
-                </div>
-                <div>
-                  <p className={`text-sm font-medium ${data.summary.cancellationRate > 0.1 ? "text-red-600" : "text-green-600"}`}>
-                    {data.summary.cancellationRate > 0.1 ? "Taux élevé" : "Bon taux"}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {data.summary.cancellationRate > 0.1
-                      ? "Pensez à améliorer votre politique d&apos;annulation"
-                      : "Vos voyageurs sont satisfaits"
-                    }
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Occupancy breakdown */}
-            <div className="rounded-xl border border-gray-200 bg-white p-6">
-              <h3 className="text-sm font-medium text-gray-500 mb-3">Occupation ({data.occupancy.period})</h3>
-              <div className="space-y-3">
-                <div className="h-4 w-full rounded-full bg-gray-100 overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full transition-all duration-500"
-                    style={{ width: `${data.occupancy.rate * 100}%` }}
-                  />
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">
-                    {data.occupancy.bookedNights} nuits réservées
-                  </span>
-                  <span className="font-medium text-gray-900">
-                    {formatPercent(data.occupancy.rate)}
-                  </span>
-                </div>
-                <p className="text-xs text-gray-500">
-                  Capacité totale: {data.occupancy.totalCapacity} nuits disponibles
-                </p>
-              </div>
-            </div>
-          </div>
         </>
       )}
 
       {/* Quick links */}
-      <div className="mt-8 pt-8 border-t border-gray-200">
+      <div className="mt-8 pt-8 border-t border-gray-200 flex flex-wrap gap-4">
         <Link
           href="/host"
-          className="inline-flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-900"
+          className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
           </svg>
           Retour au tableau de bord
+        </Link>
+        <Link
+          href="/host/calendar"
+          className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+        >
+          <CalendarDaysIcon className="h-4 w-4" />
+          Calendrier
+        </Link>
+        <Link
+          href="/host/bookings"
+          className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+        >
+          <HomeIcon className="h-4 w-4" />
+          Réservations
         </Link>
       </div>
     </div>

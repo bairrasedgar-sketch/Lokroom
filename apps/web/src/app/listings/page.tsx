@@ -12,20 +12,172 @@ import ActiveFilters from "@/components/listings/ActiveFilters";
 import ListingsWithMap from "@/components/listings/ListingsWithMap";
 import { getServerDictionary } from "@/lib/i18n.server";
 import { type MapMarker } from "@/components/Map";
+import SearchPageJsonLd from "@/components/seo/SearchPageJsonLd";
 
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Toutes les annonces - Espaces à louer",
-  description:
-    "Découvrez des espaces uniques à louer : appartements, bureaux, studios photo, salles de réunion, parkings et plus. Filtrez par ville, prix et type d'espace.",
-  openGraph: {
-    title: "Toutes les annonces - Espaces à louer | Lok'Room",
-    description:
-      "Découvrez des espaces uniques à louer près de chez vous.",
-  },
+// Mapping des types vers les labels français
+const typeLabels: Record<string, string> = {
+  APARTMENT: "Appartements",
+  HOUSE: "Maisons",
+  ROOM: "Chambres",
+  STUDIO: "Studios",
+  OFFICE: "Bureaux",
+  COWORKING: "Espaces coworking",
+  MEETING_ROOM: "Salles de réunion",
+  PARKING: "Parkings",
+  GARAGE: "Garages",
+  STORAGE: "Espaces de stockage",
+  EVENT_SPACE: "Espaces événementiels",
+  RECORDING_STUDIO: "Studios d'enregistrement",
+  OTHER: "Espaces",
 };
+
+type SearchParamsType = {
+  q?: string;
+  country?: string;
+  province?: string;
+  city?: string;
+  type?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  minRating?: string;
+  hasPhoto?: string;
+  sort?: string;
+  page?: string;
+  pageSize?: string;
+  startDate?: string;
+  endDate?: string;
+  guests?: string;
+  [key: string]: string | string[] | undefined;
+};
+
+// SEO: generateMetadata dynamique pour les pages de recherche (niveau Airbnb)
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams?: SearchParamsType;
+}): Promise<Metadata> {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.lokroom.com";
+
+  // Extraire les paramètres de recherche
+  const city = searchParams?.city as string || "";
+  const country = searchParams?.country as string || "";
+  const type = searchParams?.type as string || "";
+  const q = searchParams?.q as string || "";
+
+  // Construire le titre dynamique
+  const titleParts: string[] = [];
+  const locationParts: string[] = [];
+
+  if (type && typeLabels[type]) {
+    titleParts.push(typeLabels[type]);
+  } else {
+    titleParts.push("Espaces");
+  }
+
+  titleParts.push("à louer");
+
+  if (city) {
+    locationParts.push(city);
+  }
+  if (country) {
+    locationParts.push(country);
+  }
+
+  if (locationParts.length > 0) {
+    titleParts.push("à " + locationParts.join(", "));
+  }
+
+  if (q) {
+    titleParts.push(`- "${q}"`);
+  }
+
+  const title = titleParts.join(" ");
+
+  // Construire la description dynamique
+  let description = "";
+  if (city && country) {
+    description = `Découvrez les meilleurs ${(type && typeLabels[type]?.toLowerCase()) || "espaces"} à louer à ${city}, ${country}. `;
+  } else if (country) {
+    description = `Trouvez des ${(type && typeLabels[type]?.toLowerCase()) || "espaces"} uniques à louer en ${country}. `;
+  } else if (city) {
+    description = `Location d'${(type && typeLabels[type]?.toLowerCase()) || "espaces"} à ${city}. `;
+  } else {
+    description = `Découvrez des espaces uniques à louer : appartements, bureaux, studios photo, salles de réunion et plus. `;
+  }
+  description += "Réservation sécurisée sur Lok'Room.";
+
+  // Construire l'URL canonique avec les paramètres
+  const canonicalParams = new URLSearchParams();
+  if (country) canonicalParams.set("country", country);
+  if (city) canonicalParams.set("city", city);
+  if (type) canonicalParams.set("type", type);
+  if (q) canonicalParams.set("q", q);
+
+  const canonicalUrl = canonicalParams.toString()
+    ? `${baseUrl}/listings?${canonicalParams.toString()}`
+    : `${baseUrl}/listings`;
+
+  // Keywords dynamiques
+  const keywords = [
+    "location espace",
+    city || "",
+    country || "",
+    type && typeLabels[type]?.toLowerCase() || "",
+    "réservation",
+    "Lok'Room",
+    "location entre particuliers",
+    "louer",
+    q || "",
+  ].filter(Boolean);
+
+  return {
+    title,
+    description,
+    keywords,
+
+    openGraph: {
+      type: "website",
+      siteName: "Lok'Room",
+      locale: "fr_FR",
+      title: `${title} | Lok'Room`,
+      description,
+      url: canonicalUrl,
+      images: [
+        {
+          url: `${baseUrl}/og-image.png`,
+          width: 1200,
+          height: 630,
+          alt: `${title} - Lok'Room`,
+        },
+      ],
+    },
+
+    twitter: {
+      card: "summary_large_image",
+      site: "@lokroom",
+      title: `${title} | Lok'Room`,
+      description,
+      images: [`${baseUrl}/og-image.png`],
+    },
+
+    alternates: {
+      canonical: canonicalUrl,
+    },
+
+    robots: {
+      index: true,
+      follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+      },
+    },
+  };
+}
 
 type ReviewSummary = {
   count: number;
@@ -225,6 +377,26 @@ export default async function ListingsPage({
 
   return (
     <>
+      {/* Schema.org JSON-LD pour le SEO de la page de recherche */}
+      <SearchPageJsonLd
+        searchParams={{
+          q,
+          country,
+          city,
+          type: (searchParams?.type as string) || undefined,
+        }}
+        totalResults={total}
+        listings={listings.map(l => ({
+          id: l.id,
+          title: l.title,
+          price: l.price,
+          currency: l.currency,
+          city: l.city,
+          country: l.country,
+          images: l.images,
+        }))}
+      />
+
       {/* Contenu principal - responsive pour tous écrans */}
       <main className="min-h-screen pb-8 sm:pb-12 pt-4 sm:pt-6 lg:mr-[40%] xl:mr-[42%] 2xl:mr-[44%] 3xl:mr-[46%]">
         <div className="mx-auto max-w-5xl 2xl:max-w-6xl 3xl:max-w-7xl space-y-3 sm:space-y-4 px-4 sm:px-6 lg:px-8">

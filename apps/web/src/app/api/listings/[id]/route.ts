@@ -59,13 +59,51 @@ export async function GET(
           orderBy: { position: "asc" },
         },
         owner: { select: { id: true, name: true, email: true } },
+        amenities: {
+          include: {
+            amenity: {
+              select: {
+                slug: true,
+                label: true,
+              },
+            },
+          },
+        },
       },
     });
     if (!listing) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ listing });
+    // Calculate review stats for SEO
+    const reviewStats = await prisma.review.aggregate({
+      where: { listingId: params.id },
+      _count: { id: true },
+      _avg: { rating: true },
+    });
+
+    const reviewCount = reviewStats._count.id;
+    const avgRating = reviewStats._avg.rating;
+
+    // Transform amenities to simple array
+    const amenitiesFormatted = listing.amenities.map((a) => ({
+      key: a.amenity.slug,
+      label: a.amenity.label,
+    }));
+
+    // Return listing with review summary
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { amenities, ...listingData } = listing;
+    return NextResponse.json({
+      listing: {
+        ...listingData,
+        amenities: amenitiesFormatted,
+        reviewSummary: {
+          count: reviewCount,
+          avgRating: avgRating ? Math.round(avgRating * 10) / 10 : null,
+        },
+      },
+    });
   } catch (e) {
     console.error("GET /api/listings/[id] error:", e);
     return NextResponse.json({ error: "server_error" }, { status: 500 });

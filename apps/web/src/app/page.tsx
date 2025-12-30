@@ -5,8 +5,11 @@ import { prisma } from "@/lib/db";
 import { formatMoneyAsync, type Currency } from "@/lib/currency";
 import { getServerDictionary } from "@/lib/i18n.server";
 import HomeClient from "@/components/HomeClient";
+import HomePageJsonLd from "@/components/seo/HomePageJsonLd";
 
 export const dynamic = "force-dynamic";
+
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.lokroom.com";
 
 export const metadata: Metadata = {
   title: "Lok'Room - Location d'espaces entre particuliers",
@@ -22,34 +25,67 @@ export const metadata: Metadata = {
     "salle de réunion",
     "location entre particuliers",
     "Airbnb espaces",
+    "Lok'Room",
   ],
+  authors: [{ name: "Lok'Room" }],
+  creator: "Lok'Room",
+  publisher: "Lok'Room",
+
   openGraph: {
+    type: "website",
+    siteName: "Lok'Room",
+    locale: "fr_FR",
     title: "Lok'Room - Location d'espaces entre particuliers",
     description:
-      "Louez et proposez des espaces uniques : appartements, bureaux, studios, parkings et plus.",
-    url: "https://www.lokroom.com",
-    siteName: "Lok'Room",
+      "Louez et proposez des espaces uniques : appartements, bureaux, studios, parkings et plus. Réservation sécurisée.",
+    url: baseUrl,
     images: [
       {
-        url: "/og-image.png",
+        url: `${baseUrl}/og-image.png`,
         width: 1200,
         height: 630,
-        alt: "Lok'Room - Location d'espaces",
+        alt: "Lok'Room - Location d'espaces entre particuliers",
+        type: "image/png",
       },
     ],
-    locale: "fr_FR",
-    type: "website",
   },
+
   twitter: {
     card: "summary_large_image",
+    site: "@lokroom",
+    creator: "@lokroom",
     title: "Lok'Room - Location d'espaces entre particuliers",
     description:
-      "Louez et proposez des espaces uniques près de chez vous.",
-    images: ["/og-image.png"],
+      "Louez et proposez des espaces uniques près de chez vous. Réservation sécurisée.",
+    images: [`${baseUrl}/og-image.png`],
   },
+
   alternates: {
-    canonical: "https://www.lokroom.com",
+    canonical: baseUrl,
+    languages: {
+      "fr-FR": baseUrl,
+      "en-US": `${baseUrl}/en`,
+    },
   },
+
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+
+  verification: {
+    // À remplir avec vos codes de vérification
+    // google: "votre-code-google",
+  },
+
+  category: "location",
 };
 
 async function getFeaturedListings() {
@@ -135,12 +171,17 @@ export default async function Home() {
   ];
 
   return (
-    <HomeClient
-      cards={cards}
-      categories={categories}
-      stats={stats}
-      translations={t}
-      displayCurrency={displayCurrency}
-    />
+    <>
+      {/* Schema.org JSON-LD pour le SEO de la page d'accueil */}
+      <HomePageJsonLd stats={stats} />
+
+      <HomeClient
+        cards={cards}
+        categories={categories}
+        stats={stats}
+        translations={t}
+        displayCurrency={displayCurrency}
+      />
+    </>
   );
 }
