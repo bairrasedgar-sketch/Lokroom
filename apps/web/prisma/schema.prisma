@@ -71,6 +71,7 @@ model User {
   wallet                           Wallet?
   WalletLedger                     WalletLedger[]
   wishlists                        Wishlist[]
+  hostKit                           HostKit?
 }
 
 /// Historique des mots de passe pour empêcher la réutilisation
@@ -968,6 +969,49 @@ model UserPresence {
   User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+/// Kit de récompense pour les hôtes Lok'Room
+/// L'hôte doit choisir entre le Kit Essentiel (5 résas) ou attendre le Kit Super Hôte (25 résas)
+model HostKit {
+  id              String        @id @default(cuid())
+  hostId          String        @unique
+  host            User          @relation(fields: [hostId], references: [id], onDelete: Cascade)
+
+  /// Type de kit choisi/réclamé
+  kitType         HostKitType
+
+  /// Statut du kit
+  status          HostKitStatus @default(PENDING)
+
+  /// Valeur affichée du kit (en centimes EUR)
+  displayValueCents Int
+
+  /// Nombre de réservations qualifiées au moment de la réclamation
+  qualifyingBookings Int
+
+  /// Date de qualification (quand l'hôte a atteint le seuil)
+  qualifiedAt     DateTime
+
+  /// Date de réclamation (quand l'hôte a fait son choix)
+  claimedAt       DateTime      @default(now())
+
+  /// Date d'expédition
+  shippedAt       DateTime?
+
+  /// Date de livraison
+  deliveredAt     DateTime?
+
+  /// Numéro de suivi
+  trackingNumber  String?
+
+  /// Adresse de livraison (JSON)
+  shippingAddress Json
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([status])
+}
+
 enum Role {
   HOST
   GUEST
@@ -1183,4 +1227,19 @@ enum PromoType {
   PERCENTAGE
   FIXED_AMOUNT
   FREE_SERVICE_FEE
+}
+
+/// Type de kit hôte
+enum HostKitType {
+  ESSENTIAL   // Kit Essentiel - 5 réservations - Valeur 100€
+  SUPERHOST   // Kit Super Hôte - 25 réservations - Valeur 250€
+}
+
+/// Statut du kit hôte
+enum HostKitStatus {
+  PENDING     // En attente de traitement
+  PROCESSING  // En cours de préparation
+  SHIPPED     // Expédié
+  DELIVERED   // Livré
+  CANCELLED   // Annulé
 }
