@@ -224,6 +224,14 @@
   transform: translate(-50%, -100%) scale(1.1);
 }
 
+/* Garder le style actif même au hover */
+.lokroom-price-badge--active:hover {
+  background: #000000;
+  color: #ffffff;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.2);
+  transform: translate(-50%, -100%) scale(1.12);
+}
+
 @keyframes lokroom-badge-pop {
   from {
     transform: translate(-50%, -100%) scale(0.8);
@@ -437,4 +445,199 @@
 
 .lokroom-heart-btn.animate-heart svg {
   animation: heart-pop 0.4s ease-out;
+}
+
+/* ============================================
+   ACCESSIBILITY - WCAG 2.1 AA/AAA Compliance
+   ============================================ */
+
+/* Focus visible styles - Enhanced visibility */
+*:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* Remove default focus for mouse users, keep for keyboard */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* High contrast focus ring */
+@media (forced-colors: active) {
+  *:focus-visible {
+    outline: 3px solid CanvasText;
+    outline-offset: 3px;
+  }
+}
+
+/* Skip link styling */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.skip-link:focus {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  width: auto;
+  height: auto;
+  padding: 0.75rem 1.5rem;
+  background: #1f2937;
+  color: white;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  z-index: 9999;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Screen reader only content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sr-only-focusable:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: inherit;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High contrast mode adjustments */
+@media (forced-colors: active) {
+  .lokroom-price-badge {
+    border: 2px solid CanvasText;
+  }
+
+  .lokroom-price-badge--active {
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  button, a, [role="button"] {
+    border: 1px solid CanvasText;
+  }
+}
+
+/* Minimum touch target size (44x44px) - WCAG 2.1 AAA Target Size */
+@media (pointer: coarse) {
+  button:not(.btn-icon-only),
+  a:not(.link-inline),
+  [role="button"],
+  input[type="checkbox"],
+  input[type="radio"],
+  select {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Focus indicators for interactive elements */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Focus within for composite widgets */
+[role="listbox"]:focus-within,
+[role="menu"]:focus-within,
+[role="tablist"]:focus-within {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Better visibility for disabled states */
+[disabled],
+[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Link styling for better visibility */
+a:not([class]) {
+  color: #2563eb;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+a:not([class]):hover {
+  color: #1d4ed8;
+  text-decoration-thickness: 2px;
+}
+
+a:not([class]):visited {
+  color: #7c3aed;
+}
+
+/* Form validation states - visible to all */
+input:invalid:not(:placeholder-shown),
+select:invalid:not(:placeholder-shown),
+textarea:invalid:not(:placeholder-shown) {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 1px #dc2626;
+}
+
+input:valid:not(:placeholder-shown),
+select:valid:not(:placeholder-shown),
+textarea:valid:not(:placeholder-shown) {
+  border-color: #16a34a;
+}
+
+/* Error message styling */
+[role="alert"] {
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid currentColor;
+}
+
+/* Loading state announcement */
+[aria-busy="true"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Keyboard navigation indicators */
+[data-keyboard-nav="true"] *:focus {
+  outline: 3px solid #2563eb;
+  outline-offset: 3px;
 }

@@ -116,11 +116,28 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
+      // Première connexion : stocker l'id et le role
       if (user?.id) {
         token.sub = user.id;
         token.email = user.email;
+        token.role = (user as { role?: string }).role as typeof token.role;
       }
+
+      // Rafraîchir le role depuis la DB à chaque refresh (pour mise à jour en temps réel)
+      if (trigger === "update" || !token.role) {
+        const email = token.email as string | undefined;
+        if (email) {
+          const dbUser = await prisma.user.findUnique({
+            where: { email },
+            select: { role: true },
+          });
+          if (dbUser) {
+            token.role = dbUser.role;
+          }
+        }
+      }
+
       return token;
     },
 

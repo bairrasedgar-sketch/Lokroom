@@ -11,10 +11,9 @@ const footerSections = [
     links: [
       { label: "Centre d'aide", href: "/help" },
       { label: "LokCover", href: "/lokcover" },
-      { label: "Lutte contre la discrimination", href: "/anti-discrimination" },
-      { label: "Soutien aux personnes handicapées", href: "/accessibility" },
-      { label: "Options d'annulation", href: "/help/cancellation" },
-      { label: "Signaler un problème", href: "/help/report" },
+      { label: "Non-discrimination", href: "/legal/non-discrimination" },
+      { label: "Options d'annulation", href: "/legal/cancellation" },
+      { label: "Accessibilité", href: "/accessibility" },
     ],
   },
   {
@@ -23,7 +22,7 @@ const footerSections = [
       { label: "Proposer votre espace sur Lok'Room", href: "/become-host" },
       { label: "LokCover pour les hôtes", href: "/lokcover-host" },
       { label: "Ressources pour les hôtes", href: "/host/resources" },
-      { label: "Forum de la communauté", href: "/community" },
+      { label: "Standards de la communauté", href: "/legal/community-standards" },
       { label: "Accueil responsable", href: "/responsible-hosting" },
     ],
   },
@@ -81,16 +80,20 @@ export default function Footer() {
             <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-gray-600">
               <span>&copy; {currentYear} Lok&apos;Room, Inc.</span>
               <span className="hidden sm:inline">·</span>
-              <Link href="/privacy" className="hover:underline">
+              <Link href="/legal/privacy" className="hover:underline">
                 Confidentialité
               </Link>
               <span className="hidden sm:inline">·</span>
-              <Link href="/terms" className="hover:underline">
+              <Link href="/legal/terms" className="hover:underline">
                 Conditions générales
               </Link>
               <span className="hidden sm:inline">·</span>
-              <Link href="/sitemap" className="hover:underline">
-                Plan du site
+              <Link href="/legal/legal-notice" className="hover:underline">
+                Mentions légales
+              </Link>
+              <span className="hidden sm:inline">·</span>
+              <Link href="/legal/cookies" className="hover:underline">
+                Cookies
               </Link>
             </div>
 

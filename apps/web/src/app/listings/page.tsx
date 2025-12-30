@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { getServerSession } from "next-auth";
+import { Metadata } from "next";
 
 import { authOptions } from "@/lib/auth";
 import { formatMoneyAsync, type Currency } from "@/lib/currency";
@@ -14,6 +15,17 @@ import { type MapMarker } from "@/components/Map";
 
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Toutes les annonces - Espaces à louer",
+  description:
+    "Découvrez des espaces uniques à louer : appartements, bureaux, studios photo, salles de réunion, parkings et plus. Filtrez par ville, prix et type d'espace.",
+  openGraph: {
+    title: "Toutes les annonces - Espaces à louer | Lok'Room",
+    description:
+      "Découvrez des espaces uniques à louer près de chez vous.",
+  },
+};
 
 type ReviewSummary = {
   count: number;
@@ -201,6 +213,7 @@ export default async function ListingsPage({
       createdAt: listing.createdAt,
       priceFormatted: priceLabel,
       imageUrl: listing.images?.[0]?.url ?? null,
+      images: listing.images ?? [], // Passer toutes les images pour le carousel
     }));
 
   const resultLabel =

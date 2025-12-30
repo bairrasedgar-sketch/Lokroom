@@ -15,7 +15,7 @@ type BookingFormProps = {
 };
 
 type PreviewLine = {
-  code: "base" | "service_guest" | "taxes" | "total";
+  code: "base" | "service_guest" | "taxes" | "total" | "promo";
   label: string;
   amountCents: number;
   emphasize?: boolean;
@@ -69,6 +69,19 @@ export default function BookingForm({
   const [previewLoading, setPreviewLoading] = useState(false);
   const [preview, setPreview] = useState<PreviewBreakdown | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
+
+  // Code promo
+  const [promoCode, setPromoCode] = useState("");
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [validPromo, setValidPromo] = useState<{
+    id: string;
+    code: string;
+    type: string;
+    value: number;
+    discountAmountCents: number;
+    discountLabel: string;
+  } | null>(null);
 
   // 💰 Label "tarif de base" par nuit — utilise price & currency
   const pricePerNightCents = Math.round(price * 100);
@@ -145,6 +158,59 @@ export default function BookingForm({
     };
   }, [startDate, endDate, listingId]);
 
+  // Validation du code promo
+  async function validatePromoCode() {
+    if (!promoCode.trim()) {
+      setPromoError("Veuillez entrer un code promo");
+      return;
+    }
+
+    if (!isLoggedIn) {
+      setPromoError("Connectez-vous pour utiliser un code promo");
+      return;
+    }
+
+    setPromoLoading(true);
+    setPromoError(null);
+
+    try {
+      const bookingAmountCents = preview?.basePriceCents || 0;
+
+      const res = await fetch("/api/promo/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: promoCode.trim(),
+          listingId,
+          bookingAmountCents,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.valid) {
+        setPromoError(data.error || "Code promo invalide");
+        setValidPromo(null);
+        return;
+      }
+
+      setValidPromo(data.promoCode);
+      setPromoError(null);
+      toast.success(`Code promo "${data.promoCode.code}" appliqué !`);
+    } catch (error) {
+      console.error("Error validating promo code:", error);
+      setPromoError("Erreur lors de la validation");
+    } finally {
+      setPromoLoading(false);
+    }
+  }
+
+  function removePromoCode() {
+    setValidPromo(null);
+    setPromoCode("");
+    setPromoError(null);
+  }
+
   function mapServerErrorToMessage(code: string | undefined): string {
     const bf = t.components.bookingForm;
     if (!code) {
@@ -207,6 +273,7 @@ export default function BookingForm({
           listingId,
           startDate,
           endDate,
+          promoCodeId: validPromo?.id,
         }),
       });
 
@@ -332,7 +399,68 @@ export default function BookingForm({
                   </span>
                 </div>
               ))}
+
+              {/* Afficher la réduction du code promo */}
+              {validPromo && validPromo.discountAmountCents > 0 && (
+                <div className="flex items-center justify-between text-green-600">
+                  <span>Réduction ({validPromo.code})</span>
+                  <span>-{formatMoney(validPromo.discountAmountCents, preview.currency)}</span>
+                </div>
+              )}
             </div>
+          )}
+        </div>
+
+        {/* Champ code promo */}
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={() => document.getElementById("promo-input")?.focus()}
+            className="text-xs font-medium text-gray-600 hover:text-gray-900 underline"
+          >
+            Vous avez un code promo ?
+          </button>
+
+          {!validPromo ? (
+            <div className="flex gap-2">
+              <input
+                id="promo-input"
+                type="text"
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                placeholder="Entrez votre code"
+                className="flex-1 h-9 rounded-lg border border-gray-300 px-3 text-sm uppercase outline-none focus:border-black focus:ring-1 focus:ring-black"
+                disabled={promoLoading}
+              />
+              <button
+                type="button"
+                onClick={validatePromoCode}
+                disabled={promoLoading || !promoCode.trim()}
+                className="px-4 h-9 rounded-lg bg-gray-100 text-sm font-medium text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {promoLoading ? "..." : "Appliquer"}
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between rounded-lg bg-green-50 border border-green-200 px-3 py-2">
+              <div className="flex items-center gap-2">
+                <span className="text-green-600">✓</span>
+                <span className="text-sm font-medium text-green-700">
+                  {validPromo.code} - {validPromo.discountLabel}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={removePromoCode}
+                className="text-xs text-gray-500 hover:text-gray-700"
+              >
+                Retirer
+              </button>
+            </div>
+          )}
+
+          {promoError && (
+            <p className="text-xs text-red-600">{promoError}</p>
           )}
         </div>
 

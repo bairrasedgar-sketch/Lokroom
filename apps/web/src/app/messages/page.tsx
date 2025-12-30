@@ -19,8 +19,12 @@ import {
   StarIcon,
   CurrencyEuroIcon,
   MapPinIcon,
+  PaperClipIcon,
 } from "@heroicons/react/24/outline";
 import { CheckIcon, SparklesIcon } from "@heroicons/react/24/solid";
+import TypingIndicator from "@/components/messages/TypingIndicator";
+import { ReadStatus } from "@/components/messages/ReadReceipt";
+import { useRealtimeMessages, useTypingIndicator } from "@/lib/realtime";
 
 // Support bot ID
 const SUPPORT_BOT_ID = "lokroom-support";
@@ -102,6 +106,56 @@ export default function MessagesPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const currentUserId = session?.user?.id;
+
+  // Temps réel - Hook pour les messages en temps réel
+  const realConvId = selectedConvId !== SUPPORT_BOT_ID ? selectedConvId : null;
+  const {
+    isConnected,
+    typingUsers,
+    readReceipts,
+    sendTyping,
+    markAsRead,
+    setOnMessage,
+  } = useRealtimeMessages(realConvId);
+
+  // Hook pour gérer l'indicateur de frappe
+  const { handleTyping, stopTyping } = useTypingIndicator(sendTyping);
+
+  // Type pour les événements temps réel (format différent du type Message local)
+  type RealtimeMessageEvent = {
+    message: {
+      id: string;
+      content: string;
+      senderId: string;
+      senderName: string;
+      createdAt: string;
+    };
+  };
+
+  // Callback pour les nouveaux messages en temps réel
+  useEffect(() => {
+    setOnMessage(() => (event: RealtimeMessageEvent) => {
+      // Ajouter le message reçu si ce n'est pas de l'utilisateur actuel
+      if (event.message.senderId !== currentUserId) {
+        setMessages((prev) => {
+          // Vérifier si le message existe déjà
+          if (prev.some((m) => m.id === event.message.id)) return prev;
+          return [...prev, {
+            id: event.message.id,
+            content: event.message.content,
+            createdAt: event.message.createdAt,
+            sender: {
+              id: event.message.senderId,
+              name: event.message.senderName,
+              profile: null,
+            },
+          }];
+        });
+        // Marquer comme lu automatiquement
+        markAsRead(event.message.id);
+      }
+    });
+  }, [setOnMessage, currentUserId, markAsRead]);
 
   // Auto-open support bot if ?support=true
   useEffect(() => {
@@ -1036,7 +1090,17 @@ Posez-moi vos questions sur :
                                     minute: "2-digit",
                                   })}
                                 </span>
-                                {isMine && (
+                                {isMine && selectedConvId !== SUPPORT_BOT_ID && (
+                                  <ReadStatus
+                                    isRead={
+                                      Array.from(readReceipts.values()).some(
+                                        (r) => r.lastReadMessageId === msg.id ||
+                                        new Date(r.readAt) >= new Date(msg.createdAt)
+                                      )
+                                    }
+                                  />
+                                )}
+                                {isMine && selectedConvId === SUPPORT_BOT_ID && (
                                   <CheckIcon className="h-3 w-3 text-gray-400" />
                                 )}
                               </div>
@@ -1090,19 +1154,46 @@ Posez-moi vos questions sur :
                   </div>
                 )}
 
+                {/* Typing indicator */}
+                {typingUsers.length > 0 && selectedConvId !== SUPPORT_BOT_ID && (
+                  <TypingIndicator
+                    users={typingUsers.map(t => ({ userId: t.userId, userName: t.userName }))}
+                    currentUserId={currentUserId || ""}
+                  />
+                )}
+
                 {/* Input */}
                 <div className="flex items-end gap-3">
-                  <div className="flex-1">
+                  <div className="flex-1 relative">
                     <textarea
                       ref={textareaRef}
                       value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
+                      onChange={(e) => {
+                        setNewMessage(e.target.value);
+                        // Envoyer l'événement "en train d'écrire"
+                        if (selectedConvId !== SUPPORT_BOT_ID) {
+                          handleTyping();
+                        }
+                      }}
                       onKeyDown={handleKeyDown}
+                      onBlur={() => {
+                        if (selectedConvId !== SUPPORT_BOT_ID) {
+                          stopTyping();
+                        }
+                      }}
                       placeholder="Écrivez votre message..."
                       rows={1}
-                      className="w-full resize-none rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-[15px] placeholder-gray-400 transition-all focus:border-gray-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/5"
+                      className="w-full resize-none rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 pr-12 text-[15px] placeholder-gray-400 transition-all focus:border-gray-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/5"
                       style={{ maxHeight: "120px" }}
                     />
+                    {/* Bouton pièce jointe */}
+                    <button
+                      type="button"
+                      className="absolute right-3 bottom-3 text-gray-400 hover:text-gray-600 transition"
+                      title="Joindre un fichier"
+                    >
+                      <PaperClipIcon className="h-5 w-5" />
+                    </button>
                   </div>
                   <button
                     onClick={handleSend}
@@ -1120,6 +1211,16 @@ Posez-moi vos questions sur :
                     )}
                   </button>
                 </div>
+
+                {/* Connexion temps réel status */}
+                {selectedConvId !== SUPPORT_BOT_ID && (
+                  <div className="flex items-center justify-center mt-1">
+                    <span className={`inline-flex items-center gap-1 text-[10px] ${isConnected ? "text-green-500" : "text-gray-400"}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? "bg-green-500" : "bg-gray-400"}`} />
+                      {isConnected ? "Connecté en temps réel" : "Connexion..."}
+                    </span>
+                  </div>
+                )}
               </div>
             </>
           )}

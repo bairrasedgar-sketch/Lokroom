@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { cookies } from "next/headers";
+import { Metadata } from "next";
 
 import { authOptions } from "@/lib/auth";
 import DeleteListingButton from "@/components/DeleteListingButton";
@@ -14,6 +15,7 @@ import Map from "@/components/Map"; // mini-map localisation
 import ListingReviews from "@/components/ListingReviews";
 import { formatMoneyAsync, type Currency } from "@/lib/currency";
 import { getServerDictionary } from "@/lib/i18n.server";
+import ListingJsonLd from "@/components/seo/ListingJsonLd";
 
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
@@ -47,6 +49,58 @@ async function getListing(id: string): Promise<Listing | null> {
   if (!res.ok) return null;
   const data = await res.json();
   return (data.listing ?? null) as Listing | null;
+}
+
+// SEO: generateMetadata pour les meta tags dynamiques
+export async function generateMetadata({
+  params,
+}: {
+  params: { id: string };
+}): Promise<Metadata> {
+  const listing = await getListing(params.id);
+
+  if (!listing) {
+    return {
+      title: "Annonce non trouvée | Lok'Room",
+      description: "Cette annonce n'existe pas ou a été supprimée.",
+    };
+  }
+
+  const locationLabel = [listing.city, listing.country].filter(Boolean).join(", ");
+  const title = `${listing.title} - ${locationLabel} | Lok'Room`;
+  const description = listing.description?.slice(0, 160) || `Louez ${listing.title} à ${locationLabel} sur Lok'Room. Réservation facile et sécurisée.`;
+  const imageUrl = listing.images?.[0]?.url || "/og-image.png";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.lokroom.com";
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `${baseUrl}/listings/${listing.id}`,
+      siteName: "Lok'Room",
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: listing.title,
+        },
+      ],
+      locale: "fr_FR",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [imageUrl],
+    },
+    alternates: {
+      canonical: `${baseUrl}/listings/${listing.id}`,
+    },
+  };
 }
 
 export default async function ListingDetailPage({
@@ -92,7 +146,25 @@ export default async function ListingDetailPage({
   const publishedDate = new Date(listing.createdAt).toLocaleDateString(locale);
 
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 pb-12 pt-6">
+    <>
+      {/* Schema.org JSON-LD pour le SEO */}
+      <ListingJsonLd
+        listing={{
+          id: listing.id,
+          title: listing.title,
+          description: listing.description,
+          price: listing.price,
+          currency: listing.currency,
+          city: listing.city,
+          country: listing.country,
+          images: listing.images,
+          lat: lat,
+          lng: lng,
+          ownerName: listing.owner.name,
+        }}
+      />
+
+      <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 pb-12 pt-6">
       {/* Ligne retour + date */}
       <div className="flex items-center justify-between text-xs text-gray-600">
         <Link href="/listings" className="hover:underline">
@@ -281,5 +353,6 @@ export default async function ListingDetailPage({
         </div>
       )}
     </main>
+    </>
   );
 }

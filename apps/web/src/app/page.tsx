@@ -1,11 +1,56 @@
 // apps/web/src/app/page.tsx
-export const dynamic = "force-dynamic";
-
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/db";
 import { formatMoneyAsync, type Currency } from "@/lib/currency";
 import { getServerDictionary } from "@/lib/i18n.server";
 import HomeClient from "@/components/HomeClient";
+
+export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Lok'Room - Location d'espaces entre particuliers",
+  description:
+    "Louez et proposez des espaces uniques : appartements, bureaux, studios photo, salles de réunion, parkings et plus. Réservation sécurisée entre particuliers.",
+  keywords: [
+    "location espace",
+    "louer bureau",
+    "location appartement",
+    "coworking",
+    "location parking",
+    "studio photo",
+    "salle de réunion",
+    "location entre particuliers",
+    "Airbnb espaces",
+  ],
+  openGraph: {
+    title: "Lok'Room - Location d'espaces entre particuliers",
+    description:
+      "Louez et proposez des espaces uniques : appartements, bureaux, studios, parkings et plus.",
+    url: "https://www.lokroom.com",
+    siteName: "Lok'Room",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Lok'Room - Location d'espaces",
+      },
+    ],
+    locale: "fr_FR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Lok'Room - Location d'espaces entre particuliers",
+    description:
+      "Louez et proposez des espaces uniques près de chez vous.",
+    images: ["/og-image.png"],
+  },
+  alternates: {
+    canonical: "https://www.lokroom.com",
+  },
+};
 
 async function getFeaturedListings() {
   const listings = await prisma.listing.findMany({

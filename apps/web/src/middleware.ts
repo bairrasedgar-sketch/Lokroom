@@ -3,10 +3,22 @@
  * - Détection locale et devise
  * - Headers de sécurité (CSP, XSS, etc.)
  * - Protection des routes (auth required)
+ * - Protection admin avec permissions par rôle
  */
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
+
+// Rôles admin autorisés
+const ADMIN_ROLES = ["ADMIN", "MODERATOR", "SUPPORT", "FINANCE"];
+
+// Pages accessibles par rôle admin
+const ROLE_PAGES: Record<string, string[]> = {
+  ADMIN: ["/admin", "/admin/users", "/admin/listings", "/admin/bookings", "/admin/disputes", "/admin/logs", "/admin/settings"],
+  MODERATOR: ["/admin", "/admin/users", "/admin/listings", "/admin/bookings", "/admin/disputes", "/admin/logs"],
+  SUPPORT: ["/admin", "/admin/users", "/admin/listings", "/admin/bookings", "/admin/disputes"],
+  FINANCE: ["/admin", "/admin/users", "/admin/listings", "/admin/bookings", "/admin/disputes"],
+};
 
 // Routes qui nécessitent une authentification
 const PROTECTED_ROUTES = [
@@ -18,6 +30,9 @@ const PROTECTED_ROUTES = [
   "/profile",
   "/host",
 ];
+
+// Routes qui nécessitent le rôle ADMIN
+const ADMIN_ROUTES = ["/admin"];
 
 // Routes publiques (pas de redirection même si dans un path protégé)
 const PUBLIC_ROUTES = [
@@ -225,7 +240,48 @@ export async function middleware(req: NextRequest) {
   // ─────────────────────────────────────────────────────────────
   const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
   const isProtectedRoute = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
+  const isAdminRoute = ADMIN_ROUTES.some((route) => pathname.startsWith(route));
 
+  // Routes admin - nécessitent authentification + rôle admin
+  if (isAdminRoute) {
+    const token = await getToken({
+      req,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+
+    if (!token) {
+      // Non connecté - rediriger vers /login
+      const loginUrl = new URL("/login", req.url);
+      loginUrl.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    const role = token.role as string | undefined;
+
+    // Vérifier que c'est un rôle admin
+    if (!role || !ADMIN_ROLES.includes(role)) {
+      // Pas admin - rediriger vers la page d'accueil avec erreur
+      const homeUrl = new URL("/", req.url);
+      homeUrl.searchParams.set("error", "unauthorized");
+      return NextResponse.redirect(homeUrl);
+    }
+
+    // Vérifier que ce rôle a accès à cette page
+    const allowedPages = ROLE_PAGES[role] || [];
+    const normalizedPath = pathname.replace(/\/$/, "") || "/admin";
+    const hasAccess = allowedPages.some(page =>
+      normalizedPath === page || normalizedPath.startsWith(page + "/")
+    );
+
+    if (!hasAccess) {
+      // Pas accès à cette page - rediriger vers le dashboard admin
+      const adminUrl = new URL("/admin", req.url);
+      adminUrl.searchParams.set("error", "forbidden");
+      return NextResponse.redirect(adminUrl);
+    }
+  }
+
+  // Routes protégées standard
   if (!isPublicRoute && isProtectedRoute) {
     // Vérifie le token JWT NextAuth
     const token = await getToken({

@@ -8,6 +8,7 @@ import { signIn, useSession } from "next-auth/react";
 import { UserMenu } from "./layout/UserMenu";
 import { useSearchBarSafe } from "@/contexts/SearchBarContext";
 import { COUNTRIES, DEFAULT_COUNTRY, type Country } from "@/data/countries";
+import NotificationBell from "./NotificationBell";
 
 type LocaleOption = {
   code: string;
@@ -543,6 +544,9 @@ export default function Navbar() {
               </span>
             </button>
 
+            {/* Cloche de notifications */}
+            {isLoggedIn && <NotificationBell />}
+
             {/* Menu utilisateur avec hamburger + profil */}
             {isLoggedIn ? (
               <UserMenu />
@@ -625,6 +629,12 @@ export default function Navbar() {
                     className="rounded-lg px-3 py-2 hover:bg-gray-100"
                   >
                     Favoris
+                  </Link>
+                  <Link
+                    href="/notifications"
+                    className="rounded-lg px-3 py-2 hover:bg-gray-100 flex items-center justify-between"
+                  >
+                    <span>Notifications</span>
                   </Link>
                   <Link
                     href="/messages"

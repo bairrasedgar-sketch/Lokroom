@@ -7,9 +7,970 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id                               String                     @id @default(cuid())
+  email                            String                     @unique
+  name                             String?
+  role                             Role                       @default(GUEST)
+  country                          String?
+  createdAt                        DateTime                   @default(now())
+  lastLoginAt                      DateTime?
+  emailVerified                    DateTime?
+  identityLastVerifiedAt           DateTime?
+  /// Vérification d'identité Stripe Identity (Lok'Room)
+  identityStatus                   IdentityVerificationStatus @default(UNVERIFIED)
+  identityStripeSessionId          String?
+  /// Mot de passe hashé (bcrypt) - null si compte créé via OAuth uniquement
+  passwordHash                     String?
+  /// Token de réinitialisation de mot de passe
+  resetToken                       String?                    @unique
+  resetTokenExpiresAt              DateTime?
+  accounts                         Account[]
+  accountDeletionRequest           AccountDeletionRequest[]
+  adminNotes                       AdminNote[]
+  auditLogs                        AuditLog[]
+  cancelledBookings                Booking[]                  @relation("BookingCancelledBy")
+  bookings                         Booking[]                  @relation("BookingGuest")
+  guestConversations               Conversation[]             @relation("GuestConversations")
+  hostConversations                Conversation[]             @relation("HostConversations")
+  dataExportRequests               DataExportRequest[]
+  Dispute_Dispute_againstIdToUser  Dispute[]                  @relation("Dispute_againstIdToUser")
+  disputesAssigned                 Dispute[]                  @relation("DisputeAdmin")
+  disputesOpened                   Dispute[]                  @relation("DisputeOpener")
+  disputeEvidence                  DisputeEvidence[]
+  disputeMessages                  DisputeMessage[]
+  Experience                       Experience[]
+  ExperienceBooking                ExperienceBooking[]
+  ExperienceReview                 ExperienceReview[]
+  favorites                        Favorite[]
+  hostProfile                      HostProfile?
+  Listing                          Listing[]
+  ListingModeration                ListingModeration[]
+  ListingReport                    ListingReport[]
+  messages                         Message[]
+  notifications                    Notification[]
+  notificationPreferences          NotificationPreference?
+  passwordHistory                  PasswordHistory[]
+  PromoCode                        PromoCode[]
+  promoCodeUsages                  PromoCodeUsage[]
+  PushSubscription                 PushSubscription[]
+  referralsReceived                Referral?                  @relation("ReferralsReceived")
+  referralsMade                    Referral[]                 @relation("ReferralsMade")
+  ReferralCode                     ReferralCode?
+  reviewsWritten                   Review[]                   @relation("ReviewAuthor")
+  reviewsReceived                  Review[]                   @relation("ReviewTarget")
+  searchHistory                    SearchHistory[]
+  sessions                         Session[]
+  SystemConfig                     SystemConfig[]
+  UserBadge                        UserBadge[]
+  UserBan_UserBan_bannedByIdToUser UserBan[]                  @relation("UserBan_bannedByIdToUser")
+  UserBan_UserBan_userIdToUser     UserBan[]                  @relation("UserBan_userIdToUser")
+  UserConsent                      UserConsent[]
+  UserPresence                     UserPresence?
+  profile                          UserProfile?
+  wallet                           Wallet?
+  WalletLedger                     WalletLedger[]
+  wishlists                        Wishlist[]
+}
+
+/// Historique des mots de passe pour empêcher la réutilisation
+model PasswordHistory {
+  id           String   @id @default(cuid())
+  userId       String
+  passwordHash String
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model UserProfile {
+  id           String    @id @default(cuid())
+  userId       String    @unique
+  avatarUrl    String?
+  ratingAvg    Float     @default(0)
+  ratingCount  Int       @default(0)
+  addressLine1 String?
+  addressLine2 String?
+  birthDate    DateTime?
+  city         String?
+  country      String?
+  /// Champs supplémentaires pour pré-remplir Stripe / profil Lok'Room
+  firstName    String?
+  lastName     String?
+  phone        String?
+  postalCode   String?
+  province     String?
+  user         User      @relation(fields: [userId], references: [id])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Listing {
+  id                 String             @id @default(cuid())
+  title              String
+  description        String
+  /// Prix par nuit / par jour (frontend décidera comment l’afficher)
+  price              Float
+  country            String
+  /// Ville : obligatoire (défaut vide pour anciennes lignes)
+  city               String             @default("")
+  createdAt          DateTime           @default(now())
+  ownerId            String
+  currency           Currency           @default(EUR)
+  province           ProvinceCA?
+  /// Adresse exacte de l’espace (jamais affichée publiquement)
+  addressFull        String             @default("")
+  /// Coordonnées exactes
+  lat                Float              @default(0)
+  /// Coordonnées “publiques” (approx)
+  latPublic          Float              @default(0)
+  lng                Float              @default(0)
+  lngPublic          Float              @default(0)
+  /// Ligne d’adresse principale (numéro + rue)
+  addressLine1       String?
+  /// ID du lieu renvoyé par le provider
+  mapPlaceId         String?
+  /// Provider utilisé
+  mapProvider        MapProvider        @default(GOOGLE)
+  /// Code postal
+  postalCode         String?
+  /// Prix à l'heure (optionnel, si l'espace est louable à l'heure)
+  hourlyPrice        Float?
+  /// Réservation instantanée possible ?
+  isInstantBook      Boolean            @default(false)
+  maxDurationHours   Int?
+  /// Capacité de l'espace (nombre de personnes max)
+  maxGuests          Int?
+  maxNights          Int?
+  /// Contraintes de durée pour les réservations à l’heure
+  minDurationHours   Int?
+  /// Contraintes de durée pour les réservations à la journée / nuitée
+  minNights          Int?
+  /// Mode de tarification (à l’heure, à la journée, ou les deux)
+  pricingMode        PricingMode        @default(DAILY)
+  /// Type d'espace principal (chambre, bureau, parking, studio, etc.)
+  type               ListingType        @default(OTHER)
+  /// Nombre de salles de bain
+  bathrooms          Int?
+  /// Capacités spécifiques selon le type d'espace
+  /// Nombre de lits (logements)
+  beds               Int?
+  /// Type personnalisé si type = OTHER (ex: "Atelier", "Cave", etc.)
+  customType         String?
+  /// Nombre de bureaux (coworking/office)
+  desks              Int?
+  /// Réduction pour 3+ jours
+  discountDays3Plus  Int?
+  /// Réductions pour réservations multiples (en pourcentage)
+  /// Réduction pour 3+ heures
+  discountHours3Plus Int?
+  /// Réduction pour 6+ heures
+  discountHours6Plus Int?
+  /// Réduction mensuelle
+  discountMonthly    Int?
+  /// Réduction hebdomadaire
+  discountWeekly     Int?
+  /// Nombre de places (parking/garage)
+  parkings           Int?
+  /// Région/département pour la France
+  regionFR           String?
+  /// Caractéristiques de l'espace (tags descriptifs)
+  spaceFeatures      String[]           @default([])
+  /// Types d'espace additionnels (multi-catégorie, ex: HOUSE + STUDIO)
+  additionalTypes    String[]           @default([])
+  isActive           Boolean            @default(true)
+  rating             Float              @default(0)
+  updatedAt          DateTime           @default(now())
+  viewCount          Int                @default(0)
+  bookings           Booking[]
+  calendar           CalendarBlock[]
+  CalendarExport     CalendarExport?
+  CalendarSync       CalendarSync[]
+  conversations      Conversation[]
+  DynamicPrice       DynamicPrice[]
+  favorites          Favorite[]
+  owner              User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  amenities          ListingAmenity[]
+  images             ListingImage[]
+  ListingModeration  ListingModeration?
+  ListingReport      ListingReport[]
+  reviews            Review[]
+
+  @@index([ownerId])
+  @@index([createdAt])
+  @@index([country, province, city])
+  @@index([mapPlaceId])
+}
+
+model ListingImage {
+  id        String  @id @default(cuid())
+  url       String
+  listingId String
+  /// Image de couverture de l’annonce ?
+  isCover   Boolean @default(false)
+  /// Ordre d’affichage des images (0, 1, 2, …)
+  position  Int     @default(0)
+  height    Int?
+  /// Dimensions de l’image (optionnel, utile pour optimisation / thumbnails)
+  width     Int?
+  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+  @@index([listingId, position])
+  @@index([listingId, isCover])
+}
+
+model Favorite {
+  id         String    @id @default(cuid())
+  userId     String
+  listingId  String
+  createdAt  DateTime  @default(now())
+  wishlistId String?
+  listing    Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wishlist   Wishlist? @relation(fields: [wishlistId], references: [id])
+
+  @@unique([userId, listingId])
+  @@index([listingId])
+  @@index([userId])
+  @@index([wishlistId])
+}
+
+model Wishlist {
+  id        String     @id @default(cuid())
+  name      String
+  userId    String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  favorites Favorite[]
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Booking {
+  id                     String          @id @default(cuid())
+  listingId              String
+  /// Voyageur (guest)
+  guestId                String
+  /// Pour les réservations à la journée / nuitée
+  startDate              DateTime
+  endDate                DateTime
+  /// Prix de base de la réservation (hors frais Lok'Room), dans la devise de l’annonce
+  totalPrice             Float
+  currency               Currency
+  status                 BookingStatus   @default(PENDING)
+  createdAt              DateTime        @default(now())
+  /// Infos d’annulation / refund
+  cancelledAt            DateTime?
+  cancelledByUserId      String?
+  /// Montant total remboursé au client (en cents, toutes devises confondues)
+  refundAmountCents      Int?
+  /// Charge principale (remplie via webhook payment_intent.succeeded)
+  stripeChargeId         String?
+  /// Stripe PaymentIntent (rempli au moment de la création)
+  stripePaymentIntentId  String?
+  guestFeeCents          Int             @default(0)
+  /// Détail des frais Lok’Room (snapshot en cents au moment de la création)
+  hostFeeCents           Int             @default(0)
+  platformNetCents       Int             @default(0)
+  stripeFeeEstimateCents Int             @default(0)
+  taxOnGuestFeeCents     Int             @default(0)
+  endTimeMinutes         Int?
+  /// Mode de tarification utilisé pour cette réservation (heure ou jour)
+  pricingMode            PricingMode
+  /// Pour les réservations à l’heure :
+  /// heures de début/fin en minutes depuis minuit (dans le fuseau du listing)
+  /// ex : 9h30 -> 570 ; 13h00 -> 780
+  startTimeMinutes       Int?
+  timezone               String?
+  cancelledByUser        User?           @relation("BookingCancelledBy", fields: [cancelledByUserId], references: [id])
+  guest                  User            @relation("BookingGuest", fields: [guestId], references: [id])
+  listing                Listing         @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  calendarBlocks         CalendarBlock[]
+  conversations          Conversation[]  @relation("BookingConversations")
+  disputes               Dispute[]
+  reviews                Review[]
+
+  @@index([listingId, startDate, endDate])
+  @@index([guestId, createdAt])
+  @@index([stripePaymentIntentId])
+}
+
+model Review {
+  id           String   @id @default(cuid())
+  bookingId    String
+  listingId    String
+  /// Auteur de l’avis (guest OU host)
+  authorId     String
+  /// Utilisateur visé par l’avis (souvent l’hôte, parfois le guest)
+  targetUserId String
+  /// Note 1–5
+  rating       Int
+  /// Commentaire libre
+  comment      String?
+  createdAt    DateTime @default(now())
+  author       User     @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  booking      Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  listing      Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  targetUser   User     @relation("ReviewTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+
+  @@unique([bookingId, authorId])
+  @@index([listingId])
+  @@index([targetUserId])
+}
+
+model HostProfile {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  stripeAccountId      String?
+  kycStatus            String   @default("incomplete")
+  payoutsEnabled       Boolean  @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  avatarUrl            String?
+  bio                  String?
+  /// Années d'expérience comme hôte
+  experienceYears      Int?
+  instagram            String?
+  languages            String[] @default([])
+  /// "moins_une_heure" | "quelques_heures" | "un_jour"
+  responseTimeCategory String?
+  superhost            Boolean  @default(false)
+  verifiedEmail        Boolean  @default(false)
+  verifiedPhone        Boolean  @default(false)
+  website              String?
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([stripeAccountId])
+}
+
+model Wallet {
+  id           String   @id @default(cuid())
+  hostId       String   @unique
+  balanceCents Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  host         User     @relation(fields: [hostId], references: [id], onDelete: Cascade)
+}
+
+model WalletLedger {
+  id         String   @id @default(cuid())
+  hostId     String
+  deltaCents Int
+  reason     String?
+  bookingId  String?
+  createdAt  DateTime @default(now())
+  host       User     @relation(fields: [hostId], references: [id], onDelete: Cascade)
+
+  @@index([hostId, createdAt])
+}
+
+model Amenity {
+  id       String           @id @default(cuid())
+  slug     String           @unique
+  label    String
+  category AmenityCategory  @default(GENERAL)
+  listings ListingAmenity[]
+}
+
+model ListingAmenity {
+  listingId String
+  amenityId String
+  createdAt DateTime @default(now())
+  amenity   Amenity  @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@id([listingId, amenityId])
+}
+
+model CalendarBlock {
+  id        String              @id @default(cuid())
+  listingId String
+  start     DateTime
+  end       DateTime
+  reason    CalendarBlockReason @default(MANUAL_BLOCK)
+  bookingId String?
+  createdAt DateTime            @default(now())
+  booking   Booking?            @relation(fields: [bookingId], references: [id])
+  listing   Listing             @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId, start, end])
+}
+
+model Conversation {
+  id            String    @id @default(cuid())
+  /// contexte
+  listingId     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  guestId       String
+  /// participants
+  hostId        String
+  reservationId String?
+  guest         User      @relation("GuestConversations", fields: [guestId], references: [id])
+  host          User      @relation("HostConversations", fields: [hostId], references: [id])
+  listing       Listing?  @relation(fields: [listingId], references: [id])
+  booking       Booking?  @relation("BookingConversations", fields: [reservationId], references: [id])
+  messages      Message[]
+
+  @@index([hostId])
+  @@index([guestId])
+  @@index([reservationId])
+}
+
+model Message {
+  id                String              @id @default(cuid())
+  conversationId    String
+  senderId          String
+  createdAt         DateTime            @default(now())
+  content           String
+  readAt            DateTime?
+  conversation      Conversation        @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender            User                @relation(fields: [senderId], references: [id])
+  MessageAttachment MessageAttachment[]
+
+  @@index([conversationId, createdAt])
+}
+
+model StripeEvent {
+  id          String   @id
+  type        String
+  processedAt DateTime @default(now())
+
+  @@index([processedAt])
+}
+
+model SearchHistory {
+  id          String   @id @default(cuid())
+  userId      String
+  destination String
+  startDate   String?
+  endDate     String?
+  guests      Int?
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?
+  read      Boolean          @default(false)
+  readAt    DateTime?
+  actionUrl String?
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, read, createdAt])
+}
+
+model NotificationPreference {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  emailEnabled      Boolean  @default(true)
+  pushEnabled       Boolean  @default(true)
+  smsEnabled        Boolean  @default(false)
+  preferences       Json     @default("{}")
+  doNotDisturbStart String?
+  doNotDisturbEnd   String?
+  timezone          String   @default("Europe/Paris")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Dispute {
+  id                           String            @id @default(cuid())
+  bookingId                    String
+  openedById                   String
+  againstId                    String
+  reason                       DisputeReason
+  status                       DisputeStatus     @default(OPEN)
+  description                  String
+  claimedAmountCents           Int?
+  awardedAmountCents           Int?
+  assignedAdminId              String?
+  resolution                   String?
+  resolvedAt                   DateTime?
+  priority                     Int               @default(3)
+  createdAt                    DateTime          @default(now())
+  updatedAt                    DateTime          @updatedAt
+  User_Dispute_againstIdToUser User              @relation("Dispute_againstIdToUser", fields: [againstId], references: [id])
+  assignedAdmin                User?             @relation("DisputeAdmin", fields: [assignedAdminId], references: [id])
+  booking                      Booking           @relation(fields: [bookingId], references: [id])
+  openedBy                     User              @relation("DisputeOpener", fields: [openedById], references: [id])
+  evidence                     DisputeEvidence[]
+  messages                     DisputeMessage[]
+
+  @@index([bookingId])
+  @@index([openedById])
+  @@index([assignedAdminId])
+  @@index([againstId])
+  @@index([status, priority])
+}
+
+model DisputeEvidence {
+  id           String   @id @default(cuid())
+  disputeId    String
+  uploadedById String
+  fileUrl      String
+  fileType     String
+  fileName     String
+  description  String?
+  createdAt    DateTime @default(now())
+  dispute      Dispute  @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+
+  @@index([disputeId])
+}
+
+model DisputeMessage {
+  id        String   @id @default(cuid())
+  disputeId String
+  senderId  String
+  content   String
+  isAdmin   Boolean  @default(false)
+  isSystem  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  dispute   Dispute  @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+  sender    User     @relation(fields: [senderId], references: [id])
+
+  @@index([disputeId, createdAt])
+}
+
+model AuditLog {
+  id         String      @id @default(cuid())
+  adminId    String
+  action     AuditAction
+  entityType String
+  entityId   String
+  details    Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime    @default(now())
+  admin      User        @relation(fields: [adminId], references: [id])
+
+  @@index([action, createdAt])
+  @@index([adminId, createdAt])
+  @@index([entityType, entityId])
+}
+
+model PromoCode {
+  id                     String           @id @default(cuid())
+  code                   String           @unique
+  type                   PromoType
+  value                  Int
+  maxUses                Int?
+  usedCount              Int              @default(0)
+  maxPerUser             Int              @default(1)
+  minBookingAmountCents  Int?
+  validFrom              DateTime         @default(now())
+  validUntil             DateTime?
+  firstBookingOnly       Boolean          @default(false)
+  newUsersOnly           Boolean          @default(false)
+  applicableListingTypes String[]         @default([])
+  applicableCountries    String[]         @default([])
+  isActive               Boolean          @default(true)
+  createdById            String
+  createdAt              DateTime         @default(now())
+  User                   User             @relation(fields: [createdById], references: [id])
+  usages                 PromoCodeUsage[]
+
+  @@index([code, isActive])
+  @@index([validUntil])
+}
+
+model PromoCodeUsage {
+  id                  String    @id @default(cuid())
+  promoCodeId         String
+  userId              String
+  bookingId           String?
+  discountAmountCents Int
+  usedAt              DateTime  @default(now())
+  promoCode           PromoCode @relation(fields: [promoCodeId], references: [id], onDelete: Cascade)
+  user                User      @relation(fields: [userId], references: [id])
+
+  @@unique([promoCodeId, userId, bookingId])
+  @@index([userId])
+}
+
+model Referral {
+  id                     String    @id @default(cuid())
+  referrerId             String
+  referredId             String    @unique
+  referrerBonusCents     Int       @default(0)
+  referredBonusCents     Int       @default(0)
+  referrerPaid           Boolean   @default(false)
+  referredPaid           Boolean   @default(false)
+  referredFirstBooking   Boolean   @default(false)
+  referredFirstBookingAt DateTime?
+  createdAt              DateTime  @default(now())
+  referred               User      @relation("ReferralsReceived", fields: [referredId], references: [id])
+  referrer               User      @relation("ReferralsMade", fields: [referrerId], references: [id])
+
+  @@index([referrerId])
+}
+
+model DataExportRequest {
+  id          String    @id @default(cuid())
+  userId      String
+  status      String    @default("pending")
+  fileUrl     String?
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+}
+
+model AccountDeletionRequest {
+  id          String    @id @default(cuid())
+  userId      String
+  reason      String?
+  status      String    @default("pending")
+  scheduledAt DateTime
+  createdAt   DateTime  @default(now())
+  processedAt DateTime?
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status, scheduledAt])
+}
+
+model SystemConfig {
+  id          String   @id
+  key         String   @unique
+  value       Json
+  category    String   @default("general")
+  description String?
+  updatedById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  User        User?    @relation(fields: [updatedById], references: [id])
+
+  @@index([category])
+}
+
+model AdminNote {
+  id         String   @id @default(cuid())
+  targetType String
+  targetId   String
+  content    String
+  isPinned   Boolean  @default(false)
+  authorId   String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  author     User     @relation(fields: [authorId], references: [id])
+
+  @@index([targetType, targetId])
+  @@index([authorId])
+}
+
+model CalendarExport {
+  id          String   @id
+  listingId   String   @unique
+  secretToken String   @unique
+  createdAt   DateTime @default(now())
+  Listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+}
+
+model CalendarSync {
+  id                  String    @id
+  listingId           String
+  externalUrl         String
+  name                String
+  lastSyncAt          DateTime?
+  lastSyncStatus      String?
+  lastSyncError       String?
+  autoSync            Boolean   @default(true)
+  syncIntervalMinutes Int       @default(60)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime
+  Listing             Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([autoSync, lastSyncAt])
+  @@index([listingId])
+}
+
+model DynamicPrice {
+  id          String   @id
+  listingId   String
+  date        DateTime @db.Date
+  dailyPrice  Float?
+  hourlyPrice Float?
+  minNights   Int?
+  note        String?
+  createdAt   DateTime @default(now())
+  Listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([listingId, date])
+  @@index([listingId, date])
+}
+
+model Experience {
+  id                String              @id
+  hostId            String
+  title             String
+  description       String
+  category          ExperienceCategory
+  city              String
+  country           String
+  address           String?
+  lat               Float?
+  lng               Float?
+  pricePerPerson    Int
+  currency          Currency            @default(EUR)
+  minGuests         Int                 @default(1)
+  maxGuests         Int
+  durationMinutes   Int
+  includes          String[]            @default([])
+  toBring           String[]            @default([])
+  languages         String[]            @default(["fr"])
+  status            ListingStatus       @default(DRAFT)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime
+  User              User                @relation(fields: [hostId], references: [id])
+  ExperienceBooking ExperienceBooking[]
+  ExperienceImage   ExperienceImage[]
+  ExperienceReview  ExperienceReview[]
+  ExperienceSlot    ExperienceSlot[]
+
+  @@index([category])
+  @@index([city, country])
+  @@index([hostId])
+  @@index([status])
+}
+
+model ExperienceBooking {
+  id                    String         @id
+  experienceId          String
+  slotId                String
+  guestId               String
+  guestCount            Int
+  totalPriceCents       Int
+  currency              Currency
+  status                BookingStatus  @default(PENDING)
+  stripePaymentIntentId String?
+  messageToHost         String?
+  createdAt             DateTime       @default(now())
+  Experience            Experience     @relation(fields: [experienceId], references: [id])
+  User                  User           @relation(fields: [guestId], references: [id])
+  ExperienceSlot        ExperienceSlot @relation(fields: [slotId], references: [id])
+
+  @@index([experienceId])
+  @@index([guestId])
+  @@index([slotId])
+}
+
+model ExperienceImage {
+  id           String     @id
+  experienceId String
+  url          String
+  isCover      Boolean    @default(false)
+  position     Int        @default(0)
+  Experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+
+  @@index([experienceId])
+}
+
+model ExperienceReview {
+  id           String     @id
+  experienceId String
+  authorId     String
+  rating       Int
+  comment      String?
+  createdAt    DateTime   @default(now())
+  User         User       @relation(fields: [authorId], references: [id])
+  Experience   Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+
+  @@unique([experienceId, authorId])
+  @@index([experienceId])
+}
+
+model ExperienceSlot {
+  id                String              @id
+  experienceId      String
+  date              DateTime            @db.Date
+  startTime         String
+  availableSpots    Int
+  bookedSpots       Int                 @default(0)
+  priceOverride     Int?
+  isActive          Boolean             @default(true)
+  ExperienceBooking ExperienceBooking[]
+  Experience        Experience          @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+
+  @@unique([experienceId, date, startTime])
+  @@index([experienceId, date])
+}
+
+model ListingModeration {
+  id              String        @id
+  listingId       String        @unique
+  status          ListingStatus @default(DRAFT)
+  reviewedById    String?
+  reviewedAt      DateTime?
+  rejectionReason String?
+  adminNotes      String?
+  reportCount     Int           @default(0)
+  isFeatured      Boolean       @default(false)
+  featuredUntil   DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime
+  Listing         Listing       @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  User            User?         @relation(fields: [reviewedById], references: [id])
+
+  @@index([isFeatured])
+  @@index([status])
+}
+
+model ListingReport {
+  id         String   @id
+  listingId  String
+  reporterId String
+  reason     String
+  details    String?
+  resolved   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  Listing    Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  User       User     @relation(fields: [reporterId], references: [id])
+
+  @@unique([listingId, reporterId])
+  @@index([listingId])
+  @@index([resolved])
+}
+
+model MessageAttachment {
+  id            String   @id
+  messageId     String
+  fileUrl       String
+  fileType      String
+  fileName      String
+  createdAt     DateTime @default(now())
+  fileSizeBytes Int      @default(0)
+  Message       Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+}
+
+model PushSubscription {
+  id        String   @id
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model ReferralCode {
+  id        String   @id
+  userId    String   @unique
+  code      String   @unique
+  usedCount Int      @default(0)
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserBadge {
+  id        String    @id
+  userId    String
+  type      BadgeType
+  earnedAt  DateTime  @default(now())
+  expiresAt DateTime?
+  metadata  Json?
+  User      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+  @@index([userId])
+}
+
+model UserBan {
+  id                            String    @id
+  userId                        String
+  bannedById                    String
+  reason                        String
+  expiresAt                     DateTime?
+  isActive                      Boolean   @default(true)
+  createdAt                     DateTime  @default(now())
+  User_UserBan_bannedByIdToUser User      @relation("UserBan_bannedByIdToUser", fields: [bannedById], references: [id])
+  User_UserBan_userIdToUser     User      @relation("UserBan_userIdToUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@index([userId, isActive])
+}
+
+model UserConsent {
+  id        String   @id
+  userId    String
+  type      String
+  version   String
+  accepted  Boolean
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type, version])
+  @@index([userId])
+}
+
+model UserPresence {
+  id         String   @id
+  userId     String   @unique
+  isOnline   Boolean  @default(false)
+  isTypingIn String?
+  lastSeen   DateTime @default(now())
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 enum Role {
-  GUEST
   HOST
+  GUEST
   BOTH
   ADMIN
 }
@@ -46,7 +1007,17 @@ enum BookingStatus {
   CANCELLED
 }
 
-/// Catégorie d’espace (Lok'Room : logements, bureaux, parkings, studios, etc.)
+/// Statut d'une annonce (workflow d'approbation)
+enum ListingStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  SUSPENDED
+  ARCHIVED
+}
+
+/// Catégorie d'espace (Lok'Room : logements, bureaux, parkings, studios, etc.)
 enum ListingType {
   ROOM
   STUDIO
@@ -95,569 +1066,121 @@ enum IdentityVerificationStatus {
   REJECTED
 }
 
-model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  name          String?
-  emailVerified DateTime?
-
-  /// Mot de passe hashé (bcrypt) - null si compte créé via OAuth uniquement
-  passwordHash  String?
-
-  /// Token de réinitialisation de mot de passe
-  resetToken          String?   @unique
-  resetTokenExpiresAt DateTime?
-
-  role        Role         @default(GUEST)
-  country     String?
-  createdAt   DateTime     @default(now())
-  lastLoginAt DateTime?
-  profile     UserProfile?
-
-  /// Vérification d'identité Stripe Identity (Lok'Room)
-  identityStatus          IdentityVerificationStatus @default(UNVERIFIED)
-  identityLastVerifiedAt  DateTime?
-  identityStripeSessionId String?
-
-  accounts  Account[]
-  sessions  Session[]
-  Listing   Listing[]
-  favorites Favorite[]
-  wishlists Wishlist[]
-
-  /// Réservations où l'user est le voyageur (guest)
-  bookings Booking[] @relation("BookingGuest")
-
-  /// Réservations annulées par cet user (guest ou host)
-  cancelledBookings Booking[] @relation("BookingCancelledBy")
-
-  /// Avis écrits par cet utilisateur
-  reviewsWritten Review[] @relation("ReviewAuthor")
-
-  /// Avis reçus par cet utilisateur (en tant qu'hôte ou guest)
-  reviewsReceived Review[] @relation("ReviewTarget")
-
-  hostProfile  HostProfile?
-  wallet       Wallet?
-  WalletLedger WalletLedger[]
-
-  /// Messagerie
-  messages           Message[]
-  hostConversations  Conversation[] @relation("HostConversations")
-  guestConversations Conversation[] @relation("GuestConversations")
-
-  /// Historique de recherche
-  searchHistory SearchHistory[]
-
-  /// Historique des mots de passe (sécurité - empêcher réutilisation)
-  passwordHistory PasswordHistory[]
+/// Type de notification
+enum NotificationType {
+  BOOKING_REQUEST
+  BOOKING_CONFIRMED
+  BOOKING_CANCELLED
+  BOOKING_REMINDER
+  MESSAGE_NEW
+  REVIEW_RECEIVED
+  REVIEW_REMINDER
+  PAYOUT_SENT
+  PAYOUT_FAILED
+  LISTING_APPROVED
+  LISTING_REJECTED
+  LISTING_SUSPENDED
+  DISPUTE_OPENED
+  DISPUTE_UPDATE
+  DISPUTE_RESOLVED
+  IDENTITY_VERIFIED
+  IDENTITY_REJECTED
+  SUPERHOST_EARNED
+  SUPERHOST_LOST
+  PROMO_CODE
+  SYSTEM_ANNOUNCEMENT
+  REFERRAL_BONUS
 }
 
-/// Historique des mots de passe pour empêcher la réutilisation
-model PasswordHistory {
-  id           String   @id @default(cuid())
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId       String
-  passwordHash String
-  createdAt    DateTime @default(now())
-
-  @@index([userId])
+/// Statut du litige
+enum DisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  AWAITING_HOST
+  AWAITING_GUEST
+  MEDIATION
+  RESOLVED_GUEST
+  RESOLVED_HOST
+  RESOLVED_PARTIAL
+  CLOSED
+  ESCALATED
 }
 
-model UserProfile {
-  id          String  @id @default(cuid())
-  user        User    @relation(fields: [userId], references: [id])
-  userId      String  @unique
-  avatarUrl   String?
-  ratingAvg   Float   @default(0)
-  ratingCount Int     @default(0)
-
-  /// Champs supplémentaires pour pré-remplir Stripe / profil Lok'Room
-  firstName    String?
-  lastName     String?
-  birthDate    DateTime?
-  phone        String?
-  addressLine1 String?
-  addressLine2 String?
-  city         String?
-  postalCode   String?
-  country      String?
-  province     String?
+/// Raison du litige
+enum DisputeReason {
+  PROPERTY_NOT_AS_DESCRIBED
+  CLEANLINESS_ISSUE
+  AMENITIES_MISSING
+  HOST_UNRESPONSIVE
+  GUEST_DAMAGE
+  GUEST_VIOLATION
+  PAYMENT_ISSUE
+  CANCELLATION_DISPUTE
+  SAFETY_CONCERN
+  NOISE_COMPLAINT
+  UNAUTHORIZED_GUESTS
+  OTHER
 }
 
-model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String? @db.Text
-  session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
+/// Type d'action auditée
+enum AuditAction {
+  USER_CREATED
+  USER_UPDATED
+  USER_BANNED
+  USER_UNBANNED
+  USER_DELETED
+  USER_ROLE_CHANGED
+  USER_VERIFIED
+  LISTING_APPROVED
+  LISTING_REJECTED
+  LISTING_SUSPENDED
+  LISTING_UNSUSPENDED
+  LISTING_DELETED
+  LISTING_FEATURED
+  BOOKING_CANCELLED_ADMIN
+  BOOKING_REFUNDED
+  DISPUTE_ASSIGNED
+  DISPUTE_STATUS_CHANGED
+  DISPUTE_RESOLVED
+  DISPUTE_ESCALATED
+  PAYOUT_APPROVED
+  PAYOUT_REJECTED
+  PAYOUT_MANUAL
+  CONFIG_CHANGED
+  PROMO_CREATED
+  PROMO_DELETED
+  ANNOUNCEMENT_SENT
+  BADGE_GRANTED
+  BADGE_REVOKED
 }
 
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+enum BadgeType {
+  IDENTITY_VERIFIED
+  EMAIL_VERIFIED
+  PHONE_VERIFIED
+  SUPERHOST
+  EXPERIENCED_HOST
+  QUICK_RESPONDER
+  HIGHLY_RATED
+  TRUSTED_GUEST
+  EARLY_ADOPTER
+  TOP_CONTRIBUTOR
 }
 
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
+enum ExperienceCategory {
+  FOOD_DRINK
+  ART_CULTURE
+  SPORTS
+  NATURE
+  ENTERTAINMENT
+  WELLNESS
+  TOURS
+  WORKSHOPS
+  OTHER
 }
 
-model Listing {
-  id          String @id @default(cuid())
-  title       String
-  description String
-
-  /// Type d'espace principal (chambre, bureau, parking, studio, etc.)
-  type ListingType @default(OTHER)
-
-  /// Types d'espace additionnels (multi-catégorie, ex: HOUSE + STUDIO)
-  additionalTypes String[] @default([])
-
-  /// Type personnalisé si type = OTHER (ex: "Atelier", "Cave", etc.)
-  customType String?
-
-  /// Mode de tarification (à l’heure, à la journée, ou les deux)
-  pricingMode PricingMode @default(DAILY)
-
-  /// Prix par nuit / par jour (frontend décidera comment l’afficher)
-  price    Float
-  currency Currency @default(EUR)
-
-  /// Prix à l'heure (optionnel, si l'espace est louable à l'heure)
-  hourlyPrice Float?
-
-  /// Réductions pour réservations multiples (en pourcentage)
-  discountHours3Plus  Int? /// Réduction pour 3+ heures
-  discountHours6Plus  Int? /// Réduction pour 6+ heures
-  discountDays3Plus   Int? /// Réduction pour 3+ jours
-  discountWeekly      Int? /// Réduction hebdomadaire
-  discountMonthly     Int? /// Réduction mensuelle
-
-  /// Capacité de l'espace (nombre de personnes max)
-  maxGuests Int?
-
-  /// Capacités spécifiques selon le type d'espace
-  beds       Int? /// Nombre de lits (logements)
-  desks      Int? /// Nombre de bureaux (coworking/office)
-  parkings   Int? /// Nombre de places (parking/garage)
-  bathrooms  Int? /// Nombre de salles de bain
-
-  /// Caractéristiques de l'espace (tags descriptifs)
-  spaceFeatures String[] @default([])
-
-  /// Réservation instantanée possible ?
-  isInstantBook Boolean @default(false)
-
-  /// Contraintes de durée pour les réservations à l’heure
-  minDurationHours Int?
-  maxDurationHours Int?
-
-  /// Contraintes de durée pour les réservations à la journée / nuitée
-  minNights Int?
-  maxNights Int?
-
-  country  String
-  province ProvinceCA?
-
-  /// Région/département pour la France
-  regionFR String?
-
-  /// Ville : obligatoire (défaut vide pour anciennes lignes)
-  city String @default("")
-
-  /// Adresse exacte de l’espace (jamais affichée publiquement)
-  addressFull String @default("")
-
-  /// Ligne d’adresse principale (numéro + rue)
-  addressLine1 String?
-
-  /// Code postal
-  postalCode String?
-
-  /// ID du lieu renvoyé par le provider
-  mapPlaceId String?
-
-  /// Provider utilisé
-  mapProvider MapProvider @default(GOOGLE)
-
-  /// Coordonnées exactes
-  lat Float @default(0)
-  lng Float @default(0)
-
-  /// Coordonnées “publiques” (approx)
-  latPublic Float @default(0)
-  lngPublic Float @default(0)
-
-  createdAt DateTime @default(now())
-
-  ownerId String
-  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-
-  images    ListingImage[]
-  favorites Favorite[]
-  bookings  Booking[]
-
-  /// Avis associés à cette annonce
-  reviews Review[]
-
-  /// Commodités / équipements
-  amenities ListingAmenity[]
-
-  /// Blocages calendrier (bookings + blocages manuels)
-  calendar CalendarBlock[]
-
-  /// Conversations liées à cette annonce
-  conversations Conversation[]
-
-  @@index([ownerId])
-  @@index([createdAt])
-  @@index([country, province, city])
-  @@index([mapPlaceId])
-}
-
-model ListingImage {
-  id        String  @id @default(cuid())
-  url       String
-  listingId String
-  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
-
-  /// Image de couverture de l’annonce ?
-  isCover Boolean @default(false)
-
-  /// Ordre d’affichage des images (0, 1, 2, …)
-  position Int @default(0)
-
-  /// Dimensions de l’image (optionnel, utile pour optimisation / thumbnails)
-  width  Int?
-  height Int?
-
-  @@index([listingId])
-  @@index([listingId, position])
-  @@index([listingId, isCover])
-}
-
-model Favorite {
-  id        String   @id @default(cuid())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  listingId String
-  createdAt DateTime @default(now())
-
-  // Lien optionnel vers une liste de favoris
-  wishlistId String?
-  wishlist   Wishlist? @relation(fields: [wishlistId], references: [id], onDelete: SetNull)
-
-  @@unique([userId, listingId])
-  @@index([listingId])
-  @@index([userId])
-  @@index([wishlistId])
-}
-
-// Liste de favoris (dossiers) style Airbnb
-model Wishlist {
-  id        String   @id @default(cuid())
-  name      String
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  favorites Favorite[]
-
-  @@index([userId])
-}
-
-model Booking {
-  id String @id @default(cuid())
-
-  listingId String
-  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
-
-  /// Voyageur (guest)
-  guestId String
-  guest   User   @relation("BookingGuest", fields: [guestId], references: [id])
-
-  /// Mode de tarification utilisé pour cette réservation (heure ou jour)
-  pricingMode PricingMode
-
-  /// Pour les réservations à la journée / nuitée
-  startDate DateTime
-  endDate   DateTime
-
-  /// Pour les réservations à l’heure :
-  /// heures de début/fin en minutes depuis minuit (dans le fuseau du listing)
-  /// ex : 9h30 -> 570 ; 13h00 -> 780
-  startTimeMinutes Int?
-  endTimeMinutes   Int?
-  timezone         String? // ex: "America/Montreal"
-
-  /// Prix de base de la réservation (hors frais Lok'Room), dans la devise de l’annonce
-  totalPrice Float
-  currency   Currency
-
-  status BookingStatus @default(PENDING)
-
-  /// Stripe PaymentIntent (rempli au moment de la création)
-  stripePaymentIntentId String?
-
-  /// Charge principale (remplie via webhook payment_intent.succeeded)
-  stripeChargeId String?
-
-  /// Infos d’annulation / refund
-  cancelledAt       DateTime?
-  cancelledByUserId String?
-  cancelledByUser   User?     @relation("BookingCancelledBy", fields: [cancelledByUserId], references: [id])
-
-  /// Montant total remboursé au client (en cents, toutes devises confondues)
-  refundAmountCents Int?
-
-  /// Détail des frais Lok’Room (snapshot en cents au moment de la création)
-  hostFeeCents           Int @default(0) // commission prise sur l’hôte
-  guestFeeCents          Int @default(0) // commission prise sur le guest
-  taxOnGuestFeeCents     Int @default(0) // taxes collectées sur la part guest
-  stripeFeeEstimateCents Int @default(0) // estimation des frais Stripe sur ce paiement
-  platformNetCents       Int @default(0) // marge nette estimée (hostFee + guestFee + taxGuest - stripe)
-
-  /// Avis liés à cette réservation (guest et/ou host)
-  reviews Review[]
-
-  /// Blocages de calendrier liés à cette réservation
-  calendarBlocks CalendarBlock[]
-
-  /// Conversations liées à cette réservation
-  conversations Conversation[] @relation("BookingConversations")
-
-  createdAt DateTime @default(now())
-
-  @@index([listingId, startDate, endDate])
-  @@index([guestId, createdAt])
-  @@index([stripePaymentIntentId])
-}
-
-model Review {
-  id String @id @default(cuid())
-
-  bookingId String
-  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-
-  listingId String
-  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
-
-  /// Auteur de l’avis (guest OU host)
-  authorId String
-  author   User   @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-
-  /// Utilisateur visé par l’avis (souvent l’hôte, parfois le guest)
-  targetUserId String
-  targetUser   User   @relation("ReviewTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
-
-  /// Note 1–5
-  rating Int
-
-  /// Commentaire libre
-  comment   String?
-  createdAt DateTime @default(now())
-
-  /// Un même user ne peut laisser qu’un avis par booking
-  @@unique([bookingId, authorId])
-  @@index([listingId])
-  @@index([targetUserId])
-}
-
-model HostProfile {
-  id     String @id @default(cuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Stripe / payouts
-  stripeAccountId String?
-  kycStatus       String  @default("incomplete")
-  payoutsEnabled  Boolean @default(false)
-
-  // 🎨 Personnalisation & identité host
-  bio       String?  @db.Text
-  avatarUrl String?
-  languages String[] @default([])
-
-  /// "moins_une_heure" | "quelques_heures" | "un_jour"
-  responseTimeCategory String?
-
-  verifiedPhone Boolean @default(false)
-  verifiedEmail Boolean @default(false)
-  superhost     Boolean @default(false)
-
-  // Liens externes
-  instagram String?
-  website   String?
-
-  /// Années d'expérience comme hôte
-  experienceYears Int?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([stripeAccountId])
-}
-
-model Wallet {
-  id     String @id @default(cuid())
-  hostId String @unique
-  host   User   @relation(fields: [hostId], references: [id], onDelete: Cascade)
-
-  balanceCents Int @default(0)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model WalletLedger {
-  id     String @id @default(cuid())
-  hostId String
-  host   User   @relation(fields: [hostId], references: [id], onDelete: Cascade)
-
-  deltaCents Int
-  reason     String?
-  bookingId  String?
-  createdAt  DateTime @default(now())
-
-  @@index([hostId, createdAt])
-}
-
-// ======================================================================
-// AMENITIES (commodités / équipements)
-// ======================================================================
-
-model Amenity {
-  id       String          @id @default(cuid())
-  slug     String          @unique // "wifi", "parking", "climatisation"
-  label    String // "Wifi", "Stationnement gratuit"
-  category AmenityCategory @default(GENERAL)
-
-  listings ListingAmenity[]
-}
-
-model ListingAmenity {
-  listingId String
-  amenityId String
-
-  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  amenity Amenity @relation(fields: [amenityId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-
-  @@id([listingId, amenityId])
-}
-
-// ======================================================================
-// CALENDRIER – blocages (bookings + blocages manuels)
-// ======================================================================
-
-model CalendarBlock {
-  id        String  @id @default(cuid())
-  listingId String
-  listing   Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
-
-  start  DateTime
-  end    DateTime
-  reason CalendarBlockReason @default(MANUAL_BLOCK)
-
-  bookingId String?
-  booking   Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
-
-  createdAt DateTime @default(now())
-
-  @@index([listingId, start, end])
-}
-
-// ======================================================================
-// MESSAGERIE – conversations & messages
-// ======================================================================
-
-model Conversation {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  /// participants
-  hostId  String
-  guestId String
-  host    User   @relation("HostConversations", fields: [hostId], references: [id])
-  guest   User   @relation("GuestConversations", fields: [guestId], references: [id])
-
-  /// contexte
-  listingId     String?
-  listing       Listing? @relation(fields: [listingId], references: [id])
-  reservationId String?
-  booking       Booking? @relation("BookingConversations", fields: [reservationId], references: [id])
-
-  /// messages
-  messages Message[]
-
-  @@index([hostId])
-  @@index([guestId])
-  @@index([reservationId])
-}
-
-model Message {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-
-  conversationId String
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-
-  senderId String
-  sender   User   @relation(fields: [senderId], references: [id])
-
-  content String
-
-  @@index([conversationId, createdAt])
-}
-
-// ======================================================================
-// STRIPE EVENTS - Idempotence pour les webhooks
-// ======================================================================
-
-model StripeEvent {
-  id          String   @id // L'ID de l'événement Stripe (evt_xxx)
-  type        String   // Type d'événement (payment_intent.succeeded, etc.)
-  processedAt DateTime @default(now())
-
-  @@index([processedAt])
-}
-
-// ======================================================================
-// SEARCH HISTORY - Historique des recherches utilisateur
-// ======================================================================
-
-model SearchHistory {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  destination String
-  startDate   String?
-  endDate     String?
-  guests      Int?
-  createdAt   DateTime @default(now())
-
-  @@index([userId, createdAt])
+enum PromoType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  FREE_SERVICE_FEE
 }

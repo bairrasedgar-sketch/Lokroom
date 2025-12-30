@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { sendMessageSchema, validateRequestBody } from "@/lib/validations";
+import { broadcastMessage } from "@/lib/sse-broadcast";
 
 export const dynamic = "force-dynamic";
 
@@ -135,6 +136,21 @@ export async function POST(req: NextRequest) {
               },
             },
           },
+        },
+      },
+    });
+
+    // 4️⃣ Diffuser le message en temps réel aux participants
+    broadcastMessage(conv.id, {
+      type: "message",
+      data: {
+        conversationId: conv.id,
+        message: {
+          id: msg.id,
+          content: msg.content,
+          senderId: msg.senderId,
+          senderName: msg.sender.name || "Utilisateur",
+          createdAt: msg.createdAt.toISOString(),
         },
       },
     });

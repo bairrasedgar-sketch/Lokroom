@@ -366,6 +366,7 @@ export default function ListingsWithMap({
             createdAt: l.createdAt,
             priceFormatted: l.priceLabel,
             imageUrl: l.images?.[0]?.url ?? null,
+            images: l.images ?? [], // Passer toutes les images pour le carousel
           }));
 
         setListings(formattedListings);

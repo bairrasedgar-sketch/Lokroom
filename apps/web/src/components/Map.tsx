@@ -2,10 +2,11 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useGoogleMaps } from "./GoogleMapsLoader";
+import FavoriteButton from "@/components/FavoriteButton";
 
 export type MapMarker = {
   id: string;
@@ -20,6 +21,7 @@ export type MapMarker = {
   createdAt?: string | Date;
   priceFormatted?: string;
   imageUrl?: string | null;
+  images?: { id: string; url: string }[]; // Toutes les images pour le carousel
 };
 
 type MapProps = {
@@ -47,6 +49,179 @@ type MapProps = {
 };
 
 const DEFAULT_CENTER = { lat: 45.5019, lng: -73.5674 }; // Montréal
+
+// Composant popup style Airbnb pour la carte
+function MapPopupCard({
+  marker,
+  onClose,
+}: {
+  marker: MapMarker;
+  onClose: () => void;
+}) {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const images = marker.images ?? (marker.imageUrl ? [{ id: "0", url: marker.imageUrl }] : []);
+  const hasMultipleImages = images.length > 1;
+
+  const goToImage = useCallback((index: number) => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setCurrentImageIndex(index);
+    setTimeout(() => setIsTransitioning(false), 300);
+  }, [isTransitioning]);
+
+  const nextImage = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      goToImage((currentImageIndex + 1) % images.length);
+    },
+    [currentImageIndex, images.length, goToImage]
+  );
+
+  const prevImage = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      goToImage((currentImageIndex - 1 + images.length) % images.length);
+    },
+    [currentImageIndex, images.length, goToImage]
+  );
+
+  const locationLabel = [marker.city ?? undefined, marker.country ?? undefined]
+    .filter(Boolean)
+    .join(", ");
+
+  return (
+    <div className="pointer-events-auto absolute bottom-4 right-4 z-[1000] w-[280px] max-w-[calc(100%-32px)] overflow-hidden rounded-xl bg-white shadow-2xl sm:w-[300px]">
+      {/* Image container avec carousel */}
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100">
+        {/* Bouton fermer - toujours visible en haut gauche */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onClose();
+          }}
+          className="absolute left-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-white/95 text-gray-800 shadow-md backdrop-blur-sm transition-all hover:bg-white hover:scale-105"
+          aria-label="Fermer l'aperçu"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        {/* Bouton favori - en haut à droite */}
+        <div className="absolute right-2 top-2 z-20">
+          <FavoriteButton listingId={marker.id} size={22} variant="card" />
+        </div>
+
+        {/* Carousel d'images avec slide fluide */}
+        <Link href={`/listings/${marker.id}`} className="block h-full w-full">
+          {images.length > 0 ? (
+            <div
+              className="flex h-full transition-transform duration-300 ease-out"
+              style={{
+                width: `${images.length * 100}%`,
+                transform: `translateX(-${currentImageIndex * (100 / images.length)}%)`
+              }}
+            >
+              {images.map((img, idx) => (
+                <div key={img.id || idx} className="relative h-full flex-shrink-0" style={{ width: `${100 / images.length}%` }}>
+                  <Image
+                    src={img.url}
+                    alt={`${marker.title ?? "Annonce"} - Image ${idx + 1}`}
+                    fill
+                    className="object-cover"
+                    sizes="300px"
+                    priority={idx === 0}
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="absolute inset-0 grid place-items-center text-xs text-gray-400">
+              Pas d&apos;image
+            </div>
+          )}
+        </Link>
+
+        {/* Flèches de navigation */}
+        {hasMultipleImages && (
+          <>
+            <button
+              onClick={prevImage}
+              className="absolute left-2 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-gray-800 shadow-md backdrop-blur-sm transition-all hover:bg-white hover:scale-110 active:scale-95"
+              aria-label="Image précédente"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button
+              onClick={nextImage}
+              className="absolute right-2 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-gray-800 shadow-md backdrop-blur-sm transition-all hover:bg-white hover:scale-110 active:scale-95"
+              aria-label="Image suivante"
+            >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </>
+        )}
+
+        {/* Points indicateurs d'images */}
+        {hasMultipleImages && (
+          <div className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 gap-1">
+            {images.slice(0, 5).map((_, idx) => (
+              <button
+                key={idx}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  goToImage(idx);
+                }}
+                className={`h-1.5 rounded-full transition-all duration-200 ${
+                  idx === currentImageIndex
+                    ? "bg-white w-2"
+                    : "bg-white/60 w-1.5 hover:bg-white/80"
+                }`}
+                aria-label={`Voir image ${idx + 1}`}
+              />
+            ))}
+            {images.length > 5 && (
+              <span className="text-[10px] text-white/80 ml-1">+{images.length - 5}</span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Infos de l'annonce */}
+      <Link href={`/listings/${marker.id}`} className="block p-3">
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="line-clamp-1 text-[14px] font-semibold text-gray-900 flex-1">
+            {marker.title ?? "Annonce Lok'Room"}
+          </h3>
+        </div>
+
+        <p className="mt-0.5 text-[12px] text-gray-500 line-clamp-1">
+          {locationLabel || "Emplacement"}
+        </p>
+
+        <div className="mt-2 flex items-center justify-between">
+          <p className="text-[14px]">
+            <span className="font-semibold text-gray-900">
+              {marker.priceFormatted ?? marker.label ?? ""}
+            </span>
+            <span className="font-normal text-gray-500"> / nuit</span>
+          </p>
+          <span className="text-[11px] text-gray-400">Voir détails →</span>
+        </div>
+      </Link>
+    </div>
+  );
+}
 
 // Style écologique pour la map
 const MAP_STYLES = [
@@ -403,60 +578,12 @@ export default function Map({
           </button>
         </div>
 
-        {/* Aperçu intégré façon Airbnb */}
+        {/* Aperçu intégré façon Airbnb avec carousel */}
         {selectedMarker && (
-          <div className="pointer-events-auto absolute bottom-4 right-4 z-[1000] w-72 max-w-full overflow-hidden rounded-2xl border bg-white text-xs shadow-xl sm:w-80">
-            <button
-              type="button"
-              onClick={() => setSelectedId(null)}
-              className="absolute right-2 top-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-xs font-bold text-gray-800 shadow"
-              aria-label="Fermer l'aperçu"
-            >
-              ×
-            </button>
-
-            <Link href={`/listings/${selectedMarker.id}`} className="block">
-              <div className="relative h-32 w-full bg-gray-100 sm:h-36">
-                {selectedMarker.imageUrl ? (
-                  <Image
-                    src={selectedMarker.imageUrl}
-                    alt={selectedMarker.title ?? "Annonce Lok'Room"}
-                    fill
-                    className="object-cover"
-                    sizes="320px"
-                  />
-                ) : (
-                  <div className="absolute inset-0 grid place-items-center text-[11px] text-gray-400">
-                    Pas d&apos;image
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-1 px-3 pb-3 pt-2">
-                <p className="line-clamp-1 text-[13px] font-semibold text-gray-900">
-                  {selectedMarker.title ?? "Annonce Lok'Room"}
-                </p>
-
-                <p className="text-[11px] text-gray-500">
-                  {selectedMarker.city ? `${selectedMarker.city}, ` : ""}
-                  {selectedMarker.country}
-                  {selectedMarker.createdAt && (
-                    <>
-                      {" · "}
-                      {new Date(selectedMarker.createdAt).toLocaleDateString()}
-                    </>
-                  )}
-                </p>
-
-                <p className="pt-1 text-[13px] font-semibold text-gray-900">
-                  {selectedMarker.priceFormatted ?? selectedMarker.label ?? ""}
-                </p>
-                <p className="text-[11px] text-gray-500">
-                  Cliquer pour voir les détails
-                </p>
-              </div>
-            </Link>
-          </div>
+          <MapPopupCard
+            marker={selectedMarker}
+            onClose={() => setSelectedId(null)}
+          />
         )}
       </div>
 

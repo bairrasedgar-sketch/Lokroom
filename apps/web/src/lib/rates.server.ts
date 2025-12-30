@@ -61,13 +61,13 @@ async function writeCache(payload: RatesPayload) {
 }
 
 /**
- * Récupère les taux frais depuis exchangerate.host
+ * Récupère les taux frais depuis frankfurter.app (API gratuite sans clé)
  * base = EUR → on reconstruit la matrice complète (SANS marge).
  */
 async function fetchRatesFresh(): Promise<RatesPayload> {
   try {
     const symbols = CURRENCIES.filter((c) => c !== "EUR").join(",");
-    const u = `https://api.exchangerate.host/latest?base=EUR&symbols=${symbols}`;
+    const u = `https://api.frankfurter.app/latest?from=EUR&to=${symbols}`;
 
     const res = await fetch(u, { cache: "no-store" });
     if (!res.ok) throw new Error("rates http " + res.status);
