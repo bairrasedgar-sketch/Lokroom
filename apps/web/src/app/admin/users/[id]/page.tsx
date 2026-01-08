@@ -202,13 +202,19 @@ export default function AdminUserDetailPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"overview" | "listings" | "bookings" | "reviews" | "disputes" | "notes" | "history">("overview");
   const [showBanModal, setShowBanModal] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [showEditModal, setShowEditModal] = useState(false);
   const [showNoteModal, setShowNoteModal] = useState(false);
   const [banReason, setBanReason] = useState("");
   const [banDuration, setBanDuration] = useState<"permanent" | "7" | "30" | "90">("permanent");
   const [noteContent, setNoteContent] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // États pour le formulaire d'édition
+  const [editEmail, setEditEmail] = useState("");
+  const [editName, setEditName] = useState("");
+  const [editRole, setEditRole] = useState("");
+  const [editCountry, setEditCountry] = useState("");
+  const [editIdentityStatus, setEditIdentityStatus] = useState("");
 
   const fetchUser = useCallback(async () => {
     try {
@@ -295,6 +301,46 @@ export default function AdminUserDetailPage() {
     }
   };
 
+  const openEditModal = () => {
+    if (user) {
+      setEditEmail(user.email);
+      setEditName(user.name || "");
+      setEditRole(user.role);
+      setEditCountry(user.country || "");
+      setEditIdentityStatus(user.identityStatus);
+      setShowEditModal(true);
+    }
+  };
+
+  const handleEditUser = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: editEmail,
+          name: editName,
+          role: editRole,
+          country: editCountry,
+          identityStatus: editIdentityStatus,
+        }),
+      });
+
+      if (res.ok) {
+        fetchUser();
+        setShowEditModal(false);
+      } else {
+        const data = await res.json();
+        alert(data.error || "Erreur lors de la mise à jour");
+      }
+    } catch (error) {
+      console.error("Error updating user:", error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const formatCurrency = (amount: number, currency = "EUR") => {
     return new Intl.NumberFormat("fr-FR", {
       style: "currency",
@@ -376,7 +422,7 @@ export default function AdminUserDetailPage() {
             </button>
           )}
           <button
-            onClick={() => setShowEditModal(true)}
+            onClick={openEditModal}
             className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
           >
             <PencilIcon className="h-5 w-5" />
@@ -1013,6 +1059,93 @@ export default function AdminUserDetailPage() {
                   className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50"
                 >
                   {saving ? "..." : "Ajouter"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Modifier l&apos;utilisateur</h3>
+              <button onClick={() => setShowEditModal(false)} className="text-gray-500 hover:text-gray-700">
+                <XMarkIcon className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                  placeholder="email@exemple.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                  placeholder="Nom de l'utilisateur"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Rôle</label>
+                <select
+                  value={editRole}
+                  onChange={(e) => setEditRole(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                >
+                  <option value="GUEST">Voyageur</option>
+                  <option value="HOST">Hôte</option>
+                  <option value="BOTH">Hôte & Voyageur</option>
+                  <option value="ADMIN">Administrateur</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Pays</label>
+                <input
+                  type="text"
+                  value={editCountry}
+                  onChange={(e) => setEditCountry(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                  placeholder="Pays"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Statut d&apos;identité</label>
+                <select
+                  value={editIdentityStatus}
+                  onChange={(e) => setEditIdentityStatus(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
+                >
+                  <option value="UNVERIFIED">Non vérifié</option>
+                  <option value="PENDING">En cours</option>
+                  <option value="VERIFIED">Vérifié</option>
+                  <option value="REJECTED">Rejeté</option>
+                </select>
+              </div>
+              <div className="flex gap-3 justify-end pt-2">
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleEditUser}
+                  disabled={saving}
+                  className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50"
+                >
+                  {saving ? "..." : "Enregistrer"}
                 </button>
               </div>
             </div>

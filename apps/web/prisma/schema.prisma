@@ -25,6 +25,9 @@ model User {
   /// Token de réinitialisation de mot de passe
   resetToken                       String?                    @unique
   resetTokenExpiresAt              DateTime?
+  /// Code de vérification email pour inscription
+  emailVerificationCode            String?
+  emailVerificationCodeExpiresAt   DateTime?
   accounts                         Account[]
   accountDeletionRequest           AccountDeletionRequest[]
   adminNotes                       AdminNote[]
@@ -72,6 +75,43 @@ model User {
   WalletLedger                     WalletLedger[]
   wishlists                        Wishlist[]
   hostKit                           HostKit?
+  twoFactorSecret                   TwoFactorSecret?
+  twoFactorLogs                     TwoFactorLog[]
+}
+
+/// Secret TOTP pour l'authentification à deux facteurs
+model TwoFactorSecret {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Secret TOTP chiffré
+  secret      String
+  /// Codes de secours hashés
+  backupCodes String[]
+  /// 2FA activé ou non
+  enabled     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
+
+/// Logs des tentatives 2FA
+model TwoFactorLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Méthode utilisée: TOTP, BACKUP_CODE, SMS
+  method    String
+  /// Succès ou échec
+  success   Boolean
+  /// Adresse IP
+  ipAddress String?
+  /// User Agent
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
 }
 
 /// Historique des mots de passe pour empêcher la réutilisation
@@ -114,6 +154,9 @@ model UserProfile {
   emergencyContactName  String?
   emergencyContactPhone String?
   emergencyContactRelation String?
+  /// Preferences de traduction automatique des messages
+  preferredLanguage String  @default("fr")
+  autoTranslate     Boolean @default(true)
   user         User      @relation(fields: [userId], references: [id])
 }
 
@@ -241,6 +284,8 @@ model Listing {
   ListingModeration  ListingModeration?
   ListingReport      ListingReport[]
   reviews            Review[]
+  instantBookSettings InstantBookSettings?
+  securityDepositPolicy SecurityDepositPolicy?
 
   @@index([ownerId])
   @@index([createdAt])
@@ -295,19 +340,19 @@ model Wishlist {
 }
 
 model Booking {
-  id                     String          @id @default(cuid())
+  id                     String            @id @default(cuid())
   listingId              String
   /// Voyageur (guest)
   guestId                String
   /// Pour les réservations à la journée / nuitée
   startDate              DateTime
   endDate                DateTime
-  /// Prix de base de la réservation (hors frais Lok'Room), dans la devise de l’annonce
+  /// Prix de base de la réservation (hors frais Lok'Room), dans la devise de l'annonce
   totalPrice             Float
   currency               Currency
-  status                 BookingStatus   @default(PENDING)
-  createdAt              DateTime        @default(now())
-  /// Infos d’annulation / refund
+  status                 BookingStatus     @default(PENDING)
+  createdAt              DateTime          @default(now())
+  /// Infos d'annulation / refund
   cancelledAt            DateTime?
   cancelledByUserId      String?
   /// Montant total remboursé au client (en cents, toutes devises confondues)
@@ -316,27 +361,32 @@ model Booking {
   stripeChargeId         String?
   /// Stripe PaymentIntent (rempli au moment de la création)
   stripePaymentIntentId  String?
-  guestFeeCents          Int             @default(0)
-  /// Détail des frais Lok’Room (snapshot en cents au moment de la création)
-  hostFeeCents           Int             @default(0)
-  platformNetCents       Int             @default(0)
-  stripeFeeEstimateCents Int             @default(0)
-  taxOnGuestFeeCents     Int             @default(0)
+  guestFeeCents          Int               @default(0)
+  /// Détail des frais Lok'Room (snapshot en cents au moment de la création)
+  hostFeeCents           Int               @default(0)
+  platformNetCents       Int               @default(0)
+  stripeFeeEstimateCents Int               @default(0)
+  taxOnGuestFeeCents     Int               @default(0)
   endTimeMinutes         Int?
   /// Mode de tarification utilisé pour cette réservation (heure ou jour)
   pricingMode            PricingMode
-  /// Pour les réservations à l’heure :
+  /// Pour les réservations à l'heure :
   /// heures de début/fin en minutes depuis minuit (dans le fuseau du listing)
   /// ex : 9h30 -> 570 ; 13h00 -> 780
   startTimeMinutes       Int?
   timezone               String?
-  cancelledByUser        User?           @relation("BookingCancelledBy", fields: [cancelledByUserId], references: [id])
-  guest                  User            @relation("BookingGuest", fields: [guestId], references: [id])
-  listing                Listing         @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  /// Provider de paiement utilisé (STRIPE par défaut, PAYPAL si PayPal)
+  paymentProvider        PaymentProvider   @default(STRIPE)
+  cancelledByUser        User?             @relation("BookingCancelledBy", fields: [cancelledByUserId], references: [id])
+  guest                  User              @relation("BookingGuest", fields: [guestId], references: [id])
+  listing                Listing           @relation(fields: [listingId], references: [id], onDelete: Cascade)
   calendarBlocks         CalendarBlock[]
-  conversations          Conversation[]  @relation("BookingConversations")
+  conversations          Conversation[]    @relation("BookingConversations")
   disputes               Dispute[]
   reviews                Review[]
+  securityDeposit        SecurityDeposit?
+  /// Transactions PayPal associées
+  paypalTransactions     PayPalTransaction[]
 
   @@index([listingId, startDate, endDate])
   @@index([guestId, createdAt])
@@ -344,26 +394,80 @@ model Booking {
 }
 
 model Review {
-  id           String   @id @default(cuid())
+  id           String       @id @default(cuid())
   bookingId    String
   listingId    String
-  /// Auteur de l’avis (guest OU host)
+  /// Auteur de l'avis (guest OU host)
   authorId     String
-  /// Utilisateur visé par l’avis (souvent l’hôte, parfois le guest)
+  /// Utilisateur visé par l'avis (souvent l'hôte, parfois le guest)
   targetUserId String
-  /// Note 1–5
+  /// Note globale 1–5
   rating       Int
   /// Commentaire libre
   comment      String?
-  createdAt    DateTime @default(now())
-  author       User     @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  booking      Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  listing      Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  targetUser   User     @relation("ReviewTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+  /// Réponse de l'hôte/voyageur à l'avis
+  response     String?
+  responseAt   DateTime?
+  /// Type d'avis (guest vers host, ou host vers guest)
+  type         ReviewType   @default(GUEST_TO_HOST)
+  /// Statut de l'avis (publié, en attente, signalé, supprimé)
+  status       ReviewStatus @default(PUBLISHED)
+  /// Sous-notes détaillées (style Airbnb) - pour les avis de voyageurs
+  ratingCleanliness    Int?  /// Propreté (1-5)
+  ratingAccuracy       Int?  /// Exactitude de l'annonce (1-5)
+  ratingCommunication  Int?  /// Communication avec l'hôte (1-5)
+  ratingLocation       Int?  /// Emplacement (1-5)
+  ratingCheckin        Int?  /// Arrivée (1-5)
+  ratingValue          Int?  /// Rapport qualité/prix (1-5)
+  /// Sous-notes pour les avis d'hôtes sur les voyageurs
+  ratingRespect        Int?  /// Respect des règles (1-5)
+  ratingTidiness       Int?  /// Propreté laissée (1-5)
+  /// Points forts mentionnés (tags)
+  highlights   String[]     @default([])
+  /// L'avis recommande-t-il cet espace/voyageur ?
+  wouldRecommend Boolean    @default(true)
+  /// Photos jointes à l'avis
+  photos       ReviewPhoto[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  author       User         @relation("ReviewAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  booking      Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  listing      Listing      @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  targetUser   User         @relation("ReviewTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
 
   @@unique([bookingId, authorId])
   @@index([listingId])
   @@index([targetUserId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+/// Photos jointes aux avis
+model ReviewPhoto {
+  id        String   @id @default(cuid())
+  reviewId  String
+  url       String
+  caption   String?
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@index([reviewId])
+}
+
+/// Type d'avis
+enum ReviewType {
+  GUEST_TO_HOST   /// Voyageur note l'hôte/annonce
+  HOST_TO_GUEST   /// Hôte note le voyageur
+}
+
+/// Statut de l'avis
+enum ReviewStatus {
+  PENDING     /// En attente de publication (période de 14 jours)
+  PUBLISHED   /// Publié et visible
+  FLAGGED     /// Signalé pour modération
+  HIDDEN      /// Masqué par l'admin
+  DELETED     /// Supprimé
 }
 
 model HostProfile {
@@ -473,6 +577,10 @@ model Message {
   createdAt         DateTime            @default(now())
   content           String
   readAt            DateTime?
+  /// Langue detectee du message original (fr, en, es, etc.)
+  originalLanguage  String?
+  /// Traductions stockees en JSON { "fr": "...", "en": "...", "es": "..." }
+  translations      Json?
   conversation      Conversation        @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   sender            User                @relation(fields: [senderId], references: [id])
   MessageAttachment MessageAttachment[]
@@ -541,12 +649,35 @@ model Dispute {
   reason                       DisputeReason
   status                       DisputeStatus     @default(OPEN)
   description                  String
+  /// Montant réclamé par l'ouvreur (en centimes)
   claimedAmountCents           Int?
+  /// Montant accordé après résolution (en centimes)
   awardedAmountCents           Int?
   assignedAdminId              String?
+  /// Résolution finale (texte explicatif)
   resolution                   String?
   resolvedAt                   DateTime?
+  /// Priorité (1 = urgent, 5 = basse)
   priority                     Int               @default(3)
+  /// Catégorie de litige pour stats
+  category                     DisputeCategory   @default(OTHER)
+  /// Date limite de réponse pour la partie adverse
+  responseDeadline             DateTime?
+  /// La partie adverse a-t-elle répondu ?
+  hasResponse                  Boolean           @default(false)
+  /// Date de la dernière activité
+  lastActivityAt               DateTime          @default(now())
+  /// Nombre de jours depuis l'ouverture (calculé)
+  /// Remboursement effectué ?
+  refundProcessed              Boolean           @default(false)
+  refundProcessedAt            DateTime?
+  refundStripeId               String?
+  /// Notes internes admin (non visibles par les parties)
+  internalNotes                String?
+  /// Escaladé au niveau supérieur ?
+  isEscalated                  Boolean           @default(false)
+  escalatedAt                  DateTime?
+  escalationReason             String?
   createdAt                    DateTime          @default(now())
   updatedAt                    DateTime          @updatedAt
   User_Dispute_againstIdToUser User              @relation("Dispute_againstIdToUser", fields: [againstId], references: [id])
@@ -555,12 +686,58 @@ model Dispute {
   openedBy                     User              @relation("DisputeOpener", fields: [openedById], references: [id])
   evidence                     DisputeEvidence[]
   messages                     DisputeMessage[]
+  timeline                     DisputeTimeline[]
 
   @@index([bookingId])
   @@index([openedById])
   @@index([assignedAdminId])
   @@index([againstId])
   @@index([status, priority])
+  @@index([category])
+  @@index([lastActivityAt])
+}
+
+/// Timeline des événements d'un litige
+model DisputeTimeline {
+  id        String              @id @default(cuid())
+  disputeId String
+  event     DisputeTimelineEvent
+  actorId   String?
+  details   String?
+  metadata  Json?
+  createdAt DateTime            @default(now())
+  dispute   Dispute             @relation(fields: [disputeId], references: [id], onDelete: Cascade)
+
+  @@index([disputeId, createdAt])
+}
+
+/// Événements de la timeline d'un litige
+enum DisputeTimelineEvent {
+  OPENED
+  RESPONSE_RECEIVED
+  EVIDENCE_ADDED
+  MESSAGE_SENT
+  ADMIN_ASSIGNED
+  STATUS_CHANGED
+  ESCALATED
+  MEDIATION_STARTED
+  RESOLUTION_PROPOSED
+  RESOLVED
+  REFUND_PROCESSED
+  CLOSED
+  REOPENED
+}
+
+/// Catégorie de litige (pour stats et filtres)
+enum DisputeCategory {
+  REFUND_REQUEST
+  PROPERTY_ISSUE
+  HOST_BEHAVIOR
+  GUEST_BEHAVIOR
+  PAYMENT_PROBLEM
+  CANCELLATION
+  SAFETY
+  OTHER
 }
 
 model DisputeEvidence {
@@ -1025,6 +1202,33 @@ model HostKit {
   @@index([status])
 }
 
+/// Paramètres de réservation instantanée pour une annonce
+model InstantBookSettings {
+  id                    String   @id @default(cuid())
+  listingId             String   @unique
+  listing               Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  /// Critères d'acceptation automatique
+  requireVerifiedId     Boolean  @default(false)  /// Guest doit avoir ID vérifié
+  requirePositiveReviews Boolean @default(false)  /// Guest doit avoir des avis positifs
+  minGuestRating        Float?                    /// Note minimum du guest (ex: 4.0)
+  requireProfilePhoto   Boolean  @default(false)  /// Guest doit avoir une photo
+  requirePhoneVerified  Boolean  @default(false)  /// Guest doit avoir téléphone vérifié
+
+  /// Restrictions
+  maxNights             Int?                      /// Nombre max de nuits
+  minNights             Int?                      /// Nombre min de nuits
+  advanceNoticeHours    Int      @default(24)     /// Préavis minimum en heures
+
+  /// Message automatique
+  autoMessage           String?                   /// Message envoyé automatiquement
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([listingId])
+}
+
 enum Role {
   HOST
   GUEST
@@ -1129,6 +1333,7 @@ enum NotificationType {
   BOOKING_CONFIRMED
   BOOKING_CANCELLED
   BOOKING_REMINDER
+  INSTANT_BOOK_CONFIRMED
   MESSAGE_NEW
   REVIEW_RECEIVED
   REVIEW_REMINDER
@@ -1147,6 +1352,11 @@ enum NotificationType {
   PROMO_CODE
   SYSTEM_ANNOUNCEMENT
   REFERRAL_BONUS
+  // Notifications pour les dépôts de garantie (caution)
+  SECURITY_DEPOSIT_AUTHORIZED
+  SECURITY_DEPOSIT_RELEASED
+  SECURITY_DEPOSIT_CAPTURED
+  SECURITY_DEPOSIT_CLAIM_REQUEST
 }
 
 /// Statut du litige
@@ -1187,6 +1397,7 @@ enum AuditAction {
   USER_UNBANNED
   USER_DELETED
   USER_ROLE_CHANGED
+  USER_EMAIL_CHANGED
   USER_VERIFIED
   LISTING_APPROVED
   LISTING_REJECTED
@@ -1209,6 +1420,10 @@ enum AuditAction {
   ANNOUNCEMENT_SENT
   BADGE_GRANTED
   BADGE_REVOKED
+  MESSAGE_DELETED
+  CONVERSATION_DELETED
+  NOTIFICATION_DELETED
+  NOTIFICATIONS_BULK_DELETED
 }
 
 enum BadgeType {
@@ -1242,6 +1457,52 @@ enum PromoType {
   FREE_SERVICE_FEE
 }
 
+/// Provider de paiement utilisé pour une réservation
+enum PaymentProvider {
+  STRIPE
+  PAYPAL
+}
+
+/// Transaction PayPal pour une réservation
+model PayPalTransaction {
+  id              String   @id @default(cuid())
+  bookingId       String
+  booking         Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  /// PayPal Order ID
+  orderId         String   @unique
+  /// PayPal Capture ID (rempli après capture)
+  captureId       String?
+  /// PayPal Payer ID
+  payerId         String?
+
+  /// Montant en centimes
+  amountCents     Int
+  /// Devise (EUR, CAD, USD, etc.)
+  currency        String   @default("EUR")
+  /// Statut: CREATED, APPROVED, CAPTURED, REFUNDED, FAILED
+  status          String
+
+  /// Réponse brute PayPal (JSON)
+  rawResponse     Json?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([bookingId])
+  @@index([orderId])
+  @@index([status])
+}
+
+/// Événement PayPal pour idempotence (similaire à StripeEvent)
+model PayPalEvent {
+  id          String   @id
+  type        String
+  processedAt DateTime @default(now())
+
+  @@index([processedAt])
+}
+
 /// Type de kit hôte
 enum HostKitType {
   ESSENTIAL   // Kit Essentiel - 5 réservations - Valeur 100€
@@ -1255,4 +1516,73 @@ enum HostKitStatus {
   SHIPPED     // Expédié
   DELIVERED   // Livré
   CANCELLED   // Annulé
+}
+
+/// Statut du dépôt de garantie (caution)
+enum SecurityDepositStatus {
+  PENDING           // En attente de paiement
+  AUTHORIZED        // Montant autorisé (hold)
+  CAPTURED          // Montant capturé (dommages)
+  RELEASED          // Montant libéré (pas de dommages)
+  PARTIALLY_CAPTURED // Partiellement capturé
+  FAILED            // Échec
+  EXPIRED           // Expiré
+}
+
+/// Dépôt de garantie (caution) pour une réservation
+model SecurityDeposit {
+  id                    String                @id @default(cuid())
+  bookingId             String                @unique
+  booking               Booking               @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  /// Montant de la caution en centimes
+  amountCents           Int
+  currency              String                @default("EUR")
+  status                SecurityDepositStatus @default(PENDING)
+
+  /// Stripe PaymentIntent pour le hold
+  stripePaymentIntentId String?
+  /// Stripe Charge si capturé
+  stripeChargeId        String?
+
+  /// Capture partielle ou totale
+  capturedAmountCents   Int?                  // Montant capturé en centimes
+  captureReason         String?               // Raison de la capture
+  capturedAt            DateTime?
+  /// Photos des dommages (URLs)
+  damagePhotos          String[]              @default([])
+
+  /// Libération
+  releasedAt            DateTime?
+
+  /// Date d'expiration du hold Stripe
+  expiresAt             DateTime
+
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+
+  @@index([status])
+  @@index([expiresAt])
+  @@index([stripePaymentIntentId])
+}
+
+/// Politique de dépôt de garantie pour une annonce
+model SecurityDepositPolicy {
+  id              String   @id @default(cuid())
+  listingId       String   @unique
+  listing         Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  /// Caution activée pour cette annonce
+  enabled         Boolean  @default(false)
+  /// Montant de la caution en centimes (200€ par défaut)
+  amountCents     Int      @default(20000)
+  currency        String   @default("EUR")
+
+  /// Description pour le voyageur
+  description     String?
+  /// Nombre de jours après checkout pour libérer automatiquement
+  refundDays      Int      @default(7)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

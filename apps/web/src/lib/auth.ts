@@ -7,6 +7,34 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/db";
 import { sendEmail, magicLinkEmail } from "@/lib/email";
 import { verifyPassword } from "@/lib/password";
+import { jwtVerify } from "jose";
+
+// Cle pour les tokens temporaires 2FA
+const TWO_FACTOR_SECRET = new TextEncoder().encode(
+  process.env.NEXTAUTH_SECRET || "fallback-secret-key-for-2fa"
+);
+
+/**
+ * Verifie un token temporaire 2FA
+ */
+async function verifyTwoFactorPendingToken(
+  token: string
+): Promise<{ userId: string; email: string } | null> {
+  try {
+    const { payload } = await jwtVerify(token, TWO_FACTOR_SECRET);
+
+    if (payload.type !== "2fa-pending") {
+      return null;
+    }
+
+    return {
+      userId: payload.userId as string,
+      email: payload.email as string,
+    };
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Options NextAuth partagées (exportées) pour:
@@ -48,20 +76,73 @@ export const authOptions: NextAuthOptions = {
       },
     }),
 
-    // 🔑 Connexion avec email + mot de passe
+    // Connexion avec email + mot de passe
     CredentialsProvider({
       id: "credentials",
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Mot de passe", type: "password" },
+        twoFactorVerified: { label: "2FA Verified", type: "text" },
+        twoFactorToken: { label: "2FA Token", type: "text" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
+        if (!credentials?.email) {
           return null;
         }
 
         const email = credentials.email.trim().toLowerCase();
+
+        // Cas 1: Connexion apres verification 2FA
+        if (credentials.twoFactorVerified === "true" && credentials.twoFactorToken) {
+          // Verifier le token 2FA
+          const tokenPayload = await verifyTwoFactorPendingToken(credentials.twoFactorToken);
+
+          if (!tokenPayload || tokenPayload.email !== email) {
+            return null;
+          }
+
+          // Recuperer l'utilisateur
+          const user = await prisma.user.findUnique({
+            where: { email },
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              role: true,
+              profile: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                  avatarUrl: true,
+                },
+              },
+            },
+          });
+
+          if (!user) {
+            return null;
+          }
+
+          // Mettre a jour la derniere connexion
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { lastLoginAt: new Date() },
+          });
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name || `${user.profile?.firstName || ""} ${user.profile?.lastName || ""}`.trim() || null,
+            image: user.profile?.avatarUrl || null,
+            role: user.role,
+          };
+        }
+
+        // Cas 2: Connexion normale avec mot de passe
+        if (!credentials.password) {
+          return null;
+        }
 
         const user = await prisma.user.findUnique({
           where: { email },
@@ -79,6 +160,9 @@ export const authOptions: NextAuthOptions = {
                 avatarUrl: true,
               },
             },
+            twoFactorSecret: {
+              select: { enabled: true },
+            },
           },
         });
 
@@ -91,7 +175,15 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        // Mettre à jour la dernière connexion
+        // Si 2FA est active, ne pas autoriser la connexion directe
+        // (le frontend doit d'abord passer par /api/auth/2fa/check)
+        if (user.twoFactorSecret?.enabled) {
+          // On retourne null pour forcer le passage par le flux 2FA
+          // Le frontend detectera cela et redirigera vers la page 2FA
+          return null;
+        }
+
+        // Mettre a jour la derniere connexion
         await prisma.user.update({
           where: { id: user.id },
           data: { lastLoginAt: new Date() },

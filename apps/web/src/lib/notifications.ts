@@ -399,7 +399,7 @@ export async function notifyDisputeResolved(disputeId: string, resolution: strin
       type: "DISPUTE_RESOLVED",
       title: "Litige résolu",
       message: `Le litige a été résolu. ${resolution}`,
-      actionUrl: `/reservations/${dispute.bookingId}`,
+      actionUrl: `/disputes/${disputeId}`,
       data: {
         disputeId,
         bookingId: dispute.bookingId,
@@ -407,4 +407,287 @@ export async function notifyDisputeResolved(disputeId: string, resolution: strin
       },
     });
   }
+}
+
+/**
+ * Notification de mise à jour d'un litige
+ */
+export async function notifyDisputeUpdate(disputeId: string, updateType: string) {
+  const dispute = await prisma.dispute.findUnique({
+    where: { id: disputeId },
+    include: {
+      booking: {
+        include: {
+          listing: true,
+          guest: true,
+        },
+      },
+      openedBy: true,
+    },
+  });
+
+  if (!dispute) return;
+
+  const messages: Record<string, string> = {
+    message: "Nouveau message dans votre litige",
+    evidence: "Une nouvelle preuve a été ajoutée au litige",
+    status: "Le statut de votre litige a été mis à jour",
+    assigned: "Un administrateur a été assigné à votre litige",
+    escalated: "Votre litige a été escaladé",
+  };
+
+  // Notifier les deux parties
+  const parties = [dispute.booking.guestId, dispute.booking.listing.ownerId];
+
+  for (const usrId of parties) {
+    await createNotification({
+      userId: usrId,
+      type: "DISPUTE_UPDATE",
+      title: "Mise à jour du litige",
+      message: messages[updateType] || "Votre litige a été mis à jour",
+      actionUrl: `/disputes/${disputeId}`,
+      data: {
+        disputeId,
+        bookingId: dispute.bookingId,
+        updateType,
+      },
+    });
+  }
+}
+
+/**
+ * Notification de réponse à un avis
+ */
+export async function notifyReviewResponse(reviewId: string) {
+  const review = await prisma.review.findUnique({
+    where: { id: reviewId },
+    include: {
+      author: true,
+      targetUser: true,
+      listing: true,
+    },
+  });
+
+  if (!review || !review.response) return;
+
+  await createNotification({
+    userId: review.authorId,
+    type: "REVIEW_RECEIVED",
+    title: "Réponse à votre avis",
+    message: `${review.targetUser.name || "L'hôte"} a répondu à votre avis sur ${review.listing.title}`,
+    actionUrl: `/listings/${review.listingId}#reviews`,
+    data: {
+      reviewId,
+      listingId: review.listingId,
+    },
+  });
+}
+
+/**
+ * Notification pour rappeler de laisser un avis (après checkout)
+ */
+export async function notifyReviewReminderBoth(bookingId: string) {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: {
+      listing: {
+        include: { owner: true },
+      },
+      guest: true,
+    },
+  });
+
+  if (!booking) return;
+
+  // Rappeler au voyageur
+  await createNotification({
+    userId: booking.guestId,
+    type: "REVIEW_REMINDER",
+    title: "Partagez votre expérience",
+    message: `Comment s'est passé votre séjour à ${booking.listing.title} ? Laissez un avis !`,
+    actionUrl: `/reviews/new?bookingId=${bookingId}`,
+    data: {
+      bookingId,
+      listingId: booking.listingId,
+      type: "GUEST_TO_HOST",
+    },
+  });
+
+  // Rappeler à l'hôte
+  await createNotification({
+    userId: booking.listing.ownerId,
+    type: "REVIEW_REMINDER",
+    title: "Évaluez votre voyageur",
+    message: `Comment s'est passé le séjour de ${booking.guest.name || "votre voyageur"} ?`,
+    actionUrl: `/reviews/new?bookingId=${bookingId}`,
+    data: {
+      bookingId,
+      guestId: booking.guestId,
+      type: "HOST_TO_GUEST",
+    },
+  });
+}
+
+/**
+ * Notifications pour les dépôts de garantie (caution)
+ */
+
+/**
+ * Notification au guest quand la caution est autorisée
+ */
+export async function notifySecurityDepositAuthorized(bookingId: string) {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: {
+      listing: true,
+      guest: true,
+      securityDeposit: true,
+    },
+  });
+
+  if (!booking || !booking.securityDeposit) return;
+
+  const deposit = booking.securityDeposit;
+  const formattedAmount = new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: deposit.currency,
+  }).format(deposit.amountCents / 100);
+
+  await createNotification({
+    userId: booking.guestId,
+    type: "SECURITY_DEPOSIT_AUTHORIZED",
+    title: "Caution autorisée",
+    message: `Une caution de ${formattedAmount} a été autorisée pour votre réservation à ${booking.listing.title}`,
+    actionUrl: `/reservations/${bookingId}`,
+    data: {
+      bookingId,
+      depositId: deposit.id,
+      amountCents: deposit.amountCents,
+      currency: deposit.currency,
+    },
+  });
+}
+
+/**
+ * Notification au guest quand la caution est libérée
+ */
+export async function notifySecurityDepositReleased(bookingId: string, automatic: boolean = false) {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: {
+      listing: true,
+      guest: true,
+      securityDeposit: true,
+    },
+  });
+
+  if (!booking || !booking.securityDeposit) return;
+
+  const deposit = booking.securityDeposit;
+  const formattedAmount = new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: deposit.currency,
+  }).format(deposit.amountCents / 100);
+
+  const message = automatic
+    ? `Votre caution de ${formattedAmount} a été libérée automatiquement. Aucun dommage n'a été signalé.`
+    : `Votre caution de ${formattedAmount} a été libérée par l'hôte.`;
+
+  await createNotification({
+    userId: booking.guestId,
+    type: "SECURITY_DEPOSIT_RELEASED",
+    title: "Caution libérée",
+    message,
+    actionUrl: `/reservations/${bookingId}`,
+    data: {
+      bookingId,
+      depositId: deposit.id,
+      amountCents: deposit.amountCents,
+      currency: deposit.currency,
+      automatic,
+    },
+  });
+}
+
+/**
+ * Notification au guest quand une partie ou la totalité de la caution est capturée
+ */
+export async function notifySecurityDepositCaptured(bookingId: string) {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: {
+      listing: true,
+      guest: true,
+      securityDeposit: true,
+    },
+  });
+
+  if (!booking || !booking.securityDeposit) return;
+
+  const deposit = booking.securityDeposit;
+  const capturedAmount = deposit.capturedAmountCents || 0;
+  const formattedAmount = new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: deposit.currency,
+  }).format(capturedAmount / 100);
+
+  await createNotification({
+    userId: booking.guestId,
+    type: "SECURITY_DEPOSIT_CAPTURED",
+    title: "Réclamation sur votre caution",
+    message: `${formattedAmount} ont été retenus sur votre caution. Raison: ${deposit.captureReason || "Non spécifiée"}`,
+    actionUrl: `/reservations/${bookingId}`,
+    data: {
+      bookingId,
+      depositId: deposit.id,
+      capturedAmountCents: capturedAmount,
+      reason: deposit.captureReason,
+      currency: deposit.currency,
+    },
+  });
+}
+
+/**
+ * Notification à l'hôte pour lui rappeler de vérifier les dommages
+ */
+export async function notifySecurityDepositClaimReminder(bookingId: string) {
+  const booking = await prisma.booking.findUnique({
+    where: { id: bookingId },
+    include: {
+      listing: {
+        include: {
+          owner: true,
+          securityDepositPolicy: true,
+        },
+      },
+      guest: true,
+      securityDeposit: true,
+    },
+  });
+
+  if (!booking || !booking.securityDeposit) return;
+
+  const deposit = booking.securityDeposit;
+  const policy = booking.listing.securityDepositPolicy;
+  const refundDays = policy?.refundDays || 7;
+
+  const formattedAmount = new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: deposit.currency,
+  }).format(deposit.amountCents / 100);
+
+  await createNotification({
+    userId: booking.listing.ownerId,
+    type: "SECURITY_DEPOSIT_CLAIM_REQUEST",
+    title: "Vérifiez les dommages éventuels",
+    message: `Le séjour de ${booking.guest.name || "votre voyageur"} est terminé. Vous avez ${refundDays} jours pour réclamer la caution de ${formattedAmount} en cas de dommages.`,
+    actionUrl: `/host/bookings?id=${bookingId}`,
+    data: {
+      bookingId,
+      depositId: deposit.id,
+      amountCents: deposit.amountCents,
+      currency: deposit.currency,
+      expiresAt: deposit.expiresAt.toISOString(),
+    },
+  });
 }

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { sendMessageSchema, validateRequestBody } from "@/lib/validations";
 import { broadcastMessage } from "@/lib/sse-broadcast";
+import { detectLanguage } from "@/lib/translation";
 
 export const dynamic = "force-dynamic";
 
@@ -118,12 +119,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3️⃣ Crée le message
+    // 3. Detecter la langue du message
+    let detectedLanguage: string | null = null;
+    try {
+      const detection = await detectLanguage(text);
+      if (detection.confidence > 0.3) {
+        detectedLanguage = detection.language;
+      }
+    } catch (e) {
+      console.error("Erreur detection langue:", e);
+    }
+
+    // 4. Creer le message avec la langue detectee
     const msg = await prisma.message.create({
       data: {
         conversationId: conv.id,
         senderId: userId,
         content: text,
+        originalLanguage: detectedLanguage,
       },
       include: {
         sender: {
@@ -140,7 +153,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // 4️⃣ Diffuser le message en temps réel aux participants
+    // 5. Diffuser le message en temps reel aux participants
     broadcastMessage(conv.id, {
       type: "message",
       data: {
@@ -151,6 +164,7 @@ export async function POST(req: NextRequest) {
           senderId: msg.senderId,
           senderName: msg.sender.name || "Utilisateur",
           createdAt: msg.createdAt.toISOString(),
+          originalLanguage: msg.originalLanguage,
         },
       },
     });

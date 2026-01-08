@@ -1,32 +1,38 @@
 "use client";
 
-import { FormEvent, useState, useEffect } from "react";
+import { FormEvent, useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import { getDictionaryForLocale, type SupportedLocale } from "@/lib/i18n.client";
 import Link from "next/link";
 
-type LoginStep = "email" | "password" | "magic-link-sent";
+type LoginStep = "email" | "password" | "verification-code" | "magic-link-sent";
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { status } = useSession();
 
-  // États du formulaire - pré-remplir l'email si passé en paramètre
+  // États du formulaire
   const [step, setStep] = useState<LoginStep>("email");
   const [email, setEmail] = useState(searchParams.get("email") || "");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [verificationCode, setVerificationCode] = useState(["", "", "", "", "", ""]);
+  const [isNewUser, setIsNewUser] = useState(false);
+
+  // Refs pour les inputs du code
+  const codeInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // États de chargement et erreurs
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState(0);
 
   // Dictionnaire i18n
   const [dict, setDict] = useState(getDictionaryForLocale("fr"));
 
-  // Si déjà connecté, rediriger vers la page demandée ou l'accueil
+  // Si déjà connecté, rediriger
   useEffect(() => {
     if (status === "authenticated") {
       const callbackUrl = searchParams.get("callbackUrl") || "/";
@@ -34,7 +40,7 @@ export default function LoginPage() {
     }
   }, [status, router, searchParams]);
 
-  // Charger le dictionnaire selon la locale du cookie
+  // Charger le dictionnaire selon la locale
   useEffect(() => {
     if (typeof document === "undefined") return;
     const m = document.cookie.match(/(?:^|;\s*)locale=([^;]+)/);
@@ -42,9 +48,17 @@ export default function LoginPage() {
     setDict(getDictionaryForLocale(locale));
   }, []);
 
+  // Countdown pour renvoyer le code
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
+
   const t = dict.auth;
 
-  // Afficher un loader pendant la vérification de session
+  // Loader pendant la vérification de session
   if (status === "loading" || status === "authenticated") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -80,19 +94,28 @@ export default function LoginPage() {
 
       if (data.exists && data.hasPassword) {
         // L'utilisateur a un compte avec mot de passe
+        setIsNewUser(false);
         setStep("password");
       } else {
-        // Nouvel utilisateur ou compte sans mot de passe - envoyer magic link
-        const signInRes = await signIn("email", {
-          email: trimmedEmail,
-          callbackUrl: "/onboarding",
-          redirect: false,
+        // Nouvel utilisateur ou compte sans mot de passe - envoyer code de vérification
+        setIsNewUser(!data.exists);
+        const signupRes = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: trimmedEmail }),
         });
 
-        if (signInRes?.error) {
-          setError(t.sendError);
+        const signupData = await signupRes.json();
+
+        if (signupData.code === "ACCOUNT_EXISTS") {
+          // Compte existe avec mot de passe
+          setIsNewUser(false);
+          setStep("password");
+        } else if (signupRes.ok) {
+          setStep("verification-code");
+          setCountdown(60);
         } else {
-          setStep("magic-link-sent");
+          setError(signupData.error || "Erreur lors de l'envoi du code");
         }
       }
     } catch {
@@ -116,9 +139,27 @@ export default function LoginPage() {
 
     try {
       const callbackUrl = searchParams.get("callbackUrl") || "/";
+      const trimmedEmail = email.trim().toLowerCase();
 
+      // Vérifier d'abord si l'utilisateur a le 2FA activé
+      const checkRes = await fetch("/api/auth/2fa/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: trimmedEmail, password }),
+      });
+
+      const checkData = await checkRes.json();
+
+      if (checkData.requires2FA && checkData.twoFactorToken) {
+        router.push(
+          `/login/2fa?token=${encodeURIComponent(checkData.twoFactorToken)}&callbackUrl=${encodeURIComponent(callbackUrl)}`
+        );
+        return;
+      }
+
+      // Pas de 2FA, connexion normale
       const res = await signIn("credentials", {
-        email: email.trim().toLowerCase(),
+        email: trimmedEmail,
         password,
         redirect: false,
       });
@@ -127,6 +168,123 @@ export default function LoginPage() {
         setError("Email ou mot de passe incorrect");
       } else if (res?.ok) {
         router.push(callbackUrl);
+      }
+    } catch {
+      setError(t.genericError);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Gestion de la saisie du code de vérification
+  function handleCodeChange(index: number, value: string) {
+    // Accepter uniquement les chiffres
+    const digit = value.replace(/\D/g, "").slice(-1);
+
+    const newCode = [...verificationCode];
+    newCode[index] = digit;
+    setVerificationCode(newCode);
+
+    // Auto-focus sur le champ suivant
+    if (digit && index < 5) {
+      codeInputRefs.current[index + 1]?.focus();
+    }
+
+    // Si tous les chiffres sont remplis, vérifier automatiquement
+    if (digit && index === 5) {
+      const fullCode = newCode.join("");
+      if (fullCode.length === 6) {
+        handleVerifyCode(fullCode);
+      }
+    }
+  }
+
+  // Gestion du backspace
+  function handleCodeKeyDown(index: number, e: React.KeyboardEvent) {
+    if (e.key === "Backspace" && !verificationCode[index] && index > 0) {
+      codeInputRefs.current[index - 1]?.focus();
+    }
+  }
+
+  // Gestion du paste
+  function handleCodePaste(e: React.ClipboardEvent) {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (pastedData.length === 6) {
+      const newCode = pastedData.split("");
+      setVerificationCode(newCode);
+      handleVerifyCode(pastedData);
+    }
+  }
+
+  // Vérifier le code
+  async function handleVerifyCode(code?: string) {
+    const fullCode = code || verificationCode.join("");
+    if (fullCode.length !== 6) {
+      setError("Entre le code à 6 chiffres");
+      return;
+    }
+
+    setError(null);
+    setLoading(true);
+
+    try {
+      const trimmedEmail = email.trim().toLowerCase();
+
+      const res = await fetch("/api/auth/signup", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: trimmedEmail, code: fullCode }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        // Email vérifié, connecter l'utilisateur via magic link silencieux
+        const signInRes = await signIn("email", {
+          email: trimmedEmail,
+          callbackUrl: "/onboarding",
+          redirect: false,
+        });
+
+        if (signInRes?.error) {
+          setError("Erreur lors de la connexion");
+        } else {
+          // Afficher le message de succès et rediriger
+          setStep("magic-link-sent");
+        }
+      } else {
+        setError(data.error || "Code invalide");
+        setVerificationCode(["", "", "", "", "", ""]);
+        codeInputRefs.current[0]?.focus();
+      }
+    } catch {
+      setError(t.genericError);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Renvoyer le code
+  async function handleResendCode() {
+    if (countdown > 0) return;
+
+    setError(null);
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+
+      if (res.ok) {
+        setCountdown(60);
+        setVerificationCode(["", "", "", "", "", ""]);
+      } else {
+        const data = await res.json();
+        setError(data.error || "Erreur lors de l'envoi");
       }
     } catch {
       setError(t.genericError);
@@ -163,6 +321,7 @@ export default function LoginPage() {
   function handleBack() {
     setStep("email");
     setPassword("");
+    setVerificationCode(["", "", "", "", "", ""]);
     setError(null);
   }
 
@@ -175,28 +334,20 @@ export default function LoginPage() {
           onClick={() => step === "email" ? router.push("/") : handleBack()}
           className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-900 transition-colors"
         >
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15 19l-7-7 7-7"
-            />
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
           {step === "email" ? t.backToHome : "Retour"}
         </button>
 
         <h1 className="mt-4 text-2xl font-semibold text-gray-900">
-          {t.loginTitle}
+          {step === "verification-code" && isNewUser ? "Créer un compte" : t.loginTitle}
         </h1>
         <p className="mt-1 text-sm text-gray-500">
           {step === "password"
             ? "Entre ton mot de passe pour te connecter."
+            : step === "verification-code"
+            ? `Un code a été envoyé à ${email}`
             : t.linkSentDesc.split(".")[0] + "."
           }
         </p>
@@ -205,10 +356,7 @@ export default function LoginPage() {
         {step === "email" && (
           <form onSubmit={handleEmailSubmit} className="mt-6 space-y-4">
             <div className="space-y-1.5">
-              <label
-                htmlFor="email"
-                className="block text-xs font-semibold text-gray-700"
-              >
+              <label htmlFor="email" className="block text-xs font-semibold text-gray-700">
                 {t.emailLabel}
               </label>
               <input
@@ -255,11 +403,8 @@ export default function LoginPage() {
         {/* ========== ÉTAPE 2: MOT DE PASSE ========== */}
         {step === "password" && (
           <form onSubmit={handlePasswordSubmit} className="mt-6 space-y-4">
-            {/* Email affiché (read-only) */}
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-gray-700">
-                {t.emailLabel}
-              </label>
+              <label className="block text-xs font-semibold text-gray-700">{t.emailLabel}</label>
               <input
                 type="email"
                 value={email}
@@ -269,12 +414,8 @@ export default function LoginPage() {
               />
             </div>
 
-            {/* Champ mot de passe */}
             <div className="space-y-1.5">
-              <label
-                htmlFor="password"
-                className="block text-xs font-semibold text-gray-700"
-              >
+              <label htmlFor="password" className="block text-xs font-semibold text-gray-700">
                 Mot de passe
               </label>
               <div className="relative">
@@ -332,7 +473,6 @@ export default function LoginPage() {
               )}
             </button>
 
-            {/* Liens secondaires */}
             <div className="flex flex-col gap-2 pt-2">
               <Link
                 href={`/forgot-password?email=${encodeURIComponent(email)}`}
@@ -340,7 +480,6 @@ export default function LoginPage() {
               >
                 Mot de passe oublié ?
               </Link>
-
               <button
                 type="button"
                 onClick={handleSendMagicLink}
@@ -353,22 +492,72 @@ export default function LoginPage() {
           </form>
         )}
 
-        {/* ========== ÉTAPE 3: MAGIC LINK ENVOYÉ ========== */}
+        {/* ========== ÉTAPE 3: CODE DE VÉRIFICATION ========== */}
+        {step === "verification-code" && (
+          <div className="mt-6 space-y-6">
+            {/* Inputs du code */}
+            <div className="flex justify-center gap-2">
+              {verificationCode.map((digit, index) => (
+                <input
+                  key={index}
+                  ref={(el) => { codeInputRefs.current[index] = el; }}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleCodeChange(index, e.target.value)}
+                  onKeyDown={(e) => handleCodeKeyDown(index, e)}
+                  onPaste={index === 0 ? handleCodePaste : undefined}
+                  className="w-12 h-14 text-center text-xl font-semibold rounded-xl border border-gray-300 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 transition-colors"
+                  autoFocus={index === 0}
+                />
+              ))}
+            </div>
+
+            {error && (
+              <div className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700 border border-red-100 text-center">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => handleVerifyCode()}
+              disabled={loading || verificationCode.join("").length !== 6}
+              className="w-full rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-black focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <span className="inline-flex items-center gap-2">
+                  <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Vérification...
+                </span>
+              ) : (
+                "Vérifier"
+              )}
+            </button>
+
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={handleResendCode}
+                disabled={countdown > 0 || loading}
+                className="text-xs font-medium text-gray-500 hover:text-gray-900 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {countdown > 0 ? `Renvoyer le code (${countdown}s)` : "Renvoyer le code"}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ========== ÉTAPE 4: MAGIC LINK ENVOYÉ ========== */}
         {step === "magic-link-sent" && (
           <div className="mt-6 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800 border border-emerald-100">
             <div className="flex items-start gap-3">
-              <svg
-                className="h-5 w-5 text-emerald-600 mt-0.5 shrink-0"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
+              <svg className="h-5 w-5 text-emerald-600 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <div>
                 <p className="font-semibold">{t.linkSent}</p>
@@ -382,14 +571,9 @@ export default function LoginPage() {
 
         <p className="mt-6 text-[11px] leading-relaxed text-gray-500">
           {t.legalText.split(t.terms)[0]}
-          <a href="/legal/terms" className="underline hover:text-gray-900">
-            {t.terms}
-          </a>{" "}
+          <a href="/legal/terms" className="underline hover:text-gray-900">{t.terms}</a>{" "}
           {dict.common.and}{" "}
-          <a href="/legal/privacy" className="underline hover:text-gray-900">
-            {t.privacy}
-          </a>
-          .
+          <a href="/legal/privacy" className="underline hover:text-gray-900">{t.privacy}</a>.
         </p>
       </div>
     </div>

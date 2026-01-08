@@ -54,7 +54,7 @@ export interface EmailResult {
 /**
  * Layout de base pour tous les emails
  */
-function emailLayout(content: string): string {
+export function emailLayout(content: string): string {
   return `
 <!DOCTYPE html>
 <html lang="fr">
@@ -594,4 +594,142 @@ export async function sendPasswordResetEmail(data: {
     code: data.code,
   });
   return sendEmail({ to: data.to, subject, html, text });
+}
+
+/**
+ * Email de vérification pour l'inscription
+ */
+export function emailVerificationCodeEmail(data: {
+  code: string;
+}): { html: string; text: string; subject: string } {
+  const html = emailLayout(`
+    ${emailHeader()}
+    <div style="padding:32px;">
+      <h1 style="margin:0 0 16px;font-size:22px;font-weight:600;color:#111111;">
+        Bienvenue sur Lok'Room !
+      </h1>
+      <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#444444;">
+        Pour finaliser ton inscription, entre le code ci-dessous :
+      </p>
+
+      <div style="background:#f9f9f9;border-radius:16px;padding:24px;margin:24px 0;text-align:center;">
+        <p style="margin:0 0 8px;font-size:12px;color:#888888;text-transform:uppercase;letter-spacing:1px;">
+          Ton code de vérification
+        </p>
+        <p style="margin:0;font-size:36px;font-weight:700;color:#111111;letter-spacing:8px;font-family:monospace;">
+          ${data.code}
+        </p>
+        <p style="margin:16px 0 0;font-size:13px;color:#888888;">
+          Ce code expire dans 15 minutes
+        </p>
+      </div>
+
+      <p style="margin:0;font-size:14px;color:#666666;">
+        Si tu n'as pas créé de compte sur Lok'Room, tu peux ignorer cet e-mail.
+      </p>
+
+      <div style="border-top:1px solid #eeeeee;padding-top:20px;margin-top:24px;">
+        <p style="margin:0;font-size:12px;color:#999999;">
+          Pour ta sécurité, ne partage jamais ce code avec qui que ce soit.
+          L'équipe Lok'Room ne te demandera jamais ce code.
+        </p>
+      </div>
+    </div>
+  `);
+
+  const text = `Bienvenue sur Lok'Room !\n\nPour finaliser ton inscription, entre le code suivant :\n\nCode de vérification : ${data.code}\n\nCe code expire dans 15 minutes.\n\nSi tu n'as pas créé de compte, ignore cet e-mail.`;
+
+  return {
+    html,
+    text,
+    subject: `${data.code} - Code de vérification Lok'Room`,
+  };
+}
+
+/**
+ * Envoie un email de vérification pour l'inscription
+ */
+export async function sendEmailVerificationCode(data: {
+  to: string;
+  code: string;
+}): Promise<EmailResult> {
+  const { html, text, subject } = emailVerificationCodeEmail({
+    code: data.code,
+  });
+  return sendEmail({ to: data.to, subject, html, text });
+}
+
+/**
+ * Email de message du support Lok'Room (admin)
+ */
+export function supportMessageEmail(data: {
+  recipientName: string;
+  title: string;
+  message: string;
+  actionUrl?: string;
+}): { html: string; text: string; subject: string } {
+  const html = emailLayout(`
+    ${emailHeader()}
+    <div style="padding:32px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;">
+        <div style="width:40px;height:40px;border-radius:999px;background:#111111;display:inline-flex;align-items:center;justify-content:center;">
+          <span style="color:#ffffff;font-size:18px;">💬</span>
+        </div>
+        <span style="font-size:14px;color:#888888;">Message du support Lok'Room</span>
+      </div>
+
+      <h1 style="margin:0 0 16px;font-size:22px;font-weight:600;color:#111111;">
+        ${data.title}
+      </h1>
+
+      <p style="margin:0 0 8px;font-size:15px;line-height:1.6;color:#444444;">
+        Bonjour ${data.recipientName},
+      </p>
+
+      <div style="background:#f9f9f9;border-radius:16px;padding:20px;margin:24px 0;">
+        <p style="margin:0;font-size:15px;line-height:1.7;color:#333333;white-space:pre-wrap;">
+          ${data.message}
+        </p>
+      </div>
+
+      ${data.actionUrl ? emailButton("Voir sur Lok'Room", data.actionUrl) : emailButton("Accéder à mon compte", APP_URL)}
+
+      <p style="margin-top:24px;font-size:13px;color:#666666;">
+        Si tu as des questions, tu peux répondre directement à cet e-mail ou nous contacter via le centre d'aide.
+      </p>
+
+      <div style="border-top:1px solid #eeeeee;padding-top:20px;margin-top:24px;">
+        <p style="margin:0;font-size:12px;color:#999999;">
+          Cet e-mail a été envoyé par l'équipe support de Lok'Room.
+        </p>
+      </div>
+    </div>
+  `);
+
+  const text = `Message du support Lok'Room\n\n${data.title}\n\nBonjour ${data.recipientName},\n\n${data.message}\n\n${data.actionUrl ? `Voir sur Lok'Room : ${data.actionUrl}` : `Accéder à mon compte : ${APP_URL}`}`;
+
+  return {
+    html,
+    text,
+    subject: `${data.title} - Support Lok'Room`,
+  };
+}
+
+/**
+ * Envoie un email de message du support admin
+ */
+export async function sendSupportMessage(data: {
+  to: string;
+  recipientName: string;
+  title: string;
+  message: string;
+  actionUrl?: string;
+}): Promise<EmailResult> {
+  const { html, text, subject } = supportMessageEmail({
+    recipientName: data.recipientName,
+    title: data.title,
+    message: data.message,
+    actionUrl: data.actionUrl,
+  });
+  return sendEmail({ to: data.to, subject, html, text, replyTo: "support@lokroom.com" });
 }

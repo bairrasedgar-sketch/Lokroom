@@ -27,6 +27,7 @@ import {
   HomeIcon,
   MapPinIcon,
   UserGroupIcon,
+  LanguageIcon,
 } from "@heroicons/react/24/outline";
 
 const ONE_YEAR = 60 * 60 * 24 * 365;
@@ -63,7 +64,8 @@ type TabId =
   | "notifications"
   | "taxes"
   | "payments"
-  | "language";
+  | "language"
+  | "translation";
 
 type AccountTranslations = typeof import("@/locales/fr").default.account;
 
@@ -76,6 +78,7 @@ const iconColorByTab: Record<TabId, string> = {
   taxes: "text-gray-500",
   payments: "text-gray-500",
   language: "text-gray-500",
+  translation: "text-gray-500",
 };
 
 // ---------- Types pour la vérification d'identité ----------
@@ -2189,6 +2192,229 @@ function LanguageTabContent({ t, router }: { t: AccountTranslations; router: Ret
   );
 }
 
+// ---------- Contenu Traduction des messages ----------
+function TranslationTabContent() {
+  const [preferredLanguage, setPreferredLanguage] = useState("fr");
+  const [autoTranslate, setAutoTranslate] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  // Liste des langues supportees
+  const languages = [
+    { code: "fr", name: "Francais", nativeName: "Francais" },
+    { code: "en", name: "English", nativeName: "English" },
+    { code: "es", name: "Spanish", nativeName: "Espanol" },
+    { code: "de", name: "German", nativeName: "Deutsch" },
+    { code: "it", name: "Italian", nativeName: "Italiano" },
+    { code: "pt", name: "Portuguese", nativeName: "Portugues" },
+    { code: "zh", name: "Chinese", nativeName: "Zhongwen" },
+    { code: "ar", name: "Arabic", nativeName: "Arabi" },
+    { code: "ja", name: "Japanese", nativeName: "Nihongo" },
+  ];
+
+  // Charger les preferences
+  useEffect(() => {
+    const loadPrefs = async () => {
+      try {
+        const res = await fetch("/api/account/preferences/translation");
+        if (res.ok) {
+          const data = await res.json();
+          setPreferredLanguage(data.preferredLanguage || "fr");
+          setAutoTranslate(data.autoTranslate ?? true);
+        }
+      } catch (e) {
+        console.error("Erreur chargement preferences:", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    void loadPrefs();
+  }, []);
+
+  // Sauvegarder les preferences
+  const savePreferences = async (newLang?: string, newAuto?: boolean) => {
+    setSaving(true);
+    setSaved(false);
+
+    try {
+      const res = await fetch("/api/account/preferences/translation", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          preferredLanguage: newLang ?? preferredLanguage,
+          autoTranslate: newAuto ?? autoTranslate,
+        }),
+      });
+
+      if (res.ok) {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      }
+    } catch (e) {
+      console.error("Erreur sauvegarde:", e);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleLanguageChange = (code: string) => {
+    setPreferredLanguage(code);
+    void savePreferences(code, undefined);
+  };
+
+  const handleAutoTranslateToggle = () => {
+    const newValue = !autoTranslate;
+    setAutoTranslate(newValue);
+    void savePreferences(undefined, newValue);
+  };
+
+  if (loading) {
+    return (
+      <section className="space-y-6">
+        <header>
+          <h1 className="text-2xl font-semibold">Traduction des messages</h1>
+          <p className="text-sm text-gray-500">Chargement...</p>
+        </header>
+        <div className="flex items-center justify-center py-12">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-gray-900" />
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="space-y-6">
+      <header>
+        <h1 className="text-2xl font-semibold">Traduction des messages</h1>
+        <p className="text-sm text-gray-500">
+          Configurez la traduction automatique de vos messages
+        </p>
+      </header>
+
+      {/* Toggle traduction automatique */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="flex items-start justify-between">
+          <div className="flex items-start gap-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
+              <GlobeAltIcon className="h-5 w-5 text-gray-600" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900">
+                Traduction automatique
+              </h3>
+              <p className="mt-0.5 text-xs text-gray-500">
+                Traduire automatiquement les messages recus dans une langue differente
+              </p>
+              <p className="mt-2 text-sm text-gray-600">
+                {autoTranslate
+                  ? "Les messages seront traduits automatiquement"
+                  : "Vous devrez cliquer pour traduire chaque message"}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={autoTranslate}
+            onClick={handleAutoTranslateToggle}
+            disabled={saving}
+            className={[
+              "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2",
+              autoTranslate ? "bg-gray-900" : "bg-gray-200",
+              saving ? "opacity-50 cursor-wait" : "",
+            ].join(" ")}
+          >
+            <span
+              className={[
+                "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                autoTranslate ? "translate-x-5" : "translate-x-0",
+              ].join(" ")}
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* Selecteur de langue preferee */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h3 className="text-base font-semibold text-gray-900 mb-2">
+          Langue preferee
+        </h3>
+        <p className="text-sm text-gray-500 mb-4">
+          Les messages seront traduits dans cette langue
+        </p>
+
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+          {languages.map((lang) => {
+            const isSelected = lang.code === preferredLanguage;
+            return (
+              <button
+                key={lang.code}
+                type="button"
+                onClick={() => handleLanguageChange(lang.code)}
+                disabled={saving}
+                className={[
+                  "flex items-center justify-between rounded-xl border px-4 py-3 text-left text-sm transition",
+                  isSelected
+                    ? "border-gray-900 bg-gray-900 text-white"
+                    : "border-gray-200 bg-white hover:border-gray-400",
+                  saving ? "opacity-50 cursor-wait" : "",
+                ].join(" ")}
+              >
+                <span className="font-medium">{lang.nativeName}</span>
+                {isSelected && <CheckCircleIcon className="h-5 w-5" />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Information sur le fonctionnement */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h3 className="text-base font-semibold text-gray-900 mb-4">
+          Comment ca fonctionne
+        </h3>
+        <div className="space-y-4 text-sm text-gray-600">
+          <div className="flex items-start gap-3">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-600">
+              1
+            </div>
+            <p>
+              Quand vous recevez un message, la langue est automatiquement detectee.
+            </p>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-600">
+              2
+            </div>
+            <p>
+              Si le message est dans une langue differente de votre langue preferee,
+              il sera traduit {autoTranslate ? "automatiquement" : "sur demande"}.
+            </p>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-600">
+              3
+            </div>
+            <p>
+              Vous pouvez toujours voir le message original en cliquant sur
+              &quot;Voir l&apos;original&quot;.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Indicateur de sauvegarde */}
+      {saved && (
+        <div className="flex items-center gap-1.5 text-sm text-emerald-600">
+          <CheckCircleIcon className="h-4 w-4" />
+          <span>Preferences enregistrees</span>
+        </div>
+      )}
+    </section>
+  );
+}
+
 // ---------- TabContent global ----------
 function TabContent({
   active,
@@ -2226,6 +2452,9 @@ function TabContent({
 
     case "language":
       return <LanguageTabContent t={t} router={router} />;
+
+    case "translation":
+      return <TranslationTabContent />;
 
     default:
       return (
@@ -2289,6 +2518,11 @@ export default function AccountSettingsPage() {
       label: t.tabs.language,
       icon: <GlobeAltIcon className="h-5 w-5" />,
     },
+    {
+      id: "translation" as TabId,
+      label: "Traduction",
+      icon: <LanguageIcon className="h-5 w-5" />,
+    },
   ], [t.tabs]);
 
   const tabLabels: Record<TabId, string> = {
@@ -2299,6 +2533,7 @@ export default function AccountSettingsPage() {
     taxes: t.tabs.taxes,
     payments: t.tabs.payments,
     language: t.tabs.language,
+    translation: "Traduction",
   };
 
   const urlTab = searchParams.get("tab") as TabId | null;

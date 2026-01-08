@@ -5,13 +5,16 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 import { toast } from "sonner";
+import { BoltIcon } from "@heroicons/react/24/solid";
 import type { Currency } from "@/lib/currency";
 import { useTranslation } from "@/hooks/useTranslation";
+import { InstantBookIndicator } from "@/components/InstantBookBadge";
 
 type BookingFormProps = {
   listingId: string;
   price: number; // prix par nuit
   currency: Currency;
+  isInstantBook?: boolean;
 };
 
 type PreviewLine = {
@@ -55,6 +58,7 @@ export default function BookingForm({
   listingId,
   price,
   currency,
+  isInstantBook = false,
 }: BookingFormProps) {
   const router = useRouter();
   const { status } = useSession();
@@ -69,6 +73,11 @@ export default function BookingForm({
   const [previewLoading, setPreviewLoading] = useState(false);
   const [preview, setPreview] = useState<PreviewBreakdown | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
+
+  // Instant Book eligibility
+  const [instantBookEligible, setInstantBookEligible] = useState<boolean | null>(null);
+  const [instantBookReasons, setInstantBookReasons] = useState<string[]>([]);
+  const [checkingEligibility, setCheckingEligibility] = useState(false);
 
   // Code promo
   const [promoCode, setPromoCode] = useState("");
@@ -151,6 +160,54 @@ export default function BookingForm({
 
     return () => controller.abort();
   }, [startDate, endDate, listingId]);
+
+  // Vérifier l'éligibilité instant book quand les dates changent
+  useEffect(() => {
+    if (!isInstantBook || !startDate || !endDate || !isLoggedIn) {
+      setInstantBookEligible(isInstantBook ? null : false);
+      setInstantBookReasons([]);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    async function checkEligibility() {
+      setCheckingEligibility(true);
+
+      try {
+        const params = new URLSearchParams({
+          startDate,
+          endDate,
+        });
+
+        const res = await fetch(
+          `/api/listings/${listingId}/instant-book/eligibility?${params}`,
+          { signal: controller.signal }
+        );
+
+        if (!res.ok) {
+          setInstantBookEligible(false);
+          setInstantBookReasons(["Impossible de vérifier l'éligibilité"]);
+          return;
+        }
+
+        const data = await res.json();
+        setInstantBookEligible(data.eligible);
+        setInstantBookReasons(data.reasons || []);
+      } catch (err) {
+        if (err instanceof Error && err.name === "AbortError") return;
+        console.error(err);
+        setInstantBookEligible(false);
+        setInstantBookReasons(["Erreur lors de la vérification"]);
+      } finally {
+        setCheckingEligibility(false);
+      }
+    }
+
+    void checkEligibility();
+
+    return () => controller.abort();
+  }, [isInstantBook, startDate, endDate, listingId, isLoggedIn]);
 
   // Validation du code promo
   async function validatePromoCode() {
@@ -260,7 +317,11 @@ export default function BookingForm({
     setSubmitting(true);
 
     try {
-      const res = await fetch("/api/bookings/create", {
+      // Utiliser l'API instant book si éligible
+      const useInstantBook = isInstantBook && instantBookEligible === true;
+      const endpoint = useInstantBook ? "/api/bookings/instant" : "/api/bookings/create";
+
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -271,7 +332,11 @@ export default function BookingForm({
         }),
       });
 
-      const data = await res.json().catch(() => null) as { booking?: { id?: string }; error?: string } | null;
+      const data = await res.json().catch(() => null) as {
+        booking?: { id?: string; status?: string };
+        error?: string;
+        success?: boolean;
+      } | null;
 
       if (!res.ok) {
         const msg = mapServerErrorToMessage(data?.error);
@@ -282,10 +347,15 @@ export default function BookingForm({
 
       // data = { booking, fees, hostUserId, nights }
       const bookingId: string | undefined = data?.booking?.id;
+      const isConfirmed = data?.booking?.status === "CONFIRMED";
 
-      toast.success(bf.bookingCreated);
+      if (useInstantBook && isConfirmed) {
+        toast.success("Réservation confirmée instantanément !");
+      } else {
+        toast.success(bf.bookingCreated);
+      }
 
-      // 🔁 Redirige vers la page de paiement de cette réservation
+      // Redirige vers la page de paiement de cette réservation
       if (bookingId) {
         router.push(`/bookings/${bookingId}`);
       } else {
@@ -458,17 +528,47 @@ export default function BookingForm({
           )}
         </div>
 
+        {/* Indicateur Instant Book */}
+        {isInstantBook && startDate && endDate && (
+          <div className="mt-2">
+            {checkingEligibility ? (
+              <div className="flex items-center gap-2 rounded-xl bg-gray-50 p-3 text-sm">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-amber-500" />
+                <span className="text-gray-600">Vérification de l&apos;éligibilité...</span>
+              </div>
+            ) : (
+              <InstantBookIndicator
+                eligible={instantBookEligible}
+                reasons={instantBookReasons}
+              />
+            )}
+          </div>
+        )}
+
         {/* Bouton submit */}
-        <button
-          type="submit"
-          disabled={submitting || !startDate || !endDate}
-          className="inline-flex w-full items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {submitting ? bf.creating : bf.continueButton}
-        </button>
+        {isInstantBook && instantBookEligible === true ? (
+          <button
+            type="submit"
+            disabled={submitting || !startDate || !endDate}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-amber-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
+          >
+            <BoltIcon className="h-4 w-4" />
+            {submitting ? "Réservation en cours..." : "Réserver instantanément"}
+          </button>
+        ) : (
+          <button
+            type="submit"
+            disabled={submitting || !startDate || !endDate}
+            className="inline-flex w-full items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {submitting ? bf.creating : bf.continueButton}
+          </button>
+        )}
 
         <p className="text-[11px] text-gray-500">
-          {bf.securePaymentNote}
+          {isInstantBook && instantBookEligible === true
+            ? "Votre réservation sera confirmée immédiatement après le paiement."
+            : bf.securePaymentNote}
         </p>
       </form>
 

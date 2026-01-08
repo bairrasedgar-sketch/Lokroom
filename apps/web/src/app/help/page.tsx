@@ -338,6 +338,30 @@ export default function HelpCenterPage() {
 
       {/* Quick Links */}
       <div className="mx-auto -mt-8 max-w-4xl 2xl:max-w-5xl 3xl:max-w-6xl px-4 sm:px-6 lg:px-8">
+        {/* Signaler un problème - Mise en avant */}
+        <Link
+          href="/help/issue"
+          className="mb-4 flex items-center gap-4 rounded-xl border-2 border-red-200 bg-gradient-to-r from-red-50 to-orange-50 p-5 shadow-sm transition-all hover:shadow-md hover:border-red-300"
+        >
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-100">
+            <ExclamationTriangleIcon className="h-7 w-7 text-red-600" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-gray-900">Signaler un problème</h3>
+            <p className="text-sm text-gray-600">
+              Un souci avec une réservation ? Ouvrez un litige en quelques clics
+            </p>
+          </div>
+          <div className="hidden sm:block">
+            <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-3 py-1 text-sm font-medium text-red-700">
+              Obtenir de l&apos;aide
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </span>
+          </div>
+        </Link>
+
         <div className="grid gap-4 sm:grid-cols-3">
           <Link
             href="/messages"
@@ -366,15 +390,15 @@ export default function HelpCenterPage() {
           </Link>
 
           <Link
-            href="/profile"
+            href="/disputes"
             className="flex items-center gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
-              <UserGroupIcon className="h-5 w-5 text-purple-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100">
+              <ExclamationTriangleIcon className="h-5 w-5 text-orange-600" />
             </div>
             <div>
-              <h3 className="font-medium text-gray-900">Mon profil</h3>
-              <p className="text-xs text-gray-500">Paramètres du compte</p>
+              <h3 className="font-medium text-gray-900">Mes litiges</h3>
+              <p className="text-xs text-gray-500">Suivre mes demandes</p>
             </div>
           </Link>
         </div>

@@ -2,9 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import "./globals.css";
 import Providers from "@/components/providers";
-import Navbar from "@/components/navbar";
-import Footer from "@/components/Footer";
-import { CookieBanner } from "@/components/CookieBanner";
+import { ConditionalNavbar, ConditionalFooter, ConditionalCookieBanner } from "@/components/ConditionalLayout";
 import SkipLink from "@/components/accessibility/SkipLink";
 
 const SUPPORTED_LOCALES = ["fr", "en", "es", "de", "it", "pt", "zh"] as const;
@@ -129,12 +127,12 @@ export default function RootLayout({
       <body className="min-h-screen bg-white text-gray-900 antialiased relative">
         <Providers>
           <SkipLink />
-          <Navbar />
+          <ConditionalNavbar />
           <main id="main-content" className="flex-1" role="main" tabIndex={-1}>
             {children}
           </main>
-          <Footer />
-          <CookieBanner />
+          <ConditionalFooter />
+          <ConditionalCookieBanner />
         </Providers>
       </body>
     </html>

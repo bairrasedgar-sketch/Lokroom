@@ -59,9 +59,17 @@ export async function GET(req: NextRequest) {
           },
         },
       },
+      // Inclure les champs de traduction
     });
 
-    return NextResponse.json({ messages });
+    // Transformer les messages pour inclure les champs de traduction
+    const messagesWithTranslation = messages.map((msg) => ({
+      ...msg,
+      originalLanguage: msg.originalLanguage,
+      translations: msg.translations,
+    }));
+
+    return NextResponse.json({ messages: messagesWithTranslation });
   } catch (e) {
     console.error("Erreur /api/messages/list:", e);
     return NextResponse.json(

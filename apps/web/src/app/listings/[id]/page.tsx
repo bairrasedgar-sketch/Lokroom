@@ -16,6 +16,7 @@ import ListingReviews from "@/components/ListingReviews";
 import { formatMoneyAsync, type Currency } from "@/lib/currency";
 import { getServerDictionary } from "@/lib/i18n.server";
 import ListingJsonLd from "@/components/seo/ListingJsonLd";
+import InstantBookBadge from "@/components/InstantBookBadge";
 
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
@@ -35,6 +36,9 @@ type Listing = {
   lng: number | null;
   latPublic: number | null;
   lngPublic: number | null;
+
+  // Instant Book
+  isInstantBook?: boolean;
 
   // SEO fields
   type?: string;
@@ -286,11 +290,16 @@ export default async function ListingDetailPage({
         </span>
       </div>
 
-      {/* Titre + localisation */}
+      {/* Titre + localisation + badge instant book */}
       <section className="space-y-1">
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold">
-          {listing.title}
-        </h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold">
+            {listing.title}
+          </h1>
+          {listing.isInstantBook && (
+            <InstantBookBadge size="md" showTooltip={true} />
+          )}
+        </div>
         <p className="text-xs sm:text-sm text-gray-600">{locationLabel}</p>
       </section>
 
@@ -442,6 +451,7 @@ export default async function ListingDetailPage({
               listingId={listing.id}
               price={listing.price}
               currency={listing.currency}
+              isInstantBook={listing.isInstantBook ?? false}
             />
           ) : (
             <p className="text-xs text-gray-500">

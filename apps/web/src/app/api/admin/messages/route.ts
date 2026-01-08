@@ -6,6 +6,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdminPermission, logAdminAction } from "@/lib/admin-auth";
+import { sendSupportMessage } from "@/lib/email";
 
 export async function GET(request: Request) {
   const auth = await requireAdminPermission("users:view");
@@ -234,6 +235,26 @@ export async function POST(request: Request) {
       })),
     });
 
+    // Envoyer les emails en parallèle (avec limite pour éviter le rate limiting)
+    const emailPromises = targetUsers.map((user) =>
+      sendSupportMessage({
+        to: user.email,
+        recipientName: user.name || "Utilisateur",
+        title,
+        message,
+        actionUrl: actionUrl || undefined,
+      })
+    );
+
+    // Envoyer les emails par lots de 10 pour éviter le rate limiting
+    const BATCH_SIZE = 10;
+    let emailsSent = 0;
+    for (let i = 0; i < emailPromises.length; i += BATCH_SIZE) {
+      const batch = emailPromises.slice(i, i + BATCH_SIZE);
+      const results = await Promise.allSettled(batch);
+      emailsSent += results.filter((r) => r.status === "fulfilled" && (r.value as { success: boolean }).success).length;
+    }
+
     // Log action
     await logAdminAction({
       adminId: auth.session.user.id,
@@ -254,6 +275,7 @@ export async function POST(request: Request) {
       success: true,
       sent: notifications.count,
       recipients: targetUsers.length,
+      emailsSent,
     });
   } catch (error) {
     console.error("Erreur envoi message admin:", error);

@@ -256,12 +256,12 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { name, role, country, emailVerified, identityStatus } = body;
+    const { email, name, role, country, emailVerified, identityStatus } = body;
 
     // Vérifier que l'utilisateur existe
     const existingUser = await prisma.user.findUnique({
       where: { id },
-      select: { role: true, identityStatus: true },
+      select: { email: true, role: true, identityStatus: true },
     });
 
     if (!existingUser) {
@@ -271,8 +271,23 @@ export async function PUT(
       );
     }
 
+    // Si l'email change, vérifier qu'il n'est pas déjà utilisé
+    if (email && email !== existingUser.email) {
+      const emailExists = await prisma.user.findUnique({
+        where: { email },
+        select: { id: true },
+      });
+      if (emailExists) {
+        return NextResponse.json(
+          { error: "Cette adresse email est déjà utilisée" },
+          { status: 400 }
+        );
+      }
+    }
+
     // Construire les données de mise à jour
     const updateData: Record<string, unknown> = {};
+    if (email !== undefined) updateData.email = email;
     if (name !== undefined) updateData.name = name;
     if (role !== undefined) updateData.role = role;
     if (country !== undefined) updateData.country = country;
@@ -296,7 +311,19 @@ export async function PUT(
     });
 
     // Log l'action appropriée
-    if (role && role !== existingUser.role) {
+    if (email && email !== existingUser.email) {
+      await logAdminAction({
+        adminId: auth.session.user.id,
+        action: "USER_EMAIL_CHANGED",
+        targetType: "User",
+        targetId: id,
+        details: {
+          previousEmail: existingUser.email,
+          newEmail: email,
+        },
+        request,
+      });
+    } else if (role && role !== existingUser.role) {
       await logAdminAction({
         adminId: auth.session.user.id,
         action: "USER_ROLE_CHANGED",

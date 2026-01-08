@@ -551,6 +551,118 @@ export async function POST(req: Request) {
     }
 
     // ==========================================================
+    // 1.5) Gestion des dépôts de garantie (Security Deposits)
+    // ==========================================================
+    if (event.type === "payment_intent.amount_capturable_updated") {
+      // Un hold a été autorisé - vérifier si c'est un dépôt de garantie
+      const pi = event.data.object as Stripe.PaymentIntent;
+      const md = (pi.metadata ?? {}) as Record<string, string>;
+
+      if (md.type === "security_deposit" && md.bookingId) {
+        const bookingId = md.bookingId;
+
+        // Mettre à jour le statut du dépôt
+        const deposit = await prisma.securityDeposit.findUnique({
+          where: { bookingId },
+          include: {
+            booking: {
+              include: {
+                listing: {
+                  include: {
+                    securityDepositPolicy: true,
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        if (deposit && deposit.status === "PENDING") {
+          // Calculer la date d'expiration basée sur la politique
+          const refundDays = deposit.booking.listing.securityDepositPolicy?.refundDays || 7;
+          const checkoutDate = new Date(deposit.booking.endDate);
+          const expiresAt = new Date(checkoutDate);
+          expiresAt.setDate(expiresAt.getDate() + refundDays);
+
+          await prisma.securityDeposit.update({
+            where: { id: deposit.id },
+            data: {
+              status: "AUTHORIZED",
+              expiresAt,
+            },
+          });
+
+          securityLog("info", "security_deposit_authorized", undefined, {
+            eventId: event.id,
+            bookingId,
+            depositId: deposit.id,
+            amountCents: deposit.amountCents,
+          });
+        }
+      }
+    }
+
+    // Gérer la capture d'un dépôt de garantie
+    if (event.type === "charge.captured") {
+      const charge = event.data.object as Stripe.Charge;
+      const piIdRaw = charge.payment_intent;
+
+      if (piIdRaw) {
+        const paymentIntentId = typeof piIdRaw === "string" ? piIdRaw : piIdRaw.id;
+
+        // Vérifier si c'est un dépôt de garantie
+        const deposit = await prisma.securityDeposit.findFirst({
+          where: { stripePaymentIntentId: paymentIntentId },
+        });
+
+        if (deposit) {
+          // Mettre à jour avec le charge ID
+          await prisma.securityDeposit.update({
+            where: { id: deposit.id },
+            data: {
+              stripeChargeId: charge.id,
+            },
+          });
+
+          securityLog("info", "security_deposit_captured", undefined, {
+            eventId: event.id,
+            depositId: deposit.id,
+            chargeId: charge.id,
+            amountCaptured: charge.amount_captured,
+          });
+        }
+      }
+    }
+
+    // Gérer l'annulation d'un PaymentIntent (libération du hold)
+    if (event.type === "payment_intent.canceled") {
+      const pi = event.data.object as Stripe.PaymentIntent;
+      const md = (pi.metadata ?? {}) as Record<string, string>;
+
+      if (md.type === "security_deposit" && md.bookingId) {
+        const deposit = await prisma.securityDeposit.findFirst({
+          where: { stripePaymentIntentId: pi.id },
+        });
+
+        if (deposit && deposit.status === "AUTHORIZED") {
+          await prisma.securityDeposit.update({
+            where: { id: deposit.id },
+            data: {
+              status: "RELEASED",
+              releasedAt: new Date(),
+            },
+          });
+
+          securityLog("info", "security_deposit_released_webhook", undefined, {
+            eventId: event.id,
+            depositId: deposit.id,
+            bookingId: md.bookingId,
+          });
+        }
+      }
+    }
+
+    // ==========================================================
     // 2) Stripe Identity – Gestion complète de tous les événements
     //    Événements supportés:
     //    - identity.verification_session.created
