@@ -62,10 +62,85 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
   const [selectedCountry, setSelectedCountry] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [guests, setGuests] = useState(1);
+  // Voyageurs par type
+  const [adults, setAdults] = useState(1);
+  const [children, setChildren] = useState(0);
+  const [pets, setPets] = useState(0);
   const [searchHistory, setSearchHistory] = useState<SearchHistory[]>([]);
 
+  // Total des voyageurs (hors animaux)
+  const totalGuests = adults + children;
+
+  // État pour le calendrier
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
+  const [selectingEnd, setSelectingEnd] = useState(false);
+
   const today = new Date().toISOString().split("T")[0];
+
+  // Fonctions utilitaires pour le calendrier
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startingDay = firstDay.getDay(); // 0 = Dimanche
+
+    // Ajuster pour commencer par Lundi (0 = Lundi)
+    const adjustedStartingDay = startingDay === 0 ? 6 : startingDay - 1;
+
+    return { daysInMonth, startingDay: adjustedStartingDay, year, month };
+  };
+
+  const formatDateString = (year: number, month: number, day: number) => {
+    return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  };
+
+  const isDateDisabled = (dateStr: string) => {
+    return dateStr < today;
+  };
+
+  const isDateInRange = (dateStr: string) => {
+    if (!startDate || !endDate) return false;
+    return dateStr > startDate && dateStr < endDate;
+  };
+
+  const handleDateClick = (dateStr: string) => {
+    if (isDateDisabled(dateStr)) return;
+
+    if (!startDate || (startDate && endDate) || (!selectingEnd && dateStr < startDate)) {
+      // Nouvelle sélection ou reset
+      setStartDate(dateStr);
+      setEndDate("");
+      setSelectingEnd(true);
+    } else if (selectingEnd && dateStr > startDate) {
+      // Sélection de la date de fin
+      setEndDate(dateStr);
+      setSelectingEnd(false);
+    } else if (dateStr === startDate) {
+      // Clic sur la même date = reset
+      setStartDate("");
+      setEndDate("");
+      setSelectingEnd(false);
+    }
+  };
+
+  const goToPreviousMonth = () => {
+    setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
+  };
+
+  const goToNextMonth = () => {
+    setCalendarMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+  };
+
+  const canGoPrevious = () => {
+    const currentMonth = new Date();
+    return calendarMonth.getFullYear() > currentMonth.getFullYear() ||
+      (calendarMonth.getFullYear() === currentMonth.getFullYear() && calendarMonth.getMonth() > currentMonth.getMonth());
+  };
+
+  const DAYS_OF_WEEK = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
+  const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
 
   // Charger l'historique de recherche si connecté
   useEffect(() => {
@@ -113,7 +188,10 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
     if (selectedCountry) params.set("country", selectedCountry);
     if (startDate) params.set("startDate", startDate);
     if (endDate) params.set("endDate", endDate);
-    if (guests > 1) params.set("guests", guests.toString());
+    if (totalGuests > 1) params.set("guests", totalGuests.toString());
+    if (adults > 1) params.set("adults", adults.toString());
+    if (children > 0) params.set("children", children.toString());
+    if (pets > 0) params.set("pets", pets.toString());
 
     // Sauvegarder dans l'historique si connecté
     if (session?.user && destination) {
@@ -121,7 +199,7 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
         await fetch("/api/search-history", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ destination, startDate, endDate, guests }),
+          body: JSON.stringify({ destination, startDate, endDate, guests: totalGuests }),
         });
       } catch (e) {
         console.error("Failed to save search history:", e);
@@ -149,7 +227,7 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
     setDestination(history.destination);
     if (history.startDate) setStartDate(history.startDate);
     if (history.endDate) setEndDate(history.endDate);
-    if (history.guests) setGuests(history.guests);
+    if (history.guests) setAdults(history.guests);
     setActiveTab("dates");
   };
 
@@ -165,10 +243,10 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-start sm:items-start justify-center pt-0 sm:pt-20 bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[100] flex items-start sm:items-start justify-center pt-0 sm:pt-10 bg-black/50 backdrop-blur-sm">
       <div
         ref={modalRef}
-        className="w-full h-full sm:h-auto sm:max-w-3xl bg-white sm:rounded-3xl shadow-2xl overflow-hidden animate-modal-appear"
+        className="w-full h-full sm:h-auto sm:max-w-3xl sm:max-h-[90vh] bg-white sm:rounded-3xl shadow-2xl overflow-hidden animate-modal-appear flex flex-col"
       >
         {/* Header avec onglets */}
         <div className="flex items-center justify-between border-b border-gray-100 px-4 sm:px-6 py-4">
@@ -240,17 +318,20 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
           </button>
           <button
             onClick={() => setActiveTab("guests")}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs sm:text-sm flex-shrink-0 transition-colors cursor-pointer ${guests > 1 ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-white border border-gray-200 text-gray-500 hover:border-gray-400"}`}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs sm:text-sm flex-shrink-0 transition-colors cursor-pointer ${totalGuests > 1 || pets > 0 ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-white border border-gray-200 text-gray-500 hover:border-gray-400"}`}
           >
             <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
-            <span className="whitespace-nowrap">{guests} {guests > 1 ? "voyageurs" : "voyageur"}</span>
+            <span className="whitespace-nowrap">
+              {totalGuests} {totalGuests > 1 ? "voyageurs" : "voyageur"}
+              {pets > 0 && ` · ${pets} ${pets > 1 ? "animaux" : "animal"}`}
+            </span>
           </button>
         </div>
 
         {/* Contenu des onglets */}
-        <div className="p-4 sm:p-6 min-h-[300px] max-h-[calc(100vh-220px)] sm:max-h-[60vh] overflow-y-auto">
+        <div className="p-4 sm:p-6 min-h-[300px] max-h-[calc(100vh-180px)] sm:max-h-[70vh] overflow-y-auto">
           {activeTab === "destination" && (
             <div className="space-y-6">
               {/* Champ de recherche avec autocomplete */}
@@ -304,107 +385,176 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
           )}
 
           {activeTab === "dates" && (
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-4">
-                  Sélectionnez vos dates
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                      Arrivée
-                    </label>
-                    <input
-                      type="date"
-                      value={startDate}
-                      min={today}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-                    />
+            <div className="space-y-4">
+              {/* Résumé des dates sélectionnées */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className={`px-4 py-2 rounded-xl border-2 transition-colors ${!startDate ? "border-gray-900 bg-gray-50" : "border-gray-200"}`}>
+                    <p className="text-xs text-gray-500">Arrivée</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {startDate ? new Date(startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "Choisir"}
+                    </p>
                   </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">
-                      Départ
-                    </label>
-                    <input
-                      type="date"
-                      value={endDate}
-                      min={startDate || today}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-                    />
+                  <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                  <div className={`px-4 py-2 rounded-xl border-2 transition-colors ${startDate && !endDate ? "border-gray-900 bg-gray-50" : "border-gray-200"}`}>
+                    <p className="text-xs text-gray-500">Départ</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {endDate ? new Date(endDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "Choisir"}
+                    </p>
                   </div>
+                </div>
+                {(startDate || endDate) && (
+                  <button
+                    onClick={() => { setStartDate(""); setEndDate(""); setSelectingEnd(false); }}
+                    className="text-xs text-gray-500 hover:text-gray-900 underline"
+                  >
+                    Effacer
+                  </button>
+                )}
+              </div>
+
+              {/* Calendrier */}
+              <div className="border border-gray-200 rounded-2xl overflow-hidden">
+                {/* Header du calendrier */}
+                <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
+                  <button
+                    onClick={goToPreviousMonth}
+                    disabled={!canGoPrevious()}
+                    className="p-2 rounded-full hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    aria-label="Mois précédent"
+                  >
+                    <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <h3 className="text-base font-semibold text-gray-900">
+                    {MONTHS[calendarMonth.getMonth()]} {calendarMonth.getFullYear()}
+                  </h3>
+                  <button
+                    onClick={goToNextMonth}
+                    className="p-2 rounded-full hover:bg-gray-200 transition-colors"
+                    aria-label="Mois suivant"
+                  >
+                    <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Jours de la semaine */}
+                <div className="grid grid-cols-7 border-b border-gray-200">
+                  {DAYS_OF_WEEK.map((day) => (
+                    <div key={day} className="py-2 text-center text-xs font-medium text-gray-500">
+                      {day}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Grille des jours */}
+                <div className="grid grid-cols-7 p-2 gap-1">
+                  {(() => {
+                    const { daysInMonth, startingDay, year, month } = getDaysInMonth(calendarMonth);
+                    const days = [];
+
+                    // Cases vides avant le premier jour
+                    for (let i = 0; i < startingDay; i++) {
+                      days.push(<div key={`empty-${i}`} className="h-10" />);
+                    }
+
+                    // Jours du mois
+                    for (let day = 1; day <= daysInMonth; day++) {
+                      const dateStr = formatDateString(year, month, day);
+                      const isDisabled = isDateDisabled(dateStr);
+                      const isStart = dateStr === startDate;
+                      const isEnd = dateStr === endDate;
+                      const isInRange = isDateInRange(dateStr);
+                      const isToday = dateStr === today;
+
+                      days.push(
+                        <button
+                          key={day}
+                          onClick={() => handleDateClick(dateStr)}
+                          disabled={isDisabled}
+                          className={`
+                            h-10 w-full rounded-full text-sm font-medium transition-all
+                            ${isDisabled ? "text-gray-300 cursor-not-allowed" : "hover:bg-gray-100 cursor-pointer"}
+                            ${isStart || isEnd ? "bg-gray-900 text-white hover:bg-gray-800" : ""}
+                            ${isInRange ? "bg-gray-100" : ""}
+                            ${isToday && !isStart && !isEnd ? "border-2 border-gray-900" : ""}
+                          `}
+                        >
+                          {day}
+                        </button>
+                      );
+                    }
+
+                    return days;
+                  })()}
                 </div>
               </div>
 
               {/* Raccourcis de dates */}
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                  Suggestions
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { label: "Ce week-end", type: "weekend" },
-                    { label: "Semaine prochaine", type: "week" },
-                    { label: "Ce mois-ci", type: "month" },
-                    { label: "Flexible", type: "flexible" },
-                  ].map((shortcut) => (
-                    <button
-                      key={shortcut.type}
-                      onClick={() => {
-                        const todayDate = new Date();
-                        const start = new Date();
-                        const end = new Date();
+              <div className="flex flex-wrap gap-2 pt-2">
+                {[
+                  { label: "Ce week-end", type: "weekend" },
+                  { label: "Semaine prochaine", type: "week" },
+                  { label: "Flexible", type: "flexible" },
+                ].map((shortcut) => (
+                  <button
+                    key={shortcut.type}
+                    onClick={() => {
+                      const todayDate = new Date();
+                      const start = new Date();
+                      const end = new Date();
 
-                        if (shortcut.type === "weekend") {
-                          const dayOfWeek = todayDate.getDay();
-                          const daysUntilSaturday = (6 - dayOfWeek + 7) % 7 || 7;
-                          start.setDate(todayDate.getDate() + daysUntilSaturday);
-                          end.setDate(start.getDate() + 1);
-                        } else if (shortcut.type === "week") {
-                          start.setDate(todayDate.getDate() + 1);
-                          end.setDate(start.getDate() + 7);
-                        } else if (shortcut.type === "month") {
-                          start.setDate(todayDate.getDate() + 1);
-                          end.setDate(start.getDate() + 30);
-                        } else {
-                          // Flexible - pas de dates
-                          setStartDate("");
-                          setEndDate("");
-                          setActiveTab("guests");
-                          return;
-                        }
-
-                        setStartDate(start.toISOString().split("T")[0]);
-                        setEndDate(end.toISOString().split("T")[0]);
+                      if (shortcut.type === "weekend") {
+                        const dayOfWeek = todayDate.getDay();
+                        const daysUntilSaturday = (6 - dayOfWeek + 7) % 7 || 7;
+                        start.setDate(todayDate.getDate() + daysUntilSaturday);
+                        end.setDate(start.getDate() + 1);
+                      } else if (shortcut.type === "week") {
+                        start.setDate(todayDate.getDate() + 1);
+                        end.setDate(start.getDate() + 7);
+                      } else {
+                        // Flexible - pas de dates
+                        setStartDate("");
+                        setEndDate("");
                         setActiveTab("guests");
-                      }}
-                      className="px-4 py-2 border border-gray-200 hover:border-gray-400 rounded-full text-sm font-medium text-gray-700 transition-colors"
-                    >
-                      {shortcut.label}
-                    </button>
-                  ))}
-                </div>
+                        return;
+                      }
+
+                      setStartDate(start.toISOString().split("T")[0]);
+                      setEndDate(end.toISOString().split("T")[0]);
+                    }}
+                    className="px-4 py-2 border border-gray-200 hover:border-gray-400 rounded-full text-sm font-medium text-gray-700 transition-colors"
+                  >
+                    {shortcut.label}
+                  </button>
+                ))}
               </div>
             </div>
           )}
 
           {activeTab === "guests" && (
-            <div className="space-y-6">
+            <div className="space-y-4">
               <div>
                 <h3 className="text-sm font-semibold text-gray-900 mb-4">
-                  Combien de voyageurs ?
+                  Qui voyage ?
                 </h3>
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+
+                {/* Adultes */}
+                <div className="flex items-center justify-between p-4 border-b border-gray-100">
                   <div>
-                    <p className="font-medium text-gray-900">Voyageurs</p>
-                    <p className="text-sm text-gray-500">Nombre de personnes</p>
+                    <p className="font-medium text-gray-900">Adultes</p>
+                    <p className="text-sm text-gray-500">13 ans et plus</p>
                   </div>
                   <div className="flex items-center gap-4">
                     <button
-                      onClick={() => setGuests(Math.max(1, guests - 1))}
-                      disabled={guests <= 1}
-                      aria-label="Diminuer le nombre de voyageurs"
+                      onClick={() => setAdults(Math.max(1, adults - 1))}
+                      disabled={adults <= 1}
+                      aria-label="Diminuer le nombre d'adultes"
                       className="flex items-center justify-center h-10 w-10 rounded-full border border-gray-300 text-gray-600 transition-colors hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -412,12 +562,78 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
                       </svg>
                     </button>
                     <span className="w-8 text-center text-lg font-semibold text-gray-900">
-                      {guests}
+                      {adults}
                     </span>
                     <button
-                      onClick={() => setGuests(Math.min(16, guests + 1))}
-                      disabled={guests >= 16}
-                      aria-label="Augmenter le nombre de voyageurs"
+                      onClick={() => setAdults(Math.min(16, adults + 1))}
+                      disabled={adults >= 16}
+                      aria-label="Augmenter le nombre d'adultes"
+                      className="flex items-center justify-center h-10 w-10 rounded-full border border-gray-300 text-gray-600 transition-colors hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Enfants */}
+                <div className="flex items-center justify-between p-4 border-b border-gray-100">
+                  <div>
+                    <p className="font-medium text-gray-900">Enfants</p>
+                    <p className="text-sm text-gray-500">Jusqu'à 12 ans</p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => setChildren(Math.max(0, children - 1))}
+                      disabled={children <= 0}
+                      aria-label="Diminuer le nombre d'enfants"
+                      className="flex items-center justify-center h-10 w-10 rounded-full border border-gray-300 text-gray-600 transition-colors hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
+                      </svg>
+                    </button>
+                    <span className="w-8 text-center text-lg font-semibold text-gray-900">
+                      {children}
+                    </span>
+                    <button
+                      onClick={() => setChildren(Math.min(10, children + 1))}
+                      disabled={children >= 10}
+                      aria-label="Augmenter le nombre d'enfants"
+                      className="flex items-center justify-center h-10 w-10 rounded-full border border-gray-300 text-gray-600 transition-colors hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Animaux de compagnie */}
+                <div className="flex items-center justify-between p-4">
+                  <div>
+                    <p className="font-medium text-gray-900">Animaux de compagnie</p>
+                    <p className="text-sm text-gray-500">Chiens, chats...</p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => setPets(Math.max(0, pets - 1))}
+                      disabled={pets <= 0}
+                      aria-label="Diminuer le nombre d'animaux"
+                      className="flex items-center justify-center h-10 w-10 rounded-full border border-gray-300 text-gray-600 transition-colors hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
+                      </svg>
+                    </button>
+                    <span className="w-8 text-center text-lg font-semibold text-gray-900">
+                      {pets}
+                    </span>
+                    <button
+                      onClick={() => setPets(Math.min(5, pets + 1))}
+                      disabled={pets >= 5}
+                      aria-label="Augmenter le nombre d'animaux"
                       className="flex items-center justify-center h-10 w-10 rounded-full border border-gray-300 text-gray-600 transition-colors hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -438,7 +654,9 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
               setDestination("");
               setStartDate("");
               setEndDate("");
-              setGuests(1);
+              setAdults(1);
+              setChildren(0);
+              setPets(0);
             }}
             className="text-sm font-medium text-gray-600 hover:text-gray-900 underline"
           >
