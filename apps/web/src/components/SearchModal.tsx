@@ -217,27 +217,36 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
 
         {/* Résumé de la recherche - Scrollable sur mobile */}
         <div className="flex items-center gap-2 px-4 sm:px-6 py-3 bg-gray-50 border-b border-gray-100 overflow-x-auto">
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs sm:text-sm flex-shrink-0 ${destination ? "bg-gray-900 text-white" : "bg-white border border-gray-200 text-gray-500"}`}>
+          <button
+            onClick={() => setActiveTab("destination")}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs sm:text-sm flex-shrink-0 transition-colors cursor-pointer ${destination ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-white border border-gray-200 text-gray-500 hover:border-gray-400"}`}
+          >
             <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             <span className="whitespace-nowrap">{destination || "Destination"}</span>
-          </div>
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs sm:text-sm flex-shrink-0 ${startDate ? "bg-gray-900 text-white" : "bg-white border border-gray-200 text-gray-500"}`}>
+          </button>
+          <button
+            onClick={() => setActiveTab("dates")}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs sm:text-sm flex-shrink-0 transition-colors cursor-pointer ${startDate ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-white border border-gray-200 text-gray-500 hover:border-gray-400"}`}
+          >
             <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             <span className="whitespace-nowrap">
               {startDate && endDate ? `${new Date(startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })} - ${new Date(endDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}` : startDate ? new Date(startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "Dates"}
             </span>
-          </div>
-          <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs sm:text-sm flex-shrink-0 ${guests > 1 ? "bg-gray-900 text-white" : "bg-white border border-gray-200 text-gray-500"}`}>
+          </button>
+          <button
+            onClick={() => setActiveTab("guests")}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs sm:text-sm flex-shrink-0 transition-colors cursor-pointer ${guests > 1 ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-white border border-gray-200 text-gray-500 hover:border-gray-400"}`}
+          >
             <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
             <span className="whitespace-nowrap">{guests} {guests > 1 ? "voyageurs" : "voyageur"}</span>
-          </div>
+          </button>
         </div>
 
         {/* Contenu des onglets */}
