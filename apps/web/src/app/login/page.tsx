@@ -245,15 +245,14 @@ export default function LoginPage() {
           email: trimmedEmail,
           emailVerified: "true",
           emailVerificationToken: data.verificationToken,
-          callbackUrl: "/onboarding",
           redirect: false,
         });
 
         if (signInRes?.error) {
           setError("Erreur lors de la connexion");
         } else if (signInRes?.ok) {
-          // Rediriger vers l'onboarding
-          router.push("/onboarding");
+          // Forcer la redirection vers l'onboarding
+          window.location.href = "/onboarding";
         }
       } else {
         setError(data.error || "Code invalide");
