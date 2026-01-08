@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useSearchBar } from "@/contexts/SearchBarContext";
 import SearchModal from "./SearchModal";
 import FavoriteButton from "./FavoriteButton";
@@ -692,6 +693,8 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
+  const { data: session } = useSession();
+  const isLoggedIn = !!session?.user;
 
   // Ordre des catégories les plus recherchées
   const CATEGORY_ORDER = [
@@ -1422,10 +1425,10 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
             </p>
             <div className="mt-6 sm:mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
               <Link
-                href="/become-host"
+                href={isLoggedIn ? "/host/listings/new" : "/become-host"}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-white px-6 py-3 font-medium text-gray-900 transition-all hover:bg-gray-100"
               >
-                Devenir hôte
+                {isLoggedIn ? "Créer une annonce" : "Devenir hôte"}
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
