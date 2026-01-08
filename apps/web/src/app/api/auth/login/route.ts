@@ -4,8 +4,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { verifyPassword } from "@/lib/password";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
+
+// Rate limit: 5 tentatives par minute par IP pour login
+const LOGIN_RATE_LIMIT = 5;
+const LOGIN_WINDOW_MS = 60_000;
 
 /**
  * POST /api/auth/login
@@ -14,6 +19,19 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(req: NextRequest) {
   try {
+    // Rate limiting par IP
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               req.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`login:${ip}`, LOGIN_RATE_LIMIT, LOGIN_WINDOW_MS);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "Trop de tentatives. Réessayez dans une minute.", code: "RATE_LIMITED" },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
     const body = await req.json();
     const { email, password } = body;
 
@@ -104,6 +122,19 @@ export async function POST(req: NextRequest) {
  */
 export async function GET(req: NextRequest) {
   try {
+    // Rate limiting pour éviter l'énumération d'emails
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               req.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`login-check:${ip}`, 10, LOGIN_WINDOW_MS);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "Trop de tentatives. Réessayez dans une minute.", code: "RATE_LIMITED" },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
     const email = req.nextUrl.searchParams.get("email");
 
     if (!email) {

@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowLeftIcon,
   UserCircleIcon,
@@ -405,11 +406,15 @@ export default function AdminUserDetailPage() {
           {/* Avatar */}
           <div className="flex-shrink-0">
             {user.profile?.avatarUrl ? (
-              <img
-                src={user.profile.avatarUrl}
-                alt=""
-                className="w-24 h-24 rounded-full object-cover border-4 border-gray-100"
-              />
+              <div className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-gray-100">
+                <Image
+                  src={user.profile.avatarUrl}
+                  alt={`Avatar de ${user.name || "utilisateur"}`}
+                  fill
+                  className="object-cover"
+                  sizes="96px"
+                />
+              </div>
             ) : (
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white text-3xl font-bold">
                 {user.name?.charAt(0) || "U"}
@@ -621,7 +626,9 @@ export default function AdminUserDetailPage() {
                         className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50"
                       >
                         {listing.coverImage ? (
-                          <img src={listing.coverImage} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                          <div className="relative w-12 h-12 rounded-lg overflow-hidden">
+                            <Image src={listing.coverImage} alt={`Photo de ${listing.title}`} fill className="object-cover" sizes="48px" />
+                          </div>
                         ) : (
                           <div className="w-12 h-12 rounded-lg bg-gray-200" />
                         )}
@@ -652,7 +659,9 @@ export default function AdminUserDetailPage() {
                         className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50"
                       >
                         {booking.coverImage ? (
-                          <img src={booking.coverImage} alt="" className="w-12 h-12 rounded-lg object-cover" />
+                          <div className="relative w-12 h-12 rounded-lg overflow-hidden">
+                            <Image src={booking.coverImage} alt={`Photo de ${booking.listing.title}`} fill className="object-cover" sizes="48px" />
+                          </div>
                         ) : (
                           <div className="w-12 h-12 rounded-lg bg-gray-200" />
                         )}
@@ -690,7 +699,9 @@ export default function AdminUserDetailPage() {
                   className="flex items-center gap-4 p-4 hover:bg-gray-50"
                 >
                   {listing.coverImage ? (
-                    <img src={listing.coverImage} alt="" className="w-20 h-14 rounded-lg object-cover" />
+                    <div className="relative w-20 h-14 rounded-lg overflow-hidden">
+                      <Image src={listing.coverImage} alt={`Photo de ${listing.title}`} fill className="object-cover" sizes="80px" />
+                    </div>
                   ) : (
                     <div className="w-20 h-14 rounded-lg bg-gray-200" />
                   )}
@@ -732,7 +743,9 @@ export default function AdminUserDetailPage() {
               user.bookings.map((booking) => (
                 <div key={booking.id} className="flex items-center gap-4 p-4 hover:bg-gray-50">
                   {booking.coverImage ? (
-                    <img src={booking.coverImage} alt="" className="w-20 h-14 rounded-lg object-cover" />
+                    <div className="relative w-20 h-14 rounded-lg overflow-hidden">
+                      <Image src={booking.coverImage} alt={`Photo de ${booking.listing.title}`} fill className="object-cover" sizes="80px" />
+                    </div>
                   ) : (
                     <div className="w-20 h-14 rounded-lg bg-gray-200" />
                   )}

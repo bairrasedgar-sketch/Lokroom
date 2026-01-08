@@ -105,9 +105,11 @@ export default function ProfilePage() {
 
   // 1️⃣ Chargement du profil
   useEffect(() => {
+    const controller = new AbortController();
+
     (async () => {
       try {
-        const res = await fetch("/api/profile", { cache: "no-store" });
+        const res = await fetch("/api/profile", { cache: "no-store", signal: controller.signal });
         if (!res.ok) {
           setLoading(false);
           return;
@@ -133,31 +135,39 @@ export default function ProfilePage() {
         if (user?.profile?.avatarUrl) {
           setAvatarPreview(user.profile.avatarUrl);
         }
-      } catch {
+      } catch (e) {
+        if (e instanceof Error && e.name === 'AbortError') return;
         // silencieux
       } finally {
         setLoading(false);
       }
     })();
+
+    return () => controller.abort();
   }, []);
 
   // 2️⃣ Chargement des voyages précédents
   useEffect(() => {
+    const controller = new AbortController();
+
     (async () => {
       try {
-        const res = await fetch("/api/account/trips", { cache: "no-store" });
+        const res = await fetch("/api/account/trips", { cache: "no-store", signal: controller.signal });
         if (!res.ok) {
           setTrips([]);
           return;
         }
         const data = (await res.json()) as { trips?: BookingDTO[] };
         setTrips(data.trips ?? []);
-      } catch {
+      } catch (e) {
+        if (e instanceof Error && e.name === 'AbortError') return;
         setTrips([]);
       } finally {
         setTripsLoading(false);
       }
     })();
+
+    return () => controller.abort();
   }, []);
 
   const changed = useMemo(() => {
@@ -405,7 +415,7 @@ export default function ProfilePage() {
   // Afficher un loader pendant le chargement
   if (loading) {
     return (
-      <main className="mx-auto max-w-6xl px-4 pb-12 pt-10">
+      <main className="mx-auto max-w-6xl 2xl:max-w-7xl px-4 sm:px-6 lg:px-8 pb-12 pt-10">
         <div className="flex min-h-[50vh] items-center justify-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-gray-900" />
         </div>
@@ -433,11 +443,12 @@ export default function ProfilePage() {
             >
               <div className="relative h-10 w-10 overflow-hidden rounded-full bg-gray-200">
                 {avatarPreview ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <Image
                     src={avatarPreview}
                     alt={fullName}
-                    className="h-full w-full object-cover"
+                    fill
+                    className="object-cover"
+                    sizes="40px"
                   />
                 ) : (
                   <span className="flex h-full w-full items-center justify-center text-xs font-medium text-gray-600">
@@ -733,11 +744,12 @@ function AboutSection(props: AboutProps) {
         <div className="flex items-center gap-6">
           <div className="relative h-20 w-20 overflow-hidden rounded-full bg-gray-200">
             {avatarPreview ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={avatarPreview}
                 alt={fullName}
-                className="h-full w-full object-cover"
+                fill
+                className="object-cover"
+                sizes="80px"
               />
             ) : (
               <span className="flex h-full w-full items-center justify-center text-2xl font-semibold text-gray-600">
@@ -982,11 +994,12 @@ function AboutSection(props: AboutProps) {
             <div className="mb-4 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
               <div className="relative h-16 w-16 overflow-hidden rounded-full bg-gray-200">
                 {avatarPreview ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
+                  <Image
                     src={avatarPreview}
                     alt="avatar"
-                    className="h-full w-full object-cover"
+                    fill
+                    className="object-cover"
+                    sizes="64px"
                   />
                 ) : (
                   <span className="flex h-full w-full items-center justify-center text-sm text-gray-600">

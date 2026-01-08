@@ -1,11 +1,12 @@
 /**
- * Page Admin - Liste des réservations
+ * Page Admin - Liste des reservations
  */
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   MagnifyingGlassIcon,
   CalendarDaysIcon,
@@ -52,7 +53,7 @@ export default function AdminBookingsPage() {
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "");
 
-  const fetchBookings = useCallback(async () => {
+  const fetchBookings = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -60,12 +61,13 @@ export default function AdminBookingsPage() {
       if (search) params.set("search", search);
       if (statusFilter) params.set("status", statusFilter);
 
-      const res = await fetch(`/api/admin/bookings?${params}`);
+      const res = await fetch(`/api/admin/bookings?${params}`, { signal });
       const data = await res.json();
 
       if (data.bookings) setBookings(data.bookings);
       if (data.pagination) setPagination(data.pagination);
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return;
       console.error("Erreur chargement bookings:", error);
     } finally {
       setLoading(false);
@@ -73,7 +75,9 @@ export default function AdminBookingsPage() {
   }, [search, statusFilter, searchParams]);
 
   useEffect(() => {
-    fetchBookings();
+    const controller = new AbortController();
+    fetchBookings(controller.signal);
+    return () => controller.abort();
   }, [fetchBookings]);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -120,6 +124,7 @@ export default function AdminBookingsPage() {
                 placeholder="Rechercher par annonce ou voyageur..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                aria-label="Rechercher par annonce ou voyageur"
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
               />
             </div>
@@ -127,6 +132,7 @@ export default function AdminBookingsPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
+            aria-label="Filtrer par statut"
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
           >
             <option value="">Tous les statuts</option>
@@ -136,6 +142,7 @@ export default function AdminBookingsPage() {
           </select>
           <button
             type="submit"
+            aria-label="Filtrer les reservations"
             className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
           >
             Filtrer
@@ -189,9 +196,11 @@ export default function AdminBookingsPage() {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           {booking.listing.imageUrl ? (
-                            <img
+                            <Image
                               src={booking.listing.imageUrl}
-                              alt=""
+                              alt={`Photo de ${booking.listing.title}`}
+                              width={48}
+                              height={48}
                               className="w-12 h-12 rounded-lg object-cover"
                             />
                           ) : (
@@ -263,13 +272,15 @@ export default function AdminBookingsPage() {
               <button
                 onClick={() => router.push(`/admin/bookings?page=${pagination.page - 1}`)}
                 disabled={pagination.page === 1}
+                aria-label="Page precedente"
                 className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50"
               >
-                Précédent
+                Precedent
               </button>
               <button
                 onClick={() => router.push(`/admin/bookings?page=${pagination.page + 1}`)}
                 disabled={pagination.page === pagination.pageCount}
+                aria-label="Page suivante"
                 className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50"
               >
                 Suivant

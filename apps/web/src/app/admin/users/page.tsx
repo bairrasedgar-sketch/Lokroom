@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
@@ -62,7 +63,7 @@ export default function AdminUsersPage() {
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [roleFilter, setRoleFilter] = useState(searchParams.get("role") || "");
 
-  const fetchUsers = useCallback(async () => {
+  const fetchUsers = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -70,12 +71,13 @@ export default function AdminUsersPage() {
       if (search) params.set("search", search);
       if (roleFilter) params.set("role", roleFilter);
 
-      const res = await fetch(`/api/admin/users?${params}`);
+      const res = await fetch(`/api/admin/users?${params}`, { signal });
       const data = await res.json();
 
       if (data.users) setUsers(data.users);
       if (data.pagination) setPagination(data.pagination);
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return;
       console.error("Erreur chargement users:", error);
     } finally {
       setLoading(false);
@@ -83,7 +85,9 @@ export default function AdminUsersPage() {
   }, [search, roleFilter, searchParams]);
 
   useEffect(() => {
-    fetchUsers();
+    const controller = new AbortController();
+    fetchUsers(controller.signal);
+    return () => controller.abort();
   }, [fetchUsers]);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -123,6 +127,7 @@ export default function AdminUsersPage() {
                 placeholder="Rechercher par email ou nom..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                aria-label="Rechercher par email ou nom"
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
               />
             </div>
@@ -130,6 +135,7 @@ export default function AdminUsersPage() {
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
+            aria-label="Filtrer par role"
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
           >
             <option value="">Tous les rôles</option>
@@ -140,6 +146,7 @@ export default function AdminUsersPage() {
           </select>
           <button
             type="submit"
+            aria-label="Filtrer les utilisateurs"
             className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
           >
             <FunnelIcon className="h-5 w-5" />
@@ -190,9 +197,11 @@ export default function AdminUsersPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         {user.avatarUrl ? (
-                          <img
+                          <Image
                             src={user.avatarUrl}
-                            alt=""
+                            alt={`Avatar de ${user.name || "utilisateur"}`}
+                            width={40}
+                            height={40}
                             className="w-10 h-10 rounded-full object-cover"
                           />
                         ) : (
@@ -263,13 +272,15 @@ export default function AdminUsersPage() {
               <button
                 onClick={() => handlePageChange(pagination.page - 1)}
                 disabled={pagination.page === 1}
+                aria-label="Page precedente"
                 className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50"
               >
-                Précédent
+                Precedent
               </button>
               <button
                 onClick={() => handlePageChange(pagination.page + 1)}
                 disabled={pagination.page === pagination.pageCount}
+                aria-label="Page suivante"
                 className="px-3 py-1 border rounded hover:bg-gray-50 disabled:opacity-50"
               >
                 Suivant

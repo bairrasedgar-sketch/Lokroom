@@ -102,12 +102,12 @@ export default function BookingForm({
     if (endDate <= startDate) {
       setPreview(null);
       setPreviewError(
-        "La date de départ doit être postérieure à la date d’arrivée.",
+        "La date de départ doit être postérieure à la date d'arrivée.",
       );
       return;
     }
 
-    let cancelled = false;
+    const controller = new AbortController();
 
     async function loadPreview() {
       setPreviewLoading(true);
@@ -122,40 +122,34 @@ export default function BookingForm({
             startDate,
             endDate,
           }),
+          signal: controller.signal,
         });
 
         if (!res.ok) {
           const data = await res.json().catch(() => null);
           const msg =
             data?.error ?? "Impossible de calculer le détail du prix.";
-          if (!cancelled) {
-            setPreview(null);
-            setPreviewError(msg);
-          }
+          setPreview(null);
+          setPreviewError(msg);
           return;
         }
 
         const json = (await res.json()) as PreviewResponse;
-        if (!cancelled) {
-          setPreview(json.breakdown);
-          setPreviewError(null);
-        }
+        setPreview(json.breakdown);
+        setPreviewError(null);
       } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return;
         console.error(err);
-        if (!cancelled) {
-          setPreview(null);
-          setPreviewError("Erreur lors du calcul du prix.");
-        }
+        setPreview(null);
+        setPreviewError("Erreur lors du calcul du prix.");
       } finally {
-        if (!cancelled) setPreviewLoading(false);
+        setPreviewLoading(false);
       }
     }
 
     void loadPreview();
 
-    return () => {
-      cancelled = true;
-    };
+    return () => controller.abort();
   }, [startDate, endDate, listingId]);
 
   // Validation du code promo
@@ -480,8 +474,8 @@ export default function BookingForm({
 
       {/* Modale de connexion requise */}
       {showLoginPrompt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-0 sm:p-4">
+          <div className="w-full max-w-md rounded-t-2xl sm:rounded-2xl bg-white p-4 sm:p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold">
                 {t.errors.loginRequired}

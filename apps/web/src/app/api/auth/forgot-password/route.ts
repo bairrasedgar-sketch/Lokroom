@@ -5,8 +5,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { generateVerificationCode, validatePassword, hashPassword, verifyPassword } from "@/lib/password";
 import { sendPasswordResetEmail } from "@/lib/email";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
+
+// Rate limit: 3 demandes par 15 minutes par IP
+const FORGOT_PASSWORD_RATE_LIMIT = 3;
+const FORGOT_PASSWORD_WINDOW_MS = 15 * 60_000;
 
 // Nombre maximum d'anciens mots de passe à vérifier
 const PASSWORD_HISTORY_LIMIT = 5;
@@ -17,6 +22,19 @@ const PASSWORD_HISTORY_LIMIT = 5;
  */
 export async function POST(req: NextRequest) {
   try {
+    // Rate limiting par IP
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               req.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`forgot-password:${ip}`, FORGOT_PASSWORD_RATE_LIMIT, FORGOT_PASSWORD_WINDOW_MS);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "Trop de demandes. Réessayez dans 15 minutes.", code: "RATE_LIMITED" },
+        { status: 429, headers: { "Retry-After": "900" } }
+      );
+    }
+
     const body = await req.json();
     const { email } = body;
 
@@ -75,6 +93,19 @@ export async function POST(req: NextRequest) {
  */
 export async function PUT(req: NextRequest) {
   try {
+    // Rate limiting par IP
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               req.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`reset-password:${ip}`, 5, 60_000);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "Trop de tentatives. Réessayez dans une minute.", code: "RATE_LIMITED" },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
     const body = await req.json();
     const { email, code, newPassword } = body;
 

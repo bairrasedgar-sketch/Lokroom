@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, FormEvent } from "react";
 import Image from "next/image";
 import { signIn, useSession } from "next-auth/react";
@@ -9,6 +9,7 @@ import { UserMenu } from "./layout/UserMenu";
 import { useSearchBarSafe } from "@/contexts/SearchBarContext";
 import { COUNTRIES, DEFAULT_COUNTRY, type Country } from "@/data/countries";
 import NotificationBell from "./NotificationBell";
+import CategoryIcon from "./CategoryIcon";
 
 type LocaleOption = {
   code: string;
@@ -300,29 +301,37 @@ function getClientLocale(): LocaleCode {
 }
 
 type SessionUser = {
-  role?: "HOST" | "GUEST" | "BOTH";
+  role?: "HOST" | "GUEST" | "BOTH" | "ADMIN";
   isHost?: boolean;
 };
 
-// Helper pour obtenir l'emoji de chaque catégorie
-function getCategoryEmoji(key: string): string {
-  const emojis: Record<string, string> = {
-    APARTMENT: "🏢",
-    HOUSE: "🏠",
-    STUDIO: "🎨",
-    OFFICE: "💼",
-    COWORKING: "👥",
-    PARKING: "🚗",
-    EVENT_SPACE: "🎉",
-    RECORDING_STUDIO: "🎤",
-  };
-  return emojis[key] || "🏠";
-}
+// Labels pour toutes les catégories
+const CATEGORY_LABELS: Record<string, string> = {
+  HOUSE: "Maison",
+  APARTMENT: "Appartement",
+  PARKING: "Parking",
+  ROOM: "Chambre",
+  GARAGE: "Garage",
+  STORAGE: "Stockage",
+  OFFICE: "Bureau",
+  MEETING_ROOM: "Salle de réunion",
+  COWORKING: "Coworking",
+  EVENT_SPACE: "Événementiel",
+  RECORDING_STUDIO: "Studios",
+  OTHER: "Autre",
+};
+
+// Ordre des catégories
+const CATEGORY_ORDER = [
+  "HOUSE", "APARTMENT", "PARKING", "ROOM", "GARAGE", "STORAGE",
+  "OFFICE", "MEETING_ROOM", "COWORKING", "EVENT_SPACE", "RECORDING_STUDIO", "OTHER"
+];
 
 export default function Navbar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [animatingCategory, setAnimatingCategory] = useState<string | null>(null);
 
   const [localeModalOpen, setLocaleModalOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -334,10 +343,15 @@ export default function Navbar() {
 
   // Récupérer les catégories et l'état du scroll depuis le contexte
   const searchBarContext = useSearchBarSafe();
-  const categories = searchBarContext?.categories || [];
   const showSearchBar = searchBarContext?.showInNavbar || false;
   const activeCategory = searchBarContext?.activeCategory || null;
   const setActiveCategory = searchBarContext?.setActiveCategory || (() => {});
+
+  // Créer la liste complète des catégories triées
+  const sortedCategories = CATEGORY_ORDER.map(key => ({
+    key,
+    label: CATEGORY_LABELS[key] || key,
+  }));
 
   const { data: session, status } = useSession();
   const typedUser = session?.user as SessionUser | undefined;
@@ -346,12 +360,22 @@ export default function Navbar() {
   const userRole = typedUser?.role ?? "GUEST";
 
   const isHost =
-    typedUser?.isHost || userRole === "HOST" || userRole === "BOTH";
+    typedUser?.isHost || userRole === "HOST" || userRole === "BOTH" || userRole === "ADMIN";
+
 
   // Fermer le menu mobile quand on change de page
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
+
+  // Écouter l'événement pour ouvrir le modal langue/devise depuis le UserMenu
+  useEffect(() => {
+    function handleOpenLocaleModal() {
+      setLocaleModalOpen(true);
+    }
+    window.addEventListener("openLocaleModal", handleOpenLocaleModal);
+    return () => window.removeEventListener("openLocaleModal", handleOpenLocaleModal);
+  }, []);
 
   // Initialise locale + currency à partir du DOM / cookies
   useEffect(() => {
@@ -366,6 +390,7 @@ export default function Navbar() {
     }
   }, []);
 
+  const router = useRouter();
   const t = NAV_TEXTS[currentLocale] ?? NAV_TEXTS.fr;
 
   function setLocale(code: LocaleCode) {
@@ -374,7 +399,7 @@ export default function Navbar() {
       document.cookie = `locale=${code}; path=/; max-age=31536000`;
       document.documentElement.lang = code;
       document.documentElement.setAttribute("data-locale", code);
-      window.location.reload();
+      router.refresh();
     }
     setLocaleModalOpen(false);
   }
@@ -383,7 +408,7 @@ export default function Navbar() {
     setCurrentCurrency(code);
     if (typeof document !== "undefined") {
       document.cookie = `currency=${code}; path=/; max-age=31536000`;
-      window.location.reload();
+      router.refresh();
     }
     setLocaleModalOpen(false);
   }
@@ -395,36 +420,156 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white border-b border-gray-200">
-        <div className="relative flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3 sm:py-4 max-w-[1760px] 3xl:max-w-[2200px] 4xl:max-w-[2800px] mx-auto">
+      <header className="sticky top-0 z-50 bg-neutral-50">
+        <div className="relative flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4 sm:py-5 max-w-[1760px] 3xl:max-w-[2200px] 4xl:max-w-[2800px] mx-auto">
           {/* Logo à gauche */}
-          <Link href="/" className="flex-shrink-0 z-10">
+          <Link href="/" className="flex-shrink-0">
             <Image
               src="/logo.svg"
               alt="Lok'Room"
               width={130}
               height={85}
-              className="h-8 sm:h-9 w-auto"
+              className="h-7 sm:h-8 lg:h-9 w-auto"
               priority
               unoptimized
             />
           </Link>
 
-          {/* Centre : Tous + Recherche (visible quand scrollé) - Centrage absolu */}
-          <div className={`hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center justify-center transition-all duration-500 ${showSearchBar ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+          {/* Centre : Recherche (visible quand scrollé sur la page d'accueil uniquement) */}
+          <div className={`hidden xl:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center z-20 transition-all duration-500 ease-out ${showSearchBar && pathname === "/" ? "opacity-100" : "opacity-0 -translate-y-4 pointer-events-none"}`}>
             {/* Container pour Tous + Recherche */}
-            <div className="flex items-center gap-3">
-              {/* Bouton Tous avec catégories qui se déploient à gauche (scrollable) */}
-              <div className={`flex items-center flex-row-reverse rounded-full border border-gray-300 bg-white shadow-sm transition-all duration-500 ease-out ${
-                categoriesOpen ? "shadow-md" : "hover:shadow-md"
-              }`}>
-                {/* Bouton Tous (à droite grâce à flex-row-reverse) */}
+            <div className="flex items-center gap-2">
+              {/* Bouton Tous avec catégories qui se déploient à gauche */}
+              <div className="relative flex items-center">
+                {/* Catégories qui se déploient à gauche (position absolue, aligné avec Tous) */}
+                <div
+                  className={`absolute right-full mr-2 top-1/2 -translate-y-1/2 transition-all duration-300 ease-out ${
+                    categoriesOpen
+                      ? "opacity-100 translate-x-0"
+                      : "opacity-0 translate-x-4 pointer-events-none"
+                  }`}
+                >
+                  {/* Container ovale horizontal avec scrollbar intégrée */}
+                  <div className="rounded-full border border-gray-200 bg-white shadow-md overflow-hidden max-w-[300px]">
+                    {/* Zone des catégories scrollable */}
+                    <div
+                      id="navbar-categories-scroll"
+                      className="flex items-center px-2 pt-1 pb-0.5 overflow-x-auto scrollbar-navbar-categories"
+                      onScroll={(e) => {
+                        const target = e.target as HTMLDivElement;
+                        const thumb = document.getElementById('navbar-custom-scrollbar-thumb');
+                        const track = document.getElementById('navbar-custom-scrollbar-track');
+                        if (thumb && track && target.scrollWidth > target.clientWidth) {
+                          const scrollPercent = target.scrollLeft / (target.scrollWidth - target.clientWidth);
+                          const trackWidth = track.offsetWidth;
+                          const thumbWidth = thumb.offsetWidth;
+                          const maxLeft = trackWidth - thumbWidth;
+                          thumb.style.left = `${scrollPercent * maxLeft}px`;
+                        }
+                      }}
+                    >
+                      {sortedCategories.map((cat, index) => (
+                        <button
+                          key={cat.key}
+                          onClick={() => {
+                            if (activeCategory !== cat.key) {
+                              setAnimatingCategory(cat.key);
+                              setTimeout(() => setAnimatingCategory(null), 2000);
+                            }
+                            setActiveCategory(activeCategory === cat.key ? null : cat.key);
+                          }}
+                          className={`group flex items-center gap-1.5 px-2 py-1 rounded-full transition-all duration-200 flex-shrink-0 ${
+                            activeCategory === cat.key
+                              ? "bg-gray-100 text-gray-900"
+                              : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                          }`}
+                          style={{
+                            transitionDelay: categoriesOpen ? `${index * 30}ms` : '0ms',
+                          }}
+                        >
+                          <div className="scale-[0.6]">
+                            <CategoryIcon
+                              category={cat.key}
+                              isActive={activeCategory === cat.key}
+                              isAnimating={animatingCategory === cat.key}
+                            />
+                          </div>
+                          <span className={`text-[10px] font-medium whitespace-nowrap ${
+                            activeCategory === cat.key ? "text-gray-900" : "text-gray-600"
+                          }`}>{cat.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                    {/* Custom scrollbar intégrée en bas de la bulle */}
+                    <div
+                      id="navbar-custom-scrollbar-track"
+                      className="mx-3 mb-1.5 h-1 bg-gray-100 rounded-full relative cursor-pointer"
+                      onClick={(e) => {
+                        const track = e.currentTarget;
+                        const rect = track.getBoundingClientRect();
+                        const clickX = e.clientX - rect.left;
+                        const trackWidth = track.offsetWidth;
+                        const thumb = document.getElementById('navbar-custom-scrollbar-thumb');
+                        const thumbWidth = thumb ? thumb.offsetWidth : 50;
+                        const scrollContainer = document.getElementById('navbar-categories-scroll');
+                        if (scrollContainer) {
+                          const scrollPercent = Math.max(0, Math.min(1, (clickX - thumbWidth / 2) / (trackWidth - thumbWidth)));
+                          const maxScroll = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+                          scrollContainer.scrollLeft = scrollPercent * maxScroll;
+                        }
+                      }}
+                    >
+                      <div
+                        id="navbar-custom-scrollbar-thumb"
+                        className="absolute top-0 left-0 h-1 w-[50px] bg-gray-300 rounded-full cursor-grab hover:bg-gray-400 active:cursor-grabbing active:bg-gray-500 transition-colors"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          const thumb = e.currentTarget;
+                          const track = document.getElementById('navbar-custom-scrollbar-track');
+                          const scrollContainer = document.getElementById('navbar-categories-scroll');
+                          if (!track || !scrollContainer) return;
+
+                          const trackRect = track.getBoundingClientRect();
+                          const thumbRect = thumb.getBoundingClientRect();
+                          const startX = e.clientX;
+                          const startLeft = thumbRect.left - trackRect.left;
+                          const trackWidth = track.offsetWidth;
+                          const thumbWidth = thumb.offsetWidth;
+                          const maxLeft = trackWidth - thumbWidth;
+
+                          const onMouseMove = (moveEvent: MouseEvent) => {
+                            const deltaX = moveEvent.clientX - startX;
+                            const newLeft = Math.max(0, Math.min(maxLeft, startLeft + deltaX));
+                            thumb.style.left = `${newLeft}px`;
+                            const scrollPercent = newLeft / maxLeft;
+                            const maxScroll = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+                            scrollContainer.scrollLeft = scrollPercent * maxScroll;
+                          };
+
+                          const onMouseUp = () => {
+                            document.removeEventListener('mousemove', onMouseMove);
+                            document.removeEventListener('mouseup', onMouseUp);
+                          };
+
+                          document.addEventListener('mousemove', onMouseMove);
+                          document.addEventListener('mouseup', onMouseUp);
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bouton Tous (position fixe) */}
                 <button
                   type="button"
                   onClick={() => setCategoriesOpen(!categoriesOpen)}
-                  className="flex items-center gap-1.5 px-3 py-2 transition-all duration-300 flex-shrink-0 group"
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-full border bg-white shadow-sm transition-all duration-300 group ${
+                    categoriesOpen
+                      ? "border-gray-400 shadow-md"
+                      : "border-gray-300 hover:shadow-md hover:border-gray-400"
+                  }`}
                 >
-                  <div className={`transition-transform duration-500 ${categoriesOpen ? "rotate-90 scale-110" : "group-hover:scale-110"}`}>
+                  <div className={`transition-transform duration-300 ${categoriesOpen ? "rotate-45 scale-110" : "group-hover:scale-110"}`}>
                     <svg className="h-3.5 w-3.5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <rect x="3" y="3" width="7" height="7" rx="1" />
                       <rect x="14" y="3" width="7" height="7" rx="1" />
@@ -433,69 +578,34 @@ export default function Navbar() {
                     </svg>
                   </div>
                   <span className="text-sm font-medium text-gray-700 whitespace-nowrap">Tous</span>
-                  <svg className={`h-3 w-3 text-gray-400 transition-transform duration-300 ${categoriesOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                  </svg>
                 </button>
-
-                {/* Séparateur */}
-                <div className={`w-px h-5 bg-gray-200 transition-all duration-300 flex-shrink-0 ${categoriesOpen ? "opacity-100" : "opacity-0"}`} />
-
-                {/* Catégories avec largeur max et scroll */}
-                <div className={`flex items-center transition-all duration-500 ease-out overflow-hidden ${
-                  categoriesOpen ? "opacity-100 max-w-[280px]" : "opacity-0 max-w-0"
-                }`}>
-                  <div className="flex items-center gap-1 overflow-x-auto px-2 scrollbar-thin-horizontal">
-                    {categories.map((cat, index) => (
-                      <button
-                        key={cat.key}
-                        onClick={() => setActiveCategory(activeCategory === cat.key ? null : cat.key)}
-                        className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full transition-all duration-300 flex-shrink-0 whitespace-nowrap text-xs font-medium ${
-                          activeCategory === cat.key
-                            ? "bg-gray-900 text-white"
-                            : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-                        }`}
-                        style={{
-                          animationDelay: categoriesOpen ? `${index * 40}ms` : '0ms',
-                          animation: categoriesOpen ? 'category-pill-in 0.3s ease-out forwards' : 'none',
-                          opacity: categoriesOpen ? 1 : 0
-                        }}
-                      >
-                        <span className="text-sm">{getCategoryEmoji(cat.key)}</span>
-                        <span>{cat.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
               </div>
 
               {/* Barre de recherche compacte */}
               <button
                 type="button"
                 onClick={() => {
-                  // Rediriger vers la page d'accueil avec le paramètre pour ouvrir le modal
                   if (typeof window !== "undefined") {
                     if (window.location.pathname === "/") {
-                      // Si on est sur la home, dispatch un event pour ouvrir le modal
                       window.dispatchEvent(new CustomEvent("openSearchModal"));
                     } else {
                       window.location.href = "/?search=open";
                     }
                   }
                 }}
-                className="flex items-center rounded-full border border-gray-300 bg-white shadow-sm hover:shadow-md transition-all py-1.5 px-1.5"
+                className="flex items-center rounded-full border border-gray-300 bg-white shadow-sm hover:shadow-md transition-all duration-200 py-2 px-2"
               >
-                <div className="px-3 py-1 border-r border-gray-200 text-left">
+                <div className="px-3 border-r border-gray-200 text-left">
                   <p className="text-sm font-medium text-gray-900">Destination</p>
                 </div>
-                <div className="px-3 py-1 border-r border-gray-200 text-left">
+                <div className="px-3 border-r border-gray-200 text-left hidden xl:block">
                   <p className="text-sm font-medium text-gray-900">Dates</p>
                 </div>
-                <div className="px-3 py-1 text-left">
+                <div className="px-3 text-left hidden 2xl:block">
                   <p className="text-sm text-gray-500">Voyageurs</p>
                 </div>
-                <div className="flex items-center justify-center h-8 w-8 rounded-full bg-gray-900 ml-1">
-                  <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <div className="flex items-center justify-center h-7 w-7 rounded-full bg-gray-900 ml-1">
+                  <svg className="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                   </svg>
                 </div>
@@ -503,46 +613,36 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Menu à droite - Plus d'espace */}
-          <div className="hidden md:flex items-center gap-3 z-10">
-            {/* Lien Favoris - visible si connecté */}
+          {/* Menu à droite */}
+          <div className="hidden md:flex items-center gap-1 lg:gap-2 flex-shrink-0">
+            {/* Lien Favoris - toujours visible si connecté */}
             {isLoggedIn && (
               <Link
                 href="/wishlists"
-                className="flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
+                className="hidden lg:flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-full transition-all group"
               >
-                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M12 21s-6.716-4.145-9.192-7.07C.749 11.62 1.367 8.5 3.757 7.05A5.002 5.002 0 0 1 12 8.278 5.002 5.002 0 0 1 20.243 7.05c2.39 1.45 3.008 4.57.95 6.88C18.716 16.855 12 21 12 21z" />
+                <svg
+                  className="h-4 w-4 transition-transform duration-200 group-hover:scale-110"
+                  viewBox="0 0 32 32"
+                  fill="none"
+                >
+                  <path
+                    d="M16 28C7 23.27 2 18 2 11a6.98 6.98 0 0 1 7-7c1.8 0 3.58.68 4.95 2.05L16 8.1l2.05-2.05a6.98 6.98 0 0 1 9.9 0A6.98 6.98 0 0 1 30 11c0 7-5 12.27-14 17z"
+                    className="fill-transparent stroke-gray-600 group-hover:stroke-[#FF385C] transition-colors duration-200"
+                    strokeWidth="2"
+                  />
                 </svg>
-                Favoris
+                <span className="group-hover:text-gray-900 transition-colors duration-200">Favoris</span>
               </Link>
             )}
 
-            {/* Bouton unique : texte change selon statut hôte, destination toujours /listings/new */}
+            {/* Bouton unique : texte change selon statut hôte */}
             <Link
               href="/listings/new"
-              className="px-4 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
+              className="hidden lg:block px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100 rounded-full transition-colors whitespace-nowrap"
             >
               {isHost ? t.createListing : t.becomeHost}
             </Link>
-
-            {/* Globe pour langue/devise avec abréviation */}
-            <button
-              type="button"
-              onClick={() => setLocaleModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-2 hover:bg-gray-100 rounded-full transition-colors"
-              aria-label="Choisir la langue et la devise"
-            >
-              <svg className="h-5 w-5 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M2 12h20" />
-                <path d="M12 2a15 15 0 0 1 0 20" />
-                <path d="M12 2a15 15 0 0 0 0 20" />
-              </svg>
-              <span className="text-xs font-medium text-gray-700">
-                {currentLocale.toUpperCase()} {CURRENCY_SYMBOLS[currentCurrency] || "€"}
-              </span>
-            </button>
 
             {/* Cloche de notifications */}
             {isLoggedIn && <NotificationBell />}
@@ -591,7 +691,7 @@ export default function Navbar() {
 
         {/* Panneau mobile */}
         {open && (
-          <div className="border-t bg-white md:hidden">
+          <div className="border-t border-neutral-200 bg-neutral-50 md:hidden">
             <nav className="mx-auto flex max-w-5xl flex-col gap-1 px-4 py-3">
               <Link
                 href="/listings"
@@ -774,14 +874,15 @@ export default function Navbar() {
             </nav>
           </div>
         )}
+
       </header>
 
       {/* MODAL LANGUE / DEVISE */}
       {localeModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="max-h-[80vh] w-full max-w-4xl overflow-y-auto rounded-3xl bg-white p-6 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-0 sm:p-4">
+          <div className="max-h-[90vh] sm:max-h-[85vh] w-full sm:max-w-xl md:max-w-2xl lg:max-w-4xl overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-white p-4 sm:p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-lg sm:text-xl font-semibold">
                 {t.modalTitle}
               </h2>
               <button
@@ -794,13 +895,13 @@ export default function Navbar() {
               </button>
             </div>
 
-            <div className="grid gap-8 md:grid-cols-2">
+            <div className="grid gap-4 sm:gap-6 md:gap-8 md:grid-cols-2">
               {/* Langues */}
               <div>
-                <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
+                <h3 className="mb-3 text-xs sm:text-sm font-semibold uppercase tracking-wide text-gray-500">
                   {t.modalLanguage}
                 </h3>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div className="grid grid-cols-2 gap-2">
                   {LOCALES.map((loc) => (
                     <button
                       key={loc.code}
@@ -812,7 +913,7 @@ export default function Navbar() {
                           : "border-gray-200"
                       }`}
                     >
-                      <span className="font-medium">{loc.label}</span>
+                      <span className="font-medium truncate w-full">{loc.label}</span>
                       <span className="text-xs uppercase text-gray-500">
                         {loc.code}
                       </span>
@@ -823,10 +924,10 @@ export default function Navbar() {
 
               {/* Devises */}
               <div>
-                <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-500">
+                <h3 className="mb-3 text-xs sm:text-sm font-semibold uppercase tracking-wide text-gray-500">
                   {t.modalCurrency}
                 </h3>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div className="grid grid-cols-1 min-[400px]:grid-cols-2 gap-2">
                   {CURRENCIES.map((cur) => (
                     <button
                       key={cur.code}
@@ -838,7 +939,7 @@ export default function Navbar() {
                           : "border-gray-200"
                       }`}
                     >
-                      <span className="font-medium">
+                      <span className="font-medium truncate w-full">
                         {cur.label} ({cur.symbol})
                       </span>
                       <span className="text-xs uppercase text-gray-500">
@@ -855,9 +956,9 @@ export default function Navbar() {
 
       {/* MODAL CONNEXION / INSCRIPTION */}
       {authModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="flex max-h-[90vh] w-full max-w-lg flex-col rounded-3xl bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b px-6 py-4">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-0 sm:p-4">
+          <div className="flex max-h-[95vh] sm:max-h-[90vh] w-full sm:max-w-md md:max-w-lg flex-col rounded-t-2xl sm:rounded-2xl bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b px-4 sm:px-6 py-3 sm:py-4">
               <button
                 type="button"
                 onClick={() => setAuthModalOpen(false)}
@@ -872,8 +973,8 @@ export default function Navbar() {
               <span className="w-8" />
             </div>
 
-            <div className="auth-scroll flex-1 overflow-y-auto px-6 py-5">
-              <h3 className="mb-4 text-xl font-semibold">
+            <div className="auth-scroll flex-1 overflow-y-auto px-4 sm:px-6 py-4 sm:py-5">
+              <h3 className="mb-4 text-lg sm:text-xl font-semibold">
                 {t.authWelcome}
               </h3>
 

@@ -9,13 +9,23 @@ const responseCache = new Map<string, { response: string; timestamp: number }>()
 const CACHE_DURATION = 60 * 60 * 1000; // 1 heure en ms
 
 // Contexte système pour le bot Lok'Room
-const SYSTEM_CONTEXT = `Tu es l'assistant virtuel de Lok'Room, une plateforme de location d'espaces (comme Airbnb mais pour des espaces de travail, studios, salles de réunion, etc.).
+const SYSTEM_CONTEXT = `Tu es l'assistant virtuel de Lok'Room, une plateforme de location d'espaces entre particuliers et professionnels.
+
+🎯 QU'EST-CE QUE LOK'ROOM ?
+Lok'Room est une plateforme de location d'espaces OUVERTE À TOUS :
+- Particuliers qui veulent louer leur appartement, maison, chambre, garage, parking
+- Professionnels qui proposent des bureaux, espaces de coworking, salles de réunion
+- Créatifs qui louent des studios photo, studios d'enregistrement, espaces événementiels
+- N'importe qui peut être voyageur (locataire) ou hôte (propriétaire) - PAS BESOIN D'ÊTRE PROFESSIONNEL !
+
+C'est comme Airbnb mais pour TOUS types d'espaces : logements, bureaux, studios créatifs, parkings, etc.
 
 RÈGLES IMPORTANTES:
 - Réponds TOUJOURS en français
 - Sois concis et amical (max 3-4 phrases par réponse)
 - Utilise des emojis avec modération (1-2 max)
 - Si tu ne sais pas, dis-le honnêtement et suggère de contacter le support humain
+- RAPPELLE que Lok'Room est pour TOUT LE MONDE, pas seulement les professionnels
 
 INFORMATIONS LOK'ROOM:
 
@@ -40,11 +50,18 @@ Pour les réservations À L'HEURE (< 24h):
 - Paiements sécurisés via Stripe
 - L'hôte reçoit son paiement 24h après le début de la réservation
 
-🏠 DEVENIR HÔTE:
+🏠 DEVENIR HÔTE (ouvert à tous !):
+- N'importe qui peut devenir hôte, particulier ou professionnel
 - Créer un compte et compléter la vérification d'identité
 - Ajouter une annonce avec photos et description
 - Connecter un compte Stripe pour recevoir les paiements
 - Commission Lok'Room: 3% par réservation
+
+🔍 TYPES D'ESPACES DISPONIBLES:
+- Logements: appartements, maisons, chambres, studios
+- Espaces pro: bureaux, coworking, salles de réunion
+- Espaces créatifs: studios photo, studios d'enregistrement
+- Autres: parkings, garages, espaces de stockage, salles événementielles
 
 📞 SUPPORT:
 - Pour les problèmes urgents, contacter d'abord l'hôte via la messagerie
@@ -68,7 +85,6 @@ function getCachedResponse(question: string): string | null {
   const cached = responseCache.get(normalized);
 
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-    console.log("[Gemini] Cache hit for:", normalized.substring(0, 50));
     return cached.response;
   }
 
@@ -106,13 +122,76 @@ const PREDEFINED_RESPONSES: Record<string, string> = {
   "bye": "À bientôt ! N'hésitez pas à revenir si vous avez des questions. 👋",
 };
 
+// Réponses avec liens pour les actions courantes
+const ACTION_RESPONSES: Array<{ keywords: string[]; response: string }> = [
+  {
+    keywords: ["devenir hote", "devenir hôte", "comment devenir hote", "comment devenir hôte", "etre hote", "être hôte", "proposer mon espace", "louer mon espace", "mettre en location", "je veux louer"],
+    response: "Pour devenir hôte sur Lok'Room, c'est très simple ! 🏠 Cliquez ici pour créer votre première annonce : [Créer une annonce](/listings/new). Vous deviendrez automatiquement hôte dès la création de votre annonce.",
+  },
+  {
+    keywords: ["creer annonce", "créer annonce", "nouvelle annonce", "ajouter annonce", "publier annonce", "mettre annonce", "poster annonce", "faire une annonce"],
+    response: "Pour créer une annonce, cliquez ici : [Créer une annonce](/listings/new) 📝 Vous pourrez ajouter des photos, définir vos tarifs et vos disponibilités.",
+  },
+  {
+    keywords: ["mes reservations", "mes réservations", "voir reservations", "voir réservations", "reservation en cours", "réservation en cours"],
+    response: "Vous pouvez consulter toutes vos réservations ici : [Mes réservations](/bookings) 📅",
+  },
+  {
+    keywords: ["mes annonces", "voir mes annonces", "gerer annonces", "gérer annonces", "modifier annonce"],
+    response: "Retrouvez et gérez toutes vos annonces ici : [Mes annonces](/host/listings) 🏠",
+  },
+  {
+    keywords: ["mon compte", "mon profil", "modifier profil", "parametres", "paramètres", "reglages", "réglages"],
+    response: "Accédez à votre compte et vos paramètres ici : [Mon compte](/account) ⚙️",
+  },
+  {
+    keywords: ["messagerie", "messages", "contacter hote", "contacter hôte", "envoyer message", "discussion"],
+    response: "Retrouvez toutes vos conversations ici : [Messagerie](/messages) 💬",
+  },
+  {
+    keywords: ["favoris", "mes favoris", "annonces favorites", "espaces favoris", "wishlist"],
+    response: "Consultez vos espaces favoris ici : [Mes favoris](/favorites) ❤️",
+  },
+  {
+    keywords: ["explorer", "rechercher", "trouver espace", "voir annonces", "tous les espaces", "chercher"],
+    response: "Explorez tous les espaces disponibles ici : [Explorer](/listings) 🔍",
+  },
+  {
+    keywords: ["tableau de bord", "dashboard", "espace hote", "espace hôte", "gestion hote", "gestion hôte"],
+    response: "Accédez à votre tableau de bord hôte ici : [Dashboard hôte](/host) 📊",
+  },
+  {
+    keywords: ["calendrier", "disponibilites", "disponibilités", "gerer dates", "gérer dates"],
+    response: "Gérez vos disponibilités dans le calendrier : [Calendrier](/host/calendar) 📆",
+  },
+  {
+    keywords: ["paiement", "paiements", "revenus", "gains", "argent", "portefeuille", "wallet"],
+    response: "Consultez vos paiements et revenus ici : [Portefeuille](/host/wallet) 💰",
+  },
+  {
+    keywords: ["aide", "help", "assistance", "support", "probleme", "problème", "question"],
+    response: "Consultez notre centre d'aide ici : [Centre d'aide](/help) 🆘 Si vous avez une question spécifique, n'hésitez pas à me la poser !",
+  },
+];
+
 // Fonction pour obtenir une réponse prédéfinie
 function getPredefinedResponse(question: string): string | null {
   const normalized = normalizeQuestion(question);
 
+  // Vérifier les salutations simples
   for (const [key, response] of Object.entries(PREDEFINED_RESPONSES)) {
     if (normalized.includes(key) && normalized.length < 20) {
       return response;
+    }
+  }
+
+  // Vérifier les réponses avec actions/liens
+  for (const action of ACTION_RESPONSES) {
+    for (const keyword of action.keywords) {
+      const normalizedKeyword = normalizeQuestion(keyword);
+      if (normalized.includes(normalizedKeyword)) {
+        return action.response;
+      }
     }
   }
 

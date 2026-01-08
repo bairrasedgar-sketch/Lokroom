@@ -31,7 +31,7 @@ export async function GET() {
       return NextResponse.json({ error: "Accès réservé aux hôtes" }, { status: 403 });
     }
 
-    // Récupérer toutes les annonces de cet hôte
+    // Récupérer toutes les annonces de cet hôte (y compris brouillons pour gestion)
     const listings = await prisma.listing.findMany({
       where: { ownerId: user.id },
       select: {
@@ -45,7 +45,13 @@ export async function GET() {
         pricingMode: true,
         country: true,
         city: true,
+        minNights: true,
+        maxNights: true,
         createdAt: true,
+        isActive: true,
+        ListingModeration: {
+          select: { status: true }
+        },
         images: {
           orderBy: { position: "asc" },
           take: 1,
@@ -65,14 +71,28 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
-    // Calculer quelques stats
+    // Calculer quelques stats (uniquement sur les annonces actives et approuvées)
+    const activeListings = listings.filter(
+      (l) => l.isActive && l.ListingModeration?.status === "APPROVED"
+    );
     const stats = {
       total: listings.length,
+      active: activeListings.length,
+      draft: listings.filter((l) => l.ListingModeration?.status === "DRAFT").length,
+      pending: listings.filter((l) => l.ListingModeration?.status === "PENDING_REVIEW").length,
+      rejected: listings.filter((l) => l.ListingModeration?.status === "REJECTED").length,
       totalBookings: listings.reduce((acc, l) => acc + l._count.bookings, 0),
       totalFavorites: listings.reduce((acc, l) => acc + l._count.favorites, 0),
     };
 
-    return NextResponse.json({ listings, stats });
+    // Transformer les données pour le frontend (aplatir ListingModeration)
+    const transformedListings = listings.map((l) => ({
+      ...l,
+      moderationStatus: l.ListingModeration?.status || "DRAFT",
+      ListingModeration: undefined,
+    }));
+
+    return NextResponse.json({ listings: transformedListings, stats });
   } catch (error) {
     console.error("GET /api/host/listings error:", error);
     return NextResponse.json(

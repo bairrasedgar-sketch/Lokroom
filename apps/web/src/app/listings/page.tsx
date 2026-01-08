@@ -497,6 +497,8 @@ export default async function ListingsPage({
               }}
               searchParams={searchParams as Record<string, string>}
               displayCurrency={displayCurrency}
+              currentPage={page}
+              totalPages={pageCount}
             />
           )}
         </div>

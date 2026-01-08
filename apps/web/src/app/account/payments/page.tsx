@@ -2,6 +2,7 @@
 
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import {
@@ -12,6 +13,7 @@ import {
   ClockIcon,
   CheckCircleIcon,
   WalletIcon,
+  ChevronLeftIcon,
 } from "@heroicons/react/24/outline";
 
 type Tab = "wallet" | "payments" | "payouts";
@@ -20,10 +22,12 @@ export default function PaymentsPage() {
   return (
     <Suspense
       fallback={
-        <div className="space-y-4">
-          <div className="h-6 w-40 rounded bg-gray-100" />
-          <div className="h-10 w-64 rounded-full bg-gray-100" />
-          <div className="h-32 rounded-2xl border border-gray-200 bg-white" />
+        <div className="mx-auto max-w-2xl px-4 py-8">
+          <div className="space-y-4">
+            <div className="h-6 w-40 rounded bg-gray-100" />
+            <div className="h-10 w-64 rounded-full bg-gray-100" />
+            <div className="h-32 rounded-2xl border border-gray-200 bg-white" />
+          </div>
         </div>
       }
     >
@@ -48,56 +52,69 @@ function PaymentsPageContent() {
   }
 
   return (
-    <div className="space-y-6">
-      <header className="space-y-2">
-        <h2 className="text-xl font-semibold">{t.paymentsPage?.title || "Paiements et portefeuille"}</h2>
-        <p className="text-sm text-gray-600">
-          {t.paymentsPage?.subtitle || "Gérez votre portefeuille, vos paiements et vos versements"}
-        </p>
+    <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
+      {/* Breadcrumb */}
+      <div className="mb-6">
+        <Link
+          href="/account"
+          className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700"
+        >
+          <ChevronLeftIcon className="h-4 w-4" />
+          Retour aux paramètres
+        </Link>
+      </div>
 
-        <div className="mt-4 inline-flex rounded-full border border-gray-200 bg-gray-50 p-1 text-sm">
-          <button
-            type="button"
-            onClick={() => setTab("wallet")}
-            className={`flex items-center gap-1.5 rounded-full px-4 py-2 transition ${
-              currentTab === "wallet"
-                ? "bg-white font-medium shadow-sm"
-                : "text-gray-600 hover:bg-white/60"
-            }`}
-          >
-            <WalletIcon className="h-4 w-4" />
-            Portefeuille
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("payments")}
-            className={`flex items-center gap-1.5 rounded-full px-4 py-2 transition ${
-              currentTab === "payments"
-                ? "bg-white font-medium shadow-sm"
-                : "text-gray-600 hover:bg-white/60"
-            }`}
-          >
-            <CreditCardIcon className="h-4 w-4" />
-            {t.paymentsPage?.paymentsTab || "Paiements"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("payouts")}
-            className={`flex items-center gap-1.5 rounded-full px-4 py-2 transition ${
-              currentTab === "payouts"
-                ? "bg-white font-medium shadow-sm"
-                : "text-gray-600 hover:bg-white/60"
-            }`}
-          >
-            <BanknotesIcon className="h-4 w-4" />
-            {t.paymentsPage?.payoutsTab || "Versements"}
-          </button>
-        </div>
-      </header>
+      <div className="space-y-6">
+        <header className="space-y-2">
+          <h2 className="text-2xl font-semibold text-gray-900">{t.paymentsPage?.title || "Paiements et portefeuille"}</h2>
+          <p className="text-sm text-gray-600">
+            {t.paymentsPage?.subtitle || "Gérez votre portefeuille, vos paiements et vos versements"}
+          </p>
 
-      {currentTab === "wallet" && <MiniWallet />}
-      {currentTab === "payments" && <PaymentsHistory />}
-      {currentTab === "payouts" && <PayoutStripeCard />}
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setTab("wallet")}
+              className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition ${
+                currentTab === "wallet"
+                  ? "bg-gray-900 text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              <WalletIcon className="h-4 w-4" />
+              Portefeuille
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab("payments")}
+              className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition ${
+                currentTab === "payments"
+                  ? "bg-gray-900 text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              <CreditCardIcon className="h-4 w-4" />
+              {t.paymentsPage?.paymentsTab || "Paiements"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab("payouts")}
+              className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition ${
+                currentTab === "payouts"
+                  ? "bg-gray-900 text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              <BanknotesIcon className="h-4 w-4" />
+              {t.paymentsPage?.payoutsTab || "Versements"}
+            </button>
+          </div>
+        </header>
+
+        {currentTab === "wallet" && <MiniWallet />}
+        {currentTab === "payments" && <PaymentsHistory />}
+        {currentTab === "payouts" && <PayoutStripeCard />}
+      </div>
     </div>
   );
 }

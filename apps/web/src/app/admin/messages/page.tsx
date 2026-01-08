@@ -5,6 +5,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import {
   PaperAirplaneIcon,
   UserGroupIcon,
@@ -98,7 +99,9 @@ export default function AdminMessagesPage() {
   const [actionUrl, setActionUrl] = useState("");
 
   useEffect(() => {
-    fetchMessages();
+    const controller = new AbortController();
+    fetchMessages(controller.signal);
+    return () => controller.abort();
   }, []);
 
   // User search with debounce
@@ -108,32 +111,39 @@ export default function AdminMessagesPage() {
       return;
     }
 
+    const controller = new AbortController();
     const timer = setTimeout(async () => {
       setSearchLoading(true);
       try {
-        const res = await fetch(`/api/admin/search?q=${encodeURIComponent(userSearch)}`);
+        const res = await fetch(`/api/admin/search?q=${encodeURIComponent(userSearch)}`, { signal: controller.signal });
         if (res.ok) {
           const data = await res.json();
           setUserSearchResults(data.users || []);
           setShowUserSearch(true);
         }
+      } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') return;
       } finally {
         setSearchLoading(false);
       }
     }, 300);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [userSearch]);
 
-  const fetchMessages = async () => {
+  const fetchMessages = async (signal?: AbortSignal) => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/messages");
+      const res = await fetch("/api/admin/messages", { signal });
       const data = await res.json();
 
       setStats(data.stats);
       setBroadcasts(data.broadcasts || []);
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return;
       console.error("Error fetching messages:", error);
     } finally {
       setLoading(false);
@@ -315,7 +325,9 @@ export default function AdminMessagesPage() {
                 {selectedUser ? (
                   <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                     {selectedUser.profile?.avatarUrl ? (
-                      <img src={selectedUser.profile.avatarUrl} alt="" className="w-10 h-10 rounded-full" />
+                      <div className="relative w-10 h-10 rounded-full overflow-hidden">
+                        <Image src={selectedUser.profile.avatarUrl} alt={`Avatar de ${selectedUser.name || "utilisateur"}`} fill className="object-cover" sizes="40px" />
+                      </div>
                     ) : (
                       <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
                         {selectedUser.name?.charAt(0) || "?"}
@@ -362,7 +374,9 @@ export default function AdminMessagesPage() {
                             className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 text-left"
                           >
                             {user.profile?.avatarUrl ? (
-                              <img src={user.profile.avatarUrl} alt="" className="w-8 h-8 rounded-full" />
+                              <div className="relative w-8 h-8 rounded-full overflow-hidden">
+                                <Image src={user.profile.avatarUrl} alt={`Avatar de ${user.name || "utilisateur"}`} fill className="object-cover" sizes="32px" />
+                              </div>
                             ) : (
                               <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm">
                                 {user.name?.charAt(0) || "?"}

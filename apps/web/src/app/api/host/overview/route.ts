@@ -26,6 +26,7 @@ export async function GET() {
 
   const [
     totalListings,
+    activeListingsCount,
     totalBookings,
     totalCancelled,
     wallet,
@@ -36,6 +37,15 @@ export async function GET() {
   ] = await Promise.all([
     prisma.listing.count({
       where: { ownerId: hostId },
+    }),
+    prisma.listing.count({
+      where: {
+        ownerId: hostId,
+        isActive: true,
+        ListingModeration: {
+          status: "APPROVED",
+        },
+      },
     }),
     prisma.booking.count({
       where: { listing: { ownerId: hostId } },
@@ -81,6 +91,10 @@ export async function GET() {
         price: true,
         currency: true,
         createdAt: true,
+        isActive: true,
+        ListingModeration: {
+          select: { status: true }
+        },
         bookings: {
           select: {
             id: true,
@@ -107,6 +121,8 @@ export async function GET() {
       price: l.price,
       currency: l.currency,
       createdAt: l.createdAt,
+      isActive: l.isActive,
+      moderationStatus: l.ListingModeration?.status || "DRAFT",
       totalBookings: total,
       confirmed,
       cancelled,
@@ -116,6 +132,7 @@ export async function GET() {
   return NextResponse.json({
     stats: {
       totalListings,
+      activeListings: activeListingsCount,
       totalBookings,
       totalCancelled,
       totalRevenueCents: wallet?.balanceCents ?? 0,

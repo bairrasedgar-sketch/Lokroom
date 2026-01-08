@@ -109,10 +109,38 @@ export async function GET() {
       },
     });
 
-    // 🔹 Nombre d’annonces de l’hôte (pour l’occupation)
-    const listingsCount = await prisma.listing.count({
-      where: { ownerId: hostId },
+    // 🔹 Annonces ACTIVES de l'hôte (pour l'occupation et les stats)
+    const activeListings = await prisma.listing.findMany({
+      where: {
+        ownerId: hostId,
+        isActive: true,
+        ListingModeration: {
+          status: "APPROVED",
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+        currency: true,
+        bookings: {
+          where: {
+            status: "CONFIRMED",
+          },
+          select: {
+            totalPrice: true,
+            startDate: true,
+            endDate: true,
+          },
+        },
+        reviews: {
+          select: {
+            rating: true,
+          },
+        },
+      },
     });
+
+    const listingsCount = activeListings.length;
 
     // --------------------------
     // 1) SUMMARY GLOBAL
@@ -258,7 +286,39 @@ export async function GET() {
     };
 
     // --------------------------
-    // 4) RÉPONSE
+    // 4) LISTINGS PERFORMANCE
+    // --------------------------
+    const listings = activeListings.map((listing) => {
+      const bookingsCount = listing.bookings.length;
+      const revenue = listing.bookings.reduce((sum, b) => sum + b.totalPrice, 0);
+      const avgRating =
+        listing.reviews.length > 0
+          ? listing.reviews.reduce((sum, r) => sum + r.rating, 0) / listing.reviews.length
+          : 0;
+
+      // Calcul occupation pour ce listing (90 derniers jours)
+      let nightsBooked = 0;
+      for (const b of listing.bookings) {
+        if (b.endDate <= occupancyStart || b.startDate >= now) continue;
+        const effStart = b.startDate < occupancyStart ? occupancyStart : b.startDate;
+        const effEnd = b.endDate > now ? now : b.endDate;
+        nightsBooked += diffNights(effStart, effEnd);
+      }
+      const occupancy = occupancyWindowDays > 0 ? nightsBooked / occupancyWindowDays : 0;
+
+      return {
+        id: listing.id,
+        title: listing.title,
+        bookings: bookingsCount,
+        revenue,
+        currency: listing.currency,
+        rating: avgRating,
+        occupancy,
+      };
+    });
+
+    // --------------------------
+    // 5) RÉPONSE
     // --------------------------
     return NextResponse.json({
       summary,
@@ -266,6 +326,7 @@ export async function GET() {
       bookingsByMonth,
       nightsByMonth,
       occupancy90d,
+      listings,
     });
   } catch (e) {
     const message =

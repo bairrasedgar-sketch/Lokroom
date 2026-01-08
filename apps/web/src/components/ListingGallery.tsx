@@ -59,47 +59,57 @@ export default function ListingGallery({
   return (
     <div className="rounded-lg border overflow-hidden bg-gray-100">
       <div
-        className="relative select-none"
+        className="relative select-none overflow-hidden"
         style={{ aspectRatio: String(aspect) }}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
-        {safeImages[idx] ? (
-          <Image
-            key={safeImages[idx].url}
-            src={safeImages[idx].url}
-            alt={`${title} - Photo ${idx + 1} sur ${total}`}
-            fill
-            priority
-            sizes="(max-width: 768px) 100vw, 768px"
-            className={
-              objectFit === "cover" ? "object-cover" : "object-contain"
-            }
-          />
+        {safeImages.length > 0 ? (
+          <div
+            className="flex h-full transition-transform duration-300 ease-out"
+            style={{ transform: `translateX(-${idx * 100}%)` }}
+          >
+            {safeImages.map((img, i) => (
+              <div key={img.id || i} className="relative h-full w-full flex-shrink-0">
+                <Image
+                  src={img.url}
+                  alt={`${title} - Photo ${i + 1} sur ${total}`}
+                  fill
+                  priority={i === 0}
+                  sizes="(max-width: 768px) 100vw, 768px"
+                  className={objectFit === "cover" ? "object-cover" : "object-contain"}
+                />
+              </div>
+            ))}
+          </div>
         ) : (
           <div className="absolute inset-0 grid place-items-center text-gray-400">
-            Pas d’image
+            Pas d'image
           </div>
         )}
 
-        {/* Flèches */}
+        {/* Flèches - style Airbnb */}
         {canNav && (
           <>
             <button
               type="button"
               aria-label="Image précédente"
               onClick={prev}
-              className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/55 text-white w-8 h-8 grid place-items-center hover:bg-black/70"
+              className="absolute left-3 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-sm border border-gray-200/50 transition-all hover:bg-white hover:scale-105 hover:shadow-md"
             >
-              ‹
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
             </button>
             <button
               type="button"
               aria-label="Image suivante"
               onClick={next}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/55 text-white w-8 h-8 grid place-items-center hover:bg-black/70"
+              className="absolute right-3 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-sm border border-gray-200/50 transition-all hover:bg-white hover:scale-105 hover:shadow-md"
             >
-              ›
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
             </button>
           </>
         )}

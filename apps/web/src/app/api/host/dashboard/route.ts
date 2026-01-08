@@ -22,7 +22,8 @@ export async function GET() {
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const listings = await prisma.listing.findMany({
+  // Toutes les annonces de l'hôte (pour affichage)
+  const allListings = await prisma.listing.findMany({
     where: { ownerId: me.id },
     select: {
       id: true,
@@ -31,9 +32,18 @@ export async function GET() {
       country: true,
       price: true,
       currency: true,
+      isActive: true,
+      ListingModeration: {
+        select: { status: true }
+      },
       images: { select: { url: true }, take: 1 }
     }
   });
+
+  // Filtrer les annonces actives pour les stats
+  const activeListings = allListings.filter(
+    (l) => l.isActive && l.ListingModeration?.status === "APPROVED"
+  );
 
   const bookings = await prisma.booking.findMany({
     where: { listing: { ownerId: me.id } },
@@ -43,16 +53,30 @@ export async function GET() {
     orderBy: { startDate: "desc" }
   });
 
+  // Calculer les revenus (uniquement réservations confirmées)
+  const confirmedBookings = bookings.filter(b => b.status === "CONFIRMED");
+  const totalRevenue = confirmedBookings.reduce((sum, b) => sum + b.totalPrice, 0);
+  const thisMonthRevenue = confirmedBookings
+    .filter(b => b.createdAt >= startOfMonth)
+    .reduce((sum, b) => sum + b.totalPrice, 0);
+
+  // Devise principale (prendre la première ou EUR par défaut)
+  const primaryCurrency = activeListings[0]?.currency || "EUR";
+
   const stats = {
-    totalListings: listings.length,
+    totalListings: allListings.length,
+    activeListings: activeListings.length,
     totalBookings: bookings.length,
     upcoming: bookings.filter(b => b.startDate > now && b.status === "CONFIRMED").length,
     thisMonth: bookings.filter(b => b.createdAt >= startOfMonth).length,
-    cancelled: bookings.filter(b => b.status === "CANCELLED").length
+    cancelled: bookings.filter(b => b.status === "CANCELLED").length,
+    totalRevenue,
+    thisMonthRevenue,
+    currency: primaryCurrency
   };
 
   return NextResponse.json({
-    listings,
+    listings: allListings,
     bookings,
     stats
   });

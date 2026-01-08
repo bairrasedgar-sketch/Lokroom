@@ -135,6 +135,18 @@ export const updateProfileSchema = z.object({
   addressLine1: z.string().max(200, "Adresse trop longue").optional(),
   addressLine2: z.string().max(200, "Adresse trop longue").optional(),
   province: z.string().max(50, "Province trop longue").optional(),
+  // Adresse postale
+  postalAddressLine1: z.string().max(200, "Adresse trop longue").optional(),
+  postalAddressLine2: z.string().max(200, "Adresse trop longue").optional(),
+  postalAddressCity: z.string().max(100, "Ville trop longue").optional(),
+  postalAddressPostalCode: z.string().max(20, "Code postal trop long").optional(),
+  postalAddressCountry: z.string().max(60, "Pays trop long").optional(),
+  postalAddressProvince: z.string().max(50, "Province trop longue").optional(),
+  postalAddressSameAsResidential: z.boolean().optional(),
+  // Contact d'urgence
+  emergencyContactName: z.string().max(100, "Nom trop long").optional(),
+  emergencyContactPhone: phoneSchema,
+  emergencyContactRelation: z.string().max(50, "Relation trop longue").optional(),
 });
 
 // ============================================
@@ -179,7 +191,7 @@ export const createListingSchema = z.object({
   province: z.string().max(10).optional().nullable(),
   regionFR: z.string().max(10).optional().nullable(),
   type: listingTypeSchema.optional().default("OTHER"),
-  additionalTypes: z.array(listingTypeSchema).max(3).optional().default([]),
+  additionalTypes: z.array(listingTypeSchema).max(4).optional().default([]),
   customType: z.string().max(100).optional().nullable(),
   pricingMode: pricingModeSchema.optional().default("DAILY"),
   lat: latitudeSchema.optional(),

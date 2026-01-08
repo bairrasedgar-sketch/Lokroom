@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   MagnifyingGlassIcon,
   FunnelIcon,
@@ -96,11 +97,13 @@ export default function AdminReviewsPage() {
   const [expandedReviews, setExpandedReviews] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    fetchReviews();
+    const controller = new AbortController();
+    fetchReviews(1, controller.signal);
+    return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ratingFilter, sortBy]);
 
-  const fetchReviews = async (page = 1) => {
+  const fetchReviews = async (page = 1, signal?: AbortSignal) => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -111,13 +114,14 @@ export default function AdminReviewsPage() {
       if (ratingFilter) params.set("rating", ratingFilter);
       if (searchQuery) params.set("search", searchQuery);
 
-      const res = await fetch(`/api/admin/reviews?${params}`);
+      const res = await fetch(`/api/admin/reviews?${params}`, { signal });
       const data = await res.json();
 
       setReviews(data.reviews || []);
       setStats(data.stats);
       setPagination(data.pagination);
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return;
       console.error("Error fetching reviews:", error);
     } finally {
       setLoading(false);
@@ -381,11 +385,15 @@ export default function AdminReviewsPage() {
                     {/* Listing Image */}
                     <Link href={`/admin/listings/${review.listing.id}`} className="flex-shrink-0">
                       {review.coverImage ? (
-                        <img
-                          src={review.coverImage}
-                          alt=""
-                          className="w-20 h-20 rounded-lg object-cover"
-                        />
+                        <div className="relative w-20 h-20 rounded-lg overflow-hidden">
+                          <Image
+                            src={review.coverImage}
+                            alt={`Photo de ${review.listing.title}`}
+                            fill
+                            className="object-cover"
+                            sizes="80px"
+                          />
+                        </div>
                       ) : (
                         <div className="w-20 h-20 rounded-lg bg-gray-200 flex items-center justify-center">
                           <HomeModernIcon className="h-8 w-8 text-gray-400" />
@@ -425,11 +433,15 @@ export default function AdminReviewsPage() {
                           className="flex items-center gap-2 text-sm hover:text-red-600"
                         >
                           {review.author.profile?.avatarUrl ? (
-                            <img
-                              src={review.author.profile.avatarUrl}
-                              alt=""
-                              className="w-6 h-6 rounded-full"
-                            />
+                            <div className="relative w-6 h-6 rounded-full overflow-hidden">
+                              <Image
+                                src={review.author.profile.avatarUrl}
+                                alt={`Avatar de ${review.author.name || "auteur"}`}
+                                fill
+                                className="object-cover"
+                                sizes="24px"
+                              />
+                            </div>
                           ) : (
                             <UserCircleIcon className="h-6 w-6 text-gray-400" />
                           )}

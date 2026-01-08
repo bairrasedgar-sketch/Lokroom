@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowLeftIcon,
   CalendarDaysIcon,
@@ -409,11 +410,15 @@ export default function AdminBookingDetailPage() {
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <div className="flex items-start gap-4 p-5 border-b border-gray-100">
               {booking.coverImage ? (
-                <img
-                  src={booking.coverImage}
-                  alt=""
-                  className="w-24 h-24 rounded-lg object-cover flex-shrink-0"
-                />
+                <div className="relative w-24 h-24 rounded-lg overflow-hidden flex-shrink-0">
+                  <Image
+                    src={booking.coverImage}
+                    alt={`Photo de ${booking.listing.title}`}
+                    fill
+                    className="object-cover"
+                    sizes="96px"
+                  />
+                </div>
               ) : (
                 <div className="w-24 h-24 rounded-lg bg-gray-200 flex-shrink-0" />
               )}
@@ -484,7 +489,9 @@ export default function AdminBookingDetailPage() {
                   className="flex items-center gap-3 hover:bg-gray-50 -mx-2 p-2 rounded-lg"
                 >
                   {booking.guest.profile?.avatarUrl ? (
-                    <img src={booking.guest.profile.avatarUrl} alt="" className="w-10 h-10 rounded-full" />
+                    <div className="relative w-10 h-10 rounded-full overflow-hidden">
+                      <Image src={booking.guest.profile.avatarUrl} alt={`Avatar de ${booking.guest.name || "voyageur"}`} fill className="object-cover" sizes="40px" />
+                    </div>
                   ) : (
                     <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
                       {booking.guest.name?.charAt(0) || "?"}
@@ -707,7 +714,9 @@ export default function AdminBookingDetailPage() {
               className="flex items-center gap-3 hover:bg-gray-50 -mx-2 p-2 rounded-lg"
             >
               {booking.listing.owner.profile?.avatarUrl ? (
-                <img src={booking.listing.owner.profile.avatarUrl} alt="" className="w-12 h-12 rounded-full" />
+                <div className="relative w-12 h-12 rounded-full overflow-hidden">
+                  <Image src={booking.listing.owner.profile.avatarUrl} alt={`Avatar de ${booking.listing.owner.name || "hôte"}`} fill className="object-cover" sizes="48px" />
+                </div>
               ) : (
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white font-bold">
                   {booking.listing.owner.name?.charAt(0) || "?"}

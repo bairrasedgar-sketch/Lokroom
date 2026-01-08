@@ -194,7 +194,7 @@ const LISTING_TYPES: { value: ListingType; label: string }[] = [
   { value: "OFFICE", label: "Bureau" },
   { value: "COWORKING", label: "Coworking" },
   { value: "MEETING_ROOM", label: "Salle de réunion" },
-  { value: "RECORDING_STUDIO", label: "Studio d'enregistrement" },
+  { value: "RECORDING_STUDIO", label: "Studios" },
   { value: "EVENT_SPACE", label: "Espace événementiel" },
   { value: "PARKING", label: "Parking" },
   { value: "GARAGE", label: "Garage" },
@@ -748,7 +748,7 @@ export default function EditListingClient({ listing }: { listing: ListingData })
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <header className="sticky top-0 z-40 border-b border-gray-200 bg-white">
-          <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
+          <div className="mx-auto flex h-16 max-w-6xl 2xl:max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-4">
               <Link
                 href={`/listings/${listing.id}`}
@@ -798,7 +798,7 @@ export default function EditListingClient({ listing }: { listing: ListingData })
           </div>
         </header>
 
-        <div className="mx-auto max-w-6xl px-4 py-8">
+        <div className="mx-auto max-w-6xl 2xl:max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Sidebar navigation */}
             <aside className="lg:w-64 shrink-0">
@@ -1240,7 +1240,7 @@ export default function EditListingClient({ listing }: { listing: ListingData })
                               >
                                 <Image
                                   src={img.url}
-                                  alt=""
+                                  alt={`Image ${i + 1} de l'annonce`}
                                   fill
                                   className="object-cover"
                                   sizes="(max-width: 640px) 50vw, 25vw"
@@ -1335,9 +1335,10 @@ export default function EditListingClient({ listing }: { listing: ListingData })
                               key={img.id}
                               className="group relative aspect-[4/3] overflow-hidden rounded-xl border-2 border-gray-200 bg-gray-100"
                             >
+                              {/* eslint-disable-next-line @next/next/no-img-element -- blob URL preview */}
                               <img
                                 src={img.previewUrl}
-                                alt=""
+                                alt={`Nouvelle image ${i + 1}`}
                                 className="h-full w-full object-cover"
                               />
                               <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">

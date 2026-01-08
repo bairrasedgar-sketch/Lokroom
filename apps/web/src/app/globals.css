@@ -4,6 +4,89 @@
 
 :root {
   color-scheme: light;
+  /* Variables CSS pour le responsive */
+  --container-padding: 1rem;
+  --grid-gap: 1rem;
+  --font-scale: 1;
+}
+
+/* Ajustements pour différentes tailles d'écran */
+@media (min-width: 640px) {
+  :root {
+    --container-padding: 1.5rem;
+    --grid-gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --container-padding: 2rem;
+    --grid-gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --container-padding: 3rem;
+    --grid-gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1536px) {
+  :root {
+    --container-padding: 4rem;
+    --grid-gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1920px) {
+  :root {
+    --container-padding: 5rem;
+    --grid-gap: 2rem;
+    --font-scale: 1.05;
+  }
+}
+
+@media (min-width: 2560px) {
+  :root {
+    --container-padding: 6rem;
+    --grid-gap: 2rem;
+    --font-scale: 1.1;
+  }
+}
+
+/* Base responsive pour le body */
+html {
+  font-size: calc(14px + 0.2vw);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+@media (min-width: 1920px) {
+  html {
+    font-size: calc(15px + 0.15vw);
+  }
+}
+
+@media (min-width: 2560px) {
+  html {
+    font-size: calc(16px + 0.1vw);
+  }
+}
+
+/* Empêcher le zoom sur les inputs sur iOS */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="date"],
+  input[type="search"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }
 
 /* ============================================
@@ -12,25 +95,27 @@
 
 /* Container responsive qui s'adapte à tous les écrans */
 .container-responsive {
-  @apply w-full mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16;
+  @apply w-full mx-auto;
+  padding-left: var(--container-padding);
+  padding-right: var(--container-padding);
   max-width: 100%;
 }
 
 @media (min-width: 640px) {
   .container-responsive {
-    max-width: 640px;
+    max-width: 100%;
   }
 }
 
 @media (min-width: 768px) {
   .container-responsive {
-    max-width: 768px;
+    max-width: 100%;
   }
 }
 
 @media (min-width: 1024px) {
   .container-responsive {
-    max-width: 1024px;
+    max-width: 100%;
   }
 }
 
@@ -42,7 +127,7 @@
 
 @media (min-width: 1536px) {
   .container-responsive {
-    max-width: 1536px;
+    max-width: 1440px;
   }
 }
 
@@ -58,9 +143,16 @@
   }
 }
 
-/* Grille responsive pour les cards */
+@media (min-width: 3840px) {
+  .container-responsive {
+    max-width: 3200px;
+  }
+}
+
+/* Grille responsive pour les cards - s'adapte automatiquement */
 .grid-responsive {
-  @apply grid gap-4 sm:gap-6;
+  @apply grid;
+  gap: var(--grid-gap);
   grid-template-columns: repeat(1, minmax(0, 1fr));
 }
 
@@ -103,6 +195,12 @@
 @media (min-width: 2560px) {
   .grid-responsive {
     grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 3840px) {
+  .grid-responsive {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
   }
 }
 
@@ -282,6 +380,42 @@
 
 .scrollbar-thin-horizontal::-webkit-scrollbar-thumb:hover {
   background-color: rgba(156, 163, 175, 0.8);
+}
+
+/* Scrollbar pour navbar categories - cache la native */
+.scrollbar-navbar-categories {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-navbar-categories::-webkit-scrollbar {
+  display: none;
+}
+
+/* Scrollbar pour le menu hamburger - visible et utilisable */
+.scrollbar-menu {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.6) transparent;
+}
+
+.scrollbar-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-menu::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 9999px;
+  margin: 8px 0;
+}
+
+.scrollbar-menu::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.6);
+  border-radius: 9999px;
+  border: 1px solid transparent;
+}
+
+.scrollbar-menu::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(107, 114, 128, 0.8);
 }
 
 /* Animation dropdown */

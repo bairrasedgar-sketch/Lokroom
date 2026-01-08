@@ -156,6 +156,11 @@ export const authOptions: NextAuthOptions = {
               payoutsEnabled: true,
             },
           },
+          _count: {
+            select: {
+              Listing: true,
+            },
+          },
         },
       });
 
@@ -172,10 +177,12 @@ export const authOptions: NextAuthOptions = {
       };
       extendedUser.id = dbUser.id;
       extendedUser.role = dbUser.role;
+      // isHost = true si role HOST/BOTH, ou si payouts activés, ou si a au moins 1 annonce
       extendedUser.isHost =
         dbUser.role === "HOST" ||
         dbUser.role === "BOTH" ||
-        !!dbUser.hostProfile?.payoutsEnabled;
+        !!dbUser.hostProfile?.payoutsEnabled ||
+        dbUser._count.Listing > 0;
 
       return session;
     },

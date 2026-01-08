@@ -28,7 +28,7 @@ export function useMe() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (signal?: AbortSignal) => {
     try {
       setLoading(true);
       setError(null);
@@ -36,6 +36,7 @@ export function useMe() {
       const res = await fetch("/api/me", {
         method: "GET",
         credentials: "include",
+        signal,
       });
 
       if (!res.ok) {
@@ -46,6 +47,7 @@ export function useMe() {
       const data: MeResponse = await res.json();
       setUser(data.user ?? null);
     } catch (e: unknown) {
+      if (e instanceof Error && e.name === 'AbortError') return;
       console.error(e);
       const error = e as { message?: string };
       setError(error?.message || "Erreur inconnue");
@@ -56,7 +58,9 @@ export function useMe() {
   }, []);
 
   useEffect(() => {
-    void refresh();
+    const controller = new AbortController();
+    void refresh(controller.signal);
+    return () => controller.abort();
   }, [refresh]);
 
   return { user, loading, error, refresh };

@@ -7,7 +7,7 @@ export default function CancellationPage() {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="border-b border-gray-200">
-        <div className="mx-auto max-w-4xl px-4 py-6">
+        <div className="mx-auto max-w-4xl 2xl:max-w-5xl px-4 sm:px-6 lg:px-8 py-6">
           <Link href="/" className="text-2xl font-bold text-gray-900">
             Lok&apos;Room
           </Link>
@@ -15,7 +15,7 @@ export default function CancellationPage() {
       </header>
 
       {/* Content */}
-      <main className="mx-auto max-w-4xl px-4 py-12">
+      <main className="mx-auto max-w-4xl 2xl:max-w-5xl px-4 sm:px-6 lg:px-8 py-12">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
           Politique d&apos;Annulation et de Remboursement
         </h1>

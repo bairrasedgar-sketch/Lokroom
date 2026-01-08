@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   MagnifyingGlassIcon,
   CheckCircleIcon,
@@ -58,7 +59,7 @@ const TYPE_LABELS: Record<string, string> = {
   GARAGE: "Garage",
   STORAGE: "Stockage",
   EVENT_SPACE: "Espace événement",
-  RECORDING_STUDIO: "Studio d'enregistrement",
+  RECORDING_STUDIO: "Studios",
   OTHER: "Autre",
 };
 
@@ -73,7 +74,7 @@ export default function AdminListingsPage() {
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [statusFilter, setStatusFilter] = useState(searchParams.get("status") || "");
 
-  const fetchListings = useCallback(async () => {
+  const fetchListings = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -81,13 +82,14 @@ export default function AdminListingsPage() {
       if (search) params.set("search", search);
       if (statusFilter) params.set("status", statusFilter);
 
-      const res = await fetch(`/api/admin/listings?${params}`);
+      const res = await fetch(`/api/admin/listings?${params}`, { signal });
       const data = await res.json();
 
       if (data.listings) setListings(data.listings);
       if (data.pagination) setPagination(data.pagination);
       if (data.stats) setStats(data.stats);
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return;
       console.error("Erreur chargement listings:", error);
     } finally {
       setLoading(false);
@@ -95,7 +97,9 @@ export default function AdminListingsPage() {
   }, [search, statusFilter, searchParams]);
 
   useEffect(() => {
-    fetchListings();
+    const controller = new AbortController();
+    fetchListings(controller.signal);
+    return () => controller.abort();
   }, [fetchListings]);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -152,9 +156,10 @@ export default function AdminListingsPage() {
               <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
-                placeholder="Rechercher par titre, ville ou hôte..."
+                placeholder="Rechercher par titre, ville ou hote..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                aria-label="Rechercher par titre, ville ou hote"
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
               />
             </div>
@@ -162,6 +167,7 @@ export default function AdminListingsPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
+            aria-label="Filtrer par statut"
             className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
           >
             <option value="">Tous les statuts</option>
@@ -172,6 +178,7 @@ export default function AdminListingsPage() {
           </select>
           <button
             type="submit"
+            aria-label="Filtrer les annonces"
             className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
           >
             Filtrer
@@ -202,10 +209,11 @@ export default function AdminListingsPage() {
                 {/* Image */}
                 <div className="relative h-40 bg-gray-100">
                   {listing.imageUrl ? (
-                    <img
+                    <Image
                       src={listing.imageUrl}
                       alt={listing.title}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -261,6 +269,7 @@ export default function AdminListingsPage() {
                       <>
                         <button
                           onClick={() => handleAction(listing.id, "approve")}
+                          aria-label={`Approuver l'annonce ${listing.title}`}
                           className="flex-1 py-1.5 bg-green-500 text-white rounded text-sm hover:bg-green-600"
                         >
                           Approuver
@@ -270,6 +279,7 @@ export default function AdminListingsPage() {
                             const reason = prompt("Raison du rejet:");
                             if (reason) handleAction(listing.id, "reject", reason);
                           }}
+                          aria-label={`Rejeter l'annonce ${listing.title}`}
                           className="flex-1 py-1.5 bg-red-500 text-white rounded text-sm hover:bg-red-600"
                         >
                           Rejeter
@@ -279,6 +289,7 @@ export default function AdminListingsPage() {
                     {listing.status === "APPROVED" && (
                       <button
                         onClick={() => handleAction(listing.id, "suspend")}
+                        aria-label={`Suspendre l'annonce ${listing.title}`}
                         className="flex-1 py-1.5 border border-red-500 text-red-500 rounded text-sm hover:bg-red-50"
                       >
                         Suspendre
@@ -287,16 +298,18 @@ export default function AdminListingsPage() {
                     {listing.status === "SUSPENDED" && (
                       <button
                         onClick={() => handleAction(listing.id, "unsuspend")}
+                        aria-label={`Reactiver l'annonce ${listing.title}`}
                         className="flex-1 py-1.5 border border-green-500 text-green-500 rounded text-sm hover:bg-green-50"
                       >
-                        Réactiver
+                        Reactiver
                       </button>
                     )}
                     <Link
                       href={`/admin/listings/${listing.id}`}
+                      aria-label={`Voir les details de l'annonce ${listing.title}`}
                       className="py-1.5 px-3 border border-gray-300 rounded text-sm hover:bg-gray-50"
                     >
-                      Détails
+                      Details
                     </Link>
                   </div>
                 </div>
@@ -312,9 +325,10 @@ export default function AdminListingsPage() {
           <button
             onClick={() => router.push(`/admin/listings?page=${pagination.page - 1}`)}
             disabled={pagination.page === 1}
+            aria-label="Page precedente"
             className="px-4 py-2 border rounded hover:bg-gray-50 disabled:opacity-50"
           >
-            Précédent
+            Precedent
           </button>
           <span className="px-4 py-2">
             {pagination.page} / {pagination.pageCount}
@@ -322,6 +336,7 @@ export default function AdminListingsPage() {
           <button
             onClick={() => router.push(`/admin/listings?page=${pagination.page + 1}`)}
             disabled={pagination.page === pagination.pageCount}
+            aria-label="Page suivante"
             className="px-4 py-2 border rounded hover:bg-gray-50 disabled:opacity-50"
           >
             Suivant

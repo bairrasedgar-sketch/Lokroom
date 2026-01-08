@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   BanknotesIcon,
   CurrencyDollarIcon,
@@ -107,7 +108,7 @@ export default function AdminPaymentsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const fetchPayments = async (page = 1) => {
+  const fetchPayments = async (page = 1, signal?: AbortSignal) => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -117,7 +118,7 @@ export default function AdminPaymentsPage() {
       });
       if (statusFilter) params.set("status", statusFilter);
 
-      const res = await fetch(`/api/admin/payments?${params}`);
+      const res = await fetch(`/api/admin/payments?${params}`, { signal });
       const data = await res.json();
 
       setStats(data.stats);
@@ -126,6 +127,7 @@ export default function AdminPaymentsPage() {
       setTopHosts(data.topHosts);
       setPagination(data.pagination);
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return;
       console.error("Error fetching payments:", error);
     } finally {
       setLoading(false);
@@ -133,7 +135,9 @@ export default function AdminPaymentsPage() {
   };
 
   useEffect(() => {
-    fetchPayments();
+    const controller = new AbortController();
+    fetchPayments(1, controller.signal);
+    return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [period, statusFilter]);
 
@@ -303,11 +307,15 @@ export default function AdminPaymentsPage() {
                   {index + 1}
                 </span>
                 {host.host.profile?.avatarUrl ? (
-                  <img
-                    src={host.host.profile.avatarUrl}
-                    alt=""
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
+                  <div className="relative w-10 h-10 rounded-full overflow-hidden">
+                    <Image
+                      src={host.host.profile.avatarUrl}
+                      alt={`Avatar de ${host.host.name || "hôte"}`}
+                      fill
+                      className="object-cover"
+                      sizes="40px"
+                    />
+                  </div>
                 ) : (
                   <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
                     {host.host.name?.charAt(0) || "?"}

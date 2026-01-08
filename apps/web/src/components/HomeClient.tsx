@@ -9,6 +9,7 @@ import { useSearchBar } from "@/contexts/SearchBarContext";
 import SearchModal from "./SearchModal";
 import FavoriteButton from "./FavoriteButton";
 import { CityIllustration } from "./CityIllustrations";
+import CategoryIcon from "./CategoryIcon";
 
 // ============================================================================
 // TYPES
@@ -51,393 +52,6 @@ type HomeClientProps = {
 };
 
 type BookingMode = "days" | "hours";
-
-// ============================================================================
-// PREMIUM ANIMATED CATEGORY ICONS - Vraies animations SVG
-// ============================================================================
-
-type CategoryIconProps = {
-  category: string;
-  isActive: boolean;
-  isAnimating: boolean;
-};
-
-function CategoryIcon({ category, isActive, isAnimating }: CategoryIconProps) {
-  const color = isActive ? "#111827" : "#6B7280";
-
-  // Animation wrapper classes
-  const wrapperClass = `relative transition-all duration-300 ${isAnimating ? "scale-110" : ""}`;
-
-  const icons: Record<string, React.ReactNode> = {
-    // TOUS - Grille avec carrés qui s'assemblent
-    ALL: (
-      <div className={wrapperClass}>
-        <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
-          <rect
-            x="3" y="3" width="7" height="7" rx="1.5"
-            stroke={color}
-            strokeWidth="1.5"
-            className={isAnimating ? "animate-grid-tl" : ""}
-          />
-          <rect
-            x="14" y="3" width="7" height="7" rx="1.5"
-            stroke={color}
-            strokeWidth="1.5"
-            className={isAnimating ? "animate-grid-tr" : ""}
-          />
-          <rect
-            x="3" y="14" width="7" height="7" rx="1.5"
-            stroke={color}
-            strokeWidth="1.5"
-            className={isAnimating ? "animate-grid-bl" : ""}
-          />
-          <rect
-            x="14" y="14" width="7" height="7" rx="1.5"
-            stroke={color}
-            strokeWidth="1.5"
-            className={isAnimating ? "animate-grid-br" : ""}
-          />
-        </svg>
-      </div>
-    ),
-
-    // APPARTEMENT - Building avec fenêtres qui s'allument
-    APARTMENT: (
-      <div className={wrapperClass}>
-        <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
-          {/* Building structure */}
-          <path
-            d="M3 21V5a2 2 0 012-2h8a2 2 0 012 2v16"
-            stroke={color}
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            className={isAnimating ? "animate-building-rise" : ""}
-          />
-          <path
-            d="M15 21V10a2 2 0 012-2h2a2 2 0 012 2v11"
-            stroke={color}
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            className={isAnimating ? "animate-building-rise-delay" : ""}
-          />
-          <line x1="3" y1="21" x2="21" y2="21" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-          {/* Windows that light up */}
-          <rect x="6" y="6" width="2" height="2" rx="0.5" fill={color} className={isAnimating ? "animate-window-1" : ""} />
-          <rect x="10" y="6" width="2" height="2" rx="0.5" fill={color} className={isAnimating ? "animate-window-2" : ""} />
-          <rect x="6" y="10" width="2" height="2" rx="0.5" fill={color} className={isAnimating ? "animate-window-3" : ""} />
-          <rect x="10" y="10" width="2" height="2" rx="0.5" fill={color} className={isAnimating ? "animate-window-4" : ""} />
-          <rect x="6" y="14" width="2" height="2" rx="0.5" fill={color} className={isAnimating ? "animate-window-5" : ""} />
-          <rect x="10" y="14" width="2" height="2" rx="0.5" fill={color} className={isAnimating ? "animate-window-6" : ""} />
-        </svg>
-      </div>
-    ),
-
-    // MAISON - Toit qui se pose, porte qui s'ouvre
-    HOUSE: (
-      <div className={wrapperClass}>
-        <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
-          {/* Roof */}
-          <path
-            d="M3 11L12 3L21 11"
-            stroke={color}
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={isAnimating ? "animate-roof-drop" : ""}
-          />
-          {/* House body */}
-          <path
-            d="M5 10V19a2 2 0 002 2h10a2 2 0 002-2V10"
-            stroke={color}
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            className={isAnimating ? "animate-house-body" : ""}
-          />
-          {/* Door that opens */}
-          <path
-            d="M10 21V15a2 2 0 012-2h0a2 2 0 012 2v6"
-            stroke={color}
-            strokeWidth="1.5"
-            className={isAnimating ? "animate-door-open" : ""}
-          />
-          {/* Chimney with smoke */}
-          <path
-            d="M16 6V3"
-            stroke={color}
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            className={isAnimating ? "animate-chimney" : ""}
-          />
-          {isAnimating && (
-            <>
-              <circle cx="16" cy="1" r="0.5" fill={color} className="animate-smoke-1" />
-              <circle cx="17" cy="-1" r="0.5" fill={color} className="animate-smoke-2" />
-              <circle cx="15" cy="-2" r="0.5" fill={color} className="animate-smoke-3" />
-            </>
-          )}
-        </svg>
-      </div>
-    ),
-
-    // STUDIO - Pinceau qui dessine puis revient
-    STUDIO: (
-      <div className={wrapperClass}>
-        <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
-          {/* Canvas/Chevalet */}
-          <rect
-            x="3" y="6" width="12" height="14" rx="1"
-            stroke={color}
-            strokeWidth="1.5"
-            className={isAnimating ? "animate-canvas-appear" : ""}
-          />
-          {/* Pieds du chevalet */}
-          <path d="M5 20L3 23" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-          <path d="M13 20L15 23" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-
-          {/* Trait en train d'être dessiné */}
-          <path
-            d="M5 10C6 11 7 9 8 10C9 11 10 9 11 10C12 11 13 9 13 10"
-            stroke={color}
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            className={isAnimating ? "animate-paint-line" : ""}
-            strokeDasharray="20"
-            strokeDashoffset={isAnimating ? "0" : "20"}
-          />
-
-          {/* Pinceau */}
-          <g className={isAnimating ? "animate-brush-draw" : ""} style={{ transformOrigin: "19px 8px" }}>
-            {/* Manche du pinceau */}
-            <rect x="17" y="2" width="4" height="10" rx="1" stroke={color} strokeWidth="1.5" fill="none" />
-            {/* Virole (partie métallique) */}
-            <rect x="17" y="10" width="4" height="2" fill={color} />
-            {/* Poils du pinceau */}
-            <path d="M17.5 12L17 15L19 16L21 15L20.5 12" stroke={color} strokeWidth="1" fill={color} />
-          </g>
-
-          {/* Gouttes de peinture */}
-          {isAnimating && (
-            <>
-              <circle cx="19" cy="18" r="0.8" fill={color} className="animate-drop-1" />
-              <circle cx="17" cy="19" r="0.5" fill={color} className="animate-drop-2" />
-            </>
-          )}
-        </svg>
-      </div>
-    ),
-
-    // BUREAU - Valise qui s'ouvre avec documents
-    OFFICE: (
-      <div className={wrapperClass}>
-        <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
-          {/* Briefcase body */}
-          <rect
-            x="2" y="7" width="20" height="13" rx="2"
-            stroke={color}
-            strokeWidth="1.5"
-            className={isAnimating ? "animate-briefcase" : ""}
-          />
-          {/* Handle */}
-          <path
-            d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2"
-            stroke={color}
-            strokeWidth="1.5"
-            className={isAnimating ? "animate-handle" : ""}
-          />
-          {/* Center line (opening) */}
-          <path
-            d="M2 12h20"
-            stroke={color}
-            strokeWidth="1.5"
-            className={isAnimating ? "animate-briefcase-open" : ""}
-          />
-          {/* Documents flying out */}
-          {isAnimating && (
-            <>
-              <rect x="9" y="9" width="6" height="4" rx="0.5" fill={color} className="animate-doc-1" />
-              <rect x="10" y="10" width="4" height="3" rx="0.5" fill={color} className="animate-doc-2" />
-            </>
-          )}
-        </svg>
-      </div>
-    ),
-
-    // COWORKING - Personnes qui se connectent
-    COWORKING: (
-      <div className={wrapperClass}>
-        <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
-          {/* Center person */}
-          <circle cx="12" cy="7" r="2.5" stroke={color} strokeWidth="1.5" className={isAnimating ? "animate-person-center" : ""} />
-          <path d="M8 21v-2a4 4 0 014-4h0a4 4 0 014 4v2" stroke={color} strokeWidth="1.5" className={isAnimating ? "animate-person-center" : ""} />
-
-          {/* Left person */}
-          <circle cx="5" cy="9" r="2" stroke={color} strokeWidth="1.5" className={isAnimating ? "animate-person-left" : ""} />
-          <path d="M1 21v-1a3 3 0 013-3h2" stroke={color} strokeWidth="1.5" className={isAnimating ? "animate-person-left" : ""} />
-
-          {/* Right person */}
-          <circle cx="19" cy="9" r="2" stroke={color} strokeWidth="1.5" className={isAnimating ? "animate-person-right" : ""} />
-          <path d="M23 21v-1a3 3 0 00-3-3h-2" stroke={color} strokeWidth="1.5" className={isAnimating ? "animate-person-right" : ""} />
-
-          {/* Connection lines */}
-          {isAnimating && (
-            <>
-              <line x1="7" y1="8" x2="9.5" y2="7" stroke={color} strokeWidth="1" className="animate-connect-left" />
-              <line x1="17" y1="8" x2="14.5" y2="7" stroke={color} strokeWidth="1" className="animate-connect-right" />
-            </>
-          )}
-        </svg>
-      </div>
-    ),
-
-    // PARKING - Voiture bien visible qui se gare
-    PARKING: (
-      <div className={wrapperClass}>
-        <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
-          {/* Panneau P */}
-          <rect x="2" y="2" width="8" height="10" rx="1" stroke={color} strokeWidth="1.5" />
-          <text x="6" y="9" textAnchor="middle" fontSize="7" fontWeight="bold" fill={color}>P</text>
-
-          {/* Voiture bien dessinée */}
-          <g className={isAnimating ? "animate-car-arrive" : ""}>
-            {/* Carrosserie */}
-            <path
-              d="M8 18H20C21 18 22 17 22 16V15C22 14 21.5 13.5 21 13.5L19 13L18 11H12L10 13L9 13.5C8.5 13.5 8 14 8 15V16C8 17 8 18 8 18Z"
-              stroke={color}
-              strokeWidth="1.5"
-              fill="none"
-              strokeLinejoin="round"
-            />
-            {/* Toit/Vitres */}
-            <path d="M12 11L13 9H17L18 11" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            {/* Pare-brise */}
-            <path d="M13.5 10L16.5 10" stroke={color} strokeWidth="1" strokeLinecap="round" />
-            {/* Roue avant */}
-            <circle cx="11" cy="18" r="1.5" stroke={color} strokeWidth="1.5" />
-            <circle cx="11" cy="18" r="0.5" fill={color} />
-            {/* Roue arrière */}
-            <circle cx="19" cy="18" r="1.5" stroke={color} strokeWidth="1.5" />
-            <circle cx="19" cy="18" r="0.5" fill={color} />
-            {/* Phares */}
-            <circle cx="9" cy="15" r="0.5" fill={color} className={isAnimating ? "animate-headlight-blink" : ""} />
-            <circle cx="21" cy="15" r="0.5" fill={color} />
-            {/* Rétroviseur */}
-            <path d="M12.5 11L11.5 10.5" stroke={color} strokeWidth="1" strokeLinecap="round" />
-          </g>
-
-          {/* Lignes de mouvement quand la voiture arrive */}
-          {isAnimating && (
-            <>
-              <path d="M4 15H6" stroke={color} strokeWidth="1" strokeLinecap="round" className="animate-motion-line-1" />
-              <path d="M3 17H5" stroke={color} strokeWidth="1" strokeLinecap="round" className="animate-motion-line-2" />
-            </>
-          )}
-        </svg>
-      </div>
-    ),
-
-    // EVENT SPACE - Feu d'artifice bien visible
-    EVENT_SPACE: (
-      <div className={wrapperClass}>
-        <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
-          {/* Fusée de feu d'artifice (base) */}
-          <path
-            d="M12 22V16"
-            stroke={color}
-            strokeWidth="2"
-            strokeLinecap="round"
-            className={isAnimating ? "animate-rocket-launch" : ""}
-          />
-          <path
-            d="M10 22L12 20L14 22"
-            stroke={color}
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-
-          {/* Centre de l'explosion */}
-          <circle
-            cx="12" cy="8" r="2"
-            stroke={color}
-            strokeWidth="1.5"
-            fill={isAnimating ? color : "none"}
-            className={isAnimating ? "animate-explosion-center" : ""}
-          />
-
-          {/* Rayons de l'explosion - étoile à 8 branches */}
-          <g className={isAnimating ? "animate-firework-rays" : ""}>
-            {/* Haut */}
-            <path d="M12 6V2" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-            <circle cx="12" cy="1" r="1" fill={color} />
-            {/* Bas */}
-            <path d="M12 10V12" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-            {/* Gauche */}
-            <path d="M10 8H5" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-            <circle cx="4" cy="8" r="1" fill={color} />
-            {/* Droite */}
-            <path d="M14 8H19" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-            <circle cx="20" cy="8" r="1" fill={color} />
-            {/* Diagonales */}
-            <path d="M9.5 5.5L7 3" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-            <circle cx="6" cy="2" r="0.8" fill={color} />
-            <path d="M14.5 5.5L17 3" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-            <circle cx="18" cy="2" r="0.8" fill={color} />
-            <path d="M9.5 10.5L7 13" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-            <path d="M14.5 10.5L17 13" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-          </g>
-
-          {/* Étincelles */}
-          {isAnimating && (
-            <>
-              <circle cx="8" cy="5" r="0.5" fill={color} className="animate-sparkle-1" />
-              <circle cx="16" cy="5" r="0.5" fill={color} className="animate-sparkle-2" />
-              <circle cx="6" cy="10" r="0.5" fill={color} className="animate-sparkle-3" />
-              <circle cx="18" cy="10" r="0.5" fill={color} className="animate-sparkle-4" />
-              <circle cx="10" cy="3" r="0.4" fill={color} className="animate-sparkle-5" />
-              <circle cx="14" cy="3" r="0.4" fill={color} className="animate-sparkle-6" />
-            </>
-          )}
-        </svg>
-      </div>
-    ),
-
-    // RECORDING STUDIO - Micro avec ondes sonores
-    RECORDING_STUDIO: (
-      <div className={wrapperClass}>
-        <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
-          {/* Microphone */}
-          <rect
-            x="9" y="2" width="6" height="10" rx="3"
-            stroke={color}
-            strokeWidth="1.5"
-            className={isAnimating ? "animate-mic-pulse" : ""}
-          />
-          <path d="M12 14v4" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-          <path d="M8 18h8" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-          <path
-            d="M5 10a7 7 0 0014 0"
-            stroke={color}
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            className={isAnimating ? "animate-mic-stand" : ""}
-          />
-
-          {/* Sound waves */}
-          {isAnimating && (
-            <>
-              <path d="M2 8v4" stroke={color} strokeWidth="1.5" strokeLinecap="round" className="animate-wave-1" />
-              <path d="M4 6v8" stroke={color} strokeWidth="1.5" strokeLinecap="round" className="animate-wave-2" />
-              <path d="M20 6v8" stroke={color} strokeWidth="1.5" strokeLinecap="round" className="animate-wave-3" />
-              <path d="M22 8v4" stroke={color} strokeWidth="1.5" strokeLinecap="round" className="animate-wave-4" />
-            </>
-          )}
-        </svg>
-      </div>
-    ),
-  };
-
-  return icons[category] || icons.ALL;
-}
 
 // ============================================================================
 // SEARCH BAR COMPONENT - Animation fluide de rétrécissement
@@ -592,6 +206,7 @@ function SearchBar({ isCompact }: { isCompact: boolean }) {
           <div className={`transition-all duration-300 ${showCompact ? "pr-1" : "pr-2"}`}>
             <button
               onClick={(e) => { e.stopPropagation(); handleSearch(); }}
+              aria-label="Rechercher"
               className={`flex items-center justify-center rounded-full bg-gray-900 text-white transition-all duration-300 hover:bg-gray-800 active:scale-95 ${
                 showCompact ? "h-8 w-8" : "h-12 w-12"
               }`}
@@ -801,6 +416,7 @@ function SearchBar({ isCompact }: { isCompact: boolean }) {
                   <div className="flex items-center gap-4">
                     <button
                       onClick={() => setGuests(Math.max(1, guests - 1))}
+                      aria-label="Diminuer le nombre de voyageurs"
                       className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 text-gray-600 transition-colors hover:border-gray-400"
                     >
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -810,6 +426,7 @@ function SearchBar({ isCompact }: { isCompact: boolean }) {
                     <span className="w-8 text-center text-lg font-semibold">{guests}</span>
                     <button
                       onClick={() => setGuests(Math.min(16, guests + 1))}
+                      aria-label="Augmenter le nombre de voyageurs"
                       className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 text-gray-600 transition-colors hover:border-gray-400"
                     >
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -855,13 +472,23 @@ function ListingCard({ card, index }: { card: ListingCard; index: number }) {
       <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-100">
         <Link href={`/listings/${card.id}`} className="block absolute inset-0">
           {images.length > 0 ? (
-            <Image
-              src={images[imageIndex]?.url || images[0]?.url}
-              alt={card.title}
-              fill
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            />
+            <div
+              className="flex h-full transition-transform duration-300 ease-out"
+              style={{ transform: `translateX(-${imageIndex * 100}%)` }}
+            >
+              {images.map((image, idx) => (
+                <div key={image.id || idx} className="relative h-full w-full flex-shrink-0">
+                  <Image
+                    src={image.url}
+                    alt={`${card.title} - ${idx + 1}`}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                    priority={idx === 0}
+                  />
+                </div>
+              ))}
+            </div>
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-gray-400">
               <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
@@ -878,6 +505,7 @@ function ListingCard({ card, index }: { card: ListingCard; index: number }) {
               <button
                 key={i}
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); setImageIndex(i); }}
+                aria-label={`Voir image ${i + 1}`}
                 className={`h-1.5 rounded-full transition-all ${
                   i === imageIndex ? "w-4 bg-white" : "w-1.5 bg-white/60 hover:bg-white/80"
                 }`}
@@ -895,9 +523,10 @@ function ListingCard({ card, index }: { card: ListingCard; index: number }) {
                 e.stopPropagation();
                 setImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
               }}
-              className="absolute left-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-md opacity-0 transition-opacity group-hover:opacity-100 hover:bg-white z-10"
+              aria-label="Image precedente"
+              className="absolute left-2 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow-sm border border-gray-200/50 transition-all hover:bg-white hover:scale-105 hover:shadow-md z-10"
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
@@ -907,9 +536,10 @@ function ListingCard({ card, index }: { card: ListingCard; index: number }) {
                 e.stopPropagation();
                 setImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
               }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-md opacity-0 transition-opacity group-hover:opacity-100 hover:bg-white z-10"
+              aria-label="Image suivante"
+              className="absolute right-2 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow-sm border border-gray-200/50 transition-all hover:bg-white hover:scale-105 hover:shadow-md z-10"
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>
@@ -995,16 +625,20 @@ function CategoryButton({
   return (
     <button
       onClick={handleClick}
-      className={`flex flex-col items-center gap-2 px-4 py-3 transition-all duration-300 ${
+      className={`group flex flex-col items-center gap-1 px-3 py-2 transition-all duration-300 flex-shrink-0 ${
         isActive
-          ? "border-b-2 border-gray-900"
-          : "border-b-2 border-transparent opacity-60 hover:opacity-100"
+          ? "text-gray-900"
+          : "text-gray-400 hover:text-gray-600"
       }`}
     >
-      <div className="relative">
+      <div className={`relative p-2 rounded-full transition-all duration-300 ${
+        isActive
+          ? "bg-gray-100"
+          : "group-hover:bg-gray-50"
+      }`}>
         <CategoryIcon category={category} isActive={isActive} isAnimating={isAnimating} />
       </div>
-      <span className={`whitespace-nowrap text-xs font-medium ${isActive ? "text-gray-900" : "text-gray-600"}`}>
+      <span className={`whitespace-nowrap text-[11px] font-medium ${isActive ? "text-gray-900" : "text-gray-500"}`}>
         {label}
       </span>
     </button>
@@ -1028,7 +662,7 @@ const LISTING_TYPE_LABELS: Record<string, string> = {
   GARAGE: "Garage",
   STORAGE: "Stockage",
   EVENT_SPACE: "Événementiel",
-  RECORDING_STUDIO: "Studio",
+  RECORDING_STUDIO: "Studios",
   OTHER: "Autre",
 };
 
@@ -1058,6 +692,34 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
+
+  // Ordre des catégories les plus recherchées
+  const CATEGORY_ORDER = [
+    "HOUSE", "APARTMENT", "PARKING", "ROOM", "GARAGE", "STORAGE",
+    "OFFICE", "MEETING_ROOM", "COWORKING", "EVENT_SPACE", "RECORDING_STUDIO", "OTHER"
+  ];
+
+  // Labels pour toutes les catégories
+  const CATEGORY_LABELS: Record<string, string> = {
+    HOUSE: "Maison",
+    APARTMENT: "Appartement",
+    PARKING: "Parking",
+    ROOM: "Chambre",
+    GARAGE: "Garage",
+    STORAGE: "Stockage",
+    OFFICE: "Bureau",
+    MEETING_ROOM: "Salle de réunion",
+    COWORKING: "Coworking",
+    EVENT_SPACE: "Événementiel",
+    RECORDING_STUDIO: "Studios",
+    OTHER: "Autre",
+  };
+
+  // Créer la liste complète des catégories triées
+  const sortedCategories = CATEGORY_ORDER.map(key => {
+    const existing = categories.find(c => c.key === key);
+    return existing || { key, label: CATEGORY_LABELS[key] || key, icon: "", count: 0 };
+  });
 
   // Context pour partager la SearchBar et les catégories avec la Navbar
   const {
@@ -1449,6 +1111,25 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
         }
+
+        /* Scrollbar fine et visible */
+        .scrollbar-thin {
+          scrollbar-width: thin;
+          scrollbar-color: #d1d5db transparent;
+        }
+        .scrollbar-thin::-webkit-scrollbar {
+          height: 6px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+          background-color: #d1d5db;
+          border-radius: 3px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+          background-color: #9ca3af;
+        }
       `}</style>
 
       {/* HERO SECTION */}
@@ -1569,18 +1250,20 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
         </div>
       </div>
 
-      {/* CATEGORIES - Visible seulement quand pas scrollé */}
+      {/* CATEGORIES - Visible seulement quand pas scrollé - avec animation fluide */}
       <section
-        className={`border-b border-gray-200 bg-white transition-all duration-300 ${
-          isScrolled ? "opacity-0 h-0 overflow-hidden" : ""
+        className={`border-b border-gray-200 bg-white transition-all duration-500 ease-out ${
+          isScrolled
+            ? "opacity-0 max-h-0 py-0 overflow-hidden -translate-y-2"
+            : "opacity-100 max-h-24 py-1 translate-y-0"
         }`}
       >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-1 overflow-x-auto py-3 scrollbar-hide">
-            {/* Bouton "Tous" - toujours visible et actif par défaut */}
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2 py-3">
+            {/* Bouton "Tous" - fixe à gauche */}
             <button
               onClick={() => setActiveCategory(null)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all duration-300 ${
+              className={`flex items-center gap-2 px-3 py-2 rounded-full transition-all duration-300 flex-shrink-0 text-sm ${
                 activeCategory === null
                   ? "bg-gray-900 text-white"
                   : "bg-gray-100 text-gray-700 hover:bg-gray-200"
@@ -1592,34 +1275,39 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
                 <rect x="3" y="14" width="7" height="7" rx="1" />
                 <rect x="14" y="14" width="7" height="7" rx="1" />
               </svg>
-              <span className="whitespace-nowrap text-sm font-medium">Tous</span>
+              <span className="whitespace-nowrap font-medium">Tous</span>
             </button>
 
-            {/* Autres catégories */}
-            {categories.map((cat) => (
-              <CategoryButton
-                key={cat.key}
-                category={cat.key}
-                label={cat.label}
-                isActive={activeCategory === cat.key}
-                onClick={() => setActiveCategory(cat.key === activeCategory ? null : cat.key)}
-              />
-            ))}
+            {/* Séparateur */}
+            <div className="w-px h-6 bg-gray-200 mx-2 flex-shrink-0" />
+
+            {/* Autres catégories - scrollables */}
+            <div className="flex items-center gap-1 overflow-x-auto scrollbar-thin flex-1">
+              {sortedCategories.map((cat) => (
+                <CategoryButton
+                  key={cat.key}
+                  category={cat.key}
+                  label={cat.label}
+                  isActive={activeCategory === cat.key}
+                  onClick={() => setActiveCategory(cat.key === activeCategory ? null : cat.key)}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
       {/* LISTINGS GRID */}
-      <section className="mx-auto max-w-[1800px] 3xl:max-w-[2200px] 4xl:max-w-[2800px] px-4 py-8 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
-        <div className="mb-6 flex items-center justify-between">
+      <section className="mx-auto max-w-[1800px] 3xl:max-w-[2200px] 4xl:max-w-[2800px] px-4 py-6 sm:py-8 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
+        <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
-            <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-900">
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-900 line-clamp-1">
               {activeCategory ? categories.find(c => c.key === activeCategory)?.label : "Découvrez nos espaces"}
             </h2>
           </div>
           <Link
             href="/listings"
-            className="group flex items-center gap-1 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
+            className="group flex items-center gap-1 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 flex-shrink-0"
           >
             Voir tout
             <svg className="h-4 w-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -1639,7 +1327,7 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
             <p className="mt-1 text-sm text-gray-500">Essayez une autre catégorie ou explorez tous nos espaces</p>
           </div>
         ) : (
-          <div className="grid gap-4 sm:gap-6 grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 4xl:grid-cols-7">
+          <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6">
             {filteredCards.map((card, i) => (
               <ListingCard key={card.id} card={card} index={i} />
             ))}
@@ -1648,19 +1336,30 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
       </section>
 
       {/* DECORATIVE VISUAL SECTION */}
-      <section className="py-8 sm:py-12 lg:py-16 overflow-hidden">
+      <section className="py-4 sm:py-6 lg:py-8 overflow-hidden">
         <div className="mx-auto max-w-[1800px] 3xl:max-w-[2200px] px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Text Content */}
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            {/* Illustration - À gauche */}
+            <div className="relative hidden sm:block">
+              <Image
+                src="/illustration final 2.png"
+                alt="Illustration Lok'Room"
+                width={700}
+                height={500}
+                className="w-full max-w-[550px] lg:max-w-[700px] h-auto"
+              />
+            </div>
+
+            {/* Text Content - À droite */}
             <div>
-              <h2 className="text-2xl font-semibold text-gray-900 sm:text-3xl">
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-gray-900">
                 Des espaces pour chaque besoin
               </h2>
-              <p className="mt-4 text-gray-500 leading-relaxed">
+              <p className="mt-3 sm:mt-4 text-sm sm:text-base text-gray-500 leading-relaxed">
                 Que vous cherchiez un appartement pour vos vacances, un bureau pour votre équipe,
                 ou un studio pour votre projet créatif, trouvez l&apos;espace idéal parmi notre sélection.
               </p>
-              <div className="mt-8 grid grid-cols-2 gap-6">
+              <div className="mt-6 sm:mt-8 grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
                 <div className="flex items-start gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100">
                     <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -1707,64 +1406,24 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
                 </div>
               </div>
             </div>
-
-            {/* Visual Grid */}
-            <div className="relative">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-4">
-                  <div className="aspect-[4/3] rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
-                    <div className="h-full w-full flex items-center justify-center">
-                      <svg className="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={0.75} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="aspect-[4/5] rounded-2xl bg-gradient-to-br from-gray-50 to-gray-150 overflow-hidden">
-                    <div className="h-full w-full flex items-center justify-center">
-                      <svg className="h-20 w-20 text-gray-300" fill="none" viewBox="0 0 24 24" strokeWidth={0.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-                <div className="space-y-4 pt-8">
-                  <div className="aspect-[4/5] rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden">
-                    <div className="h-full w-full flex items-center justify-center">
-                      <svg className="h-20 w-20 text-gray-400" fill="none" viewBox="0 0 24 24" strokeWidth={0.5} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="aspect-[4/3] rounded-2xl bg-gradient-to-br from-gray-50 to-gray-150 overflow-hidden">
-                    <div className="h-full w-full flex items-center justify-center">
-                      <svg className="h-16 w-16 text-gray-300" fill="none" viewBox="0 0 24 24" strokeWidth={0.75} stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="absolute -top-4 -right-4 h-24 w-24 rounded-full bg-gray-100/50 blur-2xl" />
-              <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-gray-100/50 blur-2xl" />
-            </div>
           </div>
         </div>
       </section>
 
       {/* CTA SECTION */}
-      <section className="bg-gray-50 py-8 sm:py-12 lg:py-16">
+      <section className="bg-gray-50 py-4 sm:py-6 lg:py-8">
         <div className="mx-auto max-w-[1800px] 3xl:max-w-[2200px] px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
-          <div className="rounded-2xl bg-gray-900 px-8 py-12 text-center sm:px-12">
-            <h2 className="text-2xl font-semibold text-white sm:text-3xl">
+          <div className="rounded-2xl bg-gray-900 px-6 py-8 sm:px-8 sm:py-10 md:px-12 md:py-12 text-center">
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-white">
               Vous avez un espace à louer ?
             </h2>
-            <p className="mt-3 text-gray-400">
+            <p className="mt-2 sm:mt-3 text-sm sm:text-base text-gray-400 max-w-md mx-auto">
               Rejoignez notre communauté d&apos;hôtes et commencez à générer des revenus.
             </p>
-            <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <div className="mt-6 sm:mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
               <Link
                 href="/become-host"
-                className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 font-medium text-gray-900 transition-all hover:bg-gray-100"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-white px-6 py-3 font-medium text-gray-900 transition-all hover:bg-gray-100"
               >
                 Devenir hôte
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -1773,7 +1432,7 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
               </Link>
               <Link
                 href="/listings"
-                className="inline-flex items-center gap-2 rounded-lg border border-gray-600 px-6 py-3 font-medium text-white transition-all hover:bg-gray-800"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg border border-gray-600 px-6 py-3 font-medium text-white transition-all hover:bg-gray-800"
               >
                 Explorer les espaces
               </Link>

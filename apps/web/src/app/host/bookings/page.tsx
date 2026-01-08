@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import useTranslation from "@/hooks/useTranslation";
 
 type HostBooking = {
@@ -44,7 +45,7 @@ export default function HostBookingsPage() {
   const [from, setFrom] = useState<string>("");
   const [to, setTo] = useState<string>("");
 
-  const fetchBookings = useCallback(async () => {
+  const fetchBookings = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
 
     const params = new URLSearchParams();
@@ -54,15 +55,24 @@ export default function HostBookingsPage() {
     if (from) params.set("from", from);
     if (to) params.set("to", to);
 
-    const res = await fetch(`/api/host/bookings?${params.toString()}`);
-    const json = (await res.json()) as ApiResponse;
+    try {
+      const res = await fetch(`/api/host/bookings?${params.toString()}`, { signal });
+      const json = (await res.json()) as ApiResponse;
 
-    setData(json);
-    setLoading(false);
+      setData(json);
+    } catch (err) {
+      if (err instanceof Error && err.name !== "AbortError") {
+        console.error("Erreur lors du chargement des reservations:", err);
+      }
+    } finally {
+      setLoading(false);
+    }
   }, [page, status, from, to]);
 
   useEffect(() => {
-    fetchBookings();
+    const controller = new AbortController();
+    fetchBookings(controller.signal);
+    return () => controller.abort();
   }, [fetchBookings]);
 
   function getStatusLabel(s: string): string {
@@ -79,7 +89,7 @@ export default function HostBookingsPage() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl space-y-6 px-4 py-6">
+    <main className="mx-auto max-w-4xl 2xl:max-w-5xl 3xl:max-w-6xl space-y-6 px-4 sm:px-6 lg:px-8 py-6">
       <h1 className="text-2xl font-semibold">{t.receivedBookings}</h1>
 
       {/* 🔍 Filtres */}
@@ -91,6 +101,7 @@ export default function HostBookingsPage() {
               className="rounded border px-2 py-1 text-sm"
               value={status}
               onChange={(e) => setStatus(e.target.value)}
+              aria-label="Filtrer par statut"
             >
               <option value="">{t.filterAll}</option>
               <option value="PENDING">{t.filterPending}</option>
@@ -106,6 +117,7 @@ export default function HostBookingsPage() {
               className="rounded border px-2 py-1 text-sm"
               value={from}
               onChange={(e) => setFrom(e.target.value)}
+              aria-label="Date de debut"
             />
           </div>
 
@@ -116,6 +128,7 @@ export default function HostBookingsPage() {
               className="rounded border px-2 py-1 text-sm"
               value={to}
               onChange={(e) => setTo(e.target.value)}
+              aria-label="Date de fin"
             />
           </div>
         </div>
@@ -140,10 +153,12 @@ export default function HostBookingsPage() {
               >
                 <div className="relative h-20 w-28 overflow-hidden rounded bg-gray-100">
                   {cover ? (
-                    <img
+                    <Image
                       src={cover}
-                      className="h-full w-full object-cover"
+                      fill
+                      className="object-cover"
                       alt="cover"
+                      sizes="112px"
                     />
                   ) : (
                     <div className="grid h-full w-full place-items-center text-xs text-gray-400">
@@ -192,6 +207,7 @@ export default function HostBookingsPage() {
             disabled={page <= 1}
             className="rounded border px-3 py-1 text-sm disabled:opacity-40"
             onClick={() => setPage((p) => p - 1)}
+            aria-label="Page precedente"
           >
             ← {dict.listings.prevPage}
           </button>
@@ -204,6 +220,7 @@ export default function HostBookingsPage() {
             disabled={page >= data.pageCount}
             className="rounded border px-3 py-1 text-sm disabled:opacity-40"
             onClick={() => setPage((p) => p + 1)}
+            aria-label="Page suivante"
           >
             {dict.listings.nextPage} →
           </button>

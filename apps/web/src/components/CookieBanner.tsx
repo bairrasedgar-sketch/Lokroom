@@ -167,6 +167,7 @@ export function CookieBanner() {
               <h2 className="text-lg font-semibold text-gray-900">Paramètres de cookies</h2>
               <button
                 onClick={() => setShowSettings(false)}
+                aria-label="Fermer les parametres de cookies"
                 className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
               >
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

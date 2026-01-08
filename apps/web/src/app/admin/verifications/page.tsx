@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ShieldCheckIcon,
   ShieldExclamationIcon,
@@ -88,11 +89,13 @@ export default function AdminVerificationsPage() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchVerifications();
+    const controller = new AbortController();
+    fetchVerifications(1, controller.signal);
+    return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
 
-  const fetchVerifications = async (page = 1) => {
+  const fetchVerifications = async (page = 1, signal?: AbortSignal) => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -102,13 +105,14 @@ export default function AdminVerificationsPage() {
       if (statusFilter) params.set("status", statusFilter);
       if (searchQuery) params.set("search", searchQuery);
 
-      const res = await fetch(`/api/admin/verifications?${params}`);
+      const res = await fetch(`/api/admin/verifications?${params}`, { signal });
       const data = await res.json();
 
       setUsers(data.users || []);
       setStats(data.stats);
       setPagination(data.pagination);
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return;
       console.error("Error fetching verifications:", error);
     } finally {
       setLoading(false);
@@ -288,11 +292,15 @@ export default function AdminVerificationsPage() {
                     {/* Avatar */}
                     <div className="relative flex-shrink-0">
                       {user.profile?.avatarUrl ? (
-                        <img
-                          src={user.profile.avatarUrl}
-                          alt=""
-                          className="w-14 h-14 rounded-full object-cover"
-                        />
+                        <div className="relative w-14 h-14 rounded-full overflow-hidden">
+                          <Image
+                            src={user.profile.avatarUrl}
+                            alt={`Avatar de ${user.name || "utilisateur"}`}
+                            fill
+                            className="object-cover"
+                            sizes="56px"
+                          />
+                        </div>
                       ) : (
                         <div className="w-14 h-14 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xl font-medium">
                           {user.name?.charAt(0) || "?"}

@@ -102,6 +102,18 @@ model UserProfile {
   phone        String?
   postalCode   String?
   province     String?
+  /// Adresse postale (si différente de l'adresse résidentielle)
+  postalAddressLine1 String?
+  postalAddressLine2 String?
+  postalAddressCity  String?
+  postalAddressPostalCode String?
+  postalAddressCountry String?
+  postalAddressProvince String?
+  postalAddressSameAsResidential Boolean @default(true)
+  /// Contact d'urgence
+  emergencyContactName  String?
+  emergencyContactPhone String?
+  emergencyContactRelation String?
   user         User      @relation(fields: [userId], references: [id])
 }
 
@@ -451,6 +463,7 @@ model Conversation {
   @@index([hostId])
   @@index([guestId])
   @@index([reservationId])
+  @@index([listingId])
 }
 
 model Message {

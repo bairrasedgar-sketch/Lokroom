@@ -1,12 +1,28 @@
+/// <reference types="@types/google.maps" />
 "use client";
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useGoogleMaps } from "./GoogleMapsLoader";
 import FavoriteButton from "@/components/FavoriteButton";
+
+// Types pour Google Maps
+type GoogleMap = google.maps.Map;
+type GoogleOverlayView = google.maps.OverlayView;
+type GoogleMarker = google.maps.Marker;
+
+type WindowWithGoogle = Window & {
+  google?: {
+    maps: typeof google.maps;
+  };
+};
+
+// Interface pour les overlays personnalisés avec propriétés additionnelles
+interface CustomOverlay extends google.maps.OverlayView {
+  div: HTMLDivElement | null;
+  markerId: string;
+}
 
 export type MapMarker = {
   id: string;
@@ -283,13 +299,13 @@ export default function Map({
   const missingApiKey = !process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   // Référence vers la carte (persistante)
-  const mapRef = useRef<any | null>(null);
+  const mapRef = useRef<GoogleMap | null>(null);
   const mapInitializedRef = useRef(false);
 
   // Référence réactive vers l'id survolé (pour les bulles actives)
   const hoveredIdRef = useRef<string | null>(null);
-  const overlaysRef = useRef<any[]>([]);
-  const markersInstancesRef = useRef<any[]>([]);
+  const overlaysRef = useRef<GoogleOverlayView[]>([]);
+  const markersInstancesRef = useRef<GoogleMarker[]>([]);
 
   // Refs pour les callbacks (éviter les re-renders)
   const onMarkerHoverRef = useRef(onMarkerHover);
@@ -340,15 +356,15 @@ export default function Map({
   useEffect(() => {
     if (missingApiKey || !scriptLoaded || !containerRef.current || mapInitializedRef.current) return;
 
-    const g = (window as any).google as any;
+    const g = (window as WindowWithGoogle).google;
     if (!g || !g.maps || typeof g.maps.Map !== "function") {
-      console.error("Google Maps API non prête");
+      console.error("Google Maps API non prete");
       return;
     }
 
     const WORLD_BOUNDS = { north: 85, south: -85, west: -180, east: 180 };
 
-    const mapOptions: any = {
+    const mapOptions: google.maps.MapOptions = {
       center: DEFAULT_CENTER,
       zoom: 5,
       mapTypeId: "roadmap",
@@ -392,7 +408,7 @@ export default function Map({
   // === EFFET 2: Mise à jour des markers (à chaque changement de markers) ===
   useEffect(() => {
     const map = mapRef.current;
-    const g = (window as any).google;
+    const g = (window as WindowWithGoogle).google;
     if (!map || !g || !g.maps) return;
 
     // Nettoyer les anciens overlays et markers
@@ -427,11 +443,11 @@ export default function Map({
 
       // Mode bulle de prix (liste)
       const labelText = m.label ?? "";
-      const overlay = new g.maps.OverlayView();
-      (overlay as any).div = null;
-      (overlay as any).markerId = m.id;
+      const overlay = new g.maps.OverlayView() as CustomOverlay;
+      overlay.div = null;
+      overlay.markerId = m.id;
 
-      overlay.onAdd = function () {
+      overlay.onAdd = function (this: CustomOverlay) {
         const div = document.createElement("div");
         div.className = "lokroom-price-badge";
         div.textContent = labelText;
@@ -454,17 +470,19 @@ export default function Map({
           if (onMarkerHoverRef.current) onMarkerHoverRef.current(null);
         });
 
-        (this as any).div = div;
+        this.div = div;
         const panes = this.getPanes();
-        panes.overlayMouseTarget.appendChild(div);
+        if (panes) {
+          panes.overlayMouseTarget.appendChild(div);
+        }
       };
 
-      overlay.draw = function () {
+      overlay.draw = function (this: CustomOverlay) {
         const projection = this.getProjection();
         if (!projection) return;
 
         const point = projection.fromLatLngToDivPixel(position);
-        const div = (this as any).div as HTMLDivElement | null;
+        const div = this.div;
         if (!div || !point) return;
 
         div.style.position = "absolute";
@@ -483,8 +501,8 @@ export default function Map({
         }
       };
 
-      overlay.onRemove = function () {
-        const div = (this as any).div as HTMLDivElement | null;
+      overlay.onRemove = function (this: CustomOverlay) {
+        const div = this.div;
         if (div && div.parentNode) div.parentNode.removeChild(div);
       };
 

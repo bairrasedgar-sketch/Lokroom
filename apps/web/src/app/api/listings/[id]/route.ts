@@ -369,6 +369,26 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Vérifier les bookings actifs avant suppression
+    const activeBookings = await prisma.booking.count({
+      where: {
+        listingId: params.id,
+        status: { in: ["PENDING", "CONFIRMED"] },
+        endDate: { gte: new Date() },
+      },
+    });
+
+    if (activeBookings > 0) {
+      return NextResponse.json(
+        {
+          error: "Cannot delete listing with active bookings",
+          code: "ACTIVE_BOOKINGS",
+          activeBookingsCount: activeBookings
+        },
+        { status: 409 }
+      );
+    }
+
     await prisma.listing.delete({ where: { id: params.id } });
     return NextResponse.json({ ok: true });
   } catch (e) {

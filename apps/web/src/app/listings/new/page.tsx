@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import Script from "next/script";
+import Image from "next/image";
 import Cropper from "react-easy-crop";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { getCroppedImage, type PixelCrop } from "@/lib/cropImage";
@@ -228,7 +229,7 @@ const LISTING_TYPES: { value: ListingType; label: string; description: string }[
   { value: "OFFICE", label: "Bureau", description: "Un espace de travail privé" },
   { value: "COWORKING", label: "Coworking", description: "Un espace de travail partagé" },
   { value: "MEETING_ROOM", label: "Salle de réunion", description: "Pour vos réunions et présentations" },
-  { value: "RECORDING_STUDIO", label: "Studio d'enregistrement", description: "Pour la musique et les podcasts" },
+  { value: "RECORDING_STUDIO", label: "Studios", description: "Pour la musique et les podcasts" },
   { value: "EVENT_SPACE", label: "Espace événementiel", description: "Pour vos événements et fêtes" },
   { value: "PARKING", label: "Parking", description: "Une place de stationnement" },
   { value: "GARAGE", label: "Garage", description: "Un garage ou box fermé" },
@@ -396,7 +397,7 @@ const LISTING_TYPE_LOCATION_LABELS: Record<ListingType, string> = {
   GARAGE: "votre garage",
   STORAGE: "votre espace de stockage",
   EVENT_SPACE: "votre espace événementiel",
-  RECORDING_STUDIO: "votre studio d'enregistrement",
+  RECORDING_STUDIO: "votre studio",
   OTHER: "votre espace",
 };
 
@@ -646,6 +647,7 @@ export default function NewListingPage() {
             createdAt: draft.createdAt!, // We know it exists after the filter
             formData: {
               ...draft.formData,
+              additionalTypes: Array.isArray(draft.formData?.additionalTypes) ? draft.formData.additionalTypes : [],
               spaceFeatures: Array.isArray(draft.formData?.spaceFeatures) ? draft.formData.spaceFeatures : [],
             },
           }));
@@ -671,16 +673,79 @@ export default function NewListingPage() {
   const handleRestoreDraft = useCallback((draftId: string) => {
     const selectedDraft = availableDrafts.find(d => d.id === draftId);
     if (selectedDraft) {
-      // Ensure spaceFeatures is an array before restoring
-      const safeFormData = {
-        ...selectedDraft.formData,
-        spaceFeatures: Array.isArray(selectedDraft.formData.spaceFeatures) ? selectedDraft.formData.spaceFeatures : [],
+      // Fusionner avec les valeurs par défaut pour éviter les champs manquants
+      const defaultFormData: FormData = {
+        type: null,
+        additionalTypes: [],
+        customType: "",
+        country: "France",
+        city: "",
+        addressFull: "",
+        addressLine1: "",
+        postalCode: "",
+        province: "",
+        regionFR: "",
+        lat: null,
+        lng: null,
+        latPublic: null,
+        lngPublic: null,
+        maxGuests: 1,
+        beds: null,
+        desks: null,
+        parkings: null,
+        bathrooms: null,
+        spaceFeatures: [],
+        title: "",
+        description: "",
+        pricingMode: "DAILY",
+        price: 0,
+        hourlyPrice: null,
+        currency: "EUR",
+        isInstantBook: false,
+        minNights: null,
+        maxNights: null,
+        discountHours3Plus: null,
+        discountHours6Plus: null,
+        discountDays3Plus: null,
+        discountWeekly: null,
+        discountMonthly: null,
       };
+
+      // Fusionner les données sauvegardées avec les valeurs par défaut
+      const safeFormData: FormData = {
+        ...defaultFormData,
+        ...selectedDraft.formData,
+        // S'assurer que les arrays sont bien des arrays
+        additionalTypes: Array.isArray(selectedDraft.formData?.additionalTypes) ? selectedDraft.formData.additionalTypes : [],
+        spaceFeatures: Array.isArray(selectedDraft.formData?.spaceFeatures) ? selectedDraft.formData.spaceFeatures : [],
+      };
+
       setFormData(safeFormData);
       setCurrentDraftId(draftId);
-      if (selectedDraft.currentStep) {
+
+      // Restaurer l'étape - vérifier que c'est une étape valide
+      const validSteps: Step[] = ["type", "map", "location", "confirmLocation", "details", "features", "photos", "description", "pricing", "discounts", "review"];
+      if (selectedDraft.currentStep && validSteps.includes(selectedDraft.currentStep)) {
         setCurrentStep(selectedDraft.currentStep);
+      } else {
+        // Si l'étape n'est pas valide, déterminer la bonne étape basée sur les données
+        if (safeFormData.title && safeFormData.description) {
+          setCurrentStep("pricing");
+        } else if (safeFormData.spaceFeatures.length > 0) {
+          setCurrentStep("photos");
+        } else if (safeFormData.maxGuests > 1 || safeFormData.beds || safeFormData.desks) {
+          setCurrentStep("features");
+        } else if (safeFormData.lat && safeFormData.lng) {
+          setCurrentStep("details");
+        } else if (safeFormData.city) {
+          setCurrentStep("map");
+        } else if (safeFormData.type) {
+          setCurrentStep("map");
+        } else {
+          setCurrentStep("type");
+        }
       }
+
       if (selectedDraft.lastSaved) {
         setLastSaved(new Date(selectedDraft.lastSaved));
       }
@@ -1331,6 +1396,10 @@ export default function NewListingPage() {
       toast.success("Annonce créée avec succès !");
       clearDraft(); // Clear the draft after successful publish
       images.forEach((img) => URL.revokeObjectURL(img.previewUrl));
+
+      // Rafraîchir la session pour mettre à jour isHost
+      await updateSession();
+
       router.push(`/listings/${listingId}`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erreur lors de la création");
@@ -1383,7 +1452,7 @@ export default function NewListingPage() {
       <div className="min-h-screen bg-white">
         {/* Header */}
         <header className="sticky top-0 z-40 border-b border-gray-200 bg-white">
-          <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
+          <div className="mx-auto flex h-16 max-w-5xl 2xl:max-w-6xl items-center justify-between px-4 sm:px-6">
             <button
               onClick={() => router.push("/")}
               className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
@@ -1411,7 +1480,7 @@ export default function NewListingPage() {
         </header>
 
         {/* Main content */}
-        <main className="mx-auto max-w-2xl px-4 py-8">
+        <main className="mx-auto max-w-2xl 2xl:max-w-3xl px-4 sm:px-6 py-8">
           {/* Step title */}
           <div className="mb-8 text-center">
             <p className="text-sm font-medium text-gray-500">
@@ -1479,8 +1548,8 @@ export default function NewListingPage() {
                             return { ...prev, type: t.value, customType: "" };
                           }
 
-                          // Sinon, on l'ajoute comme type additionnel (max 3)
-                          if (prev.additionalTypes.length < 3) {
+                          // Sinon, on l'ajoute comme type additionnel (max 4 pour 5 catégories au total)
+                          if (prev.additionalTypes.length < 4) {
                             return {
                               ...prev,
                               additionalTypes: [...prev.additionalTypes, t.value],
@@ -2129,9 +2198,10 @@ export default function NewListingPage() {
                           onDrop={() => handleFileDrop(i)}
                           onDragEnd={() => setDragFileIndex(null)}
                         >
+                          {/* eslint-disable-next-line @next/next/no-img-element -- blob URL preview */}
                           <img
                             src={img.previewUrl}
-                            alt=""
+                            alt={`Image ${i + 1} de l'annonce`}
                             className="h-full w-full object-cover"
                           />
 
@@ -2576,9 +2646,10 @@ export default function NewListingPage() {
                 {/* Preview image */}
                 {images[0] && (
                   <div className="aspect-[16/9] bg-gray-100">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- blob URL preview */}
                     <img
                       src={images[0].previewUrl}
-                      alt=""
+                      alt="Apercu de l'annonce"
                       className="h-full w-full object-cover"
                     />
                   </div>

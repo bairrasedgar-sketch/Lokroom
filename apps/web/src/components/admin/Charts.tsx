@@ -4,6 +4,7 @@
  */
 "use client";
 
+import Image from "next/image";
 import {
   AreaChart,
   Area,
@@ -372,11 +373,15 @@ export function TopListingsChart({
               {index + 1}
             </span>
             {listing.image ? (
-              <img
-                src={listing.image}
-                alt=""
-                className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
-              />
+              <div className="relative w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
+                <Image
+                  src={listing.image}
+                  alt={`Image de ${listing.title}`}
+                  fill
+                  className="object-cover"
+                  sizes="48px"
+                />
+              </div>
             ) : (
               <div className="w-12 h-12 rounded-lg bg-gray-200 flex-shrink-0" />
             )}

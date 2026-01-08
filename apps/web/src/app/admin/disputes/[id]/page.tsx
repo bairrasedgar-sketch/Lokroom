@@ -1,11 +1,12 @@
 /**
- * Page Admin - Détail litige avec timeline
+ * Page Admin - Detail litige avec timeline
  */
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowLeftIcon,
   FlagIcon,
@@ -158,12 +159,13 @@ export default function AdminDisputeDetailPage() {
   const [noteContent, setNoteContent] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const fetchDispute = useCallback(async () => {
+  const fetchDispute = useCallback(async (signal?: AbortSignal) => {
     try {
-      const res = await fetch(`/api/admin/disputes/${disputeId}`);
+      const res = await fetch(`/api/admin/disputes/${disputeId}`, { signal });
       const data = await res.json();
       if (data.dispute) setDispute(data.dispute);
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return;
       console.error("Error fetching dispute:", error);
     } finally {
       setLoading(false);
@@ -171,7 +173,9 @@ export default function AdminDisputeDetailPage() {
   }, [disputeId]);
 
   useEffect(() => {
-    fetchDispute();
+    const controller = new AbortController();
+    fetchDispute(controller.signal);
+    return () => controller.abort();
   }, [fetchDispute]);
 
   useEffect(() => {
@@ -290,6 +294,7 @@ export default function AdminDisputeDetailPage() {
       <div className="flex items-start gap-4">
         <button
           onClick={() => router.back()}
+          aria-label="Retour a la page precedente"
           className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg mt-1"
         >
           <ArrowLeftIcon className="h-5 w-5" />
@@ -318,6 +323,7 @@ export default function AdminDisputeDetailPage() {
             <button
               onClick={() => handleAction("assign")}
               disabled={saving}
+              aria-label="M'assigner ce litige"
               className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
             >
               <ShieldCheckIcon className="h-5 w-5" />
@@ -329,6 +335,7 @@ export default function AdminDisputeDetailPage() {
               <button
                 onClick={() => handleAction("escalate")}
                 disabled={saving || dispute.status === "ESCALATED"}
+                aria-label="Escalader ce litige"
                 className="flex items-center gap-2 px-4 py-2 border border-purple-300 text-purple-700 rounded-lg hover:bg-purple-50 disabled:opacity-50"
               >
                 <ChevronUpIcon className="h-5 w-5" />
@@ -336,10 +343,11 @@ export default function AdminDisputeDetailPage() {
               </button>
               <button
                 onClick={() => setShowResolveModal(true)}
+                aria-label="Resoudre ce litige"
                 className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
               >
                 <CheckCircleIcon className="h-5 w-5" />
-                Résoudre
+                Resoudre
               </button>
             </>
           )}
@@ -455,11 +463,13 @@ export default function AdminDisputeDetailPage() {
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
                     placeholder="Envoyer un message..."
+                    aria-label="Ecrire un message"
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
                   />
                   <button
                     onClick={handleSendMessage}
                     disabled={!newMessage.trim() || saving}
+                    aria-label="Envoyer le message"
                     className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50"
                   >
                     <PaperAirplaneIcon className="h-5 w-5" />
@@ -485,9 +495,11 @@ export default function AdminDisputeDetailPage() {
                     className="block p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
                   >
                     {ev.fileType.startsWith("image/") ? (
-                      <img
+                      <Image
                         src={ev.fileUrl}
                         alt={ev.fileName}
+                        width={200}
+                        height={96}
                         className="w-full h-24 object-cover rounded mb-2"
                       />
                     ) : (
@@ -511,6 +523,7 @@ export default function AdminDisputeDetailPage() {
               <h3 className="font-semibold text-gray-900">Notes admin</h3>
               <button
                 onClick={() => setShowNoteModal(true)}
+                aria-label="Ajouter une note"
                 className="flex items-center gap-1 text-sm text-red-600 hover:text-red-700"
               >
                 <PlusIcon className="h-4 w-4" />
@@ -544,7 +557,7 @@ export default function AdminDisputeDetailPage() {
               className="flex items-start gap-3 hover:bg-gray-50 -mx-2 p-2 rounded-lg"
             >
               {dispute.coverImage ? (
-                <img src={dispute.coverImage} alt="" className="w-16 h-16 rounded-lg object-cover" />
+                <Image src={dispute.coverImage} alt={`Photo de ${dispute.booking.listing.title}`} width={64} height={64} className="w-16 h-16 rounded-lg object-cover" />
               ) : (
                 <div className="w-16 h-16 rounded-lg bg-gray-200" />
               )}
@@ -585,7 +598,7 @@ export default function AdminDisputeDetailPage() {
                 className="flex items-center gap-3 hover:bg-gray-50 -mx-2 p-2 rounded-lg"
               >
                 {dispute.openedBy.profile?.avatarUrl ? (
-                  <img src={dispute.openedBy.profile.avatarUrl} alt="" className="w-10 h-10 rounded-full" />
+                  <Image src={dispute.openedBy.profile.avatarUrl} alt={`Avatar de ${dispute.openedBy.name || "utilisateur"}`} width={40} height={40} className="w-10 h-10 rounded-full" />
                 ) : (
                   <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
                     {dispute.openedBy.name?.charAt(0) || "?"}
@@ -606,7 +619,7 @@ export default function AdminDisputeDetailPage() {
                 className="flex items-center gap-3 hover:bg-gray-50 -mx-2 p-2 rounded-lg"
               >
                 {dispute.against.profile?.avatarUrl ? (
-                  <img src={dispute.against.profile.avatarUrl} alt="" className="w-10 h-10 rounded-full" />
+                  <Image src={dispute.against.profile.avatarUrl} alt={`Avatar de ${dispute.against.name || "utilisateur"}`} width={40} height={40} className="w-10 h-10 rounded-full" />
                 ) : (
                   <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-red-600 font-medium">
                     {dispute.against.name?.charAt(0) || "?"}
@@ -640,6 +653,7 @@ export default function AdminDisputeDetailPage() {
                 <button
                   onClick={() => handleAction("assign")}
                   disabled={saving}
+                  aria-label="M'assigner ce litige"
                   className="mt-2 text-sm text-red-600 hover:text-red-700"
                 >
                   M&apos;assigner ce litige
@@ -702,20 +716,21 @@ export default function AdminDisputeDetailPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Résoudre le litige</h3>
-              <button onClick={() => setShowResolveModal(false)} className="text-gray-500 hover:text-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900">Resoudre le litige</h3>
+              <button onClick={() => setShowResolveModal(false)} aria-label="Fermer la fenetre" className="text-gray-500 hover:text-gray-700">
                 <XMarkIcon className="h-6 w-6" />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Résolution</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Resolution</label>
                 <textarea
                   value={resolution}
                   onChange={(e) => setResolution(e.target.value)}
                   rows={3}
+                  aria-label="Description de la resolution"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
-                  placeholder="Décrivez la résolution..."
+                  placeholder="Decrivez la resolution..."
                 />
               </div>
               <div>
@@ -729,6 +744,7 @@ export default function AdminDisputeDetailPage() {
                     step="0.01"
                     value={awardedAmount}
                     onChange={(e) => setAwardedAmount(parseFloat(e.target.value) || 0)}
+                    aria-label="Montant a rembourser"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
                     placeholder="0.00"
                   />
@@ -742,8 +758,9 @@ export default function AdminDisputeDetailPage() {
               </div>
               <div className="flex gap-3 justify-end">
                 <button
-                  onClick={() => handleAction("close", { resolution: resolution || "Fermé sans suite" })}
+                  onClick={() => handleAction("close", { resolution: resolution || "Ferme sans suite" })}
                   disabled={saving}
+                  aria-label="Fermer sans suite"
                   className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
                   Fermer sans suite
@@ -754,9 +771,10 @@ export default function AdminDisputeDetailPage() {
                     awardedAmount: Math.round(awardedAmount * 100),
                   })}
                   disabled={!resolution.trim() || saving}
+                  aria-label="Resoudre le litige"
                   className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50"
                 >
-                  {saving ? "..." : "Résoudre"}
+                  {saving ? "..." : "Resoudre"}
                 </button>
               </div>
             </div>
@@ -770,7 +788,7 @@ export default function AdminDisputeDetailPage() {
           <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Ajouter une note</h3>
-              <button onClick={() => setShowNoteModal(false)} className="text-gray-500 hover:text-gray-700">
+              <button onClick={() => setShowNoteModal(false)} aria-label="Fermer la fenetre" className="text-gray-500 hover:text-gray-700">
                 <XMarkIcon className="h-6 w-6" />
               </button>
             </div>
@@ -779,12 +797,14 @@ export default function AdminDisputeDetailPage() {
                 value={noteContent}
                 onChange={(e) => setNoteContent(e.target.value)}
                 rows={4}
+                aria-label="Contenu de la note"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
-                placeholder="Écrivez votre note..."
+                placeholder="Ecrivez votre note..."
               />
               <div className="flex gap-3 justify-end">
                 <button
                   onClick={() => setShowNoteModal(false)}
+                  aria-label="Annuler"
                   className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
                   Annuler
@@ -792,6 +812,7 @@ export default function AdminDisputeDetailPage() {
                 <button
                   onClick={handleAddNote}
                   disabled={!noteContent.trim() || saving}
+                  aria-label="Ajouter la note"
                   className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50"
                 >
                   {saving ? "..." : "Ajouter"}

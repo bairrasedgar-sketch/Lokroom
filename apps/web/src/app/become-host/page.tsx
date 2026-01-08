@@ -178,7 +178,7 @@ const SPACE_TYPES = [
   {
     id: "RECORDING_STUDIO",
     icon: SpaceIcons.RECORDING_STUDIO,
-    title: "Studio d'enregistrement",
+    title: "Studios",
     description: "Pour musique, podcast, voix-off",
   },
 ];
@@ -189,7 +189,7 @@ export default function BecomeHostPage() {
   const router = useRouter();
   const { data: session, status, update } = useSession();
   const [step, setStep] = useState<Step>("welcome");
-  const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [activatingHost, setActivatingHost] = useState(false);
 
@@ -214,9 +214,9 @@ export default function BecomeHostPage() {
         return;
       }
       setStep("space-type");
-    } else if (step === "space-type" && selectedType) {
-      // Stocker le type sélectionné
-      sessionStorage.setItem("lokroom_listing_type", selectedType);
+    } else if (step === "space-type" && selectedTypes.length > 0) {
+      // Stocker les types sélectionnés
+      sessionStorage.setItem("lokroom_listing_types", JSON.stringify(selectedTypes));
 
       // Activer le mode hôte en arrière-plan si pas déjà hôte
       if (!isHost) {
@@ -271,7 +271,7 @@ export default function BecomeHostPage() {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="border-b">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
+        <div className="mx-auto flex max-w-5xl 2xl:max-w-6xl items-center justify-between px-4 sm:px-6 py-4">
           <Link href="/" className="text-lg font-semibold">
             Lokroom
           </Link>
@@ -295,7 +295,7 @@ export default function BecomeHostPage() {
       </div>
 
       {/* Content */}
-      <main className="mx-auto max-w-3xl px-4 py-12">
+      <main className="mx-auto max-w-3xl 2xl:max-w-4xl px-4 sm:px-6 py-12">
         {step === "welcome" && (
           <div className="text-center">
             <h1 className="text-4xl font-semibold text-gray-900 md:text-5xl">
@@ -339,29 +339,52 @@ export default function BecomeHostPage() {
               Quel type d&apos;espace veux-tu proposer ?
             </h1>
             <p className="mt-2 text-gray-600">
-              Choisis la catégorie qui correspond le mieux à ton espace.
+              Choisis entre 1 et 5 espaces que ton annonce peut proposer.
+            </p>
+            <p className="mt-1 text-sm text-gray-500">
+              {selectedTypes.length}/5 sélectionné{selectedTypes.length > 1 ? "s" : ""}
             </p>
 
             <div className="mt-8 max-h-[50vh] overflow-y-auto pb-4">
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {SPACE_TYPES.map((type) => (
-                  <button
-                    key={type.id}
-                    type="button"
-                    onClick={() => setSelectedType(type.id)}
-                    className={`flex items-start gap-4 rounded-xl border-2 p-4 text-left transition-all hover:border-gray-400 ${
-                      selectedType === type.id
-                        ? "border-gray-900 bg-gray-50"
-                        : "border-gray-200"
-                    }`}
-                  >
-                    <span className="text-2xl">{type.icon}</span>
-                    <div>
-                      <div className="font-medium text-gray-900">{type.title}</div>
-                      <div className="text-sm text-gray-500">{type.description}</div>
-                    </div>
-                  </button>
-                ))}
+                {SPACE_TYPES.map((type) => {
+                  const isSelected = selectedTypes.includes(type.id);
+                  const isDisabled = !isSelected && selectedTypes.length >= 5;
+                  return (
+                    <button
+                      key={type.id}
+                      type="button"
+                      onClick={() => {
+                        if (isSelected) {
+                          setSelectedTypes(selectedTypes.filter((t) => t !== type.id));
+                        } else if (selectedTypes.length < 5) {
+                          setSelectedTypes([...selectedTypes, type.id]);
+                        }
+                      }}
+                      disabled={isDisabled}
+                      className={`flex items-start gap-4 rounded-xl border-2 p-4 text-left transition-all ${
+                        isSelected
+                          ? "border-gray-900 bg-gray-50"
+                          : isDisabled
+                          ? "border-gray-100 opacity-50 cursor-not-allowed"
+                          : "border-gray-200 hover:border-gray-400"
+                      }`}
+                    >
+                      <span className="text-2xl">{type.icon}</span>
+                      <div>
+                        <div className="font-medium text-gray-900">{type.title}</div>
+                        <div className="text-sm text-gray-500">{type.description}</div>
+                      </div>
+                      {isSelected && (
+                        <div className="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-gray-900 text-white">
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -378,16 +401,16 @@ export default function BecomeHostPage() {
           <div className="text-center">
             <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-purple-100">
               <span className="text-4xl">
-                {SPACE_TYPES.find((t) => t.id === selectedType)?.icon || "🏠"}
+                {SPACE_TYPES.find((t) => t.id === selectedTypes[0])?.icon || "🏠"}
               </span>
             </div>
             <h1 className="text-3xl font-semibold text-gray-900 md:text-4xl">
               Prêt à créer ton annonce !
             </h1>
             <p className="mt-4 text-gray-600">
-              Tu vas pouvoir créer ton annonce{" "}
+              Tu vas pouvoir créer ton annonce avec {selectedTypes.length} type{selectedTypes.length > 1 ? "s" : ""} d&apos;espace :{" "}
               <strong>
-                {SPACE_TYPES.find((t) => t.id === selectedType)?.title.toLowerCase()}
+                {selectedTypes.map((t) => SPACE_TYPES.find((s) => s.id === t)?.title.toLowerCase()).join(", ")}
               </strong>
               .
             </p>
@@ -437,7 +460,7 @@ export default function BecomeHostPage() {
           <button
             type="button"
             onClick={handleContinue}
-            disabled={loading || activatingHost || (step === "space-type" && !selectedType)}
+            disabled={loading || activatingHost || (step === "space-type" && selectedTypes.length === 0)}
             className="rounded-lg bg-gray-900 px-6 py-3 text-sm font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading || activatingHost

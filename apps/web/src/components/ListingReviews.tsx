@@ -36,36 +36,33 @@ export default function ListingReviews({ listingId }: ListingReviewsProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
 
     async function load() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`/api/reviews?listingId=${listingId}`);
+        const res = await fetch(`/api/reviews?listingId=${listingId}`, {
+          signal: controller.signal,
+        });
         if (!res.ok) {
           throw new Error("Erreur lors du chargement des avis.");
         }
         const data = (await res.json()) as { reviews?: Review[] };
-        if (!cancelled) {
-          setReviews(data.reviews ?? []);
-        }
+        setReviews(data.reviews ?? []);
       } catch (e) {
-        if (!cancelled) {
-          setError(
-            e instanceof Error ? e.message : "Impossible de charger les avis."
-          );
-        }
+        if (e instanceof Error && e.name === 'AbortError') return;
+        setError(
+          e instanceof Error ? e.message : "Impossible de charger les avis."
+        );
       } finally {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       }
     }
 
     load();
 
-    return () => {
-      cancelled = true;
-    };
+    return () => controller.abort();
   }, [listingId]);
 
   const hasReviews = reviews.length > 0;

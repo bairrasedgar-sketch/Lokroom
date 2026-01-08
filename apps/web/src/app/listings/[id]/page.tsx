@@ -75,7 +75,7 @@ const typeLabels: Record<string, string> = {
   GARAGE: "Garage",
   STORAGE: "Espace de stockage",
   EVENT_SPACE: "Espace événementiel",
-  RECORDING_STUDIO: "Studio d'enregistrement",
+  RECORDING_STUDIO: "Studios",
   OTHER: "Espace",
 };
 
@@ -275,7 +275,7 @@ export default async function ListingDetailPage({
         }}
       />
 
-      <main className="mx-auto flex max-w-6xl flex-col gap-6 px-4 pb-12 pt-6">
+      <main className="mx-auto flex max-w-6xl 2xl:max-w-7xl 3xl:max-w-[1600px] flex-col gap-4 sm:gap-6 px-3 sm:px-4 lg:px-6 xl:px-8 pb-8 sm:pb-12 pt-4 sm:pt-6">
       {/* Ligne retour + date */}
       <div className="flex items-center justify-between text-xs text-gray-600">
         <Link href="/listings" className="hover:underline">
@@ -288,15 +288,15 @@ export default async function ListingDetailPage({
 
       {/* Titre + localisation */}
       <section className="space-y-1">
-        <h1 className="text-2xl font-semibold sm:text-3xl">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-semibold">
           {listing.title}
         </h1>
-        <p className="text-sm text-gray-600">{locationLabel}</p>
+        <p className="text-xs sm:text-sm text-gray-600">{locationLabel}</p>
       </section>
 
       {/* Galerie */}
-      <section className="space-y-3">
-        <div className="overflow-hidden rounded-3xl border bg-gray-100">
+      <section className="space-y-2 sm:space-y-3">
+        <div className="overflow-hidden rounded-xl sm:rounded-2xl md:rounded-3xl border bg-gray-100">
           <ListingGallery images={listing.images ?? []} aspect={4 / 3} />
         </div>
 
@@ -320,13 +320,13 @@ export default async function ListingDetailPage({
       </section>
 
       {/* Corps : deux colonnes */}
-      <section className="flex flex-col gap-8 lg:flex-row lg:items-start">
+      <section className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
         {/* Colonne gauche : détails + hôte */}
-        <div className="flex-1 space-y-6">
+        <div className="flex-1 space-y-4 sm:space-y-6 min-w-0">
           {/* Bloc hôte résumé */}
-          <div className="flex items-center justify-between border-b pb-4">
-            <div>
-              <h2 className="text-lg font-semibold">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-semibold truncate">
                 {t.listingDetail.hostedBy}{" "}
                 {listing.owner.name || t.listingDetail.hostLokroom}
               </h2>
@@ -421,10 +421,10 @@ export default async function ListingDetailPage({
         </div>
 
         {/* Colonne droite : carte réservation */}
-        <aside className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-4 shadow-md">
-          <div className="mb-3 flex items-baseline justify-between gap-2">
-            <div>
-              <p className="text-xl font-semibold">
+        <aside className="w-full lg:w-auto lg:max-w-md lg:min-w-[320px] rounded-xl sm:rounded-2xl border border-gray-200 bg-white p-3 sm:p-4 shadow-md lg:sticky lg:top-24">
+          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-lg sm:text-xl font-semibold">
                 {priceFormatted}
                 <span className="text-sm font-normal text-gray-600">
                   {" "}

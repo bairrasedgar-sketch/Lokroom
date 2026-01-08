@@ -4,7 +4,9 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import HostCalendar from "@/components/calendar/HostCalendar";
+import { CheckCircleIcon } from "@heroicons/react/24/solid";
 
 type Listing = {
   id: string;
@@ -12,7 +14,10 @@ type Listing = {
   price: number;
   currency: string;
   city: string;
+  minNights: number | null;
+  maxNights: number | null;
   images: { url: string }[];
+  _count?: { bookings: number };
 };
 
 export default function HostCalendarPage() {
@@ -21,6 +26,7 @@ export default function HostCalendarPage() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [selectedListing, setSelectedListing] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showListingSelector, setShowListingSelector] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -29,13 +35,15 @@ export default function HostCalendarPage() {
     }
 
     if (status === "authenticated") {
-      fetchListings();
+      const controller = new AbortController();
+      fetchListings(controller.signal);
+      return () => controller.abort();
     }
   }, [status, router]);
 
-  async function fetchListings() {
+  async function fetchListings(signal?: AbortSignal) {
     try {
-      const res = await fetch("/api/host/listings");
+      const res = await fetch("/api/host/listings", { signal });
       if (!res.ok) throw new Error("Erreur");
       const data = await res.json();
       setListings(data.listings || []);
@@ -43,11 +51,15 @@ export default function HostCalendarPage() {
         setSelectedListing(data.listings[0].id);
       }
     } catch (err) {
-      console.error(err);
+      if (err instanceof Error && err.name !== "AbortError") {
+        console.error(err);
+      }
     } finally {
       setLoading(false);
     }
   }
+
+  const selectedListingData = listings.find(l => l.id === selectedListing);
 
   if (status === "loading" || loading) {
     return (
@@ -82,7 +94,7 @@ export default function HostCalendarPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
+    <div className="mx-auto max-w-6xl 2xl:max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
@@ -96,35 +108,146 @@ export default function HostCalendarPage() {
         </p>
       </div>
 
-      {/* Listing selector */}
+      {/* Enhanced Listing selector */}
       {listings.length > 1 && (
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Sélectionner une annonce
           </label>
-          <div className="flex flex-wrap gap-2">
-            {listings.map((listing) => (
-              <button
-                key={listing.id}
-                onClick={() => setSelectedListing(listing.id)}
-                className={`
-                  rounded-lg px-4 py-2 text-sm font-medium transition
-                  ${selectedListing === listing.id
-                    ? "bg-gray-900 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                  }
-                `}
-              >
-                {listing.title}
-              </button>
-            ))}
+
+          {/* Current selection card */}
+          <button
+            onClick={() => setShowListingSelector(!showListingSelector)}
+            className="w-full flex items-center gap-4 p-4 rounded-xl border border-gray-200 bg-white hover:border-gray-300 transition text-left"
+          >
+            {selectedListingData?.images?.[0] && (
+              <div className="relative h-16 w-24 flex-shrink-0 rounded-lg overflow-hidden">
+                <Image
+                  src={selectedListingData.images[0].url}
+                  alt={selectedListingData.title}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <h3 className="font-medium text-gray-900 truncate">
+                {selectedListingData?.title}
+              </h3>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-sm text-gray-500">
+                <span>{selectedListingData?.city}</span>
+                <span className="font-medium text-gray-900">
+                  {selectedListingData?.price} {selectedListingData?.currency}/nuit
+                </span>
+                {selectedListingData?.minNights && (
+                  <span>Min {selectedListingData.minNights} nuits</span>
+                )}
+              </div>
+            </div>
+            <svg
+              className={`h-5 w-5 text-gray-400 transition-transform ${showListingSelector ? "rotate-180" : ""}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {/* Dropdown list */}
+          {showListingSelector && (
+            <div className="mt-2 rounded-xl border border-gray-200 bg-white shadow-lg overflow-hidden">
+              {listings.map((listing) => (
+                <button
+                  key={listing.id}
+                  onClick={() => {
+                    setSelectedListing(listing.id);
+                    setShowListingSelector(false);
+                  }}
+                  className={`
+                    w-full flex items-center gap-4 p-4 text-left transition
+                    hover:bg-gray-50
+                    ${selectedListing === listing.id ? "bg-gray-50" : ""}
+                  `}
+                >
+                  {listing.images?.[0] && (
+                    <div className="relative h-14 w-20 flex-shrink-0 rounded-lg overflow-hidden">
+                      <Image
+                        src={listing.images[0].url}
+                        alt={listing.title}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium text-gray-900 truncate">{listing.title}</h4>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5 text-sm text-gray-500">
+                      <span>{listing.city}</span>
+                      <span className="font-medium text-gray-700">
+                        {listing.price} {listing.currency}/nuit
+                      </span>
+                      {listing.minNights && (
+                        <span className="text-xs bg-gray-100 px-2 py-0.5 rounded">
+                          Min {listing.minNights} nuits
+                        </span>
+                      )}
+                      {listing.maxNights && (
+                        <span className="text-xs bg-gray-100 px-2 py-0.5 rounded">
+                          Max {listing.maxNights} nuits
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {selectedListing === listing.id && (
+                    <CheckCircleIcon className="h-5 w-5 text-green-600 flex-shrink-0" />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Single listing info (when only one) */}
+      {listings.length === 1 && selectedListingData && (
+        <div className="mb-6 flex items-center gap-4 p-4 rounded-xl border border-gray-200 bg-white">
+          {selectedListingData.images?.[0] && (
+            <div className="relative h-16 w-24 flex-shrink-0 rounded-lg overflow-hidden">
+              <Image
+                src={selectedListingData.images[0].url}
+                alt={selectedListingData.title}
+                fill
+                className="object-cover"
+              />
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <h3 className="font-medium text-gray-900 truncate">
+              {selectedListingData.title}
+            </h3>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-sm text-gray-500">
+              <span>{selectedListingData.city}</span>
+              <span className="font-medium text-gray-900">
+                {selectedListingData.price} {selectedListingData.currency}/nuit
+              </span>
+              {selectedListingData.minNights && (
+                <span>Min {selectedListingData.minNights} nuits</span>
+              )}
+            </div>
           </div>
+          <Link
+            href={`/listings/${selectedListingData.id}/edit`}
+            className="text-sm text-gray-600 hover:text-gray-900 underline"
+          >
+            Modifier
+          </Link>
         </div>
       )}
 
       {/* Calendar */}
       {selectedListing && (
-        <HostCalendar listingId={selectedListing} />
+        <HostCalendar key={selectedListing} listingId={selectedListing} />
       )}
 
       {/* Quick links */}

@@ -551,13 +551,26 @@ export async function POST(req: Request) {
     }
 
     // ==========================================================
-    // 2) Stripe Identity – on sort du switch pour éviter les bugs TS
-    //    (les types Stripe Identity ne sont pas entièrement exportés)
+    // 2) Stripe Identity – Gestion complète de tous les événements
+    //    Événements supportés:
+    //    - identity.verification_session.created
+    //    - identity.verification_session.processing
+    //    - identity.verification_session.verified
+    //    - identity.verification_session.requires_input
+    //    - identity.verification_session.canceled
+    //    - identity.verification_session.redacted
     // ==========================================================
     /* eslint-disable @typescript-eslint/no-explicit-any */
-    if (
-      event.type === ("identity.verification_session.updated" as string)
-    ) {
+    const identityEvents = [
+      "identity.verification_session.created",
+      "identity.verification_session.processing",
+      "identity.verification_session.verified",
+      "identity.verification_session.requires_input",
+      "identity.verification_session.canceled",
+      "identity.verification_session.redacted",
+    ];
+
+    if (identityEvents.includes(event.type)) {
       const vs = (event as { data: { object: Stripe.Identity.VerificationSession } })
         .data.object;
 
@@ -578,35 +591,165 @@ export async function POST(req: Request) {
         | "VERIFIED"
         | "REJECTED" = "PENDING";
       let verifiedAt: Date | null = null;
+      let rejectionReason: string | null = null;
 
+      // Récupérer le code d'erreur si présent
+      const lastError = (vs as { last_error?: { code?: string; reason?: string } }).last_error;
+      const errorCode = lastError?.code ?? null;
+
+      // Mapper les statuts Stripe vers nos statuts internes
       switch (vs.status) {
         case "verified":
+          // ✅ Vérification réussie
           newStatus = "VERIFIED";
           verifiedAt = new Date(
             ((vs.created ?? Math.floor(Date.now() / 1000)) as number) * 1000
           );
+          securityLog("info", "identity_verified", undefined, {
+            eventId: event.id,
+            userId: lokroomUserId,
+            sessionId: vs.id,
+          });
           break;
+
         case "canceled":
-          // Vérifier si c'est un refus de consentement
-          if ((vs as { last_error?: { code?: string } }).last_error?.code === "consent_declined") {
-            newStatus = "REJECTED"; // Consent declined = bloqué
-          } else {
+          // ❌ Session annulée - plusieurs raisons possibles
+          newStatus = "REJECTED";
+
+          // Codes d'erreur possibles pour canceled:
+          // - consent_declined: L'utilisateur a refusé le consentement
+          // - under_supported_age: L'utilisateur est mineur
+          // - country_not_supported: Pays non supporté
+          // - device_not_supported: Appareil non supporté
+          switch (errorCode) {
+            case "consent_declined":
+              rejectionReason = "consent_declined";
+              break;
+            case "under_supported_age":
+              rejectionReason = "under_age";
+              break;
+            case "country_not_supported":
+              rejectionReason = "country_not_supported";
+              break;
+            case "device_not_supported":
+              rejectionReason = "device_not_supported";
+              break;
+            default:
+              rejectionReason = errorCode ?? "canceled";
+          }
+
+          securityLog("info", "identity_canceled", undefined, {
+            eventId: event.id,
+            userId: lokroomUserId,
+            sessionId: vs.id,
+            errorCode,
+            rejectionReason,
+          });
+          break;
+
+        case "requires_input":
+          // ⚠️ Vérification échouée - l'utilisateur doit réessayer
+          // Codes d'erreur possibles:
+          // - document_expired: Document expiré
+          // - document_type_not_supported: Type de document non supporté
+          // - document_unverified_other: Autre problème avec le document
+          // - selfie_document_missing_photo: Photo manquante sur le document
+          // - selfie_face_mismatch: Le selfie ne correspond pas au document
+          // - selfie_manipulated: Selfie manipulé détecté
+          // - selfie_unverified_other: Autre problème avec le selfie
+
+          if (errorCode) {
+            // Si une erreur est présente, c'est un échec de vérification
             newStatus = "REJECTED";
+
+            switch (errorCode) {
+              case "document_expired":
+                rejectionReason = "document_expired";
+                break;
+              case "document_type_not_supported":
+                rejectionReason = "document_type_not_supported";
+                break;
+              case "document_unverified_other":
+                rejectionReason = "document_invalid";
+                break;
+              case "selfie_document_missing_photo":
+                rejectionReason = "selfie_missing_photo";
+                break;
+              case "selfie_face_mismatch":
+                rejectionReason = "selfie_mismatch";
+                break;
+              case "selfie_manipulated":
+                rejectionReason = "selfie_manipulated";
+                break;
+              case "selfie_unverified_other":
+                rejectionReason = "selfie_invalid";
+                break;
+              default:
+                rejectionReason = errorCode;
+            }
+
+            securityLog("info", "identity_requires_input_failed", undefined, {
+              eventId: event.id,
+              userId: lokroomUserId,
+              sessionId: vs.id,
+              errorCode,
+              rejectionReason,
+            });
+          } else {
+            // Pas d'erreur = en attente d'input utilisateur
+            newStatus = "PENDING";
+            securityLog("info", "identity_requires_input", undefined, {
+              eventId: event.id,
+              userId: lokroomUserId,
+              sessionId: vs.id,
+            });
           }
           break;
+
         case "processing":
-        case "requires_input":
-        default:
+          // ⏳ Vérification en cours (analyse approfondie par Stripe)
           newStatus = "PENDING";
+          securityLog("info", "identity_processing", undefined, {
+            eventId: event.id,
+            userId: lokroomUserId,
+            sessionId: vs.id,
+          });
+          break;
+
+        default:
+          // Statut inconnu - garder en PENDING par sécurité
+          newStatus = "PENDING";
+          securityLog("warn", "identity_unknown_status", undefined, {
+            eventId: event.id,
+            userId: lokroomUserId,
+            sessionId: vs.id,
+            status: vs.status,
+          });
           break;
       }
 
+      // Mise à jour de l'utilisateur
+      const updateData: {
+        identityStatus: typeof newStatus;
+        identityLastVerifiedAt?: Date;
+        identityRejectionReason?: string | null;
+      } = {
+        identityStatus: newStatus,
+      };
+
+      if (verifiedAt) {
+        updateData.identityLastVerifiedAt = verifiedAt;
+      }
+
+      // Note: Si tu veux stocker la raison du rejet, ajoute un champ
+      // identityRejectionReason dans le schema Prisma
+      // if (rejectionReason) {
+      //   updateData.identityRejectionReason = rejectionReason;
+      // }
+
       await prisma.user.updateMany({
         where,
-        data: {
-          identityStatus: newStatus,
-          identityLastVerifiedAt: verifiedAt ?? undefined,
-        },
+        data: updateData,
       });
     }
     /* eslint-enable @typescript-eslint/no-explicit-any */

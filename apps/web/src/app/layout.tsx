@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
 import "./globals.css";
 import Providers from "@/components/providers";
@@ -23,6 +23,14 @@ function getInitialLocale(): LocaleCode {
 
   return "fr";
 }
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  viewportFit: 'cover',
+};
 
 export const metadata: Metadata = {
   title: {
@@ -118,7 +126,7 @@ export default function RootLayout({
       data-locale={locale}
       className="h-full"
     >
-      <body className="min-h-screen bg-gradient-to-b from-[#f9fafb] via-white to-[#f3f4f6] text-gray-900 antialiased">
+      <body className="min-h-screen bg-white text-gray-900 antialiased relative">
         <Providers>
           <SkipLink />
           <Navbar />

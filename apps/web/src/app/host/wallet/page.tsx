@@ -35,9 +35,9 @@ export default function WalletPage() {
   const [error, setError] = useState<string | null>(null);
   const [payoutLoading, setPayoutLoading] = useState(false);
 
-  const fetchWallet = useCallback(async () => {
+  const fetchWallet = useCallback(async (signal?: AbortSignal) => {
     try {
-      const res = await fetch("/api/host/wallet");
+      const res = await fetch("/api/host/wallet", { signal });
       if (!res.ok) {
         const data = await res.json();
         if (data.error === "forbidden") {
@@ -49,6 +49,7 @@ export default function WalletPage() {
       const data = await res.json();
       setWallet(data);
     } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") return;
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
       setLoading(false);
@@ -62,7 +63,9 @@ export default function WalletPage() {
     }
 
     if (status === "authenticated") {
-      fetchWallet();
+      const controller = new AbortController();
+      fetchWallet(controller.signal);
+      return () => controller.abort();
     }
   }, [status, router, fetchWallet]);
 
@@ -117,14 +120,19 @@ export default function WalletPage() {
 
   if (error) {
     return (
-      <div className="mx-auto max-w-3xl px-4 py-10">
+      <div className="mx-auto max-w-3xl 2xl:max-w-4xl px-4 sm:px-6 py-10">
         <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
           <p className="text-red-600">{error}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              setError(null);
+              setLoading(true);
+              fetchWallet();
+            }}
+            aria-label="Reessayer le chargement"
             className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
           >
-            Réessayer
+            Reessayer
           </button>
         </div>
       </div>
@@ -162,6 +170,7 @@ export default function WalletPage() {
           <button
             onClick={handlePayout}
             disabled={payoutLoading || balance <= 0}
+            aria-label="Retirer les fonds vers mon compte bancaire"
             className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {payoutLoading ? (

@@ -1,6 +1,7 @@
 // apps/web/src/components/EditListingImages.tsx
 "use client";
 
+import Image from "next/image";
 import {
   useState,
   useMemo,
@@ -429,11 +430,15 @@ export default function EditListingImages({
                   onDrop={() => handleExistingDrop(index)}
                   onDragEnd={handleExistingDragEnd}
                 >
-                  <img
-                    src={im.url}
-                    alt=""
-                    className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03]"
-                  />
+                  <div className="relative h-full w-full">
+                    <Image
+                      src={im.url}
+                      alt={`Image ${index + 1} de l'annonce`}
+                      fill
+                      className="object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03]"
+                      sizes="144px"
+                    />
+                  </div>
 
                   <button
                     type="button"
@@ -532,10 +537,11 @@ export default function EditListingImages({
                   onDrop={() => handleFileDrop(i)}
                   onDragEnd={handleFileDragEnd}
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- blob URL with onLoad cleanup */}
                   <img
                     src={URL.createObjectURL(f)}
                     className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03]"
-                    alt=""
+                    alt={`Nouvelle image ${i + 1}`}
                     onLoad={(e) =>
                       URL.revokeObjectURL(
                         (e.target as HTMLImageElement).src

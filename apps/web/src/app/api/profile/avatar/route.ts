@@ -81,20 +81,7 @@ function validateImageUrl(url: string): { valid: boolean; error?: string } {
     };
   }
 
-  // Vérifier l'extension du fichier (optionnel mais recommandé)
-  const allowedExtensions = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
-  const pathname = parsed.pathname.toLowerCase();
-  const hasValidExtension = allowedExtensions.some((ext) =>
-    pathname.endsWith(ext)
-  );
-
   // On n'impose pas l'extension car certains CDN utilisent des URLs sans extension
-  // mais on le log pour monitoring
-  if (!hasValidExtension && !pathname.includes("/avatar")) {
-    console.log(
-      `[INFO] Avatar URL sans extension image standard: ${parsed.host}${parsed.pathname.slice(0, 50)}`
-    );
-  }
 
   return { valid: true };
 }

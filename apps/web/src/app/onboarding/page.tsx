@@ -89,8 +89,8 @@ export default async function OnboardingPage({
   const returnFromStripe = searchParams.identity === "complete" || searchParams.connect === "complete";
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md rounded-3xl bg-white shadow-lg p-6">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 sm:px-6">
+      <div className="w-full max-w-md 2xl:max-w-lg rounded-3xl bg-white shadow-lg p-6 sm:p-8">
         <h1 className="text-xl font-semibold mb-1">
           {t.title}
         </h1>

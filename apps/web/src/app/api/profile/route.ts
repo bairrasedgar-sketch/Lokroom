@@ -31,6 +31,18 @@ export async function PATCH(req: Request) {
     postalCode,
     country,
     province,
+    // Adresse postale
+    postalAddressLine1,
+    postalAddressLine2,
+    postalAddressCity,
+    postalAddressPostalCode,
+    postalAddressCountry,
+    postalAddressProvince,
+    postalAddressSameAsResidential,
+    // Contact d'urgence
+    emergencyContactName,
+    emergencyContactPhone,
+    emergencyContactRelation,
   } = validation.data;
 
   // SÉCURITÉ: On ne permet JAMAIS de modifier le role via cette route
@@ -53,6 +65,18 @@ export async function PATCH(req: Request) {
             postalCode: postalCode ?? "",
             country: country ?? "",
             province: province ?? "",
+            // Adresse postale
+            postalAddressLine1: postalAddressLine1 ?? "",
+            postalAddressLine2: postalAddressLine2 ?? "",
+            postalAddressCity: postalAddressCity ?? "",
+            postalAddressPostalCode: postalAddressPostalCode ?? "",
+            postalAddressCountry: postalAddressCountry ?? "",
+            postalAddressProvince: postalAddressProvince ?? "",
+            postalAddressSameAsResidential: postalAddressSameAsResidential ?? true,
+            // Contact d'urgence
+            emergencyContactName: emergencyContactName ?? "",
+            emergencyContactPhone: emergencyContactPhone ?? "",
+            emergencyContactRelation: emergencyContactRelation ?? "",
           },
           update: {
             ...(firstName !== undefined ? { firstName } : {}),
@@ -64,6 +88,18 @@ export async function PATCH(req: Request) {
             ...(postalCode !== undefined ? { postalCode } : {}),
             ...(country !== undefined ? { country } : {}),
             ...(province !== undefined ? { province } : {}),
+            // Adresse postale
+            ...(postalAddressLine1 !== undefined ? { postalAddressLine1 } : {}),
+            ...(postalAddressLine2 !== undefined ? { postalAddressLine2 } : {}),
+            ...(postalAddressCity !== undefined ? { postalAddressCity } : {}),
+            ...(postalAddressPostalCode !== undefined ? { postalAddressPostalCode } : {}),
+            ...(postalAddressCountry !== undefined ? { postalAddressCountry } : {}),
+            ...(postalAddressProvince !== undefined ? { postalAddressProvince } : {}),
+            ...(postalAddressSameAsResidential !== undefined ? { postalAddressSameAsResidential } : {}),
+            // Contact d'urgence
+            ...(emergencyContactName !== undefined ? { emergencyContactName } : {}),
+            ...(emergencyContactPhone !== undefined ? { emergencyContactPhone } : {}),
+            ...(emergencyContactRelation !== undefined ? { emergencyContactRelation } : {}),
           },
         },
       },
@@ -74,7 +110,7 @@ export async function PATCH(req: Request) {
   return NextResponse.json({ user });
 }
 
-// GET /api/profile → retourne le profil utilisateur
+// GET /api/profile → retourne le profil utilisateur avec statut d'identité
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {

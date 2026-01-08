@@ -50,7 +50,6 @@ export default function GoogleMapsLoader({
         src={`https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`}
         strategy="afterInteractive"
         onLoad={() => {
-          console.log("Google Maps API loaded globally");
           setIsLoaded(true);
         }}
         onError={(e) => {

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   UsersIcon,
   HomeModernIcon,
@@ -112,29 +113,31 @@ export default function AdminDashboard() {
   const [statusData, setStatusData] = useState<StatusData[]>([]);
   const [chartLoading, setChartLoading] = useState(true);
 
-  const fetchDashboard = useCallback(async () => {
+  const fetchDashboard = useCallback(async (signal?: AbortSignal) => {
     try {
-      const res = await fetch("/api/admin/analytics/dashboard");
+      const res = await fetch("/api/admin/analytics/dashboard", { signal });
       const data = await res.json();
       if (data.stats) setStats(data.stats);
       if (data.activities) setActivities(data.activities);
       if (data.pendingItems) setPendingItems(data.pendingItems);
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return;
       console.error("Error fetching dashboard:", error);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const fetchChartData = useCallback(async () => {
+  const fetchChartData = useCallback(async (signal?: AbortSignal) => {
     setChartLoading(true);
     try {
-      const res = await fetch(`/api/admin/analytics/charts?period=${chartPeriod}`);
+      const res = await fetch(`/api/admin/analytics/charts?period=${chartPeriod}`, { signal });
       const data = await res.json();
       if (data.chartData) setChartData(data.chartData);
       if (data.topListings) setTopListings(data.topListings);
       if (data.statusData) setStatusData(data.statusData);
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return;
       console.error("Error fetching charts:", error);
     } finally {
       setChartLoading(false);
@@ -142,14 +145,20 @@ export default function AdminDashboard() {
   }, [chartPeriod]);
 
   useEffect(() => {
-    fetchDashboard();
+    const controller = new AbortController();
+    fetchDashboard(controller.signal);
     // Refresh every 30 seconds
-    const interval = setInterval(fetchDashboard, 30000);
-    return () => clearInterval(interval);
+    const interval = setInterval(() => fetchDashboard(), 30000);
+    return () => {
+      controller.abort();
+      clearInterval(interval);
+    };
   }, [fetchDashboard]);
 
   useEffect(() => {
-    fetchChartData();
+    const controller = new AbortController();
+    fetchChartData(controller.signal);
+    return () => controller.abort();
   }, [fetchChartData]);
 
   const formatCurrency = (amount: number, currency = "EUR") => {
@@ -194,6 +203,7 @@ export default function AdminDashboard() {
         </div>
         <button
           onClick={() => { fetchDashboard(); fetchChartData(); }}
+          aria-label="Actualiser le tableau de bord"
           className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
         >
           <ArrowPathIcon className="h-4 w-4" />
@@ -313,6 +323,7 @@ export default function AdminDashboard() {
           <select
             value={chartPeriod}
             onChange={(e) => setChartPeriod(e.target.value)}
+            aria-label="Selectionner la periode des graphiques"
             className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
           >
             <option value="7">7 derniers jours</option>

@@ -193,18 +193,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 transform bg-white shadow-xl transition-transform duration-300 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 md:w-72 transform bg-white shadow-xl transition-transform duration-300 lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* Logo */}
-        <div className="flex h-16 items-center justify-between border-b border-gray-200 px-6">
+        <div className="flex h-14 md:h-16 items-center justify-between border-b border-gray-200 px-4 md:px-6">
           <Link href="/admin" className="flex items-center gap-2">
-            <ShieldCheckIcon className="h-8 w-8 text-red-500" />
-            <span className="text-xl font-bold text-gray-900">Lok&apos;Room Admin</span>
+            <ShieldCheckIcon className="h-6 w-6 md:h-8 md:w-8 text-red-500" />
+            <span className="text-lg md:text-xl font-bold text-gray-900">Lok&apos;Room Admin</span>
           </Link>
           <button
             onClick={() => setSidebarOpen(false)}
+            aria-label="Fermer le menu"
             className="lg:hidden text-gray-500 hover:text-gray-700"
           >
             <XMarkIcon className="h-6 w-6" />
@@ -212,16 +213,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         {/* User info */}
-        <div className="border-b border-gray-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white font-semibold">
+        <div className="border-b border-gray-200 p-3 md:p-4">
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white font-semibold text-sm md:text-base">
               {user?.name?.charAt(0) || "A"}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
+              <p className="text-xs md:text-sm font-medium text-gray-900 truncate">
                 {user?.name || "Admin"}
               </p>
-              <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${ROLE_COLORS[userRole as AdminRole] || "bg-gray-100 text-gray-800"}`}>
+              <span className={`inline-flex items-center px-1.5 md:px-2 py-0.5 rounded text-[10px] md:text-xs font-medium ${ROLE_COLORS[userRole as AdminRole] || "bg-gray-100 text-gray-800"}`}>
                 {ROLE_LABELS[userRole as AdminRole] || userRole}
               </span>
             </div>
@@ -229,7 +230,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+        <nav className="flex-1 overflow-y-auto p-3 md:p-4 space-y-1">
           {filteredNav.map((item) => {
             const isActive = pathname === item.href ||
               (item.href !== "/admin" && pathname?.startsWith(item.href));
@@ -238,21 +239,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex items-center gap-2 md:gap-3 px-2 md:px-3 py-2 md:py-2.5 rounded-lg text-xs md:text-sm font-medium transition-colors ${
                   isActive
                     ? "bg-red-50 text-red-700"
                     : "text-gray-700 hover:bg-gray-100"
                 }`}
               >
-                <item.icon className={`h-5 w-5 ${isActive ? "text-red-500" : "text-gray-400"}`} />
-                {item.name}
+                <item.icon className={`h-4 w-4 md:h-5 md:w-5 flex-shrink-0 ${isActive ? "text-red-500" : "text-gray-400"}`} />
+                <span className="truncate">{item.name}</span>
                 {item.name === "Litiges" && stats.openDisputes > 0 && (
-                  <span className="ml-auto bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                  <span className="ml-auto bg-red-500 text-white text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 rounded-full">
                     {stats.openDisputes}
                   </span>
                 )}
                 {item.name === "Annonces" && stats.pendingListings > 0 && (
-                  <span className="ml-auto bg-yellow-500 text-white text-xs px-2 py-0.5 rounded-full">
+                  <span className="ml-auto bg-yellow-500 text-white text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 rounded-full">
                     {stats.pendingListings}
                   </span>
                 )}
@@ -262,48 +263,49 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </nav>
 
         {/* Bottom actions */}
-        <div className="border-t border-gray-200 p-4 space-y-2">
+        <div className="border-t border-gray-200 p-3 md:p-4 space-y-1 md:space-y-2">
           <Link
             href="/"
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-2 md:gap-3 px-2 md:px-3 py-2 md:py-2.5 rounded-lg text-xs md:text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
           >
-            <HomeIcon className="h-5 w-5 text-gray-400" />
+            <HomeIcon className="h-4 w-4 md:h-5 md:w-5 text-gray-400" />
             Retour au site
           </Link>
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+            className="w-full flex items-center gap-2 md:gap-3 px-2 md:px-3 py-2 md:py-2.5 rounded-lg text-xs md:text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
           >
-            <ArrowRightOnRectangleIcon className="h-5 w-5" />
+            <ArrowRightOnRectangleIcon className="h-4 w-4 md:h-5 md:w-5" />
             Déconnexion
           </button>
         </div>
       </aside>
 
       {/* Main content */}
-      <div className="lg:pl-72">
+      <div className="lg:pl-64 xl:pl-72 2xl:pl-72 min-w-0">
         {/* Top bar */}
         <header className="sticky top-0 z-30 bg-white border-b border-gray-200">
-          <div className="flex h-16 items-center gap-4 px-4 sm:px-6">
+          <div className="flex h-14 md:h-16 items-center gap-2 md:gap-4 px-3 sm:px-4 md:px-6">
             {/* Mobile menu button */}
             <button
               onClick={() => setSidebarOpen(true)}
+              aria-label="Ouvrir le menu"
               className="lg:hidden text-gray-500 hover:text-gray-700"
             >
               <Bars3Icon className="h-6 w-6" />
             </button>
 
             {/* Search */}
-            <form onSubmit={handleSearch} className="flex-1 max-w-lg relative">
+            <form onSubmit={handleSearch} className="flex-1 max-w-xs sm:max-w-sm md:max-w-lg relative">
               <div className="relative">
-                <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <MagnifyingGlassIcon className="absolute left-2.5 md:left-3 top-1/2 -translate-y-1/2 h-4 w-4 md:h-5 md:w-5 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Rechercher utilisateur, annonce, réservation..."
+                  placeholder="Rechercher..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => searchResults && setShowSearchResults(true)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  className="w-full pl-8 md:pl-10 pr-3 md:pr-4 py-1.5 md:py-2 border border-gray-300 rounded-lg text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                 />
                 {searchLoading && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -396,6 +398,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <div className="relative">
                 <button
                   onClick={() => setShowAlerts(!showAlerts)}
+                  aria-label="Afficher les alertes"
+                  aria-expanded={showAlerts}
                   className="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
                 >
                   <BellIcon className="h-6 w-6" />
@@ -408,7 +412,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
                 {/* Alerts dropdown */}
                 {showAlerts && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+                  <div className="absolute right-0 mt-2 w-64 sm:w-72 md:w-80 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
                     <div className="p-3 border-b border-gray-200 bg-gray-50">
                       <h3 className="font-semibold text-gray-900">Alertes</h3>
                     </div>
@@ -459,7 +463,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* Page content */}
-        <main className="p-4 sm:p-6 lg:p-8">
+        <main className="p-4 sm:p-6 lg:p-8 xl:p-10 2xl:p-12 max-w-[2000px] 3xl:max-w-[2400px] mx-auto">
           {children}
         </main>
       </div>

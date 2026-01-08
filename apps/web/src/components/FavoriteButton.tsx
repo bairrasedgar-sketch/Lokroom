@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect, useRef } from "react";
 import { useSession, signIn } from "next-auth/react";
 import { toast } from "sonner";
 import WishlistModal from "./WishlistModal";
@@ -20,11 +20,23 @@ export default function FavoriteButton({
   variant?: "default" | "map" | "card";
 }) {
   const { status } = useSession();
-  const { isFavorited, addFavorite, removeFavorite } = useFavorites();
+  const { isFavorited, addFavorite, removeFavorite, openModalForListing, setOpenModalForListing } = useFavorites();
   const [isPending, startTransition] = useTransition();
   const [isAnimating, setIsAnimating] = useState(false);
   const [particles, setParticles] = useState<number[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const animationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup du timeout d'animation au démontage
+  useEffect(() => {
+    return () => {
+      if (animationTimeoutRef.current) {
+        clearTimeout(animationTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Utiliser l'état du context pour savoir si ce modal est ouvert
+  const isModalOpen = openModalForListing === listingId;
 
   // Utiliser l'état du context
   const favorited = isFavorited(listingId);
@@ -60,7 +72,7 @@ export default function FavoriteButton({
 
     // Si pas encore en favoris, on ouvre le modal pour choisir la liste
     if (showModal) {
-      setIsModalOpen(true);
+      setOpenModalForListing(listingId);
     } else {
       // Mode simple sans modal
       triggerAnimation();
@@ -110,6 +122,7 @@ export default function FavoriteButton({
       <button
         onClick={handleClick}
         aria-label={favorited ? "Retirer des favoris" : "Ajouter aux favoris"}
+        aria-pressed={favorited}
         disabled={isPending}
         className={`lokroom-heart-btn relative rounded-full transition-all duration-200 ${buttonStyles[variant]} ${className}`}
         title={favorited ? "Retirer des favoris" : "Ajouter aux favoris"}
@@ -194,7 +207,7 @@ export default function FavoriteButton({
       {/* Modal wishlist */}
       <WishlistModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => setOpenModalForListing(null)}
         listingId={listingId}
         onSaved={handleSaved}
       />

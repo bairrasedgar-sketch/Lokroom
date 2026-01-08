@@ -68,6 +68,15 @@ export async function POST(req: Request) {
         return_url: `${origin}/account?tab=security`,
       });
 
+    // Sauvegarder l'ID de session et mettre le statut en PENDING
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        identityStripeSessionId: verificationSession.id,
+        identityStatus: "PENDING",
+      },
+    });
+
     return NextResponse.json({ url: verificationSession.url });
   } catch (err) {
     console.error("Erreur création session Stripe Identity:", err);

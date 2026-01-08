@@ -29,6 +29,40 @@ import { useRealtimeMessages, useTypingIndicator } from "@/lib/realtime";
 // Support bot ID
 const SUPPORT_BOT_ID = "lokroom-support";
 
+// Fonction pour convertir les liens markdown [texte](url) en éléments cliquables
+function parseMarkdownLinks(text: string): React.ReactNode[] {
+  const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = linkRegex.exec(text)) !== null) {
+    // Ajouter le texte avant le lien
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+    // Ajouter le lien
+    const [, linkText, url] = match;
+    parts.push(
+      <Link
+        key={`link-${match.index}`}
+        href={url}
+        className="font-medium text-violet-600 underline hover:text-violet-800 transition-colors"
+      >
+        {linkText}
+      </Link>
+    );
+    lastIndex = match.index + match[0].length;
+  }
+
+  // Ajouter le texte restant après le dernier lien
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  return parts.length > 0 ? parts : [text];
+}
+
 // Types
 type Conversation = {
   id: string;
@@ -168,31 +202,35 @@ export default function MessagesPage() {
   }, [searchParams]);
 
   // Fetch conversations
-  const fetchConversations = useCallback(async () => {
+  const fetchConversations = useCallback(async (signal?: AbortSignal) => {
     try {
-      const res = await fetch("/api/messages/conversations");
+      const res = await fetch("/api/messages/conversations", { signal });
       if (res.ok) {
         const data = await res.json();
         setConversations(data.conversations || []);
       }
     } catch (error) {
-      console.error("Error fetching conversations:", error);
+      if ((error as Error).name !== 'AbortError') {
+        console.error("Error fetching conversations:", error);
+      }
     } finally {
       setLoading(false);
     }
   }, []);
 
   // Fetch messages for selected conversation
-  const fetchMessages = useCallback(async (convId: string) => {
+  const fetchMessages = useCallback(async (convId: string, signal?: AbortSignal) => {
     setLoadingMessages(true);
     try {
-      const res = await fetch(`/api/messages/list?conversationId=${convId}`);
+      const res = await fetch(`/api/messages/list?conversationId=${convId}`, { signal });
       if (res.ok) {
         const data = await res.json();
         setMessages(data.messages || []);
       }
     } catch (error) {
-      console.error("Error fetching messages:", error);
+      if ((error as Error).name !== 'AbortError') {
+        console.error("Error fetching messages:", error);
+      }
     } finally {
       setLoadingMessages(false);
     }
@@ -201,7 +239,9 @@ export default function MessagesPage() {
   // Initial load
   useEffect(() => {
     if (status === "authenticated") {
-      fetchConversations();
+      const controller = new AbortController();
+      fetchConversations(controller.signal);
+      return () => controller.abort();
     }
   }, [status, fetchConversations]);
 
@@ -230,7 +270,9 @@ Posez-moi vos questions sur :
       ]);
     } else if (selectedConvId) {
       setBotMessages([]);
-      fetchMessages(selectedConvId);
+      const controller = new AbortController();
+      fetchMessages(selectedConvId, controller.signal);
+      return () => controller.abort();
     }
   }, [selectedConvId, fetchMessages]);
 
@@ -245,10 +287,30 @@ Posez-moi vos questions sur :
     return () => clearInterval(interval);
   }, [selectedConvId, fetchMessages]);
 
-  // Scroll to bottom on new messages
+  // Scroll to bottom on new messages - only scroll within the messages container
+  const scrollToBottom = useCallback(() => {
+    if (messagesEndRef.current) {
+      // Scroll only within the parent container, not the whole page
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+  }, []);
+
+  // Scroll when messages change, but only if we're near the bottom already
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, botMessages]);
+    const container = messagesContainerRef.current;
+    if (!container) {
+      scrollToBottom();
+      return;
+    }
+
+    // Only auto-scroll if user is near the bottom (within 150px)
+    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 150;
+    if (isNearBottom) {
+      scrollToBottom();
+    }
+  }, [messages, botMessages, scrollToBottom]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -492,11 +554,11 @@ Posez-moi vos questions sur :
   }
 
   return (
-    <main className="h-[calc(100vh-64px)] bg-white">
-      <div className="mx-auto flex h-full max-w-7xl">
+    <main className="h-[calc(100vh-64px)] sm:h-[calc(100vh-72px)] bg-white">
+      <div className="mx-auto flex h-full max-w-7xl 2xl:max-w-[1600px] 3xl:max-w-[1920px]">
         {/* Sidebar - Conversations List */}
         <aside
-          className={`flex h-full w-full flex-col border-r border-gray-100 bg-white lg:w-[400px] ${
+          className={`flex h-full w-full flex-col border-r border-gray-100 bg-white lg:w-[400px] xl:w-[420px] 2xl:w-[450px] ${
             showMobileChat ? "hidden lg:flex" : "flex"
           }`}
         >
@@ -930,7 +992,7 @@ Posez-moi vos questions sur :
               )}
 
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto px-4 py-6 lg:px-6">
+              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-6 lg:px-6">
                 {/* Bot Messages */}
                 {selectedConvId === SUPPORT_BOT_ID ? (
                   <div className="space-y-4">
@@ -960,7 +1022,7 @@ Posez-moi vos questions sur :
                             }`}
                           >
                             <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
-                              {msg.content}
+                              {msg.isBot ? parseMarkdownLinks(msg.content) : msg.content}
                             </p>
                           </div>
 
@@ -1050,7 +1112,7 @@ Posez-moi vos questions sur :
                                 (msg.sender.profile?.avatarUrl ? (
                                   <Image
                                     src={msg.sender.profile.avatarUrl}
-                                    alt=""
+                                    alt={`Avatar de ${msg.sender.name || 'utilisateur'}`}
                                     width={32}
                                     height={32}
                                     className="h-8 w-8 rounded-full object-cover"
@@ -1227,7 +1289,7 @@ Posez-moi vos questions sur :
         </section>
 
         {/* Right Panel - Details (Desktop only) */}
-        <aside className="hidden w-[320px] flex-col border-l border-gray-100 bg-white xl:flex">
+        <aside className="hidden w-[320px] xl:w-[360px] 2xl:w-[400px] flex-col border-l border-gray-100 bg-white xl:flex">
           {selectedConv ? (
             <div className="flex h-full flex-col overflow-y-auto">
               {/* Profile Section */}

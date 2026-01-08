@@ -84,6 +84,7 @@ export function LanguageCurrencyModal({ open, onClose }: Props) {
           </h2>
           <button
             type="button"
+            aria-label="Fermer"
             className="text-gray-500 hover:text-gray-800"
             onClick={onClose}
           >

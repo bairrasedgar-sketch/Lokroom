@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, type ReactNode } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import PaymentsPage from "./payments/page";
 import useTranslation from "@/hooks/useTranslation";
@@ -139,7 +139,7 @@ function maskName(name: string): string {
 }
 
 // ---------- Carte "Connexion & sécurité" AMÉLIORÉE ----------
-function SecurityTabContent({ t }: { t: AccountTranslations }) {
+function SecurityTabContent({ t, router }: { t: AccountTranslations; router: ReturnType<typeof useRouter> }) {
   const secT = t.securitySection;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const extT = t.securityExtended || {} as any;
@@ -170,10 +170,11 @@ function SecurityTabContent({ t }: { t: AccountTranslations }) {
 
   // Charger le statut et synchroniser si nécessaire
   useEffect(() => {
+    const controller = new AbortController();
     const loadAndSyncStatus = async () => {
       try {
         setLoadingStatus(true);
-        const res = await fetch("/api/account/security/status");
+        const res = await fetch("/api/account/security/status", { signal: controller.signal });
         if (!res.ok) return;
         const data = (await res.json()) as IdentityStatusResponse & { phone?: string; phoneVerified?: boolean; email?: string };
         const currentStatus = data.identityStatus ?? "UNVERIFIED";
@@ -195,6 +196,7 @@ function SecurityTabContent({ t }: { t: AccountTranslations }) {
           try {
             const syncRes = await fetch("/api/account/security/refresh-identity", {
               method: "POST",
+              signal: controller.signal,
             });
             if (syncRes.ok) {
               const syncData = await syncRes.json();
@@ -206,22 +208,27 @@ function SecurityTabContent({ t }: { t: AccountTranslations }) {
               }
             }
           } catch (e) {
-            console.error("Erreur sync status:", e);
+            if ((e as Error).name !== 'AbortError') {
+              console.error("Erreur sync status:", e);
+            }
           } finally {
             setSyncing(false);
           }
         }
       } catch (e) {
-        console.error("Erreur chargement statut identité:", e);
+        if ((e as Error).name !== 'AbortError') {
+          console.error("Erreur chargement statut identité:", e);
+        }
       } finally {
         setLoadingStatus(false);
       }
     };
 
     void loadAndSyncStatus();
+    return () => controller.abort();
   }, []);
 
-  const handleStartIdentity = async () => {
+  const handleStartIdentity = useCallback(async () => {
     try {
       setStartingIdentity(true);
       const res = await fetch("/api/identity/start", {
@@ -236,7 +243,7 @@ function SecurityTabContent({ t }: { t: AccountTranslations }) {
 
       const data = (await res.json()) as { url: string };
       if (data.url) {
-        window.location.href = data.url;
+        router.push(data.url);
       } else {
         setStartingIdentity(false);
       }
@@ -244,7 +251,7 @@ function SecurityTabContent({ t }: { t: AccountTranslations }) {
       console.error("Erreur Identity:", e);
       setStartingIdentity(false);
     }
-  };
+  }, [router]);
 
   const handleSendPhoneCode = async () => {
     setSendingCode(true);
@@ -500,7 +507,7 @@ function SecurityTabContent({ t }: { t: AccountTranslations }) {
             </div>
           </div>
 
-          <div className="flex shrink-0 items-start">
+          <div className="flex shrink-0 flex-col items-end gap-2">
             <button
               type="button"
               onClick={handleStartIdentity}
@@ -518,13 +525,44 @@ function SecurityTabContent({ t }: { t: AccountTranslations }) {
             >
               {startingIdentity ? secT.redirecting : buttonLabel}
             </button>
+
+            {/* Bouton de synchronisation manuelle pour PENDING */}
+            {status === "PENDING" && !syncing && (
+              <button
+                type="button"
+                onClick={async () => {
+                  setSyncing(true);
+                  try {
+                    const syncRes = await fetch("/api/account/security/refresh-identity", {
+                      method: "POST",
+                    });
+                    if (syncRes.ok) {
+                      const syncData = await syncRes.json();
+                      if (syncData.identityStatus) {
+                        setStatus(syncData.identityStatus);
+                        if (syncData.identityLastVerifiedAt) {
+                          setLastVerifiedAt(syncData.identityLastVerifiedAt);
+                        }
+                      }
+                    }
+                  } catch (e) {
+                    console.error("Erreur sync:", e);
+                  } finally {
+                    setSyncing(false);
+                  }
+                }}
+                className="text-xs text-gray-500 underline hover:text-gray-700"
+              >
+                {secT.refreshStatus || "Actualiser le statut"}
+              </button>
+            )}
           </div>
         </div>
       </div>
 
       {/* Modal Téléphone */}
       {showPhoneModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" role="dialog" aria-modal="true" aria-labelledby="phone-modal-title">
           <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
             <button
               type="button"
@@ -534,19 +572,21 @@ function SecurityTabContent({ t }: { t: AccountTranslations }) {
                 setVerificationCode("");
               }}
               className="absolute right-4 top-4 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              aria-label="Fermer la modale"
             >
               <XMarkIcon className="h-5 w-5" />
             </button>
 
             {phoneStep === "input" ? (
               <>
-                <h3 className="text-lg font-semibold text-gray-900">{extT.phoneModalTitle || "Ajouter votre numéro"}</h3>
+                <h3 id="phone-modal-title" className="text-lg font-semibold text-gray-900">{extT.phoneModalTitle || "Ajouter votre numéro"}</h3>
                 <p className="mt-1 text-sm text-gray-500">{extT.phoneModalDesc || "Vous recevrez un code de vérification par SMS."}</p>
 
                 <div className="mt-6 space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{extT.phoneLabel || "Numéro de téléphone"}</label>
+                    <label htmlFor="phone-input" className="block text-sm font-medium text-gray-700">{extT.phoneLabel || "Numéro de téléphone"}</label>
                     <input
+                      id="phone-input"
                       type="tel"
                       value={phoneInput}
                       onChange={(e) => {
@@ -568,6 +608,7 @@ function SecurityTabContent({ t }: { t: AccountTranslations }) {
                         }
                       }}
                       placeholder={extT.phonePlaceholder || "+33 6 12 34 56 78"}
+                      aria-label="Numéro de téléphone"
                       className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     />
                   </div>
@@ -584,18 +625,20 @@ function SecurityTabContent({ t }: { t: AccountTranslations }) {
               </>
             ) : (
               <>
-                <h3 className="text-lg font-semibold text-gray-900">{extT.verifyModalTitle || "Vérifier votre numéro"}</h3>
+                <h3 id="phone-modal-title" className="text-lg font-semibold text-gray-900">{extT.verifyModalTitle || "Vérifier votre numéro"}</h3>
                 <p className="mt-1 text-sm text-gray-500">{extT.verifyModalDesc || "Entrez le code envoyé au"} {phoneInput}</p>
 
                 <div className="mt-6 space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{extT.codeLabel || "Code de vérification"}</label>
+                    <label htmlFor="verification-code" className="block text-sm font-medium text-gray-700">{extT.codeLabel || "Code de vérification"}</label>
                     <input
+                      id="verification-code"
                       type="text"
                       value={verificationCode}
                       onChange={(e) => setVerificationCode(e.target.value)}
                       placeholder={extT.codePlaceholder || "123456"}
                       maxLength={6}
+                      aria-label="Code de vérification"
                       className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2.5 text-center text-lg tracking-widest focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     />
                   </div>
@@ -625,7 +668,7 @@ function SecurityTabContent({ t }: { t: AccountTranslations }) {
 
       {/* Modal Mot de passe */}
       {showPasswordModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" role="dialog" aria-modal="true" aria-labelledby="password-modal-title">
           <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
             <button
               type="button"
@@ -637,11 +680,12 @@ function SecurityTabContent({ t }: { t: AccountTranslations }) {
                 setConfirmPassword("");
               }}
               className="absolute right-4 top-4 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              aria-label="Fermer la modale"
             >
               <XMarkIcon className="h-5 w-5" />
             </button>
 
-            <h3 className="text-lg font-semibold text-gray-900">{extT.passwordModalTitle || "Modifier votre mot de passe"}</h3>
+            <h3 id="password-modal-title" className="text-lg font-semibold text-gray-900">{extT.passwordModalTitle || "Modifier votre mot de passe"}</h3>
 
             {passwordError && (
               <div className="mt-2 rounded-lg bg-red-50 p-3 text-sm text-red-600">
@@ -670,13 +714,15 @@ function SecurityTabContent({ t }: { t: AccountTranslations }) {
                 <p className="mt-1 text-sm text-gray-500">{extT.emailCodeDesc || "Entrez le code reçu par e-mail."}</p>
                 <div className="mt-6 space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{extT.codeLabel || "Code"}</label>
+                    <label htmlFor="email-code" className="block text-sm font-medium text-gray-700">{extT.codeLabel || "Code"}</label>
                     <input
+                      id="email-code"
                       type="text"
                       value={emailCode}
                       onChange={(e) => setEmailCode(e.target.value)}
                       placeholder="123456"
                       maxLength={6}
+                      aria-label="Code de vérification par e-mail"
                       className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2.5 text-center text-lg tracking-widest focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     />
                   </div>
@@ -731,18 +777,212 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const extT = t.personalExtended || {} as any;
 
-  // Données simulées (à remplacer par des vraies données API)
-  const [userData] = useState({
-    legalName: "Jean Dupont",
+  // Données réelles chargées depuis l'API
+  const [loading, setLoading] = useState(true);
+  const [userData, setUserData] = useState({
+    legalName: "",
+    firstName: "",
+    lastName: "",
     chosenName: "",
-    email: "jean.dupont@gmail.com",
-    phone: "+33 6 12 34 74 76",
-    phoneVerified: true,
-    identityStatus: "VERIFIED" as IdentityStatus,
-    residentialAddress: "123 Rue de Paris, 75001 Paris",
-    postalAddress: "123 Rue de Paris, 75001 Paris",
-    emergencyContact: "Marie Dupont",
+    email: "",
+    phone: "",
+    phoneVerified: false,
+    identityStatus: "UNVERIFIED" as IdentityStatus,
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    postalCode: "",
+    country: "",
+    province: "",
+    // Adresse postale
+    postalAddressLine1: "",
+    postalAddressLine2: "",
+    postalAddressCity: "",
+    postalAddressPostalCode: "",
+    postalAddressCountry: "",
+    postalAddressProvince: "",
+    postalAddressSameAsResidential: true,
+    // Contact d'urgence
+    emergencyContactName: "",
+    emergencyContactPhone: "",
+    emergencyContactRelation: "",
   });
+
+  // États d'édition
+  const [editingField, setEditingField] = useState<string | null>(null);
+  const [editValues, setEditValues] = useState<Record<string, string | boolean>>({});
+  const [saving, setSaving] = useState(false);
+
+  // Charger les données depuis l'API
+  useEffect(() => {
+    const controller = new AbortController();
+    const fetchProfile = async () => {
+      try {
+        // Charger le profil et le statut d'identité en parallèle
+        const [profileRes, identityRes] = await Promise.all([
+          fetch("/api/profile", { cache: "no-store", signal: controller.signal }),
+          fetch("/api/account/security/status", { cache: "no-store", signal: controller.signal }),
+        ]);
+
+        let identityStatus: IdentityStatus = "UNVERIFIED";
+        if (identityRes.ok) {
+          const identityData = await identityRes.json();
+          identityStatus = identityData.identityStatus ?? "UNVERIFIED";
+        }
+
+        if (!profileRes.ok) {
+          setLoading(false);
+          return;
+        }
+        const data = await profileRes.json();
+        const user = data.user;
+        const profile = user?.profile || {};
+
+        setUserData({
+          legalName: `${profile.firstName || ""} ${profile.lastName || ""}`.trim() || user?.name || "",
+          firstName: profile.firstName || "",
+          lastName: profile.lastName || "",
+          chosenName: user?.name || "",
+          email: user?.email || "",
+          phone: profile.phone || "",
+          phoneVerified: false,
+          identityStatus: user?.identityStatus || identityStatus,
+          addressLine1: profile.addressLine1 || "",
+          addressLine2: profile.addressLine2 || "",
+          city: profile.city || "",
+          postalCode: profile.postalCode || "",
+          country: profile.country || "",
+          province: profile.province || "",
+          // Adresse postale
+          postalAddressLine1: profile.postalAddressLine1 || "",
+          postalAddressLine2: profile.postalAddressLine2 || "",
+          postalAddressCity: profile.postalAddressCity || "",
+          postalAddressPostalCode: profile.postalAddressPostalCode || "",
+          postalAddressCountry: profile.postalAddressCountry || "",
+          postalAddressProvince: profile.postalAddressProvince || "",
+          postalAddressSameAsResidential: profile.postalAddressSameAsResidential ?? true,
+          // Contact d'urgence
+          emergencyContactName: profile.emergencyContactName || "",
+          emergencyContactPhone: profile.emergencyContactPhone || "",
+          emergencyContactRelation: profile.emergencyContactRelation || "",
+        });
+      } catch (e) {
+        if ((e as Error).name !== 'AbortError') {
+          console.error("Erreur chargement profil:", e);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void fetchProfile();
+    return () => controller.abort();
+  }, []);
+
+  const startEditing = (field: string, currentValue: string | boolean) => {
+    setEditingField(field);
+    setEditValues({ ...editValues, [field]: currentValue });
+  };
+
+  const cancelEditing = () => {
+    setEditingField(null);
+    setEditValues({});
+  };
+
+  const saveField = async (field: string) => {
+    setSaving(true);
+    try {
+      const payload: Record<string, string | boolean> = {};
+
+      // Mapper les champs au format API
+      switch (field) {
+        case "legalName": {
+          // Utiliser firstName et lastName directement depuis editValues
+          payload.firstName = (editValues.firstName as string) ?? userData.firstName ?? "";
+          payload.lastName = (editValues.lastName as string) ?? userData.lastName ?? "";
+          break;
+        }
+        case "chosenName":
+          payload.name = (editValues.chosenName as string) ?? (editValues[field] as string) ?? "";
+          break;
+        case "phone":
+          payload.phone = (editValues.phone as string) ?? (editValues[field] as string) ?? "";
+          break;
+        case "address":
+          payload.addressLine1 = (editValues.addressLine1 as string) || "";
+          payload.addressLine2 = (editValues.addressLine2 as string) || "";
+          payload.city = (editValues.city as string) || "";
+          payload.postalCode = (editValues.postalCode as string) || "";
+          payload.country = (editValues.country as string) || "";
+          payload.province = (editValues.province as string) || "";
+          break;
+        case "postalAddress":
+          payload.postalAddressLine1 = (editValues.postalAddressLine1 as string) || "";
+          payload.postalAddressLine2 = (editValues.postalAddressLine2 as string) || "";
+          payload.postalAddressCity = (editValues.postalAddressCity as string) || "";
+          payload.postalAddressPostalCode = (editValues.postalAddressPostalCode as string) || "";
+          payload.postalAddressCountry = (editValues.postalAddressCountry as string) || "";
+          payload.postalAddressProvince = (editValues.postalAddressProvince as string) || "";
+          payload.postalAddressSameAsResidential = editValues.postalAddressSameAsResidential as boolean ?? false;
+          break;
+        case "emergencyContact":
+          payload.emergencyContactName = (editValues.emergencyContactName as string) || "";
+          payload.emergencyContactPhone = (editValues.emergencyContactPhone as string) || "";
+          payload.emergencyContactRelation = (editValues.emergencyContactRelation as string) || "";
+          break;
+        default:
+          break;
+      }
+
+      const res = await fetch("/api/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        // Mettre à jour l'état local
+        setUserData((prev) => {
+          const updated = { ...prev };
+          if (field === "legalName") {
+            updated.firstName = (editValues.firstName as string) ?? prev.firstName;
+            updated.lastName = (editValues.lastName as string) ?? prev.lastName;
+            updated.legalName = `${updated.firstName} ${updated.lastName}`.trim();
+          } else if (field === "chosenName") {
+            updated.chosenName = (editValues.chosenName as string) ?? (editValues[field] as string) ?? "";
+          } else if (field === "phone") {
+            updated.phone = (editValues.phone as string) ?? (editValues[field] as string) ?? "";
+          } else if (field === "address") {
+            updated.addressLine1 = (editValues.addressLine1 as string) || "";
+            updated.addressLine2 = (editValues.addressLine2 as string) || "";
+            updated.city = (editValues.city as string) || "";
+            updated.postalCode = (editValues.postalCode as string) || "";
+            updated.country = (editValues.country as string) || "";
+            updated.province = (editValues.province as string) || "";
+          } else if (field === "postalAddress") {
+            updated.postalAddressLine1 = (editValues.postalAddressLine1 as string) || "";
+            updated.postalAddressLine2 = (editValues.postalAddressLine2 as string) || "";
+            updated.postalAddressCity = (editValues.postalAddressCity as string) || "";
+            updated.postalAddressPostalCode = (editValues.postalAddressPostalCode as string) || "";
+            updated.postalAddressCountry = (editValues.postalAddressCountry as string) || "";
+            updated.postalAddressProvince = (editValues.postalAddressProvince as string) || "";
+            updated.postalAddressSameAsResidential = editValues.postalAddressSameAsResidential as boolean ?? false;
+          } else if (field === "emergencyContact") {
+            updated.emergencyContactName = (editValues.emergencyContactName as string) || "";
+            updated.emergencyContactPhone = (editValues.emergencyContactPhone as string) || "";
+            updated.emergencyContactRelation = (editValues.emergencyContactRelation as string) || "";
+          }
+          return updated;
+        });
+        setEditingField(null);
+        setEditValues({});
+      }
+    } catch (e) {
+      console.error("Erreur sauvegarde:", e);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const getIdentityBadge = () => {
     switch (userData.identityStatus) {
@@ -776,39 +1016,23 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
     }
   };
 
-  const DataRow = ({
-    icon,
-    label,
-    value,
-    maskedValue,
-    badge,
-    action = "Modifier"
-  }: {
-    icon: ReactNode;
-    label: string;
-    value?: string;
-    maskedValue?: string;
-    badge?: ReactNode;
-    action?: string;
-  }) => (
-    <div className="flex items-center justify-between border-b border-gray-100 py-4 last:border-0">
-      <div className="flex items-center gap-4">
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100">
-          {icon}
+  const residentialAddress = userData.addressLine1
+    ? `${userData.addressLine1}${userData.city ? `, ${userData.city}` : ""}${userData.postalCode ? ` ${userData.postalCode}` : ""}${userData.country ? `, ${userData.country}` : ""}`
+    : "";
+
+  if (loading) {
+    return (
+      <section className="space-y-6">
+        <header>
+          <h1 className="text-2xl font-semibold">{pT.title}</h1>
+          <p className="text-sm text-gray-500">{pT.subtitle}</p>
+        </header>
+        <div className="flex items-center justify-center py-12">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-gray-900" />
         </div>
-        <div>
-          <p className="text-sm font-medium text-gray-900">{label}</p>
-          <div className="mt-0.5 flex items-center gap-2">
-            <p className="text-sm text-gray-600">{maskedValue || value || (extT.notProvided || "Non fourni")}</p>
-            {badge}
-          </div>
-        </div>
-      </div>
-      <button className="text-sm font-medium text-gray-900 underline hover:text-gray-700">
-        {value ? action : (extT.add || "Ajouter")}
-      </button>
-    </div>
-  );
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-6">
@@ -818,63 +1042,731 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
       </header>
 
       <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <DataRow
-          icon={<UserIcon className="h-4 w-4 text-gray-500" />}
-          label={extT.legalName || "Nom légal"}
-          value={userData.legalName}
-          maskedValue={maskName(userData.legalName)}
-        />
-
-        <DataRow
-          icon={<UserIcon className="h-4 w-4 text-gray-500" />}
-          label={extT.chosenName || "Nom choisi"}
-          value={userData.chosenName}
-        />
-
-        <DataRow
-          icon={<EnvelopeIcon className="h-4 w-4 text-gray-500" />}
-          label={extT.email || "Adresse courriel"}
-          value={userData.email}
-          maskedValue={maskEmail(userData.email)}
-        />
-
-        <DataRow
-          icon={<PhoneIcon className="h-4 w-4 text-gray-500" />}
-          label={extT.phoneNumber || "Numéro de téléphone"}
-          value={userData.phone}
-          maskedValue={maskPhone(userData.phone)}
-          badge={userData.phoneVerified && (
-            <span className="text-xs text-gray-400">{extT.phoneVerification || "Vérifié"}</span>
+        {/* Nom légal */}
+        <div className="border-b border-gray-100 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100">
+                <UserIcon className="h-4 w-4 text-gray-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">{extT.legalName || "Nom légal"}</p>
+                <p className="mt-0.5 text-sm text-gray-600">
+                  {userData.legalName ? maskName(userData.legalName) : (extT.notProvided || "Non fourni")}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => startEditing("legalName", userData.legalName)}
+              className="text-sm font-medium text-gray-900 underline hover:text-gray-700"
+            >
+              {userData.legalName ? (extT.modify || "Modifier") : (extT.add || "Ajouter")}
+            </button>
+          </div>
+          {editingField === "legalName" && (
+            <div className="mt-4 space-y-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <input
+                  type="text"
+                  value={(editValues.firstName as string) ?? userData.firstName}
+                  onChange={(e) => setEditValues({ ...editValues, firstName: e.target.value, legalName: `${e.target.value} ${(editValues.lastName as string) ?? userData.lastName}`.trim() })}
+                  placeholder={extT.firstNamePlaceholder || "Prénom"}
+                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                />
+                <input
+                  type="text"
+                  value={(editValues.lastName as string) ?? userData.lastName}
+                  onChange={(e) => setEditValues({ ...editValues, lastName: e.target.value, legalName: `${(editValues.firstName as string) ?? userData.firstName} ${e.target.value}`.trim() })}
+                  placeholder={extT.lastNamePlaceholder || "Nom"}
+                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => saveField("legalName")}
+                  disabled={saving}
+                  className="rounded-full bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
+                >
+                  {saving ? "..." : (extT.save || "Enregistrer")}
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelEditing}
+                  className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
+                >
+                  {extT.cancel || "Annuler"}
+                </button>
+              </div>
+            </div>
           )}
-        />
+        </div>
 
-        <DataRow
-          icon={<ShieldCheckIcon className="h-4 w-4 text-gray-500" />}
-          label={extT.identityVerification || "Vérification de l'identité"}
-          badge={getIdentityBadge()}
-          value="verified"
-        />
+        {/* Nom choisi */}
+        <div className="border-b border-gray-100 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100">
+                <UserIcon className="h-4 w-4 text-gray-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">{extT.chosenName || "Nom choisi"}</p>
+                <p className="mt-0.5 text-sm text-gray-600">
+                  {userData.chosenName || (extT.notProvided || "Non fourni")}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => startEditing("chosenName", userData.chosenName)}
+              className="text-sm font-medium text-gray-900 underline hover:text-gray-700"
+            >
+              {userData.chosenName ? (extT.modify || "Modifier") : (extT.add || "Ajouter")}
+            </button>
+          </div>
+          {editingField === "chosenName" && (
+            <div className="mt-4 space-y-3">
+              <input
+                type="text"
+                value={(editValues.chosenName as string) ?? userData.chosenName}
+                onChange={(e) => setEditValues({ ...editValues, chosenName: e.target.value })}
+                placeholder={extT.displayNamePlaceholder || "Nom d'affichage"}
+                className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+              />
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => saveField("chosenName")}
+                  disabled={saving}
+                  className="rounded-full bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
+                >
+                  {saving ? "..." : (extT.save || "Enregistrer")}
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelEditing}
+                  className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
+                >
+                  {extT.cancel || "Annuler"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
-        <DataRow
-          icon={<HomeIcon className="h-4 w-4 text-gray-500" />}
-          label={extT.residentialAddress || "Adresse résidentielle"}
-          value={userData.residentialAddress}
-          maskedValue={extT.provided || "Fournie"}
-        />
+        {/* Email (non modifiable directement) */}
+        <div className="border-b border-gray-100 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100">
+                <EnvelopeIcon className="h-4 w-4 text-gray-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">{extT.email || "Adresse courriel"}</p>
+                <p className="mt-0.5 text-sm text-gray-600">
+                  {userData.email ? maskEmail(userData.email) : (extT.notProvided || "Non fourni")}
+                </p>
+              </div>
+            </div>
+            <span className="text-xs text-gray-400">{extT.contactSupport || "Contacter le support"}</span>
+          </div>
+        </div>
 
-        <DataRow
-          icon={<MapPinIcon className="h-4 w-4 text-gray-500" />}
-          label={extT.postalAddress || "Adresse postale"}
-          value={userData.postalAddress}
-          maskedValue={extT.provided || "Fournie"}
-        />
+        {/* Téléphone */}
+        <div className="border-b border-gray-100 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100">
+                <PhoneIcon className="h-4 w-4 text-gray-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">{extT.phoneNumber || "Numéro de téléphone"}</p>
+                <div className="mt-0.5 flex items-center gap-2">
+                  <p className="text-sm text-gray-600">
+                    {userData.phone ? maskPhone(userData.phone) : (extT.notProvided || "Non fourni")}
+                  </p>
+                  {userData.phoneVerified && (
+                    <span className="text-xs text-gray-400">{extT.phoneVerification || "Vérifié"}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => startEditing("phone", userData.phone)}
+              className="text-sm font-medium text-gray-900 underline hover:text-gray-700"
+            >
+              {userData.phone ? (extT.modify || "Modifier") : (extT.add || "Ajouter")}
+            </button>
+          </div>
+          {editingField === "phone" && (
+            <div className="mt-4 space-y-3">
+              <input
+                type="tel"
+                value={(editValues.phone as string) ?? userData.phone}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/[^0-9+]/g, '');
+                  const sanitized = value.charAt(0) === '+' ? '+' + value.slice(1).replace(/\+/g, '') : value.replace(/\+/g, '');
+                  setEditValues({ ...editValues, phone: sanitized });
+                }}
+                placeholder="+33 6 12 34 56 78"
+                className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+              />
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => saveField("phone")}
+                  disabled={saving}
+                  className="rounded-full bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
+                >
+                  {saving ? "..." : (extT.save || "Enregistrer")}
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelEditing}
+                  className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
+                >
+                  {extT.cancel || "Annuler"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
-        <DataRow
-          icon={<UserGroupIcon className="h-4 w-4 text-gray-500" />}
-          label={extT.emergencyContact || "Contact en cas d'urgence"}
-          value={userData.emergencyContact}
-          maskedValue={maskName(userData.emergencyContact)}
+        {/* Vérification d'identité */}
+        <div className="border-b border-gray-100 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100">
+                <ShieldCheckIcon className="h-4 w-4 text-gray-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">{extT.identityVerification || "Vérification de l'identité"}</p>
+                <div className="mt-0.5">{getIdentityBadge()}</div>
+              </div>
+            </div>
+            <a
+              href="/account?tab=security"
+              className="text-sm font-medium text-gray-900 underline hover:text-gray-700"
+            >
+              {extT.goToSecurity || "Gérer"}
+            </a>
+          </div>
+        </div>
+
+        {/* Adresse résidentielle */}
+        <div className="border-b border-gray-100 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100">
+                <HomeIcon className="h-4 w-4 text-gray-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">{extT.residentialAddress || "Adresse résidentielle"}</p>
+                <p className="mt-0.5 text-sm text-gray-600">
+                  {residentialAddress ? (extT.provided || "Fournie") : (extT.notProvided || "Non fourni")}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setEditingField("address");
+                setEditValues({
+                  addressLine1: userData.addressLine1,
+                  addressLine2: userData.addressLine2,
+                  city: userData.city,
+                  postalCode: userData.postalCode,
+                  country: userData.country,
+                  province: userData.province,
+                });
+              }}
+              className="text-sm font-medium text-gray-900 underline hover:text-gray-700"
+            >
+              {residentialAddress ? (extT.modify || "Modifier") : (extT.add || "Ajouter")}
+            </button>
+          </div>
+          {editingField === "address" && (
+            <div className="mt-4 space-y-3">
+              <input
+                type="text"
+                value={(editValues.addressLine1 as string) ?? ""}
+                onChange={(e) => setEditValues({ ...editValues, addressLine1: e.target.value })}
+                placeholder={extT.streetPlaceholder || "Numéro et rue"}
+                className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+              />
+              <input
+                type="text"
+                value={(editValues.addressLine2 as string) ?? ""}
+                onChange={(e) => setEditValues({ ...editValues, addressLine2: e.target.value })}
+                placeholder={extT.addressLine2Placeholder || "Complément (optionnel)"}
+                className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+              />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <input
+                  type="text"
+                  value={(editValues.postalCode as string) ?? ""}
+                  onChange={(e) => setEditValues({ ...editValues, postalCode: e.target.value })}
+                  placeholder={extT.postalCodePlaceholder || "Code postal"}
+                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                />
+                <input
+                  type="text"
+                  value={(editValues.city as string) ?? ""}
+                  onChange={(e) => setEditValues({ ...editValues, city: e.target.value })}
+                  placeholder={extT.cityPlaceholder || "Ville"}
+                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <input
+                  type="text"
+                  value={(editValues.country as string) ?? ""}
+                  onChange={(e) => setEditValues({ ...editValues, country: e.target.value })}
+                  placeholder={extT.countryPlaceholder || "Pays"}
+                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                />
+                <input
+                  type="text"
+                  value={(editValues.province as string) ?? ""}
+                  onChange={(e) => setEditValues({ ...editValues, province: e.target.value })}
+                  placeholder={extT.provincePlaceholder || "Province/Région"}
+                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => saveField("address")}
+                  disabled={saving}
+                  className="rounded-full bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
+                >
+                  {saving ? "..." : (extT.save || "Enregistrer")}
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelEditing}
+                  className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
+                >
+                  {extT.cancel || "Annuler"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Adresse postale */}
+        <div className="border-b border-gray-100 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100">
+                <MapPinIcon className="h-4 w-4 text-gray-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">{extT.postalAddress || "Adresse postale"}</p>
+                <p className="mt-0.5 text-sm text-gray-600">
+                  {userData.postalAddressSameAsResidential
+                    ? (extT.sameAsResidential || "Identique à l'adresse résidentielle")
+                    : userData.postalAddressLine1
+                      ? `${userData.postalAddressLine1}${userData.postalAddressCity ? `, ${userData.postalAddressCity}` : ""}`
+                      : (extT.notProvided || "Non fourni")}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setEditingField("postalAddress");
+                setEditValues({
+                  postalAddressLine1: userData.postalAddressLine1,
+                  postalAddressLine2: userData.postalAddressLine2,
+                  postalAddressCity: userData.postalAddressCity,
+                  postalAddressPostalCode: userData.postalAddressPostalCode,
+                  postalAddressCountry: userData.postalAddressCountry,
+                  postalAddressProvince: userData.postalAddressProvince,
+                  postalAddressSameAsResidential: userData.postalAddressSameAsResidential,
+                });
+              }}
+              className="text-sm font-medium text-gray-900 underline hover:text-gray-700"
+            >
+              {userData.postalAddressLine1 || !userData.postalAddressSameAsResidential ? (extT.modify || "Modifier") : (extT.add || "Ajouter")}
+            </button>
+          </div>
+          {editingField === "postalAddress" && (
+            <div className="mt-4 space-y-3">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={editValues.postalAddressSameAsResidential as boolean ?? userData.postalAddressSameAsResidential}
+                  onChange={(e) => setEditValues({ ...editValues, postalAddressSameAsResidential: e.target.checked })}
+                  className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                />
+                <span className="text-sm text-gray-700">{extT.sameAsResidential || "Identique à l'adresse résidentielle"}</span>
+              </label>
+              {!(editValues.postalAddressSameAsResidential as boolean ?? userData.postalAddressSameAsResidential) && (
+                <>
+                  <input
+                    type="text"
+                    value={(editValues.postalAddressLine1 as string) ?? ""}
+                    onChange={(e) => setEditValues({ ...editValues, postalAddressLine1: e.target.value })}
+                    placeholder={extT.streetPlaceholder || "Numéro et rue"}
+                    className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                  />
+                  <input
+                    type="text"
+                    value={(editValues.postalAddressLine2 as string) ?? ""}
+                    onChange={(e) => setEditValues({ ...editValues, postalAddressLine2: e.target.value })}
+                    placeholder={extT.addressLine2Placeholder || "Complément (optionnel)"}
+                    className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                  />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <input
+                      type="text"
+                      value={(editValues.postalAddressPostalCode as string) ?? ""}
+                      onChange={(e) => setEditValues({ ...editValues, postalAddressPostalCode: e.target.value })}
+                      placeholder={extT.postalCodePlaceholder || "Code postal"}
+                      className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                    />
+                    <input
+                      type="text"
+                      value={(editValues.postalAddressCity as string) ?? ""}
+                      onChange={(e) => setEditValues({ ...editValues, postalAddressCity: e.target.value })}
+                      placeholder={extT.cityPlaceholder || "Ville"}
+                      className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                    />
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <input
+                      type="text"
+                      value={(editValues.postalAddressCountry as string) ?? ""}
+                      onChange={(e) => setEditValues({ ...editValues, postalAddressCountry: e.target.value })}
+                      placeholder={extT.countryPlaceholder || "Pays"}
+                      className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                    />
+                    <input
+                      type="text"
+                      value={(editValues.postalAddressProvince as string) ?? ""}
+                      onChange={(e) => setEditValues({ ...editValues, postalAddressProvince: e.target.value })}
+                      placeholder={extT.provincePlaceholder || "Province/Région"}
+                      className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                    />
+                  </div>
+                </>
+              )}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => saveField("postalAddress")}
+                  disabled={saving}
+                  className="rounded-full bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
+                >
+                  {saving ? "..." : (extT.save || "Enregistrer")}
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelEditing}
+                  className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
+                >
+                  {extT.cancel || "Annuler"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Contact d'urgence */}
+        <div className="py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100">
+                <UserGroupIcon className="h-4 w-4 text-gray-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">{extT.emergencyContact || "Contact en cas d'urgence"}</p>
+                <p className="mt-0.5 text-sm text-gray-600">
+                  {userData.emergencyContactName
+                    ? `${maskName(userData.emergencyContactName)}${userData.emergencyContactRelation ? ` (${userData.emergencyContactRelation})` : ""}`
+                    : (extT.notProvided || "Non fourni")}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setEditingField("emergencyContact");
+                setEditValues({
+                  emergencyContactName: userData.emergencyContactName,
+                  emergencyContactPhone: userData.emergencyContactPhone,
+                  emergencyContactRelation: userData.emergencyContactRelation,
+                });
+              }}
+              className="text-sm font-medium text-gray-900 underline hover:text-gray-700"
+            >
+              {userData.emergencyContactName ? (extT.modify || "Modifier") : (extT.add || "Ajouter")}
+            </button>
+          </div>
+          {editingField === "emergencyContact" && (
+            <div className="mt-4 space-y-3">
+              <input
+                type="text"
+                value={(editValues.emergencyContactName as string) ?? ""}
+                onChange={(e) => setEditValues({ ...editValues, emergencyContactName: e.target.value })}
+                placeholder="Nom complet"
+                className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+              />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <input
+                  type="tel"
+                  value={(editValues.emergencyContactPhone as string) ?? ""}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/[^0-9+]/g, '');
+                    const sanitized = value.charAt(0) === '+' ? '+' + value.slice(1).replace(/\+/g, '') : value.replace(/\+/g, '');
+                    setEditValues({ ...editValues, emergencyContactPhone: sanitized });
+                  }}
+                  placeholder="+33 6 12 34 56 78"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                />
+                <select
+                  value={(editValues.emergencyContactRelation as string) ?? ""}
+                  onChange={(e) => setEditValues({ ...editValues, emergencyContactRelation: e.target.value })}
+                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                >
+                  <option value="">Relation</option>
+                  <option value="parent">Parent</option>
+                  <option value="spouse">Conjoint(e)</option>
+                  <option value="sibling">Frère/Sœur</option>
+                  <option value="child">Enfant</option>
+                  <option value="friend">Ami(e)</option>
+                  <option value="other">Autre</option>
+                </select>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => saveField("emergencyContact")}
+                  disabled={saving}
+                  className="rounded-full bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
+                >
+                  {saving ? "..." : (extT.save || "Enregistrer")}
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelEditing}
+                  className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
+                >
+                  {extT.cancel || "Annuler"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ---------- Contenu Confidentialité ----------
+function PrivacyTabContent({ t }: { t: AccountTranslations }) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const privT = (t as any).privacySection || {};
+  const [saved, setSaved] = useState(false);
+
+  // États des paramètres de confidentialité
+  const [settings, setSettings] = useState({
+    showProfileToGuests: true,
+    showProfileToHosts: true,
+    shareActivityWithPartners: false,
+    allowSearchEngines: false,
+    showReviewsPublicly: true,
+    shareLocationData: false,
+    allowPersonalizedAds: false,
+    shareDataForResearch: false,
+  });
+
+  const handleToggle = (key: keyof typeof settings) => {
+    setSettings(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleSave = () => {
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  const PrivacyToggle = ({
+    id,
+    title,
+    description,
+    checked,
+    onChange,
+  }: {
+    id: string;
+    title: string;
+    description: string;
+    checked: boolean;
+    onChange: () => void;
+  }) => (
+    <div className="flex items-start justify-between py-4">
+      <div className="flex-1 pr-4">
+        <p className="text-sm font-medium text-gray-900">{title}</p>
+        <p className="mt-0.5 text-xs text-gray-500">{description}</p>
+      </div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        onClick={onChange}
+        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 ${
+          checked ? "bg-gray-900" : "bg-gray-200"
+        }`}
+      >
+        <span
+          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+            checked ? "translate-x-5" : "translate-x-0"
+          }`}
         />
+      </button>
+    </div>
+  );
+
+  return (
+    <section className="space-y-6">
+      <header>
+        <h1 className="text-2xl font-semibold">{privT.title || "Confidentialité et partage"}</h1>
+        <p className="text-sm text-gray-500">{privT.subtitle || "Gérez vos paramètres de confidentialité et de partage de données"}</p>
+      </header>
+
+      {/* Visibilité du profil */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h3 className="text-base font-semibold text-gray-900">{privT.profileVisibilityTitle || "Visibilité du profil"}</h3>
+        <p className="mt-1 text-sm text-gray-500">{privT.profileVisibilityDesc || "Contrôlez qui peut voir votre profil et vos informations"}</p>
+        <div className="mt-4 divide-y divide-gray-100">
+          <PrivacyToggle
+            id="showProfileToGuests"
+            title={privT.showToGuests || "Afficher mon profil aux voyageurs"}
+            description={privT.showToGuestsDesc || "Les voyageurs peuvent voir votre profil lorsqu'ils consultent vos annonces"}
+            checked={settings.showProfileToGuests}
+            onChange={() => handleToggle("showProfileToGuests")}
+          />
+          <PrivacyToggle
+            id="showProfileToHosts"
+            title={privT.showToHosts || "Afficher mon profil aux hôtes"}
+            description={privT.showToHostsDesc || "Les hôtes peuvent voir votre profil lorsque vous faites une demande de réservation"}
+            checked={settings.showProfileToHosts}
+            onChange={() => handleToggle("showProfileToHosts")}
+          />
+          <PrivacyToggle
+            id="showReviewsPublicly"
+            title={privT.showReviews || "Afficher mes avis publiquement"}
+            description={privT.showReviewsDesc || "Vos avis seront visibles sur votre profil public"}
+            checked={settings.showReviewsPublicly}
+            onChange={() => handleToggle("showReviewsPublicly")}
+          />
+          <PrivacyToggle
+            id="allowSearchEngines"
+            title={privT.allowSearchEngines || "Autoriser l'indexation par les moteurs de recherche"}
+            description={privT.allowSearchEnginesDesc || "Votre profil peut apparaître dans les résultats de recherche Google, Bing, etc."}
+            checked={settings.allowSearchEngines}
+            onChange={() => handleToggle("allowSearchEngines")}
+          />
+        </div>
+      </div>
+
+      {/* Partage de données */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h3 className="text-base font-semibold text-gray-900">{privT.dataSharingTitle || "Partage de données"}</h3>
+        <p className="mt-1 text-sm text-gray-500">{privT.dataSharingDesc || "Contrôlez comment vos données sont partagées"}</p>
+        <div className="mt-4 divide-y divide-gray-100">
+          <PrivacyToggle
+            id="shareActivityWithPartners"
+            title={privT.shareWithPartners || "Partager mon activité avec les partenaires"}
+            description={privT.shareWithPartnersDesc || "Permet à nos partenaires de vous proposer des services personnalisés"}
+            checked={settings.shareActivityWithPartners}
+            onChange={() => handleToggle("shareActivityWithPartners")}
+          />
+          <PrivacyToggle
+            id="shareLocationData"
+            title={privT.shareLocation || "Partager mes données de localisation"}
+            description={privT.shareLocationDesc || "Utilisé pour améliorer les recommandations et la recherche"}
+            checked={settings.shareLocationData}
+            onChange={() => handleToggle("shareLocationData")}
+          />
+          <PrivacyToggle
+            id="shareDataForResearch"
+            title={privT.shareForResearch || "Participer à la recherche"}
+            description={privT.shareForResearchDesc || "Vos données anonymisées peuvent être utilisées pour améliorer nos services"}
+            checked={settings.shareDataForResearch}
+            onChange={() => handleToggle("shareDataForResearch")}
+          />
+        </div>
+      </div>
+
+      {/* Publicité */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h3 className="text-base font-semibold text-gray-900">{privT.advertisingTitle || "Publicité"}</h3>
+        <p className="mt-1 text-sm text-gray-500">{privT.advertisingDesc || "Gérez vos préférences publicitaires"}</p>
+        <div className="mt-4 divide-y divide-gray-100">
+          <PrivacyToggle
+            id="allowPersonalizedAds"
+            title={privT.personalizedAds || "Publicités personnalisées"}
+            description={privT.personalizedAdsDesc || "Recevoir des publicités basées sur votre activité sur Lok'Room"}
+            checked={settings.allowPersonalizedAds}
+            onChange={() => handleToggle("allowPersonalizedAds")}
+          />
+        </div>
+      </div>
+
+      {/* Télécharger / Supprimer données */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+        <h3 className="text-base font-semibold text-gray-900">{privT.yourDataTitle || "Vos données"}</h3>
+        <p className="mt-1 text-sm text-gray-500">{privT.yourDataDesc || "Gérez vos données personnelles"}</p>
+        <div className="mt-4 space-y-3">
+          <button
+            type="button"
+            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-left text-sm font-medium text-gray-900 hover:bg-gray-50 transition"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">{privT.downloadData || "Télécharger mes données"}</p>
+                <p className="mt-0.5 text-xs text-gray-500">{privT.downloadDataDesc || "Obtenez une copie de toutes vos données personnelles"}</p>
+              </div>
+              <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+            </div>
+          </button>
+          <button
+            type="button"
+            className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-left text-sm font-medium text-red-700 hover:bg-red-100 transition"
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">{privT.deleteAccount || "Supprimer mon compte"}</p>
+                <p className="mt-0.5 text-xs text-red-600">{privT.deleteAccountDesc || "Cette action est irréversible"}</p>
+              </div>
+              <svg className="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      {/* Bouton sauvegarder */}
+      <div className="flex items-center gap-4">
+        <button
+          type="button"
+          onClick={handleSave}
+          className="inline-flex items-center rounded-full bg-gray-900 px-6 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-black transition"
+        >
+          {privT.savePreferences || "Enregistrer les préférences"}
+        </button>
+        {saved && (
+          <span className="flex items-center gap-1.5 text-sm text-emerald-600">
+            <CheckCircleIcon className="h-4 w-4" />
+            {privT.preferencesSaved || "Préférences enregistrées !"}
+          </span>
+        )}
       </div>
     </section>
   );
@@ -1133,7 +2025,7 @@ function TaxesTabContent({ t }: { t: AccountTranslations }) {
       </section>
 
       {showTaxInfoModal && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40" role="dialog" aria-modal="true" aria-labelledby="tax-modal-title">
           <div className="relative w-full max-w-4xl rounded-3xl bg-white p-10 shadow-2xl">
             <button
               type="button"
@@ -1145,7 +2037,7 @@ function TaxesTabContent({ t }: { t: AccountTranslations }) {
             </button>
 
             <div className="mt-4 space-y-4">
-              <h2 className="text-2xl font-semibold text-gray-900">
+              <h2 id="tax-modal-title" className="text-2xl font-semibold text-gray-900">
                 {taxT.modalTitle}
               </h2>
               <p className="text-sm text-gray-600">{taxT.modalDesc}</p>
@@ -1177,7 +2069,7 @@ function TaxesTabContent({ t }: { t: AccountTranslations }) {
 }
 
 // ---------- Contenu Langue & Devise (avec rechargement page) ----------
-function LanguageTabContent({ t }: { t: AccountTranslations }) {
+function LanguageTabContent({ t, router }: { t: AccountTranslations; router: ReturnType<typeof useRouter> }) {
   const [lang, setLang] = useState<SupportedLang>("fr");
   const [currency, setCurrency] = useState<Currency>("EUR");
   const [saved, setSaved] = useState(false);
@@ -1203,7 +2095,7 @@ function LanguageTabContent({ t }: { t: AccountTranslations }) {
 
     // Recharger la page après un court délai pour appliquer les changements
     setTimeout(() => {
-      window.location.reload();
+      router.refresh();
     }, 500);
   }
 
@@ -1302,17 +2194,22 @@ function TabContent({
   active,
   t,
   tabLabels,
+  router,
 }: {
   active: TabId;
   t: AccountTranslations;
   tabLabels: Record<TabId, string>;
+  router: ReturnType<typeof useRouter>;
 }) {
   switch (active) {
     case "personal":
       return <PersonalTabContent t={t} />;
 
     case "security":
-      return <SecurityTabContent t={t} />;
+      return <SecurityTabContent t={t} router={router} />;
+
+    case "privacy":
+      return <PrivacyTabContent t={t} />;
 
     case "notifications":
       return <NotificationsTabContent t={t} />;
@@ -1328,7 +2225,7 @@ function TabContent({
       );
 
     case "language":
-      return <LanguageTabContent t={t} />;
+      return <LanguageTabContent t={t} router={router} />;
 
     default:
       return (
@@ -1426,10 +2323,10 @@ export default function AccountSettingsPage() {
   };
 
   return (
-    <main className="mx-auto flex max-w-6xl gap-8 px-4 py-10 lg:px-8">
+    <main className="mx-auto flex max-w-6xl 2xl:max-w-7xl 3xl:max-w-[1600px] flex-col md:flex-row gap-6 md:gap-8 px-4 sm:px-6 lg:px-8 xl:px-10 py-6 sm:py-10">
       {/* Sidebar desktop */}
-      <aside className="hidden w-72 flex-shrink-0 border-r border-gray-200 pr-6 md:block">
-        <h2 className="mb-6 text-lg font-semibold">{t.settingsTitle}</h2>
+      <aside className="hidden w-full md:w-64 lg:w-72 xl:w-80 flex-shrink-0 md:border-r border-gray-200 md:pr-6 md:block">
+        <h2 className="mb-4 sm:mb-6 text-base sm:text-lg font-semibold">{t.settingsTitle}</h2>
         <nav className="space-y-1">
           {tabs.map((tab) => {
             const isActive = tab.id === activeTab;
@@ -1479,12 +2376,12 @@ export default function AccountSettingsPage() {
           ))}
         </select>
 
-        <TabContent active={activeTab} t={t} tabLabels={tabLabels} />
+        <TabContent active={activeTab} t={t} tabLabels={tabLabels} router={router} />
       </div>
 
       {/* Content desktop */}
       <section className="hidden md:block flex-1">
-        <TabContent active={activeTab} t={t} tabLabels={tabLabels} />
+        <TabContent active={activeTab} t={t} tabLabels={tabLabels} router={router} />
       </section>
     </main>
   );

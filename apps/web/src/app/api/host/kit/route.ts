@@ -1,10 +1,11 @@
 /**
- * API Kit Hôte Lok'Room
+ * API Kit Lok'Room
  * Gère l'éligibilité et la réclamation des kits de récompense
  *
  * Règles :
- * - Kit Essentiel : 5 réservations de 2h+ minimum (valeur 100€)
- * - Kit Super Hôte : 25 réservations de 2h+ minimum (valeur 250€)
+ * - Kit Essentiel : 5 réservations qualifiées (valeur 100€)
+ * - Kit Super Hôte : 25 réservations qualifiées (valeur 250€)
+ * - Réservation qualifiée : confirmée, minimum 10€, et minimum 2h (si horaire)
  * - L'hôte doit CHOISIR : prendre le Kit Essentiel OU attendre le Kit Super Hôte
  * - Une fois un kit réclamé, l'autre n'est plus disponible
  */
@@ -15,11 +16,12 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
 
-// Constantes du programme Kit Lokeur
+// Constantes du programme Kit Lok'Room
 const KIT_CONFIG = {
   ESSENTIAL: {
     minBookings: 5,
     minDurationHours: 2,
+    minAmountCents: 1000, // 10€ minimum
     displayValueCents: 10000, // 100€
     displayValue: "100€",
     name: "Kit Essentiel",
@@ -36,6 +38,7 @@ const KIT_CONFIG = {
   SUPERHOST: {
     minBookings: 25,
     minDurationHours: 2,
+    minAmountCents: 1000, // 10€ minimum
     displayValueCents: 25000, // 250€
     displayValue: "250€",
     name: "Kit Super Hôte",
@@ -62,30 +65,44 @@ export async function GET() {
 
     const userId = session.user.id;
 
-    // Vérifier si l'utilisateur est un hôte
+    // Vérifier si l'utilisateur est un hôte (role HOST/BOTH OU a des annonces)
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
         hostProfile: true,
         hostKit: true,
+        _count: {
+          select: { Listing: true },
+        },
       },
     });
 
-    if (!user || (user.role !== "HOST" && user.role !== "BOTH")) {
+    const isHost = user && (
+      user.role === "HOST" ||
+      user.role === "BOTH" ||
+      user._count.Listing > 0
+    );
+
+    if (!user || !isHost) {
       return NextResponse.json(
-        { error: "Vous devez être hôte pour accéder au programme Kit Lokeur" },
+        { error: "Vous devez être hôte pour accéder au programme Kit Lok'Room" },
         { status: 403 }
       );
     }
 
-    // Compter les réservations qualifiées (confirmées, 2h+ minimum)
-    // Filtrer les réservations horaires de moins de 2h
-    // (On doit faire une requête séparée car Prisma ne peut pas calculer la différence)
+    // Montant minimum en euros (10€)
+    const minAmount = 10;
+
+    // Compter les réservations qualifiées :
+    // - Confirmées
+    // - Minimum 10€
+    // - Si horaire : minimum 2h de durée
     const hourlyBookings = await prisma.booking.findMany({
       where: {
         listing: { ownerId: userId },
         status: "CONFIRMED",
         pricingMode: "HOURLY",
+        totalPrice: { gte: minAmount },
         startTimeMinutes: { not: null },
         endTimeMinutes: { not: null },
       },
@@ -95,18 +112,19 @@ export async function GET() {
       },
     });
 
-    // Compter les réservations horaires qualifiées (2h+)
+    // Compter les réservations horaires qualifiées (2h+ ET 10€+)
     const qualifiedHourlyCount = hourlyBookings.filter((b) => {
       const duration = (b.endTimeMinutes || 0) - (b.startTimeMinutes || 0);
       return duration >= 120; // 2 heures = 120 minutes
     }).length;
 
-    // Compter les réservations journalières
+    // Compter les réservations journalières (10€+ automatiquement qualifiées)
     const dailyCount = await prisma.booking.count({
       where: {
         listing: { ownerId: userId },
         status: "CONFIRMED",
         pricingMode: { in: ["DAILY", "BOTH"] },
+        totalPrice: { gte: minAmount },
       },
     });
 
@@ -231,16 +249,25 @@ export async function POST(req: NextRequest) {
 
     const { kitType, shippingAddress } = parsed.data;
 
-    // Vérifier si l'utilisateur est un hôte
+    // Vérifier si l'utilisateur est un hôte (role HOST/BOTH OU a des annonces)
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
         hostProfile: true,
         hostKit: true,
+        _count: {
+          select: { Listing: true },
+        },
       },
     });
 
-    if (!user || (user.role !== "HOST" && user.role !== "BOTH")) {
+    const isHost = user && (
+      user.role === "HOST" ||
+      user.role === "BOTH" ||
+      user._count.Listing > 0
+    );
+
+    if (!user || !isHost) {
       return NextResponse.json(
         { error: "Vous devez être hôte pour réclamer un kit" },
         { status: 403 }
@@ -255,12 +282,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Compter les réservations qualifiées
+    // Montant minimum en euros (10€)
+    const minAmount = 10;
+
+    // Compter les réservations qualifiées (10€+ et 2h+ si horaire)
     const hourlyBookings = await prisma.booking.findMany({
       where: {
         listing: { ownerId: userId },
         status: "CONFIRMED",
         pricingMode: "HOURLY",
+        totalPrice: { gte: minAmount },
         startTimeMinutes: { not: null },
         endTimeMinutes: { not: null },
       },
@@ -280,6 +311,7 @@ export async function POST(req: NextRequest) {
         listing: { ownerId: userId },
         status: "CONFIRMED",
         pricingMode: { in: ["DAILY", "BOTH"] },
+        totalPrice: { gte: minAmount },
       },
     });
 

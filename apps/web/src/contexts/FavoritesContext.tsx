@@ -39,6 +39,9 @@ type FavoritesContextType = {
   removeFavoriteFromWishlist: (listingId: string) => Promise<boolean>;
   isLoading: boolean;
   wishlistsLoading: boolean;
+  // Gestion du modal global
+  openModalForListing: string | null;
+  setOpenModalForListing: (listingId: string | null) => void;
 };
 
 const FavoritesContext = createContext<FavoritesContextType | null>(null);
@@ -49,6 +52,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   const [wishlists, setWishlists] = useState<Wishlist[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [wishlistsLoading, setWishlistsLoading] = useState(false);
+  const [openModalForListing, setOpenModalForListing] = useState<string | null>(null);
 
   const addFavorite = useCallback((listingId: string) => {
     setFavoritedListings((prev) => {
@@ -84,7 +88,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     [favoritedListings]
   );
 
-  const refreshFavorites = useCallback(async () => {
+  const refreshFavorites = useCallback(async (signal?: AbortSignal) => {
     if (status !== "authenticated") {
       setFavoritedListings(new Set());
       return;
@@ -92,20 +96,21 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
 
     setIsLoading(true);
     try {
-      const res = await fetch("/api/favorites");
+      const res = await fetch("/api/favorites", { signal });
       if (res.ok) {
         const data = await res.json();
         const ids = new Set<string>(data.favorites.map((f: { id: string }) => f.id));
         setFavoritedListings(ids);
       }
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return;
       console.error("Error refreshing favorites:", error);
     } finally {
       setIsLoading(false);
     }
   }, [status]);
 
-  const refreshWishlists = useCallback(async () => {
+  const refreshWishlists = useCallback(async (signal?: AbortSignal) => {
     if (status !== "authenticated") {
       setWishlists([]);
       return;
@@ -113,7 +118,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
 
     setWishlistsLoading(true);
     try {
-      const res = await fetch("/api/wishlists");
+      const res = await fetch("/api/wishlists", { signal });
       if (res.ok) {
         const data = await res.json();
         setWishlists(Array.isArray(data) ? data : []);
@@ -127,6 +132,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
         setFavoritedListings(allFavoriteIds);
       }
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return;
       console.error("Error refreshing wishlists:", error);
     } finally {
       setWishlistsLoading(false);
@@ -197,7 +203,9 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   // Charger les favoris et wishlists au montage et quand l'utilisateur se connecte
   useEffect(() => {
     if (status === "authenticated") {
-      refreshWishlists();
+      const controller = new AbortController();
+      refreshWishlists(controller.signal);
+      return () => controller.abort();
     } else {
       setFavoritedListings(new Set());
       setWishlists([]);
@@ -219,6 +227,8 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
         removeFavoriteFromWishlist,
         isLoading,
         wishlistsLoading,
+        openModalForListing,
+        setOpenModalForListing,
       }}
     >
       {children}

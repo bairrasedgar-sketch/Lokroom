@@ -142,6 +142,7 @@ export default function PasswordInput({
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
+            aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
             tabIndex={-1}
           >
@@ -258,6 +259,7 @@ export default function PasswordInput({
             <button
               type="button"
               onClick={() => setShowConfirm(!showConfirm)}
+              aria-label={showConfirm ? "Masquer le mot de passe" : "Afficher le mot de passe"}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               tabIndex={-1}
             >

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import useTranslation from "@/hooks/useTranslation";
 
 type BookingListing = {
@@ -121,7 +122,7 @@ export default function TripsPage() {
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-10 lg:px-8">
+    <main className="mx-auto max-w-6xl 2xl:max-w-7xl 3xl:max-w-[1600px] px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
       <header className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold">{t.title}</h1>
@@ -236,11 +237,12 @@ function TripCard({
       {/* Image */}
       <div className="relative h-40 w-40 flex-shrink-0 overflow-hidden bg-gray-100 sm:h-44 sm:w-52">
         {imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={imageUrl}
             alt={listing?.title ?? "Lok'Room"}
-            className="h-full w-full object-cover transition group-hover:scale-105"
+            fill
+            className="object-cover transition group-hover:scale-105"
+            sizes="(max-width: 640px) 160px, 208px"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">

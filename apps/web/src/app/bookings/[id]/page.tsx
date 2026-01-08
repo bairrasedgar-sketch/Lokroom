@@ -212,7 +212,7 @@ export default function BookingPaymentPage({
 
   if (!publishableKey || !stripePromise) {
     return (
-      <main className="mx-auto max-w-3xl px-4 py-6">
+      <main className="mx-auto max-w-3xl 2xl:max-w-4xl px-4 sm:px-6 py-6">
         <p className="text-sm text-red-600">
           {t.payment.stripeKeyMissing} (
           <code>NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code>).
@@ -223,7 +223,7 @@ export default function BookingPaymentPage({
 
   if (loading) {
     return (
-      <main className="mx-auto max-w-3xl px-4 py-6">
+      <main className="mx-auto max-w-3xl 2xl:max-w-4xl px-4 sm:px-6 py-6">
         <p className="text-sm text-gray-600">
           {t.payment.initializingPayment}
         </p>
@@ -233,7 +233,7 @@ export default function BookingPaymentPage({
 
   if (error || !intent || !options) {
     return (
-      <main className="mx-auto max-w-3xl px-4 py-6">
+      <main className="mx-auto max-w-3xl 2xl:max-w-4xl px-4 sm:px-6 py-6">
         <p className="text-sm text-red-600">
           {error ?? t.payment.loadPaymentError}
         </p>
@@ -242,7 +242,7 @@ export default function BookingPaymentPage({
   }
 
   return (
-    <main className="mx-auto max-w-3xl space-y-6 px-4 py-6">
+    <main className="mx-auto max-w-3xl 2xl:max-w-4xl space-y-6 px-4 sm:px-6 py-6">
       <header className="space-y-1">
         <h1 className="text-2xl font-semibold">{t.payment.completePayment}</h1>
         <p className="text-sm text-gray-600">

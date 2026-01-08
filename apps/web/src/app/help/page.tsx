@@ -301,7 +301,7 @@ export default function HelpCenterPage() {
     <main className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 pb-16 pt-12">
-        <div className="mx-auto max-w-4xl px-4">
+        <div className="mx-auto max-w-4xl 2xl:max-w-5xl 3xl:max-w-6xl px-4 sm:px-6 lg:px-8">
           <Link
             href="/"
             className="mb-6 inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white"
@@ -337,7 +337,7 @@ export default function HelpCenterPage() {
       </div>
 
       {/* Quick Links */}
-      <div className="mx-auto -mt-8 max-w-4xl px-4">
+      <div className="mx-auto -mt-8 max-w-4xl 2xl:max-w-5xl 3xl:max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="grid gap-4 sm:grid-cols-3">
           <Link
             href="/messages"
@@ -381,7 +381,7 @@ export default function HelpCenterPage() {
       </div>
 
       {/* FAQ Categories */}
-      <div className="mx-auto max-w-4xl px-4 py-12">
+      <div className="mx-auto max-w-4xl 2xl:max-w-5xl 3xl:max-w-6xl px-4 sm:px-6 lg:px-8 py-12">
         <h2 className="text-lg font-semibold text-gray-900">Questions fréquentes</h2>
 
         <div className="mt-6 space-y-4">

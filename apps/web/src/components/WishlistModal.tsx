@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useSession } from "next-auth/react";
 import { XMarkIcon, PlusIcon, HeartIcon } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import { useFavorites } from "@/contexts/FavoritesContext";
+import { toast } from "sonner";
 
 type WishlistModalProps = {
   isOpen: boolean;
@@ -26,6 +28,12 @@ export default function WishlistModal({
   const [newListName, setNewListName] = useState("");
   const [showCreateInput, setShowCreateInput] = useState(false);
   const [savingTo, setSavingTo] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  // S'assurer que le composant est monté côté client pour le portal
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Rafraîchir les wishlists quand le modal s'ouvre
   useEffect(() => {
@@ -33,6 +41,18 @@ export default function WishlistModal({
       refreshWishlists();
     }
   }, [isOpen, status, refreshWishlists]);
+
+  // Bloquer le scroll du body quand le modal est ouvert
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
 
   // Créer une nouvelle liste
   const handleCreate = async () => {
@@ -46,15 +66,19 @@ export default function WishlistModal({
         body: JSON.stringify({ name: newListName.trim() }),
       });
 
-      if (res.ok) {
-        const newWishlist = await res.json();
-        setNewListName("");
-        setShowCreateInput(false);
-        // Ajouter immédiatement le favori à cette nouvelle liste
-        await saveToWishlist(newWishlist.id);
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        throw new Error(error.error || "Erreur lors de la création");
       }
+
+      const newWishlist = await res.json();
+      setNewListName("");
+      setShowCreateInput(false);
+      // Ajouter immédiatement le favori à cette nouvelle liste
+      await saveToWishlist(newWishlist.id);
     } catch (e) {
       console.error(e);
+      toast.error(e instanceof Error ? e.message : "Erreur lors de la création de la liste");
     } finally {
       setCreating(false);
     }
@@ -64,43 +88,61 @@ export default function WishlistModal({
   const saveToWishlist = async (wishlistId: string) => {
     setSavingTo(wishlistId);
     try {
-      await fetch(`/api/favorites/${listingId}`, {
+      const res = await fetch(`/api/favorites/${listingId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ wishlistId }),
       });
+
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        throw new Error(error.error || "Erreur lors de l'ajout aux favoris");
+      }
+
       // Rafraîchir les wishlists pour mettre à jour le contexte global
       await refreshWishlists();
       onSaved();
       onClose();
     } catch (e) {
       console.error(e);
+      toast.error(e instanceof Error ? e.message : "Erreur lors de l'ajout aux favoris");
     } finally {
       setSavingTo(null);
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+  const modalContent = (
+    <div
+      className="fixed inset-0 flex items-center justify-center p-4"
+      style={{ zIndex: 99999 }}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="wishlist-modal-title"
+    >
       {/* Overlay */}
       <div
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
+        style={{ zIndex: 99999 }}
       />
 
-      {/* Modal - Plus grand et mieux centré */}
-      <div className="relative z-10 w-full max-w-2xl rounded-3xl bg-white shadow-2xl animate-modal-appear">
+      {/* Modal */}
+      <div
+        className="relative w-full min-w-[340px] sm:min-w-[450px] md:min-w-[500px] max-w-2xl rounded-3xl bg-white shadow-2xl animate-modal-appear"
+        style={{ zIndex: 100000 }}
+      >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-200 px-8 py-5">
           <button
             onClick={onClose}
             className="rounded-full p-2 hover:bg-gray-100 transition-colors"
+            aria-label="Fermer"
           >
             <XMarkIcon className="h-6 w-6" />
           </button>
-          <h2 className="text-xl font-semibold">Ajouter aux favoris</h2>
+          <h2 id="wishlist-modal-title" className="text-xl font-semibold">Ajouter aux favoris</h2>
           <div className="w-10" />
         </div>
 
@@ -135,7 +177,7 @@ export default function WishlistModal({
                               {previewImages[idx] && (
                                 <Image
                                   src={previewImages[idx]}
-                                  alt=""
+                                  alt={`Apercu de la liste ${wishlist.name}`}
                                   fill
                                   className="object-cover"
                                   sizes="150px"
@@ -194,6 +236,7 @@ export default function WishlistModal({
                 onChange={(e) => setNewListName(e.target.value)}
                 placeholder="Ex: Vacances d'été, Week-end..."
                 className="flex-1 rounded-xl border-2 border-gray-200 px-4 py-3 text-base focus:border-gray-900 focus:outline-none transition-colors"
+                aria-label="Nom de la nouvelle liste de favoris"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleCreate();
@@ -239,4 +282,7 @@ export default function WishlistModal({
       `}</style>
     </div>
   );
+
+  // Utiliser un portal pour rendre le modal directement dans le body
+  return createPortal(modalContent, document.body);
 }

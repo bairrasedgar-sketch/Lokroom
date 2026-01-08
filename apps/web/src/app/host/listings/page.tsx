@@ -20,8 +20,18 @@ const SPACE_TYPE_LABELS: Record<string, string> = {
   GARAGE: "Garage",
   STORAGE: "Stockage",
   EVENT_SPACE: "Espace événementiel",
-  RECORDING_STUDIO: "Studio d'enregistrement",
+  RECORDING_STUDIO: "Studios",
   OTHER: "Autre",
+};
+
+// Labels et couleurs pour les statuts de modération
+const MODERATION_STATUS_CONFIG: Record<string, { label: string; bgColor: string; textColor: string }> = {
+  DRAFT: { label: "Brouillon", bgColor: "bg-gray-100", textColor: "text-gray-600" },
+  PENDING_REVIEW: { label: "En attente", bgColor: "bg-amber-100", textColor: "text-amber-700" },
+  APPROVED: { label: "Publiée", bgColor: "bg-green-100", textColor: "text-green-700" },
+  REJECTED: { label: "Rejetée", bgColor: "bg-red-100", textColor: "text-red-700" },
+  SUSPENDED: { label: "Suspendue", bgColor: "bg-red-100", textColor: "text-red-700" },
+  ARCHIVED: { label: "Archivée", bgColor: "bg-gray-100", textColor: "text-gray-600" },
 };
 
 type Listing = {
@@ -36,6 +46,8 @@ type Listing = {
   country: string;
   city: string;
   createdAt: string;
+  isActive: boolean;
+  moderationStatus: string;
   images: { id: string; url: string; isCover: boolean }[];
   _count: {
     bookings: number;
@@ -59,6 +71,10 @@ type Draft = {
 
 type Stats = {
   total: number;
+  active: number;
+  draft: number;
+  pending: number;
+  rejected: number;
   totalBookings: number;
   totalFavorites: number;
 };
@@ -80,18 +96,18 @@ export default function HostListingsPage() {
   const DRAFTS_KEY = userEmail ? `lokroom_listing_drafts_${userEmail}` : "";
   const DRAFT_EXPIRY_DAYS = 90;
 
-  const fetchListings = useCallback(async () => {
+  const fetchListings = useCallback(async (signal?: AbortSignal) => {
     try {
-      const res = await fetch("/api/host/listings");
+      const res = await fetch("/api/host/listings", { signal });
       if (!res.ok) {
         const data = await res.json();
 
-        // Si accès refusé, tenter d'activer le mode hôte et réessayer
+        // Si acces refuse, tenter d'activer le mode hote et reessayer
         if (res.status === 403) {
-          const activateRes = await fetch("/api/host/activate", { method: "POST" });
+          const activateRes = await fetch("/api/host/activate", { method: "POST", signal });
           if (activateRes.ok) {
-            // Réessayer de charger les annonces
-            const retryRes = await fetch("/api/host/listings");
+            // Reessayer de charger les annonces
+            const retryRes = await fetch("/api/host/listings", { signal });
             if (retryRes.ok) {
               const retryData = await retryRes.json();
               setListings(retryData.listings);
@@ -108,6 +124,7 @@ export default function HostListingsPage() {
       setListings(data.listings);
       setStats(data.stats);
     } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") return;
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
       setLoading(false);
@@ -152,8 +169,10 @@ export default function HostListingsPage() {
     }
 
     if (status === "authenticated") {
-      fetchListings();
+      const controller = new AbortController();
+      fetchListings(controller.signal);
       loadDrafts();
+      return () => controller.abort();
     }
   }, [status, router, fetchListings, loadDrafts]);
 
@@ -205,10 +224,15 @@ export default function HostListingsPage() {
         <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
           <p className="text-red-600">{error}</p>
           <button
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              setError(null);
+              setLoading(true);
+              fetchListings();
+            }}
+            aria-label="Reessayer le chargement"
             className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
           >
-            Réessayer
+            Reessayer
           </button>
         </div>
       </div>
@@ -216,7 +240,7 @@ export default function HostListingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
+    <div className="mx-auto max-w-5xl 2xl:max-w-6xl 3xl:max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
       {/* Header */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -240,13 +264,15 @@ export default function HostListingsPage() {
       <div className="mb-6 flex border-b border-gray-200">
         <button
           onClick={() => setActiveTab("published")}
+          aria-label="Voir les annonces publiees"
+          aria-pressed={activeTab === "published"}
           className={`relative px-4 py-3 text-sm font-medium transition-colors ${
             activeTab === "published"
               ? "text-gray-900 border-b-2 border-gray-900"
               : "text-gray-500 hover:text-gray-700"
           }`}
         >
-          Publiées
+          Publiees
           {listings.length > 0 && (
             <span className="ml-2 inline-flex items-center justify-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
               {listings.length}
@@ -255,6 +281,8 @@ export default function HostListingsPage() {
         </button>
         <button
           onClick={() => setActiveTab("drafts")}
+          aria-label="Voir les brouillons"
+          aria-pressed={activeTab === "drafts"}
           className={`relative px-4 py-3 text-sm font-medium transition-colors ${
             activeTab === "drafts"
               ? "text-gray-900 border-b-2 border-gray-900"
@@ -272,10 +300,14 @@ export default function HostListingsPage() {
 
       {/* Stats (only for published) */}
       {activeTab === "published" && stats && stats.total > 0 && (
-        <div className="mb-8 grid gap-4 sm:grid-cols-3">
+        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-xl border border-gray-200 bg-white p-4">
-            <p className="text-xs font-medium uppercase text-gray-500">Annonces</p>
+            <p className="text-xs font-medium uppercase text-gray-500">Total</p>
             <p className="mt-1 text-2xl font-semibold text-gray-900">{stats.total}</p>
+          </div>
+          <div className="rounded-xl border border-green-200 bg-green-50 p-4">
+            <p className="text-xs font-medium uppercase text-green-600">Actives</p>
+            <p className="mt-1 text-2xl font-semibold text-green-700">{stats.active}</p>
           </div>
           <div className="rounded-xl border border-gray-200 bg-white p-4">
             <p className="text-xs font-medium uppercase text-gray-500">Réservations</p>
@@ -343,9 +375,26 @@ export default function HostListingsPage() {
                     <div>
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <span className="inline-block rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium uppercase text-gray-600">
-                            {SPACE_TYPE_LABELS[listing.type] || listing.type}
-                          </span>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="inline-block rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium uppercase text-gray-600">
+                              {SPACE_TYPE_LABELS[listing.type] || listing.type}
+                            </span>
+                            {/* Statut de modération */}
+                            {(() => {
+                              const config = MODERATION_STATUS_CONFIG[listing.moderationStatus] || MODERATION_STATUS_CONFIG.DRAFT;
+                              return (
+                                <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium ${config.bgColor} ${config.textColor}`}>
+                                  {config.label}
+                                </span>
+                              );
+                            })()}
+                            {/* Indicateur inactif */}
+                            {!listing.isActive && listing.moderationStatus === "APPROVED" && (
+                              <span className="inline-block rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-medium text-orange-700">
+                                Désactivée
+                              </span>
+                            )}
+                          </div>
                           <h3 className="mt-1 font-semibold text-gray-900 group-hover:text-gray-700">
                             {listing.title}
                           </h3>
@@ -468,12 +517,14 @@ export default function HostListingsPage() {
                   <div className="flex shrink-0 flex-col justify-center gap-2">
                     <Link
                       href="/listings/new"
+                      aria-label="Continuer l'edition du brouillon"
                       className="rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-700"
                     >
                       Continuer
                     </Link>
                     <button
                       onClick={() => deleteDraft(draft.id)}
+                      aria-label="Supprimer le brouillon"
                       className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-white"
                     >
                       Supprimer

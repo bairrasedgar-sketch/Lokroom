@@ -94,18 +94,19 @@ export default function NotificationBell() {
   }, []);
 
   // Charger les notifications
-  const fetchNotifications = useCallback(async () => {
+  const fetchNotifications = useCallback(async (signal?: AbortSignal) => {
     if (!isLoggedIn) return;
 
     try {
       setIsLoading(true);
-      const res = await fetch("/api/notifications?limit=10");
+      const res = await fetch("/api/notifications?limit=10", { signal });
       if (res.ok) {
         const data = await res.json();
         setNotifications(data.notifications || []);
         setUnreadCount(data.unreadCount || 0);
       }
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return;
       console.error("Error fetching notifications:", error);
     } finally {
       setIsLoading(false);
@@ -114,10 +115,14 @@ export default function NotificationBell() {
 
   // Charger au montage et toutes les 30 secondes
   useEffect(() => {
-    fetchNotifications();
+    const controller = new AbortController();
+    fetchNotifications(controller.signal);
 
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
+    const interval = setInterval(() => fetchNotifications(), 30000);
+    return () => {
+      controller.abort();
+      clearInterval(interval);
+    };
   }, [fetchNotifications]);
 
   // Marquer une notification comme lue

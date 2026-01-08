@@ -206,6 +206,7 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
           </div>
           <button
             onClick={onClose}
+            aria-label="Fermer la recherche"
             className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-gray-100 transition-colors flex-shrink-0"
           >
             <svg className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -394,6 +395,7 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
                     <button
                       onClick={() => setGuests(Math.max(1, guests - 1))}
                       disabled={guests <= 1}
+                      aria-label="Diminuer le nombre de voyageurs"
                       className="flex items-center justify-center h-10 w-10 rounded-full border border-gray-300 text-gray-600 transition-colors hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -406,6 +408,7 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
                     <button
                       onClick={() => setGuests(Math.min(16, guests + 1))}
                       disabled={guests >= 16}
+                      aria-label="Augmenter le nombre de voyageurs"
                       className="flex items-center justify-center h-10 w-10 rounded-full border border-gray-300 text-gray-600 transition-colors hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

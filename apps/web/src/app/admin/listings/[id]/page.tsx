@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowLeftIcon,
   MapPinIcon,
@@ -499,10 +500,12 @@ export default function AdminListingDetailPage() {
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             {listing.images.length > 0 ? (
               <div className="relative aspect-[16/9]">
-                <img
+                <Image
                   src={selectedImage || listing.images.find(i => i.isCover)?.url || listing.images[0]?.url}
                   alt={listing.title}
-                  className="w-full h-full object-cover"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 66vw"
                 />
               </div>
             ) : (
@@ -512,17 +515,17 @@ export default function AdminListingDetailPage() {
             )}
             {listing.images.length > 1 && (
               <div className="p-3 flex gap-2 overflow-x-auto">
-                {listing.images.map((img) => (
+                {listing.images.map((img, idx) => (
                   <button
                     key={img.id}
                     onClick={() => setSelectedImage(img.url)}
-                    className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 ${
+                    className={`relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 ${
                       (selectedImage || listing.images.find(i => i.isCover)?.url) === img.url
                         ? "border-red-500"
                         : "border-transparent"
                     }`}
                   >
-                    <img src={img.url} alt="" className="w-full h-full object-cover" />
+                    <Image src={img.url} alt={`Photo ${idx + 1} de ${listing.title}`} fill className="object-cover" sizes="64px" />
                   </button>
                 ))}
               </div>
@@ -670,9 +673,9 @@ export default function AdminListingDetailPage() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {listing.images.map((img) => (
+                    {listing.images.map((img, idx) => (
                       <div key={img.id} className="relative aspect-[4/3] rounded-lg overflow-hidden group">
-                        <img src={img.url} alt="" className="w-full h-full object-cover" />
+                        <Image src={img.url} alt={`Photo ${idx + 1} de ${listing.title}`} fill className="object-cover" sizes="(max-width: 768px) 50vw, 33vw" />
                         {img.isCover && (
                           <span className="absolute top-2 left-2 px-2 py-1 bg-black/50 text-white text-xs rounded">
                             Couverture
@@ -732,7 +735,9 @@ export default function AdminListingDetailPage() {
                     <div key={review.id} className="p-4">
                       <div className="flex items-center gap-3 mb-2">
                         {review.author.profile?.avatarUrl ? (
-                          <img src={review.author.profile.avatarUrl} alt="" className="w-8 h-8 rounded-full" />
+                          <div className="relative w-8 h-8 rounded-full overflow-hidden">
+                            <Image src={review.author.profile.avatarUrl} alt={`Avatar de ${review.author.name || "auteur"}`} fill className="object-cover" sizes="32px" />
+                          </div>
                         ) : (
                           <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-sm">
                             {review.author.name?.charAt(0) || "?"}
@@ -879,7 +884,9 @@ export default function AdminListingDetailPage() {
             <h3 className="font-semibold text-gray-900 mb-4">Propriétaire</h3>
             <Link href={`/admin/users/${listing.owner.id}`} className="flex items-center gap-3 hover:bg-gray-50 -mx-2 p-2 rounded-lg">
               {listing.owner.profile?.avatarUrl ? (
-                <img src={listing.owner.profile.avatarUrl} alt="" className="w-12 h-12 rounded-full object-cover" />
+                <div className="relative w-12 h-12 rounded-full overflow-hidden">
+                  <Image src={listing.owner.profile.avatarUrl} alt={`Avatar de ${listing.owner.name || "propriétaire"}`} fill className="object-cover" sizes="48px" />
+                </div>
               ) : (
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white text-lg font-bold">
                   {listing.owner.name?.charAt(0) || "?"}

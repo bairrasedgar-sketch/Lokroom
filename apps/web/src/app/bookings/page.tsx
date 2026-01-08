@@ -101,7 +101,7 @@ export default function BookingsPage() {
   return (
     <Suspense
       fallback={
-        <main className="mx-auto max-w-5xl px-4 py-6 lg:py-8">
+        <main className="mx-auto max-w-5xl 2xl:max-w-6xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
           <header className="mb-6">
             <div className="h-6 w-48 rounded bg-gray-100" />
             <div className="mt-2 h-4 w-64 rounded bg-gray-100" />
@@ -227,6 +227,7 @@ function BookingsPageContent() {
 
   // Chargement des réservations via /api/bookings
   useEffect(() => {
+    const controller = new AbortController();
     async function loadBookings() {
       setLoading(true);
       setError(null);
@@ -235,6 +236,7 @@ function BookingsPageContent() {
         const res = await fetch("/api/bookings", {
           method: "GET",
           headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
         });
 
         if (!res.ok) {
@@ -252,18 +254,21 @@ function BookingsPageContent() {
         const json = (await res.json()) as ApiResponse;
         setBookings(json.bookings ?? []);
       } catch (err) {
-        console.error(err);
-        setError(
-          currentLocale === "en"
-            ? "Unexpected error while loading bookings."
-            : "Erreur inattendue lors du chargement des réservations."
-        );
+        if ((err as Error).name !== 'AbortError') {
+          console.error(err);
+          setError(
+            currentLocale === "en"
+              ? "Unexpected error while loading bookings."
+              : "Erreur inattendue lors du chargement des réservations."
+          );
+        }
       } finally {
         setLoading(false);
       }
     }
 
     void loadBookings();
+    return () => controller.abort();
   }, [currentLocale]);
 
   const hasBookings = bookings.length > 0;
@@ -624,9 +629,9 @@ function BookingsPageContent() {
 
       {/* Cancellation Modal */}
       {cancelModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="cancel-modal-title">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 id="cancel-modal-title" className="text-lg font-semibold text-gray-900">
               Annuler cette réservation ?
             </h2>
 

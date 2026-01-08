@@ -100,16 +100,87 @@ export default function HostAnalyticsPage() {
   const [period, setPeriod] = useState<PeriodFilter>("30d");
   const [refreshing, setRefreshing] = useState(false);
 
-  const fetchAnalytics = useCallback(async (showRefresh = false) => {
+  const fetchAnalytics = useCallback(async (showRefresh = false, signal?: AbortSignal) => {
     try {
       if (showRefresh) setRefreshing(true);
       else setLoading(true);
 
-      const res = await fetch(`/api/host/analytics?period=${period}`);
+      const res = await fetch(`/api/host/analytics?period=${period}`, { signal });
       if (!res.ok) throw new Error("Erreur de chargement");
       const result = await res.json();
-      setData(result);
+
+      // Transformer les données de l'API vers le format attendu par le frontend
+      const transformedData: AnalyticsData = {
+        summary: {
+          totalBookings: result.summary?.totalBookings || 0,
+          upcomingBookings: result.summary?.upcomingBookings || 0,
+          pastBookings: result.summary?.pastBookings || 0,
+          cancellationRate: result.summary?.cancellationRate || 0,
+          averageRating: result.summary?.ratingAvg || 0,
+          totalReviews: result.summary?.ratingCount || 0,
+        },
+        monthlyRevenue: (() => {
+          // Grouper les revenus par devise et combiner avec bookings/nights
+          const revenueByMonth = result.revenueByMonth || [];
+          const bookingsByMonth = result.bookingsByMonth || [];
+          const nightsByMonth = result.nightsByMonth || [];
+
+          // Créer un map de tous les mois
+          const monthsSet = new Set<string>();
+          revenueByMonth.forEach((r: { month: string }) => monthsSet.add(r.month));
+          bookingsByMonth.forEach((b: { month: string }) => monthsSet.add(b.month));
+          nightsByMonth.forEach((n: { month: string }) => monthsSet.add(n.month));
+
+          const months = Array.from(monthsSet).sort();
+
+          // Grouper par devise
+          const currencyMap = new Map<string, MonthlyData[]>();
+
+          for (const month of months) {
+            const rev = revenueByMonth.find((r: { month: string; currency: string; totalCents: number }) => r.month === month);
+            const bk = bookingsByMonth.find((b: { month: string; count: number }) => b.month === month);
+            const nt = nightsByMonth.find((n: { month: string; nights: number }) => n.month === month);
+
+            const currency = rev?.currency || "EUR";
+
+            if (!currencyMap.has(currency)) {
+              currencyMap.set(currency, []);
+            }
+
+            currencyMap.get(currency)!.push({
+              month,
+              revenue: (rev?.totalCents || 0) / 100,
+              bookings: bk?.count || 0,
+              nights: nt?.nights || 0,
+            });
+          }
+
+          // Si aucune donnée, retourner un tableau vide avec EUR par défaut
+          if (currencyMap.size === 0) {
+            return [{ currency: "EUR", data: [] }];
+          }
+
+          return Array.from(currencyMap.entries()).map(([currency, data]) => ({
+            currency,
+            data,
+          }));
+        })(),
+        occupancy: {
+          rate: result.occupancy90d?.occupancyRate || 0,
+          bookedNights: result.occupancy90d?.nightsBooked || 0,
+          totalCapacity: result.occupancy90d?.nightsCapacity || 0,
+          period: `${result.occupancy90d?.windowDays || 90} jours`,
+        },
+        listings: result.listings || [],
+        comparison: result.comparison,
+        topPerformers: result.topPerformers,
+        guestStats: result.guestStats,
+        ratingBreakdown: result.ratingBreakdown,
+      };
+
+      setData(transformedData);
     } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") return;
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
       setLoading(false);
@@ -124,7 +195,9 @@ export default function HostAnalyticsPage() {
     }
 
     if (status === "authenticated") {
-      fetchAnalytics();
+      const controller = new AbortController();
+      fetchAnalytics(false, controller.signal);
+      return () => controller.abort();
     }
   }, [status, router, fetchAnalytics]);
 
@@ -215,21 +288,21 @@ export default function HostAnalyticsPage() {
   }
 
   // Calculer le total des revenus
-  const totalRevenue = data?.monthlyRevenue.reduce((acc, curr) => {
-    const total = curr.data.reduce((sum, m) => sum + m.revenue, 0);
+  const totalRevenue = data?.monthlyRevenue?.reduce((acc, curr) => {
+    const total = curr.data?.reduce((sum, m) => sum + m.revenue, 0) || 0;
     return acc + total;
   }, 0) || 0;
 
-  const primaryCurrency = data?.monthlyRevenue[0]?.currency || "EUR";
-  const chartData = data?.monthlyRevenue[0]?.data || [];
+  const primaryCurrency = data?.monthlyRevenue?.[0]?.currency || "EUR";
+  const chartData = data?.monthlyRevenue?.[0]?.data || [];
 
   // Calcul des bookings cancelled pour le pie chart
-  const confirmedBookings = data?.summary.pastBookings || 0;
-  const pendingBookings = data?.summary.upcomingBookings || 0;
-  const cancelledBookings = data?.summary.cancelledBookings || Math.round((data?.summary.totalBookings || 0) * (data?.summary.cancellationRate || 0));
+  const confirmedBookings = data?.summary?.pastBookings || 0;
+  const pendingBookings = data?.summary?.upcomingBookings || 0;
+  const cancelledBookings = data?.summary?.cancelledBookings || Math.round((data?.summary?.totalBookings || 0) * (data?.summary?.cancellationRate || 0));
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-7xl 2xl:max-w-[1600px] 3xl:max-w-[1920px] px-4 py-8 sm:px-6 lg:px-8 xl:px-10">
       {/* Header */}
       <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -249,6 +322,7 @@ export default function HostAnalyticsPage() {
           <button
             onClick={() => fetchAnalytics(true)}
             disabled={refreshing}
+            aria-label="Actualiser les donnees"
             className="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
           >
             <ArrowPathIcon className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
@@ -259,12 +333,13 @@ export default function HostAnalyticsPage() {
           <select
             value={period}
             onChange={(e) => setPeriod(e.target.value as PeriodFilter)}
+            aria-label="Selectionner la periode"
             className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
           >
             <option value="7d">7 derniers jours</option>
             <option value="30d">30 derniers jours</option>
             <option value="90d">90 derniers jours</option>
-            <option value="1y">Cette année</option>
+            <option value="1y">Cette annee</option>
             <option value="all">Tout</option>
           </select>
 
@@ -272,6 +347,7 @@ export default function HostAnalyticsPage() {
           <div className="flex gap-2">
             <button
               onClick={() => handleExport("csv")}
+              aria-label="Exporter en CSV"
               className="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
             >
               <ArrowDownTrayIcon className="h-4 w-4" />
@@ -279,6 +355,7 @@ export default function HostAnalyticsPage() {
             </button>
             <button
               onClick={() => handleExport("json")}
+              aria-label="Exporter en JSON"
               className="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
             >
               <ArrowDownTrayIcon className="h-4 w-4" />

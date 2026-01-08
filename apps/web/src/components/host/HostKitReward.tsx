@@ -1,5 +1,5 @@
 /**
- * Composant Kit Lokeur - Programme de récompense hôtes
+ * Composant Kit Lok'Room - Programme de récompense hôtes
  * Affiche la progression et permet de réclamer les kits
  */
 "use client";
@@ -13,6 +13,8 @@ import {
   SparklesIcon,
   KeyIcon,
   HomeIcon,
+  InformationCircleIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { CheckCircleIcon as CheckCircleSolidIcon } from "@heroicons/react/24/solid";
 
@@ -71,6 +73,7 @@ export default function HostKitReward() {
   const [data, setData] = useState<KitEligibilityResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showClaimModal, setShowClaimModal] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const [selectedKit, setSelectedKit] = useState<"ESSENTIAL" | "SUPERHOST" | null>(null);
   const [claiming, setClaiming] = useState(false);
   const [address, setAddress] = useState<ShippingAddress>({
@@ -310,7 +313,7 @@ export default function HostKitReward() {
             <GiftIcon className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900">Programme Kit Lokeur</h3>
+            <h3 className="font-semibold text-gray-900">Programme Kit Lok&apos;Room</h3>
             <p className="text-sm text-gray-500">
               {data.totalQualifyingBookings} réservation{data.totalQualifyingBookings > 1 ? "s" : ""} qualifiée{data.totalQualifyingBookings > 1 ? "s" : ""}
             </p>
@@ -390,8 +393,13 @@ export default function HostKitReward() {
                 <li key={idx} className="text-xs text-gray-600">{item}</li>
               ))}
               {data.kits.essential.items.length > 4 && (
-                <li className="text-xs text-gray-400">
-                  +{data.kits.essential.items.length - 4} autres...
+                <li>
+                  <button
+                    onClick={() => setShowTermsModal(true)}
+                    className="text-xs text-amber-600 hover:text-amber-700 underline"
+                  >
+                    +{data.kits.essential.items.length - 4} autres...
+                  </button>
                 </li>
               )}
             </ul>
@@ -405,7 +413,7 @@ export default function HostKitReward() {
               </button>
             ) : data.kits.essential.bookingsNeeded > 0 ? (
               <p className="text-center text-sm text-gray-500">
-                Encore {data.kits.essential.bookingsNeeded} résa{data.kits.essential.bookingsNeeded > 1 ? "s" : ""} de 2h+
+                Encore {data.kits.essential.bookingsNeeded} résa{data.kits.essential.bookingsNeeded > 1 ? "s" : ""} qualifiée{data.kits.essential.bookingsNeeded > 1 ? "s" : ""}
               </p>
             ) : null}
           </div>
@@ -469,8 +477,13 @@ export default function HostKitReward() {
                 <li key={idx} className="text-xs text-gray-600">{item}</li>
               ))}
               {data.kits.superhost.items.length > 4 && (
-                <li className="text-xs text-gray-400">
-                  +{data.kits.superhost.items.length - 4} autres...
+                <li>
+                  <button
+                    onClick={() => setShowTermsModal(true)}
+                    className="text-xs text-amber-600 hover:text-amber-700 underline"
+                  >
+                    +{data.kits.superhost.items.length - 4} autres...
+                  </button>
                 </li>
               )}
             </ul>
@@ -484,7 +497,7 @@ export default function HostKitReward() {
               </button>
             ) : data.kits.superhost.bookingsNeeded > 0 ? (
               <p className="text-center text-sm text-gray-500">
-                Encore {data.kits.superhost.bookingsNeeded} résa{data.kits.superhost.bookingsNeeded > 1 ? "s" : ""} de 2h+
+                Encore {data.kits.superhost.bookingsNeeded} résa{data.kits.superhost.bookingsNeeded > 1 ? "s" : ""} qualifiée{data.kits.superhost.bookingsNeeded > 1 ? "s" : ""}
               </p>
             ) : null}
           </div>
@@ -492,9 +505,134 @@ export default function HostKitReward() {
 
         {/* Info */}
         <p className="mt-4 text-xs text-gray-400 text-center">
-          Réservations qualifiées : confirmées et d&apos;une durée minimum de 2 heures
+          Réservations qualifiées : confirmées, minimum 10€ et 2h minimum.{" "}
+          <button
+            onClick={() => setShowTermsModal(true)}
+            className="text-gray-600 underline hover:text-gray-900"
+          >
+            En savoir plus
+          </button>
         </p>
       </div>
+
+      {/* Modal des conditions de l'offre */}
+      {showTermsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                    <InformationCircleIcon className="h-5 w-5 text-amber-600" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900">Conditions du Programme Kit Lok&apos;Room</h3>
+                </div>
+                <button
+                  onClick={() => setShowTermsModal(false)}
+                  className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <XMarkIcon className="h-5 w-5 text-gray-500" />
+                </button>
+              </div>
+
+              <div className="space-y-4 text-sm text-gray-600">
+                <section>
+                  <h4 className="font-semibold text-gray-900 mb-2">1. Objet de l&apos;offre</h4>
+                  <p>
+                    Le programme Kit Lok&apos;Room est une offre promotionnelle réservée aux hôtes de la plateforme Lok&apos;Room.
+                    Il permet de recevoir un kit de bienvenue gratuit après avoir atteint un certain nombre de réservations qualifiées.
+                  </p>
+                </section>
+
+                <section>
+                  <h4 className="font-semibold text-gray-900 mb-2">2. Réservations qualifiées</h4>
+                  <p className="mb-2">Pour être qualifiée, une réservation doit remplir <strong>toutes</strong> les conditions suivantes :</p>
+                  <ul className="list-disc list-inside space-y-1 ml-2">
+                    <li>Statut <strong>confirmé</strong> (payée et validée)</li>
+                    <li>Montant total minimum de <strong>10€</strong></li>
+                    <li>Durée minimum de <strong>2 heures</strong> (pour les réservations à l&apos;heure)</li>
+                  </ul>
+                  <p className="mt-2 text-xs text-gray-500">
+                    Ces conditions visent à garantir l&apos;équité du programme et éviter les abus.
+                  </p>
+                </section>
+
+                <section>
+                  <h4 className="font-semibold text-gray-900 mb-2">3. Les kits disponibles</h4>
+                  <div className="space-y-4">
+                    {/* Kit Essentiel */}
+                    <div className="p-4 rounded-lg bg-green-50 border border-green-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="font-medium text-green-800">Kit Essentiel</p>
+                        <span className="text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                          5 réservations · 100€
+                        </span>
+                      </div>
+                      <ul className="space-y-1.5 mt-3">
+                        {data.kits.essential.items.map((item, idx) => (
+                          <li key={idx} className="text-xs text-green-700 flex items-start gap-2">
+                            <span className="text-green-500 mt-0.5">•</span>
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* Kit Super Hôte */}
+                    <div className="p-4 rounded-lg bg-purple-50 border border-purple-200">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="font-medium text-purple-800">Kit Super Hôte</p>
+                        <span className="text-xs font-semibold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full">
+                          25 réservations · 250€
+                        </span>
+                      </div>
+                      <ul className="space-y-1.5 mt-3">
+                        {data.kits.superhost.items.map((item, idx) => (
+                          <li key={idx} className="text-xs text-purple-700 flex items-start gap-2">
+                            <span className="text-purple-500 mt-0.5">•</span>
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </section>
+
+                <section>
+                  <h4 className="font-semibold text-gray-900 mb-2">4. Règles importantes</h4>
+                  <ul className="list-disc list-inside space-y-1 ml-2">
+                    <li><strong>Un seul kit par hôte</strong> : vous devez choisir entre réclamer le Kit Essentiel dès 5 réservations ou attendre le Kit Super Hôte à 25 réservations.</li>
+                    <li>Une fois un kit réclamé, l&apos;autre option n&apos;est plus disponible.</li>
+                    <li>L&apos;offre est valable dans la limite des stocks disponibles.</li>
+                    <li>Lok&apos;Room se réserve le droit de modifier ou d&apos;annuler cette offre à tout moment.</li>
+                  </ul>
+                </section>
+
+                <section>
+                  <h4 className="font-semibold text-gray-900 mb-2">5. Livraison</h4>
+                  <p>
+                    Les kits sont expédiés sous 7 à 10 jours ouvrés après la réclamation.
+                    La livraison est gratuite en France métropolitaine, Belgique, Suisse, Luxembourg et Canada.
+                  </p>
+                </section>
+
+                <section className="pt-4 border-t border-gray-200">
+                  <p className="text-xs text-gray-500">
+                    En participant à ce programme, vous acceptez ces conditions. Pour toute question, contactez notre support à support@lokroom.com.
+                  </p>
+                </section>
+              </div>
+
+              <button
+                onClick={() => setShowTermsModal(false)}
+                className="w-full mt-6 py-2.5 rounded-xl bg-gray-900 text-white font-medium text-sm hover:bg-black transition-colors"
+              >
+                J&apos;ai compris
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal de réclamation */}
       {showClaimModal && selectedKit && (

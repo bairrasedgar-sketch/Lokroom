@@ -129,7 +129,7 @@ export default function ListingImagesManager({
               <div className="relative aspect-[4/3]">
                 <Image
                   src={img.url}
-                  alt=""
+                  alt={`Image de l'annonce`}
                   fill
                   className="object-cover"
                   sizes="200px"

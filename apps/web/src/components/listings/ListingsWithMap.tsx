@@ -60,6 +60,8 @@ type ListingsWithMapProps = {
   };
   searchParams?: Record<string, string>;
   displayCurrency?: string;
+  currentPage?: number;
+  totalPages?: number;
 };
 
 // Composant Skeleton pour le chargement (style Airbnb)
@@ -100,6 +102,7 @@ function ListingCard({
 }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
+  const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
   const images = listing.images || [];
   const hasMultipleImages = images.length > 1;
 
@@ -107,6 +110,7 @@ function ListingCard({
   useEffect(() => {
     // Reset visibility when listing changes (new data from map)
     setIsVisible(false);
+    setCurrentImageIndex(0); // Reset image index when listing changes
     const timer = setTimeout(() => {
       setIsVisible(true);
     }, index * 80); // 80ms de délai entre chaque carte (plus lent)
@@ -116,12 +120,14 @@ function ListingCard({
   const nextImage = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    setSlideDirection('left');
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
   };
 
   const prevImage = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    setSlideDirection('right');
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
@@ -143,13 +149,23 @@ function ListingCard({
       <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-gray-100">
         <Link href={`/listings/${listing.id}`} className="block h-full w-full">
           {images.length > 0 ? (
-            <Image
-              src={images[currentImageIndex]?.url || ""}
-              alt={listing.title}
-              fill
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
-              sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-            />
+            <div
+              className="flex h-full transition-transform duration-300 ease-out"
+              style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}
+            >
+              {images.map((image, idx) => (
+                <div key={image.id || idx} className="relative h-full w-full flex-shrink-0">
+                  <Image
+                    src={image.url || ""}
+                    alt={`${listing.title} - ${idx + 1}`}
+                    fill
+                    className="object-cover"
+                    sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
+                    priority={idx === 0}
+                  />
+                </div>
+              ))}
+            </div>
           ) : (
             <div className="absolute inset-0 grid place-items-center text-xs text-gray-400">
               {t.noImage}
@@ -162,28 +178,28 @@ function ListingCard({
           <FavoriteButton listingId={listing.id} size={24} variant="card" />
         </div>
 
-        {/* Flèches de navigation (visibles au hover) */}
+        {/* Flèches de navigation (visibles au hover) - style Airbnb */}
         {hasMultipleImages && (
           <>
             <button
               onClick={prevImage}
-              className={`absolute left-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white text-gray-800 shadow-md transition-all hover:scale-110 ${
+              className={`absolute left-2 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-sm border border-gray-200/50 transition-all hover:bg-white hover:scale-105 hover:shadow-md ${
                 isHovered ? "opacity-100" : "opacity-0"
               }`}
               aria-label="Image précédente"
             >
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <button
               onClick={nextImage}
-              className={`absolute right-12 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white text-gray-800 shadow-md transition-all hover:scale-110 ${
+              className={`absolute right-2 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-sm border border-gray-200/50 transition-all hover:bg-white hover:scale-105 hover:shadow-md ${
                 isHovered ? "opacity-100" : "opacity-0"
               }`}
               aria-label="Image suivante"
             >
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>
@@ -243,18 +259,68 @@ function ListingCard({
 }
 
 // Helper pour comparer les bounds (éviter les re-fetches inutiles)
+// Détecte les micro-mouvements (quelques pixels / millimètres sur la carte)
 function boundsAreEqual(
   a: { north: number; south: number; east: number; west: number } | null,
-  b: { north: number; south: number; east: number; west: number } | null,
-  threshold = 0.001
+  b: { north: number; south: number; east: number; west: number } | null
 ): boolean {
   if (!a || !b) return false;
+
+  // Calculer la taille de la zone visible
+  const height = Math.abs(a.north - a.south);
+  const width = Math.abs(a.east - a.west);
+
+  // Seuil: 1% de la zone visible = micro-mouvement
+  // Cela correspond à quelques pixels sur l'écran
+  const thresholdLat = height * 0.01;
+  const thresholdLng = width * 0.01;
+
   return (
-    Math.abs(a.north - b.north) < threshold &&
-    Math.abs(a.south - b.south) < threshold &&
-    Math.abs(a.east - b.east) < threshold &&
-    Math.abs(a.west - b.west) < threshold
+    Math.abs(a.north - b.north) < thresholdLat &&
+    Math.abs(a.south - b.south) < thresholdLat &&
+    Math.abs(a.east - b.east) < thresholdLng &&
+    Math.abs(a.west - b.west) < thresholdLng
   );
+}
+
+// Helper pour vérifier si les nouvelles bounds sont significativement différentes
+// Recharge si l'utilisateur s'est déplacé d'au moins 8% de la zone visible
+function boundsChangedSignificantly(
+  oldBounds: { north: number; south: number; east: number; west: number } | null,
+  newBounds: { north: number; south: number; east: number; west: number }
+): boolean {
+  if (!oldBounds) return true;
+
+  const oldHeight = Math.abs(oldBounds.north - oldBounds.south);
+  const oldWidth = Math.abs(oldBounds.east - oldBounds.west);
+
+  // Éviter division par zéro
+  if (oldHeight === 0 || oldWidth === 0) return true;
+
+  // Calculer le déplacement du centre de la carte
+  const oldCenterLat = (oldBounds.north + oldBounds.south) / 2;
+  const oldCenterLng = (oldBounds.east + oldBounds.west) / 2;
+  const newCenterLat = (newBounds.north + newBounds.south) / 2;
+  const newCenterLng = (newBounds.east + newBounds.west) / 2;
+
+  const centerMoveLat = Math.abs(newCenterLat - oldCenterLat) / oldHeight;
+  const centerMoveLng = Math.abs(newCenterLng - oldCenterLng) / oldWidth;
+
+  // Calculer le changement de zoom (taille de la zone)
+  const newHeight = Math.abs(newBounds.north - newBounds.south);
+  const newWidth = Math.abs(newBounds.east - newBounds.west);
+  const zoomChangeHeight = Math.abs(newHeight - oldHeight) / oldHeight;
+  const zoomChangeWidth = Math.abs(newWidth - oldWidth) / oldWidth;
+
+  // Seuil: 8% de déplacement du centre OU 15% de changement de zoom
+  // C'est assez sensible pour être réactif, mais évite les micro-mouvements
+  const moveThreshold = 0.08;
+  const zoomThreshold = 0.15;
+
+  const significantMove = centerMoveLat > moveThreshold || centerMoveLng > moveThreshold;
+  const significantZoom = zoomChangeHeight > zoomThreshold || zoomChangeWidth > zoomThreshold;
+
+  return significantMove || significantZoom;
 }
 
 export default function ListingsWithMap({
@@ -263,6 +329,8 @@ export default function ListingsWithMap({
   translations: t,
   searchParams = {},
   displayCurrency = "EUR",
+  currentPage = 1,
+  totalPages = 1,
 }: ListingsWithMapProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [isLoadingMap, setIsLoadingMap] = useState(false);
@@ -277,9 +345,55 @@ export default function ListingsWithMap({
   const isFirstLoad = useRef(true);
   const lastFetchedBounds = useRef<{ north: number; south: number; east: number; west: number } | null>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
 
   // Tracker si on a fait un fetch manuel (pour éviter de re-fitBounds)
   const hasFetchedFromMapRef = useRef(false);
+
+  // Gérer le comportement sticky de la map (s'arrête au niveau de la pagination)
+  useEffect(() => {
+    let rafId: number;
+
+    const handleScroll = () => {
+      // Utiliser requestAnimationFrame pour synchroniser avec le rendu
+      rafId = requestAnimationFrame(() => {
+        if (!mapRef.current) return;
+
+        // Chercher la pagination ou le footer comme limite
+        const pagination = document.querySelector('nav[aria-label="Pagination"]');
+        const footer = document.querySelector('footer');
+        const stopElement = pagination || footer;
+
+        if (!stopElement) return;
+
+        const map = mapRef.current;
+        const stopRect = stopElement.getBoundingClientRect();
+        const mapHeight = window.innerHeight - 100;
+        const navbarHeight = 80;
+        const margin = 20;
+
+        const limitPoint = navbarHeight + mapHeight + margin;
+
+        if (stopRect.top <= limitPoint) {
+          // La map suit le scroll - synchrone, pas de transition
+          const newTop = stopRect.top - mapHeight - margin;
+          map.style.transition = 'none';
+          map.style.top = `${newTop}px`;
+        } else {
+          // La map reste fixe en haut
+          map.style.top = `${navbarHeight}px`;
+        }
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, []);
 
   // Update listings when initial data changes (e.g., from server-side filters)
   useEffect(() => {
@@ -296,9 +410,14 @@ export default function ListingsWithMap({
   // Fetch listings based on map bounds
   const fetchListingsInBounds = useCallback(
     async (bounds: { north: number; south: number; east: number; west: number }) => {
-      // Vérifier si les bounds sont significativement différents
+      // 1. Vérifier si les bounds sont quasi identiques (micro-mouvements de quelques pixels)
       if (boundsAreEqual(lastFetchedBounds.current, bounds)) {
-        return; // Éviter les fetches redondants
+        return; // Éviter les fetches pour micro-mouvements
+      }
+
+      // 2. Vérifier si le changement est vraiment significatif (>8% de déplacement)
+      if (!boundsChangedSignificantly(lastFetchedBounds.current, bounds)) {
+        return; // Pas assez de changement pour justifier un rechargement
       }
 
       // Cancel previous request
@@ -402,10 +521,10 @@ export default function ListingsWithMap({
         clearTimeout(debounceTimeoutRef.current);
       }
 
-      // Debounce de 500ms pour éviter trop de requêtes
+      // Debounce de 600ms pour éviter trop de requêtes
       debounceTimeoutRef.current = setTimeout(() => {
         fetchListingsInBounds(bounds);
-      }, 500);
+      }, 600);
     },
     [isMapSearchEnabled, fetchListingsInBounds]
   );
@@ -476,7 +595,10 @@ export default function ListingsWithMap({
       {/* Nouvelles annonces avec animation escalier */}
       {!isLoadingMap && listings.length > 0 && (
         <div className="grid gap-4 sm:gap-x-6 sm:gap-y-8 grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3 3xl:grid-cols-4">
-          {listings.map((listing, index) => (
+          {/* Dédupliquer les listings par ID */}
+          {listings.filter((listing, index, self) =>
+            index === self.findIndex(l => l.id === listing.id)
+          ).map((listing, index) => (
             <ListingCard
               key={listing.id}
               listing={listing}
@@ -504,8 +626,108 @@ export default function ListingsWithMap({
         </div>
       )}
 
+      {/* Pagination style Airbnb */}
+      {totalPages > 1 && !isLoadingMap && (
+        <nav className="mt-10 mb-6 flex items-center justify-center gap-1 relative z-20" aria-label="Pagination">
+          {/* Bouton précédent */}
+          <Link
+            href={`/listings?${new URLSearchParams({ ...searchParams, page: String(Math.max(1, currentPage - 1)) }).toString()}`}
+            className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+              currentPage === 1
+                ? 'pointer-events-none text-gray-300'
+                : 'text-gray-700 hover:bg-gray-100'
+            }`}
+            aria-disabled={currentPage === 1}
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </Link>
+
+          {/* Numéros de page */}
+          {(() => {
+            const pages: (number | string)[] = [];
+            const showEllipsisStart = currentPage > 4;
+            const showEllipsisEnd = currentPage < totalPages - 3;
+
+            // Toujours afficher la page 1
+            pages.push(1);
+
+            if (showEllipsisStart) {
+              pages.push('...');
+            }
+
+            // Pages autour de la page courante
+            const start = showEllipsisStart ? Math.max(2, currentPage - 1) : 2;
+            const end = showEllipsisEnd ? Math.min(totalPages - 1, currentPage + 1) : totalPages - 1;
+
+            for (let i = start; i <= end; i++) {
+              if (!pages.includes(i)) {
+                pages.push(i);
+              }
+            }
+
+            if (showEllipsisEnd) {
+              pages.push('...');
+            }
+
+            // Toujours afficher la dernière page
+            if (totalPages > 1 && !pages.includes(totalPages)) {
+              pages.push(totalPages);
+            }
+
+            return pages.map((page, index) => {
+              if (page === '...') {
+                return (
+                  <span key={`ellipsis-${index}`} className="flex h-10 w-10 items-center justify-center text-gray-500">
+                    …
+                  </span>
+                );
+              }
+
+              const pageNum = page as number;
+              const isActive = pageNum === currentPage;
+
+              return (
+                <Link
+                  key={pageNum}
+                  href={`/listings?${new URLSearchParams({ ...searchParams, page: String(pageNum) }).toString()}`}
+                  className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-colors ${
+                    isActive
+                      ? 'bg-gray-900 text-white'
+                      : 'text-gray-700 hover:bg-gray-100'
+                  }`}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  {pageNum}
+                </Link>
+              );
+            });
+          })()}
+
+          {/* Bouton suivant */}
+          <Link
+            href={`/listings?${new URLSearchParams({ ...searchParams, page: String(Math.min(totalPages, currentPage + 1)) }).toString()}`}
+            className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+              currentPage === totalPages
+                ? 'pointer-events-none text-gray-300'
+                : 'text-gray-700 hover:bg-gray-100'
+            }`}
+            aria-disabled={currentPage === totalPages}
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </nav>
+      )}
+
       {/* Map fixée à droite - desktop only - responsive pour grands écrans */}
-      <div className="hidden lg:fixed lg:right-4 xl:right-6 2xl:right-8 lg:top-[80px] lg:block lg:h-[calc(100vh-100px)] lg:w-[38%] xl:w-[40%] 2xl:w-[42%] 3xl:w-[45%] lg:overflow-hidden lg:rounded-2xl lg:border lg:border-gray-200 lg:shadow-lg">
+      {/* z-index bas pour que le footer passe par-dessus */}
+      <div
+        ref={mapRef}
+        className="hidden lg:block lg:fixed lg:right-4 xl:right-6 2xl:right-8 lg:top-[80px] lg:h-[calc(100vh-100px)] lg:w-[38%] xl:w-[40%] 2xl:w-[42%] 3xl:w-[45%] lg:overflow-hidden lg:rounded-2xl lg:border lg:border-gray-200 lg:shadow-lg z-10"
+      >
         <Map
           markers={markers}
           panOnHover={false}
@@ -517,7 +739,7 @@ export default function ListingsWithMap({
 
         {/* Indicateur de mode recherche sur la carte */}
         {isMapSearchEnabled && (
-          <div className="absolute bottom-4 left-4 rounded-full bg-white/95 px-3 py-1.5 text-xs font-medium text-gray-700 shadow-md backdrop-blur-sm">
+          <div className="absolute bottom-4 left-16 rounded-full bg-white/95 px-3 py-1.5 text-xs font-medium text-gray-700 shadow-md backdrop-blur-sm">
             <span className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
               Déplacez la carte pour actualiser

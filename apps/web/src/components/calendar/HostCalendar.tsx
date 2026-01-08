@@ -86,6 +86,7 @@ export default function HostCalendar({ listingId, initialData }: HostCalendarPro
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [showModal, setShowModal] = useState<"block" | "price" | "sync" | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   // Form states
   const [blockReason, setBlockReason] = useState("");
@@ -93,32 +94,53 @@ export default function HostCalendar({ listingId, initialData }: HostCalendarPro
   const [syncUrl, setSyncUrl] = useState("");
   const [syncName, setSyncName] = useState("");
 
-  const fetchCalendar = useCallback(async () => {
+  const fetchCalendar = useCallback(async (signal?: AbortSignal, isRetry = false) => {
     try {
       setLoading(true);
+      setError(null);
       const startDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
       const endDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 2, 0);
 
       const res = await fetch(
-        `/api/host/calendar?listingId=${listingId}&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`
+        `/api/host/calendar?listingId=${listingId}&startDate=${startDate.toISOString()}&endDate=${endDate.toISOString()}`,
+        { signal }
       );
 
       if (!res.ok) throw new Error("Erreur de chargement");
 
       const result = await res.json();
       setData(result);
+      setRetryCount(0); // Reset retry count on success
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return;
+
+      // Auto-retry up to 2 times with delay
+      if (!isRetry && retryCount < 2) {
+        setRetryCount(prev => prev + 1);
+        setTimeout(() => {
+          fetchCalendar(signal, true);
+        }, 500);
+        return;
+      }
+
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
       setLoading(false);
     }
-  }, [listingId, currentMonth]);
+  }, [listingId, currentMonth, retryCount]);
 
   useEffect(() => {
-    if (!initialData) {
-      fetchCalendar();
-    }
-  }, [fetchCalendar, initialData]);
+    const controller = new AbortController();
+    // Small delay to ensure session is ready
+    const timeoutId = setTimeout(() => {
+      fetchCalendar(controller.signal);
+    }, 100);
+
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [listingId, currentMonth]); // Re-fetch when listing or month changes
 
   // Générer les jours du calendrier
   const calendarDays = useMemo(() => {
@@ -323,7 +345,7 @@ export default function HostCalendar({ listingId, initialData }: HostCalendarPro
       <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center">
         <p className="text-red-600">{error || "Erreur de chargement"}</p>
         <button
-          onClick={fetchCalendar}
+          onClick={() => fetchCalendar()}
           className="mt-4 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
         >
           Réessayer

@@ -238,7 +238,7 @@ const fr = {
       GARAGE: "Garage",
       STORAGE: "Stockage",
       EVENT_SPACE: "Espace événementiel",
-      RECORDING_STUDIO: "Studio d'enregistrement",
+      RECORDING_STUDIO: "Studios",
       OTHER: "Autre",
     },
   },
@@ -659,6 +659,7 @@ const fr = {
       pendingDesc: "Ta vérification est en cours de traitement. Cela peut prendre quelques minutes.",
       rejectedDesc: "La vérification a échoué. Cela peut arriver si les documents ne sont pas lisibles ou si le consentement a été refusé. Tu peux réessayer.",
       allDocumentsValid: "Tous tes documents sont en règle",
+      refreshStatus: "Actualiser le statut",
     },
     // Taxes section
     taxes: {
@@ -754,6 +755,21 @@ const fr = {
       provided: "Fournie",
       emergencyContact: "Contact en cas d'urgence",
       modify: "Modifier",
+      firstNamePlaceholder: "Prénom",
+      lastNamePlaceholder: "Nom",
+      save: "Enregistrer",
+      cancel: "Annuler",
+      displayNamePlaceholder: "Nom d'affichage",
+      streetPlaceholder: "Numéro et nom de rue",
+      addressLine2Placeholder: "Appartement, suite, etc. (optionnel)",
+      postalCodePlaceholder: "Code postal",
+      cityPlaceholder: "Ville",
+      countryPlaceholder: "Pays",
+      provincePlaceholder: "Province / Région",
+      contactSupport: "Contacter le support",
+      sameAsResidential: "Identique à l'adresse résidentielle",
+      comingSoon: "Bientôt disponible",
+      goToSecurity: "Gérer",
     },
     // Security extended (phone, password)
     securityExtended: {

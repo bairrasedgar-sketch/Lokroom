@@ -96,7 +96,7 @@ export default function NotificationsPage() {
 
   // Charger les notifications
   const fetchNotifications = useCallback(
-    async (reset = false) => {
+    async (reset = false, signal?: AbortSignal) => {
       try {
         setIsLoading(true);
         const currentOffset = reset ? 0 : offset;
@@ -111,7 +111,7 @@ export default function NotificationsPage() {
           params.set("unread", "true");
         }
 
-        const res = await fetch(`/api/notifications?${params}`);
+        const res = await fetch(`/api/notifications?${params}`, { signal });
         if (res.ok) {
           const data = await res.json();
 
@@ -136,6 +136,7 @@ export default function NotificationsPage() {
           setHasMore(data.hasMore || false);
         }
       } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') return;
         console.error("Error fetching notifications:", error);
       } finally {
         setIsLoading(false);
@@ -147,7 +148,9 @@ export default function NotificationsPage() {
   // Charger au montage et quand le filtre change
   useEffect(() => {
     if (status === "authenticated") {
-      fetchNotifications(true);
+      const controller = new AbortController();
+      fetchNotifications(true, controller.signal);
+      return () => controller.abort();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, filter]);
@@ -250,7 +253,7 @@ export default function NotificationsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-4xl 2xl:max-w-5xl 3xl:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
