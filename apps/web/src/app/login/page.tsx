@@ -239,19 +239,21 @@ export default function LoginPage() {
 
       const data = await res.json();
 
-      if (res.ok && data.success) {
-        // Email vérifié, connecter l'utilisateur via magic link silencieux
-        const signInRes = await signIn("email", {
+      if (res.ok && data.success && data.verificationToken) {
+        // Email vérifié, connecter l'utilisateur avec le token
+        const signInRes = await signIn("credentials", {
           email: trimmedEmail,
+          emailVerified: "true",
+          emailVerificationToken: data.verificationToken,
           callbackUrl: "/onboarding",
           redirect: false,
         });
 
         if (signInRes?.error) {
           setError("Erreur lors de la connexion");
-        } else {
-          // Afficher le message de succès et rediriger
-          setStep("magic-link-sent");
+        } else if (signInRes?.ok) {
+          // Rediriger vers l'onboarding
+          router.push("/onboarding");
         }
       } else {
         setError(data.error || "Code invalide");

@@ -9,8 +9,8 @@ import { sendEmail, magicLinkEmail } from "@/lib/email";
 import { verifyPassword } from "@/lib/password";
 import { jwtVerify } from "jose";
 
-// Cle pour les tokens temporaires 2FA
-const TWO_FACTOR_SECRET = new TextEncoder().encode(
+// Cle pour les tokens temporaires 2FA et verification email
+const AUTH_TOKEN_SECRET = new TextEncoder().encode(
   process.env.NEXTAUTH_SECRET || "fallback-secret-key-for-2fa"
 );
 
@@ -21,9 +21,31 @@ async function verifyTwoFactorPendingToken(
   token: string
 ): Promise<{ userId: string; email: string } | null> {
   try {
-    const { payload } = await jwtVerify(token, TWO_FACTOR_SECRET);
+    const { payload } = await jwtVerify(token, AUTH_TOKEN_SECRET);
 
     if (payload.type !== "2fa-pending") {
+      return null;
+    }
+
+    return {
+      userId: payload.userId as string,
+      email: payload.email as string,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Verifie un token de verification d'email (inscription)
+ */
+async function verifyEmailVerificationToken(
+  token: string
+): Promise<{ userId: string; email: string } | null> {
+  try {
+    const { payload } = await jwtVerify(token, AUTH_TOKEN_SECRET);
+
+    if (payload.type !== "email-verified") {
       return null;
     }
 
@@ -85,6 +107,8 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Mot de passe", type: "password" },
         twoFactorVerified: { label: "2FA Verified", type: "text" },
         twoFactorToken: { label: "2FA Token", type: "text" },
+        emailVerified: { label: "Email Verified", type: "text" },
+        emailVerificationToken: { label: "Email Verification Token", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.email) {
@@ -92,6 +116,51 @@ export const authOptions: NextAuthOptions = {
         }
 
         const email = credentials.email.trim().toLowerCase();
+
+        // Cas 0: Connexion apres verification d'email (inscription)
+        if (credentials.emailVerified === "true" && credentials.emailVerificationToken) {
+          const tokenPayload = await verifyEmailVerificationToken(credentials.emailVerificationToken);
+
+          if (!tokenPayload || tokenPayload.email !== email) {
+            return null;
+          }
+
+          // Recuperer l'utilisateur
+          const user = await prisma.user.findUnique({
+            where: { email },
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              role: true,
+              profile: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                  avatarUrl: true,
+                },
+              },
+            },
+          });
+
+          if (!user) {
+            return null;
+          }
+
+          // Mettre a jour la derniere connexion
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { lastLoginAt: new Date() },
+          });
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name || `${user.profile?.firstName || ""} ${user.profile?.lastName || ""}`.trim() || null,
+            image: user.profile?.avatarUrl || null,
+            role: user.role,
+          };
+        }
 
         // Cas 1: Connexion apres verification 2FA
         if (credentials.twoFactorVerified === "true" && credentials.twoFactorToken) {

@@ -11,6 +11,7 @@ import { prisma } from "@/lib/db";
 import { generateVerificationCode } from "@/lib/password";
 import { sendEmailVerificationCode } from "@/lib/email";
 import { rateLimit } from "@/lib/rate-limit";
+import { SignJWT } from "jose";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,26 @@ const SIGNUP_WINDOW_MS = 15 * 60_000;
 
 // Durée de validité du code: 15 minutes
 const CODE_EXPIRY_MINUTES = 15;
+
+// Clé pour signer les tokens
+const AUTH_TOKEN_SECRET = new TextEncoder().encode(
+  process.env.NEXTAUTH_SECRET || "fallback-secret-key"
+);
+
+/**
+ * Génère un token JWT pour la connexion après vérification d'email
+ */
+async function generateEmailVerificationToken(userId: string, email: string): Promise<string> {
+  return new SignJWT({
+    userId,
+    email,
+    type: "email-verified",
+  })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("5m") // Token valide 5 minutes
+    .sign(AUTH_TOKEN_SECRET);
+}
 
 /**
  * POST /api/auth/signup
@@ -195,10 +216,14 @@ export async function PUT(req: NextRequest) {
       },
     });
 
+    // Générer un token pour la connexion automatique
+    const verificationToken = await generateEmailVerificationToken(user.id, normalizedEmail);
+
     return NextResponse.json({
       success: true,
       message: "Email vérifié avec succès",
       userId: user.id,
+      verificationToken,
     });
   } catch (error) {
     console.error("PUT /api/auth/signup error:", error);
