@@ -1181,7 +1181,7 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
             <p className="mt-3 sm:mt-4 text-base sm:text-lg lg:text-xl text-gray-500">
               Appartements, bureaux, studios, espaces événementiels...
               <br className="hidden sm:block" />
-              Réservez à l&apos;heure ou à la journée, comme vous voulez.
+              Louez pour quelques heures, une journée ou plus.
             </p>
           </div>
         </div>
