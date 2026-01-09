@@ -385,53 +385,53 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
           )}
 
           {activeTab === "dates" && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {/* Calendrier */}
-              <div className="border border-gray-200 rounded-2xl overflow-hidden">
+              <div className="border border-gray-200 rounded-xl overflow-hidden">
                 {/* Header du calendrier */}
-                <div className="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
+                <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-200">
                   <button
                     onClick={goToPreviousMonth}
                     disabled={!canGoPrevious()}
-                    className="p-2 rounded-full hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    className="p-1.5 rounded-full hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     aria-label="Mois précédent"
                   >
-                    <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                     </svg>
                   </button>
-                  <h3 className="text-base font-semibold text-gray-900">
+                  <h3 className="text-sm font-semibold text-gray-900">
                     {MONTHS[calendarMonth.getMonth()]} {calendarMonth.getFullYear()}
                   </h3>
                   <button
                     onClick={goToNextMonth}
-                    className="p-2 rounded-full hover:bg-gray-200 transition-colors"
+                    className="p-1.5 rounded-full hover:bg-gray-200 transition-colors"
                     aria-label="Mois suivant"
                   >
-                    <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                     </svg>
                   </button>
                 </div>
 
                 {/* Jours de la semaine */}
-                <div className="grid grid-cols-7 border-b border-gray-200">
+                <div className="grid grid-cols-7 border-b border-gray-100">
                   {DAYS_OF_WEEK.map((day) => (
-                    <div key={day} className="py-2 text-center text-xs font-medium text-gray-500">
+                    <div key={day} className="py-1.5 text-center text-[11px] font-medium text-gray-500">
                       {day}
                     </div>
                   ))}
                 </div>
 
                 {/* Grille des jours */}
-                <div className="grid grid-cols-7 p-2 gap-1">
+                <div className="grid grid-cols-7 p-1.5 gap-0.5">
                   {(() => {
                     const { daysInMonth, startingDay, year, month } = getDaysInMonth(calendarMonth);
                     const days = [];
 
                     // Cases vides avant le premier jour
                     for (let i = 0; i < startingDay; i++) {
-                      days.push(<div key={`empty-${i}`} className="h-10" />);
+                      days.push(<div key={`empty-${i}`} className="h-8" />);
                     }
 
                     // Jours du mois
@@ -449,11 +449,11 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
                           onClick={() => handleDateClick(dateStr)}
                           disabled={isDisabled}
                           className={`
-                            h-10 w-full rounded-full text-sm font-medium transition-all
+                            h-8 w-full rounded-full text-xs font-medium transition-all
                             ${isDisabled ? "text-gray-300 cursor-not-allowed" : "hover:bg-gray-100 cursor-pointer"}
                             ${isStart || isEnd ? "bg-gray-900 text-white hover:bg-gray-800" : ""}
                             ${isInRange ? "bg-gray-100" : ""}
-                            ${isToday && !isStart && !isEnd ? "border-2 border-gray-900" : ""}
+                            ${isToday && !isStart && !isEnd ? "border border-gray-900" : ""}
                           `}
                         >
                           {day}
@@ -467,7 +467,7 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
               </div>
 
               {/* Raccourcis de dates */}
-              <div className="flex flex-wrap gap-2 pt-2">
+              <div className="flex flex-wrap gap-1.5">
                 {[
                   { label: "Ce week-end", type: "weekend" },
                   { label: "Semaine prochaine", type: "week" },
@@ -499,7 +499,7 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
                       setStartDate(start.toISOString().split("T")[0]);
                       setEndDate(end.toISOString().split("T")[0]);
                     }}
-                    className="px-4 py-2 border border-gray-200 hover:border-gray-400 rounded-full text-sm font-medium text-gray-700 transition-colors"
+                    className="px-3 py-1.5 border border-gray-200 hover:border-gray-400 rounded-full text-xs font-medium text-gray-700 transition-colors"
                   >
                     {shortcut.label}
                   </button>
