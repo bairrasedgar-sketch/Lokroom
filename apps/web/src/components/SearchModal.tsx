@@ -293,8 +293,8 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
           </button>
         </div>
 
-        {/* Résumé de la recherche - Scrollable sur mobile */}
-        <div className="flex items-center gap-2 px-4 sm:px-6 py-3 bg-gray-50 border-b border-gray-100 overflow-x-auto">
+        {/* Résumé de la recherche */}
+        <div className="flex items-center gap-2 px-4 sm:px-6 py-3 bg-gray-50 border-b border-gray-100">
           <button
             onClick={() => setActiveTab("destination")}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs sm:text-sm flex-shrink-0 transition-colors cursor-pointer ${destination ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-white border border-gray-200 text-gray-500 hover:border-gray-400"}`}
