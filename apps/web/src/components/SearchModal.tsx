@@ -75,6 +75,11 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const [selectingEnd, setSelectingEnd] = useState(false);
 
+  // Mode de réservation : jour ou heure
+  const [bookingMode, setBookingMode] = useState<"days" | "hours">("days");
+  const [selectedTime, setSelectedTime] = useState("");
+  const [endTime, setEndTime] = useState("");
+
   const today = new Date().toISOString().split("T")[0];
 
   // Fonctions utilitaires pour le calendrier
@@ -139,8 +144,19 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
       (calendarMonth.getFullYear() === currentMonth.getFullYear() && calendarMonth.getMonth() > currentMonth.getMonth());
   };
 
-  const DAYS_OF_WEEK = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
+  const getNextMonth = (date: Date) => {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 1);
+  };
+
+  const DAYS_OF_WEEK = ["L", "M", "M", "J", "V", "S", "D"];
   const MONTHS = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+  const MONTHS_SHORT = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"];
+
+  // Options d'heures
+  const TIME_OPTIONS = [
+    "08:00", "09:00", "10:00", "11:00", "12:00", "13:00",
+    "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00"
+  ];
 
   // Charger l'historique de recherche si connecté
   useEffect(() => {
@@ -187,7 +203,12 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
     if (selectedCity) params.set("city", selectedCity);
     if (selectedCountry) params.set("country", selectedCountry);
     if (startDate) params.set("startDate", startDate);
-    if (endDate) params.set("endDate", endDate);
+    if (bookingMode === "days" && endDate) params.set("endDate", endDate);
+    if (bookingMode === "hours") {
+      params.set("mode", "hourly");
+      if (selectedTime) params.set("startTime", selectedTime);
+      if (endTime) params.set("endTime", endTime);
+    }
     if (totalGuests > 1) params.set("guests", totalGuests.toString());
     if (adults > 1) params.set("adults", adults.toString());
     if (children > 0) params.set("children", children.toString());
@@ -386,125 +407,199 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
 
           {activeTab === "dates" && (
             <div className="space-y-3">
-              {/* Calendrier */}
-              <div className="border border-gray-200 rounded-xl overflow-hidden">
-                {/* Header du calendrier */}
-                <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-200">
-                  <button
-                    onClick={goToPreviousMonth}
-                    disabled={!canGoPrevious()}
-                    className="p-1.5 rounded-full hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                    aria-label="Mois précédent"
-                  >
-                    <svg className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-                  <h3 className="text-sm font-semibold text-gray-900">
-                    {MONTHS[calendarMonth.getMonth()]} {calendarMonth.getFullYear()}
-                  </h3>
-                  <button
-                    onClick={goToNextMonth}
-                    className="p-1.5 rounded-full hover:bg-gray-200 transition-colors"
-                    aria-label="Mois suivant"
-                  >
-                    <svg className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
+              {/* Toggle Jour / Heure */}
+              <div className="flex items-center justify-center gap-1 p-1 bg-gray-100 rounded-full w-fit mx-auto">
+                <button
+                  onClick={() => setBookingMode("days")}
+                  className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${
+                    bookingMode === "days" ? "bg-white shadow text-gray-900" : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  À la journée
+                </button>
+                <button
+                  onClick={() => setBookingMode("hours")}
+                  className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all ${
+                    bookingMode === "hours" ? "bg-white shadow text-gray-900" : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  À l&apos;heure
+                </button>
+              </div>
+
+              {/* Calendriers - 2 mois côte à côte */}
+              <div className="flex gap-2">
+                {/* Navigation gauche */}
+                <button
+                  onClick={goToPreviousMonth}
+                  disabled={!canGoPrevious()}
+                  className="p-1 self-start mt-6 rounded-full hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  aria-label="Mois précédent"
+                >
+                  <svg className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+
+                {/* Mois 1 */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-gray-900 text-center mb-1">
+                    {MONTHS_SHORT[calendarMonth.getMonth()]} {calendarMonth.getFullYear()}
+                  </p>
+                  <div className="grid grid-cols-7 gap-0">
+                    {DAYS_OF_WEEK.map((day, i) => (
+                      <div key={`d1-${i}`} className="py-1 text-center text-[10px] font-medium text-gray-400">
+                        {day}
+                      </div>
+                    ))}
+                    {(() => {
+                      const { daysInMonth, startingDay, year, month } = getDaysInMonth(calendarMonth);
+                      const days = [];
+                      for (let i = 0; i < startingDay; i++) {
+                        days.push(<div key={`e1-${i}`} className="h-7" />);
+                      }
+                      for (let day = 1; day <= daysInMonth; day++) {
+                        const dateStr = formatDateString(year, month, day);
+                        const isDisabled = isDateDisabled(dateStr);
+                        const isStart = dateStr === startDate;
+                        const isEnd = dateStr === endDate;
+                        const isInRange = isDateInRange(dateStr);
+                        const isToday = dateStr === today;
+                        days.push(
+                          <button
+                            key={day}
+                            onClick={() => handleDateClick(dateStr)}
+                            disabled={isDisabled}
+                            className={`h-7 w-full rounded-full text-[11px] font-medium transition-all
+                              ${isDisabled ? "text-gray-300 cursor-not-allowed" : "hover:bg-gray-100 cursor-pointer"}
+                              ${isStart || isEnd ? "bg-gray-900 text-white hover:bg-gray-800" : ""}
+                              ${isInRange ? "bg-gray-100" : ""}
+                              ${isToday && !isStart && !isEnd ? "ring-1 ring-gray-900" : ""}
+                            `}
+                          >
+                            {day}
+                          </button>
+                        );
+                      }
+                      return days;
+                    })()}
+                  </div>
                 </div>
 
-                {/* Jours de la semaine */}
-                <div className="grid grid-cols-7 border-b border-gray-100">
-                  {DAYS_OF_WEEK.map((day) => (
-                    <div key={day} className="py-1.5 text-center text-[11px] font-medium text-gray-500">
-                      {day}
-                    </div>
+                {/* Mois 2 */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-gray-900 text-center mb-1">
+                    {MONTHS_SHORT[getNextMonth(calendarMonth).getMonth()]} {getNextMonth(calendarMonth).getFullYear()}
+                  </p>
+                  <div className="grid grid-cols-7 gap-0">
+                    {DAYS_OF_WEEK.map((day, i) => (
+                      <div key={`d2-${i}`} className="py-1 text-center text-[10px] font-medium text-gray-400">
+                        {day}
+                      </div>
+                    ))}
+                    {(() => {
+                      const nextMonth = getNextMonth(calendarMonth);
+                      const { daysInMonth, startingDay, year, month } = getDaysInMonth(nextMonth);
+                      const days = [];
+                      for (let i = 0; i < startingDay; i++) {
+                        days.push(<div key={`e2-${i}`} className="h-7" />);
+                      }
+                      for (let day = 1; day <= daysInMonth; day++) {
+                        const dateStr = formatDateString(year, month, day);
+                        const isDisabled = isDateDisabled(dateStr);
+                        const isStart = dateStr === startDate;
+                        const isEnd = dateStr === endDate;
+                        const isInRange = isDateInRange(dateStr);
+                        const isToday = dateStr === today;
+                        days.push(
+                          <button
+                            key={day}
+                            onClick={() => handleDateClick(dateStr)}
+                            disabled={isDisabled}
+                            className={`h-7 w-full rounded-full text-[11px] font-medium transition-all
+                              ${isDisabled ? "text-gray-300 cursor-not-allowed" : "hover:bg-gray-100 cursor-pointer"}
+                              ${isStart || isEnd ? "bg-gray-900 text-white hover:bg-gray-800" : ""}
+                              ${isInRange ? "bg-gray-100" : ""}
+                              ${isToday && !isStart && !isEnd ? "ring-1 ring-gray-900" : ""}
+                            `}
+                          >
+                            {day}
+                          </button>
+                        );
+                      }
+                      return days;
+                    })()}
+                  </div>
+                </div>
+
+                {/* Navigation droite */}
+                <button
+                  onClick={goToNextMonth}
+                  className="p-1 self-start mt-6 rounded-full hover:bg-gray-100 transition-colors"
+                  aria-label="Mois suivant"
+                >
+                  <svg className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Sélection d'heures (si mode heure) */}
+              {bookingMode === "hours" && startDate && (
+                <div className="flex gap-3 pt-2">
+                  <div className="flex-1">
+                    <label className="block text-[10px] font-medium text-gray-500 mb-1">Début</label>
+                    <select
+                      value={selectedTime}
+                      onChange={(e) => setSelectedTime(e.target.value)}
+                      className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-gray-900"
+                    >
+                      <option value="">Heure</option>
+                      {TIME_OPTIONS.map((time) => (
+                        <option key={time} value={time}>{time}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-[10px] font-medium text-gray-500 mb-1">Fin</label>
+                    <select
+                      value={endTime}
+                      onChange={(e) => setEndTime(e.target.value)}
+                      className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-gray-900"
+                    >
+                      <option value="">Heure</option>
+                      {TIME_OPTIONS.filter(t => !selectedTime || t > selectedTime).map((time) => (
+                        <option key={time} value={time}>{time}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* Raccourcis */}
+              {bookingMode === "hours" && (
+                <div className="flex flex-wrap gap-1">
+                  {[
+                    { label: "2h", hours: 2 },
+                    { label: "4h", hours: 4 },
+                    { label: "Demi-journée", hours: 5 },
+                    { label: "Journée", hours: 9 },
+                  ].map((slot) => (
+                    <button
+                      key={slot.label}
+                      onClick={() => {
+                        if (!startDate) setStartDate(today);
+                        setSelectedTime("09:00");
+                        const endH = 9 + slot.hours;
+                        setEndTime(`${endH.toString().padStart(2, "0")}:00`);
+                      }}
+                      className="px-2 py-1 border border-gray-200 hover:border-gray-400 rounded-full text-[10px] font-medium text-gray-600 transition-colors"
+                    >
+                      {slot.label}
+                    </button>
                   ))}
                 </div>
-
-                {/* Grille des jours */}
-                <div className="grid grid-cols-7 p-1.5 gap-0.5">
-                  {(() => {
-                    const { daysInMonth, startingDay, year, month } = getDaysInMonth(calendarMonth);
-                    const days = [];
-
-                    // Cases vides avant le premier jour
-                    for (let i = 0; i < startingDay; i++) {
-                      days.push(<div key={`empty-${i}`} className="h-8" />);
-                    }
-
-                    // Jours du mois
-                    for (let day = 1; day <= daysInMonth; day++) {
-                      const dateStr = formatDateString(year, month, day);
-                      const isDisabled = isDateDisabled(dateStr);
-                      const isStart = dateStr === startDate;
-                      const isEnd = dateStr === endDate;
-                      const isInRange = isDateInRange(dateStr);
-                      const isToday = dateStr === today;
-
-                      days.push(
-                        <button
-                          key={day}
-                          onClick={() => handleDateClick(dateStr)}
-                          disabled={isDisabled}
-                          className={`
-                            h-8 w-full rounded-full text-xs font-medium transition-all
-                            ${isDisabled ? "text-gray-300 cursor-not-allowed" : "hover:bg-gray-100 cursor-pointer"}
-                            ${isStart || isEnd ? "bg-gray-900 text-white hover:bg-gray-800" : ""}
-                            ${isInRange ? "bg-gray-100" : ""}
-                            ${isToday && !isStart && !isEnd ? "border border-gray-900" : ""}
-                          `}
-                        >
-                          {day}
-                        </button>
-                      );
-                    }
-
-                    return days;
-                  })()}
-                </div>
-              </div>
-
-              {/* Raccourcis de dates */}
-              <div className="flex flex-wrap gap-1.5">
-                {[
-                  { label: "Ce week-end", type: "weekend" },
-                  { label: "Semaine prochaine", type: "week" },
-                  { label: "Flexible", type: "flexible" },
-                ].map((shortcut) => (
-                  <button
-                    key={shortcut.type}
-                    onClick={() => {
-                      const todayDate = new Date();
-                      const start = new Date();
-                      const end = new Date();
-
-                      if (shortcut.type === "weekend") {
-                        const dayOfWeek = todayDate.getDay();
-                        const daysUntilSaturday = (6 - dayOfWeek + 7) % 7 || 7;
-                        start.setDate(todayDate.getDate() + daysUntilSaturday);
-                        end.setDate(start.getDate() + 1);
-                      } else if (shortcut.type === "week") {
-                        start.setDate(todayDate.getDate() + 1);
-                        end.setDate(start.getDate() + 7);
-                      } else {
-                        // Flexible - pas de dates
-                        setStartDate("");
-                        setEndDate("");
-                        setActiveTab("guests");
-                        return;
-                      }
-
-                      setStartDate(start.toISOString().split("T")[0]);
-                      setEndDate(end.toISOString().split("T")[0]);
-                    }}
-                    className="px-3 py-1.5 border border-gray-200 hover:border-gray-400 rounded-full text-xs font-medium text-gray-700 transition-colors"
-                  >
-                    {shortcut.label}
-                  </button>
-                ))}
-              </div>
+              )}
             </div>
           )}
 
@@ -618,8 +713,8 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
           )}
         </div>
 
-        {/* Footer avec bouton recherche */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-gray-50">
+        {/* Footer avec bouton recherche - compact */}
+        <div className="flex items-center justify-between px-4 py-2 border-t border-gray-100 bg-gray-50">
           <button
             onClick={() => {
               setDestination("");
@@ -629,15 +724,15 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
               setChildren(0);
               setPets(0);
             }}
-            className="text-sm font-medium text-gray-600 hover:text-gray-900 underline"
+            className="text-xs font-medium text-gray-500 hover:text-gray-900 underline"
           >
-            Tout effacer
+            Effacer
           </button>
           <button
             onClick={handleSearch}
-            className="flex items-center gap-2 px-6 py-3 bg-gray-900 hover:bg-black text-white rounded-xl font-medium transition-colors"
+            className="flex items-center gap-1.5 px-4 py-2 bg-gray-900 hover:bg-black text-white rounded-lg text-sm font-medium transition-colors"
           >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             Rechercher
