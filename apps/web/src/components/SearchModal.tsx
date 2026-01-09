@@ -386,35 +386,6 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
 
           {activeTab === "dates" && (
             <div className="space-y-4">
-              {/* Résumé des dates sélectionnées */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className={`px-4 py-2 rounded-xl border-2 transition-colors ${!startDate ? "border-gray-900 bg-gray-50" : "border-gray-200"}`}>
-                    <p className="text-xs text-gray-500">Arrivée</p>
-                    <p className="text-sm font-medium text-gray-900">
-                      {startDate ? new Date(startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "Choisir"}
-                    </p>
-                  </div>
-                  <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                  <div className={`px-4 py-2 rounded-xl border-2 transition-colors ${startDate && !endDate ? "border-gray-900 bg-gray-50" : "border-gray-200"}`}>
-                    <p className="text-xs text-gray-500">Départ</p>
-                    <p className="text-sm font-medium text-gray-900">
-                      {endDate ? new Date(endDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : "Choisir"}
-                    </p>
-                  </div>
-                </div>
-                {(startDate || endDate) && (
-                  <button
-                    onClick={() => { setStartDate(""); setEndDate(""); setSelectingEnd(false); }}
-                    className="text-xs text-gray-500 hover:text-gray-900 underline"
-                  >
-                    Effacer
-                  </button>
-                )}
-              </div>
-
               {/* Calendrier */}
               <div className="border border-gray-200 rounded-2xl overflow-hidden">
                 {/* Header du calendrier */}
