@@ -94,10 +94,10 @@ export default function Footer() {
   return (
     <footer className="relative z-30" style={{ backgroundColor: '#f5f5f5' }}>
       {/* Main footer content */}
-      <div className="mx-auto max-w-7xl 2xl:max-w-[1600px] 3xl:max-w-[1920px] px-4 py-8 sm:py-12 sm:px-6 lg:px-8 xl:px-10">
-        <div className="grid grid-cols-1 gap-6 sm:gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-          {footerSections.map((section) => (
-            <div key={section.title}>
+      <div className="mx-auto max-w-7xl 2xl:max-w-[1600px] 3xl:max-w-[1920px] px-4 py-4 sm:py-5 sm:px-6 lg:px-8 xl:px-10">
+        <div className="grid grid-cols-1 gap-6 sm:gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 mt-4">
+          {footerSections.map((section, index) => (
+            <div key={section.title} className={index === 2 ? "ml-16" : ""}>
               <h3 className="text-sm font-semibold text-gray-900">{section.title}</h3>
               <ul className="mt-3 sm:mt-4 space-y-2 sm:space-y-3">
                 {section.links.map((link) => (
@@ -115,7 +115,7 @@ export default function Footer() {
           ))}
 
           {/* Illustration à droite avec fondu */}
-          <div className="hidden xl:flex xl:col-span-2 2xl:col-span-3 items-start justify-center -mt-2">
+          <div className="hidden xl:flex xl:col-span-2 2xl:col-span-3 items-start justify-center -mt-10">
             <div className="relative">
               {/* Masque de fondu radial */}
               <div
@@ -129,7 +129,7 @@ export default function Footer() {
                 alt="Illustration Lok'Room"
                 width={900}
                 height={600}
-                className="object-contain max-h-[420px] w-auto"
+                className="object-contain max-h-[350px] w-auto"
                 priority
               />
             </div>
