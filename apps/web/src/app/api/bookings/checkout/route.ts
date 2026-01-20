@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { getOrigin } from "@/lib/origin";
 import { rateLimit } from "@/lib/rate-limit";
 import { prisma } from "@/lib/db";
+import { securityLogger } from "@/lib/security-logger";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
@@ -68,6 +69,7 @@ export async function POST(req: Request) {
 
     if (expectedAmount !== providedAmount) {
       console.error(`Payment amount mismatch for booking ${bookingId}: expected ${expectedAmount}, got ${providedAmount}`);
+      securityLogger.paymentAmountMismatch(currentUser.id, bookingId, expectedAmount, providedAmount);
       return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
     }
 

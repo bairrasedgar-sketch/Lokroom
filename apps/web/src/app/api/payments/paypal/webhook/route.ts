@@ -21,6 +21,7 @@ import {
 } from "@/lib/paypal";
 import { notifyBookingConfirmed, notifyBookingCancelled } from "@/lib/notifications";
 import { rateLimit } from "@/lib/rate-limit";
+import { securityLogger } from "@/lib/security-logger";
 
 export const dynamic = "force-dynamic";
 
@@ -62,6 +63,7 @@ export async function POST(req: NextRequest) {
 
   if (!rateLimitResult.ok) {
     console.error("[PayPal Webhook] Rate limit exceeded", { ip });
+    securityLogger.webhookRateLimit(ip, "/api/payments/paypal/webhook");
     return NextResponse.json(
       { error: "Too many requests" },
       { status: 429 }

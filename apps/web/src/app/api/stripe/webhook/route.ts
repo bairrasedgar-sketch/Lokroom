@@ -14,6 +14,7 @@ import { prisma } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
 import { securityLog } from "@/lib/security";
 import { rateLimit } from "@/lib/rate-limit";
+import { securityLogger } from "@/lib/security-logger";
 
 export const dynamic = "force-dynamic";
 
@@ -137,6 +138,7 @@ export async function POST(req: Request) {
 
   if (!rateLimitResult.ok) {
     securityLog("security", "webhook_rate_limit_exceeded", undefined, { ip });
+    securityLogger.webhookRateLimit(ip, "/api/stripe/webhook");
     return NextResponse.json(
       { error: "Too many requests" },
       { status: 429 }
@@ -164,6 +166,7 @@ export async function POST(req: Request) {
         : "unknown_error";
 
     securityLog("security", "webhook_invalid_signature", undefined, { error: msg });
+    securityLogger.webhookInvalidSignature(ip, "/api/stripe/webhook");
 
     return NextResponse.json(
       { error: `invalid_signature: ${msg}` },
