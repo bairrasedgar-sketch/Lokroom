@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import type { Prisma, ProvinceCA } from "@prisma/client";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -73,6 +74,18 @@ function clampPageSize(n: number | null | undefined): number {
 export async function GET(req: NextRequest) {
   const url = req.nextUrl;
   const sp = url.searchParams;
+
+  // Rate limiting très permissif : 100 requêtes par minute par IP
+  const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "anonymous";
+  const rateLimitKey = `search:${ip}`;
+  const rateLimitResult = await rateLimit(rateLimitKey, 100, 60_000);
+
+  if (!rateLimitResult.ok) {
+    return NextResponse.json(
+      { error: "Too many requests. Please try again later." },
+      { status: 429 }
+    );
+  }
 
   const q = sp.get("q")?.trim() || null;
   const country = sp.get("country")?.trim() || null;
@@ -308,7 +321,7 @@ export async function GET(req: NextRequest) {
   } catch (e) {
     console.error("Error in /api/listings/search:", e);
     return NextResponse.json(
-      { error: "search_failed" },
+      { error: "An error occurred while searching" },
       { status: 500 },
     );
   }

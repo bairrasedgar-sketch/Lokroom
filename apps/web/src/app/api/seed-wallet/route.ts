@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   if (process.env.NODE_ENV === "production") {
-    return NextResponse.json({ error: "forbidden_in_prod" }, { status: 403 });
+    return NextResponse.json({ error: "Not available" }, { status: 403 });
   }
   return NextResponse.json({
     ok: true,
@@ -21,7 +21,7 @@ export async function GET() {
 export async function POST() {
   try {
     if (process.env.NODE_ENV === "production") {
-      return NextResponse.json({ error: "forbidden_in_prod" }, { status: 403 });
+      return NextResponse.json({ error: "Not available" }, { status: 403 });
     }
 
     const session = await getServerSession(authOptions);
@@ -35,7 +35,7 @@ export async function POST() {
       select: { id: true },
     });
     if (!hostUser)
-      return NextResponse.json({ error: "user_not_found" }, { status: 404 });
+      return NextResponse.json({ error: "Invalid request" }, { status: 400 });
 
     // Guest factice
     const guestEmail = "dev-guest@example.com";
@@ -138,6 +138,6 @@ export async function POST() {
     });
   } catch (e) {
     console.error("seed-wallet error:", e);
-    return NextResponse.json({ error: "seed_wallet_failed" }, { status: 500 });
+    return NextResponse.json({ error: "Operation failed" }, { status: 500 });
   }
 }

@@ -320,12 +320,14 @@ export async function middleware(req: NextRequest) {
     maxAge: 60 * 60 * 24 * 365,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
+    httpOnly: false, // Doit être accessible en JS pour le changement de langue
   });
   res.cookies.set("currency", currency, {
     path: "/",
     maxAge: 60 * 60 * 24 * 365,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
+    httpOnly: false, // Doit être accessible en JS pour le changement de devise
   });
 
   // Headers utiles côté serveur (headers())

@@ -30,6 +30,17 @@ import { useRealtimeMessages, useTypingIndicator } from "@/lib/realtime";
 const SUPPORT_BOT_ID = "lokroom-support";
 
 // Fonction pour convertir les liens markdown [texte](url) en éléments cliquables
+// Validation sécurisée des URLs pour prévenir les attaques XSS
+function isValidUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    // N'accepter que HTTP et HTTPS (pas javascript:, data:, etc.)
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 function parseMarkdownLinks(text: string): React.ReactNode[] {
   const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
   const parts: React.ReactNode[] = [];
@@ -43,15 +54,25 @@ function parseMarkdownLinks(text: string): React.ReactNode[] {
     }
     // Ajouter le lien
     const [, linkText, url] = match;
-    parts.push(
-      <Link
-        key={`link-${match.index}`}
-        href={url}
-        className="font-medium text-violet-600 underline hover:text-violet-800 transition-colors"
-      >
-        {linkText}
-      </Link>
-    );
+
+    // Validation de sécurité : vérifier que l'URL est sûre
+    if (isValidUrl(url)) {
+      parts.push(
+        <Link
+          key={`link-${match.index}`}
+          href={url}
+          className="font-medium text-violet-600 underline hover:text-violet-800 transition-colors"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {linkText}
+        </Link>
+      );
+    } else {
+      // URL non sûre : afficher le texte brut sans lien
+      parts.push(`[${linkText}](${url})`);
+    }
+
     lastIndex = match.index + match[0].length;
   }
 
