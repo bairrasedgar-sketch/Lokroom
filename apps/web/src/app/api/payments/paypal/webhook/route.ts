@@ -20,6 +20,7 @@ import {
   type PayPalWebhookEvent,
 } from "@/lib/paypal";
 import { notifyBookingConfirmed, notifyBookingCancelled } from "@/lib/notifications";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +55,19 @@ async function checkAndMarkEventProcessed(eventId: string, eventType: string): P
 }
 
 export async function POST(req: NextRequest) {
+  // Rate limiting: 100 webhooks par minute par IP
+  const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "anonymous";
+  const rateLimitKey = `webhook:paypal:${ip}`;
+  const rateLimitResult = await rateLimit(rateLimitKey, 100, 60_000);
+
+  if (!rateLimitResult.ok) {
+    console.error("[PayPal Webhook] Rate limit exceeded", { ip });
+    return NextResponse.json(
+      { error: "Too many requests" },
+      { status: 429 }
+    );
+  }
+
   // Vérifier que PayPal est configuré
   if (!isPayPalConfigured()) {
     return NextResponse.json(

@@ -13,6 +13,7 @@ import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
 import { securityLog } from "@/lib/security";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -129,6 +130,19 @@ async function validatePaymentAmount(
 }
 
 export async function POST(req: Request) {
+  // Rate limiting: 100 webhooks par minute par IP
+  const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "anonymous";
+  const rateLimitKey = `webhook:stripe:${ip}`;
+  const rateLimitResult = await rateLimit(rateLimitKey, 100, 60_000);
+
+  if (!rateLimitResult.ok) {
+    securityLog("security", "webhook_rate_limit_exceeded", undefined, { ip });
+    return NextResponse.json(
+      { error: "Too many requests" },
+      { status: 429 }
+    );
+  }
+
   const sig = req.headers.get("stripe-signature");
   const whsec = process.env.STRIPE_WEBHOOK_SECRET;
 
