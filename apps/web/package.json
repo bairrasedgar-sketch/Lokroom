@@ -28,6 +28,7 @@
     "@stripe/react-stripe-js": "^5.4.0",
     "@stripe/stripe-js": "^8.5.2",
     "@types/canvas-confetti": "^1.9.0",
+    "@upstash/redis": "^1.36.1",
     "bcryptjs": "^3.0.3",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",

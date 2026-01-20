@@ -28,6 +28,9 @@ if (process.env.NEXT_PUBLIC_ASSET_HOST) {
 
 const nextConfig = {
   reactStrictMode: true,
+  experimental: {
+    instrumentationHook: true,
+  },
   images: {
     remotePatterns,
     // Si tu veux forcer la taille minimale des formats, tu peux ajouter formats: ['image/avif','image/webp']
