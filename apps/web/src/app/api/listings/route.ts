@@ -167,7 +167,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "Seuls les hôtes Lok'Room peuvent créer une annonce. Passe en mode hôte pour continuer.",
+            "Seuls les hôtes Lok'Room peuvent créer une annonce. Passez en mode hôte pour continuer.",
           code: "NOT_HOST",
         },
         { status: 403 }
@@ -178,7 +178,7 @@ export async function POST(req: NextRequest) {
     if (user.identityStatus !== "VERIFIED") {
       return NextResponse.json(
         {
-          error: "Tu dois vérifier ton identité avant de créer une annonce.",
+          error: "Vous devez vérifier votre identité avant de créer une annonce.",
           code: "KYC_REQUIRED",
           identityStatus: user.identityStatus,
         },
@@ -279,7 +279,7 @@ export async function POST(req: NextRequest) {
       listing,
       needsStripeSetup,
       message: needsStripeSetup
-        ? "Annonce créée ! Configure tes versements pour recevoir tes paiements."
+        ? "Annonce créée ! Configurez vos versements pour recevoir vos paiements."
         : undefined,
     }, { status: 201 });
   } catch (err) {

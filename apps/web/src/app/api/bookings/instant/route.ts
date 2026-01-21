@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error: "KYC_REQUIRED",
-        message: "Tu dois vérifier ton identité avant de réserver.",
+        message: "Vous devez vérifier votre identité avant de réserver.",
         identityStatus: me.identityStatus,
       },
       { status: 403 }

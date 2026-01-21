@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(
       {
         error: "KYC_REQUIRED",
-        message: "Tu dois vérifier ton identité avant de réserver. Rends-toi dans les paramètres de ton compte.",
+        message: "Vous devez vérifier votre identité avant de réserver. Rendez-vous dans les paramètres de votre compte.",
         identityStatus: me.identityStatus,
       },
       { status: 403 }

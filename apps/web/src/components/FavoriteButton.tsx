@@ -46,7 +46,7 @@ export default function FavoriteButton({
     e.stopPropagation();
 
     if (status !== "authenticated") {
-      toast.message("Connecte-toi pour ajouter en favoris");
+      toast.message("Connectez-vous pour ajouter en favoris");
       return signIn();
     }
 

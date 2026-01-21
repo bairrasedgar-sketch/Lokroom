@@ -123,10 +123,10 @@ export function magicLinkEmail(url: string): { html: string; text: string } {
     ${emailHeader()}
     <div style="padding:32px;">
       <h1 style="margin:0 0 16px;font-size:22px;font-weight:600;color:#111111;">
-        Connecte-toi à Lok'Room
+        Connectez-vous à Lok'Room
       </h1>
       <p style="margin:0 0 8px;font-size:15px;line-height:1.6;color:#444444;">
-        Clique sur le bouton ci-dessous pour te connecter et accéder à ton compte Lok'Room.
+        Cliquez sur le bouton ci-dessous pour vous connecter et accéder à votre compte Lok'Room.
       </p>
       <p style="margin:0 0 24px;font-size:13px;color:#888888;">
         Ce lien est valable pendant 10 minutes.
@@ -134,20 +134,20 @@ export function magicLinkEmail(url: string): { html: string; text: string } {
       ${emailButton("Se connecter", url)}
       <div style="border-top:1px solid #eeeeee;padding-top:20px;margin-top:20px;">
         <p style="margin:0 0 8px;font-size:12px;color:#888888;">
-          Si le bouton ne fonctionne pas, copie-colle ce lien :
+          Si le bouton ne fonctionne pas, copiez-collez ce lien :
         </p>
         <p style="margin:0;font-size:11px;color:#aaaaaa;word-break:break-all;">
           ${url}
         </p>
       </div>
       <p style="margin-top:24px;font-size:11px;color:#999999;">
-        Si tu n'as pas demandé cette connexion, tu peux ignorer cet e-mail.
-        Ton compte reste sécurisé.
+        Si vous n'avez pas demandé cette connexion, vous pouvez ignorer cet e-mail.
+        Votre compte reste sécurisé.
       </p>
     </div>
   `);
 
-  const text = `Connecte-toi à Lok'Room\n\nClique sur ce lien pour te connecter : ${url}\n\nCe lien est valable pendant 10 minutes.\n\nSi tu n'as pas demandé cette connexion, ignore cet e-mail.`;
+  const text = `Connectez-vous à Lok'Room\n\nCliquez sur ce lien pour vous connecter : ${url}\n\nCe lien est valable pendant 10 minutes.\n\nSi vous n'avez pas demandé cette connexion, ignorez cet e-mail.`;
 
   return { html, text };
 }
@@ -163,7 +163,7 @@ export function welcomeEmail(firstName: string): { html: string; text: string; s
         Bienvenue sur Lok'Room, ${firstName} !
       </h1>
       <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#444444;">
-        Ton compte a été créé avec succès. Tu fais maintenant partie de notre communauté
+        Votre compte a été créé avec succès. Vous faites maintenant partie de notre communauté
         de voyageurs et d'hôtes.
       </p>
 
@@ -172,21 +172,21 @@ export function welcomeEmail(firstName: string): { html: string; text: string; s
           Prochaines étapes
         </h2>
         <ul style="margin:0;padding:0 0 0 20px;font-size:14px;line-height:1.8;color:#555555;">
-          <li>Explore les espaces disponibles près de chez toi</li>
-          <li>Complète ton profil pour rassurer les hôtes</li>
-          <li>Deviens hôte et partage ton espace</li>
+          <li>Explorez les espaces disponibles près de chez vous</li>
+          <li>Complétez votre profil pour rassurer les hôtes</li>
+          <li>Devenez hôte et partagez votre espace</li>
         </ul>
       </div>
 
       ${emailButton("Découvrir Lok'Room", APP_URL)}
 
       <p style="margin-top:24px;font-size:13px;color:#666666;">
-        Des questions ? Réponds directement à cet e-mail, notre équipe est là pour t'aider.
+        Des questions ? Répondez directement à cet e-mail, notre équipe est là pour vous aider.
       </p>
     </div>
   `);
 
-  const text = `Bienvenue sur Lok'Room, ${firstName} !\n\nTon compte a été créé avec succès. Tu fais maintenant partie de notre communauté.\n\nProchaines étapes :\n- Explore les espaces disponibles\n- Complète ton profil\n- Deviens hôte\n\nDécouvre Lok'Room : ${APP_URL}`;
+  const text = `Bienvenue sur Lok'Room, ${firstName} !\n\nVotre compte a été créé avec succès. Vous faites maintenant partie de notre communauté.\n\nProchaines étapes :\n- Explorez les espaces disponibles\n- Complétez votre profil\n- Devenez hôte\n\nDécouvrez Lok'Room : ${APP_URL}`;
 
   return {
     html,
@@ -223,7 +223,7 @@ export function bookingConfirmationEmail(data: {
         Réservation confirmée !
       </h1>
       <p style="margin:0 0 24px;font-size:14px;color:#666666;text-align:center;">
-        Merci ${data.guestName}, ta réservation a été confirmée.
+        Merci ${data.guestName}, votre réservation a été confirmée.
       </p>
 
       <div style="background:#f9f9f9;border-radius:16px;padding:20px;margin:24px 0;">
@@ -253,7 +253,7 @@ export function bookingConfirmationEmail(data: {
       ${emailButton("Voir ma réservation", bookingUrl)}
 
       <p style="margin-top:24px;font-size:13px;color:#666666;text-align:center;">
-        Tu recevras les détails de l'adresse exacte après confirmation.
+        Vous recevrez les détails de l'adresse exacte après confirmation.
       </p>
     </div>
   `);
@@ -289,7 +289,7 @@ export function newBookingHostEmail(data: {
         Nouvelle réservation !
       </h1>
       <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#444444;">
-        ${data.hostName}, tu as une nouvelle réservation pour <strong>${data.listingTitle}</strong>.
+        ${data.hostName}, vous avez une nouvelle réservation pour <strong>${data.listingTitle}</strong>.
       </p>
 
       <div style="background:#f9f9f9;border-radius:16px;padding:20px;margin:24px 0;">
@@ -307,7 +307,7 @@ export function newBookingHostEmail(data: {
             <td style="padding:8px 0;text-align:right;font-weight:500;">${data.endDate}</td>
           </tr>
           <tr style="border-top:1px solid #eeeeee;">
-            <td style="padding:12px 0 0;font-weight:600;color:#111111;">Tu recevras</td>
+            <td style="padding:12px 0 0;font-weight:600;color:#111111;">Vous recevrez</td>
             <td style="padding:12px 0 0;text-align:right;font-weight:600;color:#10b981;">${data.totalPrice} ${data.currency}</td>
           </tr>
         </table>
@@ -316,12 +316,12 @@ export function newBookingHostEmail(data: {
       ${emailButton("Voir les détails", bookingUrl)}
 
       <p style="margin-top:24px;font-size:13px;color:#666666;">
-        N'oublie pas de contacter ton voyageur pour lui donner les informations pratiques.
+        N'oubliez pas de contacter votre voyageur pour lui donner les informations pratiques.
       </p>
     </div>
   `);
 
-  const text = `Nouvelle réservation !\n\n${data.listingTitle}\nVoyageur : ${data.guestName}\nArrivée : ${data.startDate}\nDépart : ${data.endDate}\nTu recevras : ${data.totalPrice} ${data.currency}\n\nVoir les détails : ${bookingUrl}`;
+  const text = `Nouvelle réservation !\n\n${data.listingTitle}\nVoyageur : ${data.guestName}\nArrivée : ${data.startDate}\nDépart : ${data.endDate}\nVous recevrez : ${data.totalPrice} ${data.currency}\n\nVoir les détails : ${bookingUrl}`;
 
   return {
     html,
@@ -437,7 +437,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<EmailResult>
     console.error("[Email] RESEND_API_KEY non configurée");
     return {
       success: false,
-      error: "RESEND_API_KEY non configurée. Ajoute ta clé API Resend dans .env",
+      error: "RESEND_API_KEY non configurée. Ajoutez votre clé API Resend dans .env",
     };
   }
 
@@ -542,13 +542,13 @@ export function passwordResetEmail(data: {
         Réinitialisation de mot de passe
       </h1>
       <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#444444;">
-        ${greeting} tu as demandé à réinitialiser ton mot de passe.
-        Utilise le code ci-dessous pour continuer :
+        ${greeting} vous avez demandé à réinitialiser votre mot de passe.
+        Utilisez le code ci-dessous pour continuer :
       </p>
 
       <div style="background:#f9f9f9;border-radius:16px;padding:24px;margin:24px 0;text-align:center;">
         <p style="margin:0 0 8px;font-size:12px;color:#888888;text-transform:uppercase;letter-spacing:1px;">
-          Ton code de vérification
+          Votre code de vérification
         </p>
         <p style="margin:0;font-size:36px;font-weight:700;color:#111111;letter-spacing:8px;font-family:monospace;">
           ${data.code}
@@ -559,20 +559,20 @@ export function passwordResetEmail(data: {
       </div>
 
       <p style="margin:0;font-size:14px;color:#666666;">
-        Si tu n'as pas demandé cette réinitialisation, tu peux ignorer cet e-mail.
-        Ton compte reste sécurisé.
+        Si vous n'avez pas demandé cette réinitialisation, vous pouvez ignorer cet e-mail.
+        Votre compte reste sécurisé.
       </p>
 
       <div style="border-top:1px solid #eeeeee;padding-top:20px;margin-top:24px;">
         <p style="margin:0;font-size:12px;color:#999999;">
-          Pour ta sécurité, ne partage jamais ce code avec qui que ce soit.
-          L'équipe Lok'Room ne te demandera jamais ce code.
+          Pour votre sécurité, ne partagez jamais ce code avec qui que ce soit.
+          L'équipe Lok'Room ne vous demandera jamais ce code.
         </p>
       </div>
     </div>
   `);
 
-  const text = `Réinitialisation de mot de passe\n\n${greeting} tu as demandé à réinitialiser ton mot de passe.\n\nTon code de vérification : ${data.code}\n\nCe code expire dans 15 minutes.\n\nSi tu n'as pas demandé cette réinitialisation, ignore cet e-mail.`;
+  const text = `Réinitialisation de mot de passe\n\n${greeting} vous avez demandé à réinitialiser votre mot de passe.\n\nVotre code de vérification : ${data.code}\n\nCe code expire dans 15 minutes.\n\nSi vous n'avez pas demandé cette réinitialisation, ignorez cet e-mail.`;
 
   return {
     html,
@@ -609,12 +609,12 @@ export function emailVerificationCodeEmail(data: {
         Bienvenue sur Lok'Room !
       </h1>
       <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#444444;">
-        Pour finaliser ton inscription, entre le code ci-dessous :
+        Pour finaliser votre inscription, entrez le code ci-dessous :
       </p>
 
       <div style="background:#f9f9f9;border-radius:16px;padding:24px;margin:24px 0;text-align:center;">
         <p style="margin:0 0 8px;font-size:12px;color:#888888;text-transform:uppercase;letter-spacing:1px;">
-          Ton code de vérification
+          Votre code de vérification
         </p>
         <p style="margin:0;font-size:36px;font-weight:700;color:#111111;letter-spacing:8px;font-family:monospace;">
           ${data.code}
@@ -625,19 +625,19 @@ export function emailVerificationCodeEmail(data: {
       </div>
 
       <p style="margin:0;font-size:14px;color:#666666;">
-        Si tu n'as pas créé de compte sur Lok'Room, tu peux ignorer cet e-mail.
+        Si vous n'avez pas créé de compte sur Lok'Room, vous pouvez ignorer cet e-mail.
       </p>
 
       <div style="border-top:1px solid #eeeeee;padding-top:20px;margin-top:24px;">
         <p style="margin:0;font-size:12px;color:#999999;">
-          Pour ta sécurité, ne partage jamais ce code avec qui que ce soit.
-          L'équipe Lok'Room ne te demandera jamais ce code.
+          Pour votre sécurité, ne partagez jamais ce code avec qui que ce soit.
+          L'équipe Lok'Room ne vous demandera jamais ce code.
         </p>
       </div>
     </div>
   `);
 
-  const text = `Bienvenue sur Lok'Room !\n\nPour finaliser ton inscription, entre le code suivant :\n\nCode de vérification : ${data.code}\n\nCe code expire dans 15 minutes.\n\nSi tu n'as pas créé de compte, ignore cet e-mail.`;
+  const text = `Bienvenue sur Lok'Room !\n\nPour finaliser votre inscription, entrez le code suivant :\n\nCode de vérification : ${data.code}\n\nCe code expire dans 15 minutes.\n\nSi vous n'avez pas créé de compte, ignorez cet e-mail.`;
 
   return {
     html,
@@ -695,7 +695,7 @@ export function supportMessageEmail(data: {
       ${data.actionUrl ? emailButton("Voir sur Lok'Room", data.actionUrl) : emailButton("Accéder à mon compte", APP_URL)}
 
       <p style="margin-top:24px;font-size:13px;color:#666666;">
-        Si tu as des questions, tu peux répondre directement à cet e-mail ou nous contacter via le centre d'aide.
+        Si vous avez des questions, vous pouvez répondre directement à cet e-mail ou nous contacter via le centre d'aide.
       </p>
 
       <div style="border-top:1px solid #eeeeee;padding-top:20px;margin-top:24px;">

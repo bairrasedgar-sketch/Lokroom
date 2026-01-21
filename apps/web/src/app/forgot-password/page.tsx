@@ -211,10 +211,10 @@ export default function ForgotPasswordPage() {
           {step === "success" ? "Mot de passe réinitialisé" : "Mot de passe oublié"}
         </h1>
         <p className="mt-1 text-sm text-gray-500">
-          {step === "email" && "Entre ton adresse email pour recevoir un code de réinitialisation."}
-          {step === "code" && `Entre le code à 6 chiffres envoyé à ${email}.`}
-          {step === "new-password" && "Choisis ton nouveau mot de passe."}
-          {step === "success" && "Tu peux maintenant te connecter avec ton nouveau mot de passe."}
+          {step === "email" && "Entrez votre adresse email pour recevoir un code de réinitialisation."}
+          {step === "code" && `Entrez le code à 6 chiffres envoyé à ${email}. Pensez à vérifier vos spams.`}
+          {step === "new-password" && "Choisissez votre nouveau mot de passe."}
+          {step === "success" && "Vous pouvez maintenant vous connecter avec votre nouveau mot de passe."}
         </p>
 
         {/* ========== ÉTAPE 1: EMAIL ========== */}
@@ -237,7 +237,7 @@ export default function ForgotPasswordPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm transition-colors focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
-                placeholder="ton@email.com"
+                placeholder="votre@email.com"
                 autoFocus
               />
             </div>
@@ -328,10 +328,10 @@ export default function ForgotPasswordPage() {
               value={newPassword}
               onChange={setNewPassword}
               label="Nouveau mot de passe"
-              placeholder="Ton nouveau mot de passe"
+              placeholder="Votre nouveau mot de passe"
               showValidation={true}
               confirmValue={confirmPassword}
-              confirmLabel="Confirme ton nouveau mot de passe"
+              confirmLabel="Confirmez votre nouveau mot de passe"
               onConfirmChange={setConfirmPassword}
               error={passwordError}
               autoFocus

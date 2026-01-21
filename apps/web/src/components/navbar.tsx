@@ -97,15 +97,15 @@ const NAV_TEXTS: Record<LocaleCode, NavTexts> = {
     phoneCountryLabel: "Pays/région",
     phoneNumberLabel: "Numéro de téléphone",
     phoneHint:
-      "On pourra t’appeler ou t’envoyer un SMS pour confirmer ton numéro. Des frais de messagerie et de données peuvent s’appliquer.",
+      "Nous pourrons vous appeler ou vous envoyer un SMS pour confirmer votre numéro. Des frais de messagerie et de données peuvent s'appliquer.",
     phoneContinue: "Continuer",
     or: "ou",
     continueGoogle: "Continuer avec Google",
     continueApple: "Continuer avec Apple",
-    continueEmail: "Continuer avec l’adresse e-mail",
+    continueEmail: "Continuer avec l'adresse e-mail",
     continueFacebook: "Continuer avec Facebook",
     authLegal:
-      "En continuant, tu confirmes que tu as lu et accepté les Conditions générales et la Politique de confidentialité de Lok’Room.",
+      "En continuant, vous confirmez avoir lu et accepté les Conditions générales et la Politique de confidentialité de Lok'Room.",
   },
   en: {
     navListings: "Listings",

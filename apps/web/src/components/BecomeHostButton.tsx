@@ -93,7 +93,7 @@ export function CreateListingMenuItem() {
     // connecté mais pas hôte → proposer d'activer le compte hôte
     if (!isHost) {
       const ok = window.confirm(
-        "Pour créer une annonce, tu dois d’abord devenir hôte Lok’Room et activer les paiements. Lancer l’activation maintenant ?",
+        "Pour créer une annonce, vous devez d'abord devenir hôte Lok'Room et activer les paiements. Lancer l'activation maintenant ?",
       );
       if (!ok) return;
       await startHostOnboarding(setLoading);

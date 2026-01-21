@@ -78,7 +78,7 @@ export default function PasswordInput({
   value,
   onChange,
   label = "Mot de passe",
-  placeholder = "Crée ton mot de passe",
+  placeholder = "Créez votre mot de passe",
   showValidation = true,
   confirmValue,
   confirmLabel = "Confirmer le mot de passe",
@@ -253,7 +253,7 @@ export default function PasswordInput({
                   ? "border-red-300 focus:border-red-500 focus:ring-red-500"
                   : "border-gray-300 focus:border-gray-900 focus:ring-gray-900"
               }`}
-              placeholder="Confirme ton mot de passe"
+              placeholder="Confirmez votre mot de passe"
               autoComplete="new-password"
             />
             <button
