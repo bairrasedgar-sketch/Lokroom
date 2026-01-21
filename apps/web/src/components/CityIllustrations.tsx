@@ -766,7 +766,7 @@ const cityTypes: Record<string, CityType> = {
   "Metz": "countryside", "Nancy": "countryside", "Verdun": "countryside",
   "Bar-le-Duc": "countryside", "Chaumont": "countryside", "Saint-Dizier": "countryside",
   "Vesoul": "countryside", "Lons-le-Saunier": "countryside", "Dole": "countryside",
-  "Mâcon": "countryside", "Chalon-sur-Saône": "countryside", "Le Creusot": "countryside",
+  "Chalon-sur-Saône": "countryside", "Le Creusot": "countryside",
   "Montceau-les-Mines": "countryside", "Vichy": "countryside", "Montluçon": "countryside",
   "Le Puy-en-Velay": "countryside", "Privas": "countryside", "Romans-sur-Isère": "countryside",
   "Vienne": "countryside", "Annonay": "countryside", "Orange": "countryside",
@@ -784,7 +784,7 @@ const cityTypes: Record<string, CityType> = {
   "Oloron-Sainte-Marie": "countryside", "Bagnères-de-Bigorre": "countryside",
   "Saint-Gaudens": "countryside", "Muret": "countryside", "Castelsarrasin": "countryside",
   "Moissac": "countryside", "Condom": "countryside", "Lectoure": "countryside",
-  "Mirande": "countryside", "Tarbes": "countryside", "Lannemezan": "countryside",
+  "Mirande": "countryside", "Lannemezan": "countryside",
 
   // CANADA - Villes côtières
   "Victoria": "coastal", "Nanaimo": "coastal", "Kelowna": "coastal", "Kamloops": "coastal",
