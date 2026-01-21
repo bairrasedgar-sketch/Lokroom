@@ -115,7 +115,7 @@ export default function Footer() {
           ))}
 
           {/* Illustration à droite avec fondu */}
-          <div className="hidden xl:flex xl:col-span-2 2xl:col-span-3 items-start justify-center -mt-10">
+          <div className="hidden xl:flex xl:col-span-2 2xl:col-span-3 items-start justify-center" style={{ marginTop: '-2.25rem' }}>
             <div className="relative">
               {/* Masque de fondu radial */}
               <div

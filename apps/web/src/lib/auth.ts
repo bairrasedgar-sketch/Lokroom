@@ -67,7 +67,10 @@ export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
 
   // Changé en JWT pour supporter le Credentials provider
-  session: { strategy: "jwt" },
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 jours
+  },
 
   providers: [
     // 🔐 Connexion avec Google
@@ -303,31 +306,7 @@ export const authOptions: NextAuthOptions = {
     },
 
     async session({ session, token }) {
-      // Récupérer l'email depuis le token JWT
-      const email = token.email as string | undefined;
-      if (!email) return session;
-
-      const dbUser = await prisma.user.findUnique({
-        where: { email },
-        select: {
-          id: true,
-          role: true,
-          hostProfile: {
-            select: {
-              payoutsEnabled: true,
-            },
-          },
-          _count: {
-            select: {
-              Listing: true,
-            },
-          },
-        },
-      });
-
-      if (!dbUser) return session;
-
-      // Extend session.user with custom fields
+      // Récupérer les données depuis le token JWT (pas de requête DB)
       const extendedUser = session.user as {
         id?: string;
         role?: string;
@@ -336,14 +315,47 @@ export const authOptions: NextAuthOptions = {
         name?: string | null;
         image?: string | null;
       };
-      extendedUser.id = dbUser.id;
-      extendedUser.role = dbUser.role;
-      // isHost = true si role HOST/BOTH, ou si payouts activés, ou si a au moins 1 annonce
-      extendedUser.isHost =
-        dbUser.role === "HOST" ||
-        dbUser.role === "BOTH" ||
-        !!dbUser.hostProfile?.payoutsEnabled ||
-        dbUser._count.Listing > 0;
+
+      // Utiliser les données du token directement
+      extendedUser.id = token.sub as string;
+      extendedUser.role = token.role as string;
+
+      // Stocker isHost dans le token pour éviter les requêtes DB
+      if (token.isHost !== undefined) {
+        extendedUser.isHost = token.isHost as boolean;
+      } else {
+        // Première fois : récupérer depuis la DB et stocker dans le token
+        const email = token.email as string | undefined;
+        if (email) {
+          const dbUser = await prisma.user.findUnique({
+            where: { email },
+            select: {
+              role: true,
+              hostProfile: {
+                select: {
+                  payoutsEnabled: true,
+                },
+              },
+              _count: {
+                select: {
+                  Listing: true,
+                },
+              },
+            },
+          });
+
+          if (dbUser) {
+            const isHost =
+              dbUser.role === "HOST" ||
+              dbUser.role === "BOTH" ||
+              !!dbUser.hostProfile?.payoutsEnabled ||
+              dbUser._count.Listing > 0;
+
+            extendedUser.isHost = isHost;
+            token.isHost = isHost; // Stocker pour les prochaines fois
+          }
+        }
+      }
 
       return session;
     },

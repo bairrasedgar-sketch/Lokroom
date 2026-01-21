@@ -12,7 +12,7 @@ const ToasterClient = dynamic(() => import("./toaster-client"), { ssr: false });
 
 export default function Providers({ children }: { children: ReactNode }) {
   return (
-    <SessionProvider>
+    <SessionProvider refetchInterval={5 * 60} refetchOnWindowFocus={true}>
       <FavoritesProvider>
         <GoogleMapsLoader>
           <SearchBarProvider>

@@ -635,11 +635,200 @@ export const HalifaxIllustration: React.FC<CityIllustrationProps> = ({ className
 );
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// ILLUSTRATIONS GÉNÉRIQUES PAR TYPE DE VILLE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Ville côtière - Plage et mer
+export const CoastalCityIllustration: React.FC<CityIllustrationProps> = ({ className = "w-10 h-10" }) => (
+  <svg viewBox="0 0 64 64" fill="none" className={className}>
+    <rect width="64" height="64" rx="12" fill="#ECFEFF"/>
+    {/* Soleil */}
+    <circle cx="50" cy="14" r="6" fill="#FBBF24"/>
+    <circle cx="50" cy="14" r="4" fill="#FCD34D"/>
+    {/* Mer */}
+    <path d="M0 40C10 38 20 42 32 40C44 38 54 42 64 40V56H0V40Z" fill="#0EA5E9"/>
+    <path d="M0 44C10 42 20 46 32 44C44 42 54 46 64 44V56H0V44Z" fill="#0284C7"/>
+    {/* Plage */}
+    <rect x="0" y="48" width="64" height="8" fill="#FDE68A"/>
+    {/* Mouette */}
+    <path d="M18 22C16 24 20 24 22 22" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round"/>
+    <path d="M38 18C36 20 40 20 42 18" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round"/>
+    {/* Vagues */}
+    <path d="M0 50C8 48 16 52 24 50C32 48 40 52 48 50C56 48 60 52 64 50" stroke="#FFFFFF" strokeWidth="1" opacity="0.5"/>
+  </svg>
+);
+
+// Ville de montagne
+export const MountainCityIllustration: React.FC<CityIllustrationProps> = ({ className = "w-10 h-10" }) => (
+  <svg viewBox="0 0 64 64" fill="none" className={className}>
+    <rect width="64" height="64" rx="12" fill="#F0F9FF"/>
+    {/* Ciel */}
+    <circle cx="52" cy="12" r="5" fill="#FBBF24"/>
+    {/* Montagnes enneigées */}
+    <path d="M0 36L12 18L24 32L36 14L48 28L64 20V56H0V36Z" fill="#6366F1"/>
+    <path d="M12 18L8 24L16 24L12 18Z" fill="#F8FAFC"/>
+    <path d="M36 14L30 24L42 24L36 14Z" fill="#F8FAFC"/>
+    <path d="M48 28L44 32L52 32L48 28Z" fill="#F8FAFC"/>
+    {/* Forêt */}
+    <path d="M0 40C8 36 16 42 24 38C32 42 40 36 48 40C56 36 60 42 64 40V56H0V40Z" fill="#059669"/>
+    {/* Vallée */}
+    <rect x="0" y="48" width="64" height="8" fill="#86EFAC"/>
+  </svg>
+);
+
+// Ville de campagne / collines
+export const CountrysideCityIllustration: React.FC<CityIllustrationProps> = ({ className = "w-10 h-10" }) => (
+  <svg viewBox="0 0 64 64" fill="none" className={className}>
+    <rect width="64" height="64" rx="12" fill="#FEF9C3"/>
+    {/* Soleil */}
+    <circle cx="50" cy="14" r="6" fill="#FBBF24"/>
+    {/* Collines */}
+    <ellipse cx="16" cy="48" rx="20" ry="12" fill="#86EFAC"/>
+    <ellipse cx="48" cy="50" rx="22" ry="14" fill="#22C55E"/>
+    <ellipse cx="32" cy="52" rx="24" ry="10" fill="#16A34A"/>
+    {/* Arbres */}
+    <ellipse cx="20" cy="42" rx="4" ry="6" fill="#15803D"/>
+    <ellipse cx="44" cy="44" rx="4" ry="6" fill="#15803D"/>
+    <ellipse cx="32" cy="40" rx="3" ry="5" fill="#166534"/>
+    {/* Champs */}
+    <path d="M0 52H64V56H0V52Z" fill="#FDE047"/>
+    <path d="M0 54H64" stroke="#FCD34D" strokeWidth="0.5" opacity="0.5"/>
+  </svg>
+);
+
+// Ville standard / urbaine
+export const StandardCityIllustration: React.FC<CityIllustrationProps> = ({ className = "w-10 h-10" }) => (
+  <svg viewBox="0 0 64 64" fill="none" className={className}>
+    <rect width="64" height="64" rx="12" fill="#F3F4F6"/>
+    {/* Skyline */}
+    <rect x="8" y="38" width="8" height="18" fill="#1F2937"/>
+    <rect x="18" y="32" width="10" height="24" fill="#374151"/>
+    <rect x="30" y="28" width="8" height="28" fill="#1F2937"/>
+    <rect x="40" y="34" width="10" height="22" fill="#374151"/>
+    <rect x="52" y="40" width="8" height="16" fill="#1F2937"/>
+    {/* Fenêtres */}
+    <rect x="10" y="42" width="2" height="2" fill="#FCD34D"/>
+    <rect x="13" y="42" width="2" height="2" fill="#FCD34D"/>
+    <rect x="10" y="46" width="2" height="2" fill="#FCD34D"/>
+    <rect x="20" y="36" width="2" height="2" fill="#FCD34D"/>
+    <rect x="24" y="36" width="2" height="2" fill="#FCD34D"/>
+    <rect x="20" y="40" width="2" height="2" fill="#FCD34D"/>
+    <rect x="32" y="32" width="2" height="2" fill="#FCD34D"/>
+    <rect x="32" y="36" width="2" height="2" fill="#FCD34D"/>
+    <rect x="42" y="38" width="2" height="2" fill="#FCD34D"/>
+    <rect x="46" y="38" width="2" height="2" fill="#FCD34D"/>
+    <rect x="54" y="44" width="2" height="2" fill="#FCD34D"/>
+    {/* Sol */}
+    <rect x="0" y="56" width="64" height="8" fill="#D1D5DB"/>
+  </svg>
+);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Base de données des types de villes
+// ═══════════════════════════════════════════════════════════════════════════════
+
+type CityType = "coastal" | "mountain" | "countryside" | "standard";
+
+const cityTypes: Record<string, CityType> = {
+  // FRANCE - Villes côtières
+  "Biarritz": "coastal", "Cannes": "coastal", "Antibes": "coastal", "Saint-Tropez": "coastal",
+  "La Rochelle": "coastal", "Brest": "coastal", "Toulon": "coastal", "Calais": "coastal",
+  "Dunkerque": "coastal", "Cherbourg": "coastal", "Saint-Malo": "coastal", "Lorient": "coastal",
+  "Boulogne-sur-Mer": "coastal", "Arcachon": "coastal", "Sète": "coastal", "Perpignan": "coastal",
+  "Bayonne": "coastal", "Ajaccio": "coastal", "Bastia": "coastal", "Hyères": "coastal",
+  "Fréjus": "coastal", "Menton": "coastal", "Royan": "coastal", "Quimper": "coastal",
+
+  // FRANCE - Villes de montagne
+  "Grenoble": "mountain", "Annecy": "mountain", "Chambéry": "mountain", "Chamonix": "mountain",
+  "Briançon": "mountain", "Gap": "mountain", "Albertville": "mountain", "Thonon-les-Bains": "mountain",
+  "Annemasse": "mountain", "Tarbes": "mountain", "Pau": "mountain", "Lourdes": "mountain",
+  "Foix": "mountain", "Aurillac": "mountain", "Mende": "mountain",
+
+  // FRANCE - Villes de campagne/collines
+  "Reims": "countryside", "Dijon": "countryside", "Tours": "countryside", "Orléans": "countryside",
+  "Angers": "countryside", "Le Mans": "countryside", "Clermont-Ferrand": "countryside",
+  "Limoges": "countryside", "Poitiers": "countryside", "Bourges": "countryside",
+  "Troyes": "countryside", "Chartres": "countryside", "Blois": "countryside",
+  "Châteauroux": "countryside", "Nevers": "countryside", "Moulins": "countryside",
+  "Auxerre": "countryside", "Beauvais": "countryside", "Compiègne": "countryside",
+  "Laon": "countryside", "Soissons": "countryside", "Épinal": "countryside",
+  "Colmar": "countryside", "Mulhouse": "countryside", "Belfort": "countryside",
+  "Besançon": "countryside", "Mâcon": "countryside", "Bourg-en-Bresse": "countryside",
+  "Valence": "countryside", "Avignon": "countryside", "Nîmes": "countryside",
+  "Arles": "countryside", "Aix-en-Provence": "countryside", "Albi": "countryside",
+  "Montauban": "countryside", "Agen": "countryside", "Périgueux": "countryside",
+  "Angoulême": "countryside", "Niort": "countryside", "Châtellerault": "countryside",
+  "Rodez": "countryside", "Cahors": "countryside", "Auch": "countryside",
+  "Alençon": "countryside", "Évreux": "countryside", "Rouen": "countryside",
+  "Amiens": "countryside", "Arras": "countryside", "Douai": "countryside",
+  "Valenciennes": "countryside", "Lens": "countryside", "Béthune": "countryside",
+  "Calais": "countryside", "Saint-Quentin": "countryside", "Charleville-Mézières": "countryside",
+  "Metz": "countryside", "Nancy": "countryside", "Verdun": "countryside",
+  "Bar-le-Duc": "countryside", "Chaumont": "countryside", "Saint-Dizier": "countryside",
+  "Vesoul": "countryside", "Lons-le-Saunier": "countryside", "Dole": "countryside",
+  "Mâcon": "countryside", "Chalon-sur-Saône": "countryside", "Le Creusot": "countryside",
+  "Montceau-les-Mines": "countryside", "Vichy": "countryside", "Montluçon": "countryside",
+  "Le Puy-en-Velay": "countryside", "Privas": "countryside", "Romans-sur-Isère": "countryside",
+  "Vienne": "countryside", "Annonay": "countryside", "Orange": "countryside",
+  "Carpentras": "countryside", "Cavaillon": "countryside", "Salon-de-Provence": "countryside",
+  "Martigues": "countryside", "Aubagne": "countryside", "Istres": "countryside",
+  "Draguignan": "countryside", "Grasse": "countryside", "Cagnes-sur-Mer": "countryside",
+  "Saint-Raphaël": "countryside", "Digne-les-Bains": "countryside", "Manosque": "countryside",
+  "Apt": "countryside", "Sisteron": "countryside", "Embrun": "countryside",
+  "Carcassonne": "countryside", "Narbonne": "countryside", "Béziers": "countryside",
+  "Castres": "countryside", "Mazamet": "countryside", "Pamiers": "countryside",
+  "Saint-Girons": "countryside", "Millau": "countryside", "Villefranche-de-Rouergue": "countryside",
+  "Figeac": "countryside", "Gourdon": "countryside", "Sarlat-la-Canéda": "countryside",
+  "Bergerac": "countryside", "Villeneuve-sur-Lot": "countryside", "Marmande": "countryside",
+  "Dax": "countryside", "Mont-de-Marsan": "countryside", "Orthez": "countryside",
+  "Oloron-Sainte-Marie": "countryside", "Bagnères-de-Bigorre": "countryside",
+  "Saint-Gaudens": "countryside", "Muret": "countryside", "Castelsarrasin": "countryside",
+  "Moissac": "countryside", "Condom": "countryside", "Lectoure": "countryside",
+  "Mirande": "countryside", "Tarbes": "countryside", "Lannemezan": "countryside",
+
+  // CANADA - Villes côtières
+  "Victoria": "coastal", "Nanaimo": "coastal", "Kelowna": "coastal", "Kamloops": "coastal",
+  "Prince Rupert": "coastal", "Prince George": "coastal", "Charlottetown": "coastal",
+  "Summerside": "coastal", "Moncton": "coastal", "Saint John": "coastal",
+  "Fredericton": "coastal", "Bathurst": "coastal", "Miramichi": "coastal",
+  "St. John's": "coastal", "Corner Brook": "coastal", "Gander": "coastal",
+  "Whitehorse": "mountain", "Yellowknife": "countryside", "Iqaluit": "coastal",
+
+  // CANADA - Villes de montagne
+  "Banff": "mountain", "Jasper": "mountain", "Whistler": "mountain", "Revelstoke": "mountain",
+  "Nelson": "mountain", "Cranbrook": "mountain", "Fernie": "mountain",
+
+  // CANADA - Villes de campagne/standard
+  "Hamilton": "standard", "London": "countryside", "Windsor": "countryside",
+  "Kitchener": "countryside", "Waterloo": "countryside", "Guelph": "countryside",
+  "Barrie": "countryside", "Kingston": "countryside", "Peterborough": "countryside",
+  "Oshawa": "countryside", "Thunder Bay": "countryside", "Sudbury": "countryside",
+  "Sault Ste. Marie": "countryside", "North Bay": "countryside", "Timmins": "countryside",
+  "Laval": "standard", "Gatineau": "countryside", "Longueuil": "standard",
+  "Sherbrooke": "countryside", "Trois-Rivières": "countryside", "Saguenay": "countryside",
+  "Lévis": "countryside", "Terrebonne": "countryside", "Saint-Jean-sur-Richelieu": "countryside",
+  "Repentigny": "countryside", "Boucherville": "countryside", "Drummondville": "countryside",
+  "Saint-Jérôme": "countryside", "Granby": "countryside", "Blainville": "countryside",
+  "Shawinigan": "countryside", "Rimouski": "coastal", "Chicoutimi": "countryside",
+  "Jonquière": "countryside", "Saint-Hyacinthe": "countryside", "Victoriaville": "countryside",
+  "Sorel-Tracy": "countryside", "Joliette": "countryside", "Val-d'Or": "countryside",
+  "Rouyn-Noranda": "countryside", "Thetford Mines": "countryside", "Sept-Îles": "coastal",
+  "Regina": "countryside", "Saskatoon": "countryside", "Prince Albert": "countryside",
+  "Moose Jaw": "countryside", "Swift Current": "countryside", "Yorkton": "countryside",
+  "North Battleford": "countryside", "Estevan": "countryside", "Weyburn": "countryside",
+  "Lethbridge": "countryside", "Red Deer": "countryside", "Medicine Hat": "countryside",
+  "Grande Prairie": "countryside", "Airdrie": "countryside", "Spruce Grove": "countryside",
+  "Leduc": "countryside", "Fort McMurray": "countryside", "Lloydminster": "countryside",
+  "Brandon": "countryside", "Steinbach": "countryside", "Thompson": "countryside",
+  "Portage la Prairie": "countryside", "Winkler": "countryside", "Selkirk": "countryside",
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // Mapping des villes vers leurs illustrations
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const cityIllustrations: Record<string, React.FC<CityIllustrationProps>> = {
-  // France
+  // France - Villes avec illustrations personnalisées
   "Paris": ParisIllustration,
   "Lyon": LyonIllustration,
   "Bordeaux": BordeauxIllustration,
@@ -651,7 +840,7 @@ export const cityIllustrations: Record<string, React.FC<CityIllustrationProps>> 
   "Lille": LilleIllustration,
   "Montpellier": MontpellierIllustration,
   "Rennes": RennesIllustration,
-  // Canada
+  // Canada - Villes avec illustrations personnalisées
   "Montréal": MontrealIllustration,
   "Montreal": MontrealIllustration,
   "Toronto": TorontoIllustration,
@@ -667,11 +856,32 @@ export const cityIllustrations: Record<string, React.FC<CityIllustrationProps>> 
 
 // Composant générique qui affiche l'illustration de la ville
 export const CityIllustration: React.FC<{ city: string; className?: string }> = ({ city, className }) => {
-  const Illustration = cityIllustrations[city];
-  if (Illustration) {
-    return <Illustration className={className} />;
+  // 1. Vérifier si la ville a une illustration personnalisée
+  const CustomIllustration = cityIllustrations[city];
+  if (CustomIllustration) {
+    return <CustomIllustration className={className} />;
   }
-  // Fallback: icône de localisation générique
+
+  // 2. Sinon, utiliser l'illustration générique basée sur le type de ville
+  const cityType = cityTypes[city];
+
+  if (cityType === "coastal") {
+    return <CoastalCityIllustration className={className} />;
+  }
+
+  if (cityType === "mountain") {
+    return <MountainCityIllustration className={className} />;
+  }
+
+  if (cityType === "countryside") {
+    return <CountrysideCityIllustration className={className} />;
+  }
+
+  if (cityType === "standard") {
+    return <StandardCityIllustration className={className} />;
+  }
+
+  // 3. Fallback: icône de localisation générique pour les villes non répertoriées
   return (
     <svg viewBox="0 0 64 64" fill="none" className={className || "w-10 h-10"}>
       <rect width="64" height="64" rx="12" fill="#F3F4F6"/>
