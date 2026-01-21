@@ -668,15 +668,26 @@ Posez-moi vos questions sur :
 
         const data = await res.json();
 
-        const botReply: BotMessage = {
-          id: `bot-${Date.now()}`,
-          content: data.response || "Désolé, je n'ai pas pu traiter votre demande.",
-          createdAt: new Date().toISOString(),
-          isBot: true,
-          followUp: ["Comment annuler ma réservation ?", "Comment contacter l'hôte ?", "Devenir hôte"],
-        };
+        // Si le message a été envoyé à un agent (pas de réponse auto)
+        if (data.messageSent) {
+          // Ne pas ajouter de réponse bot, le message est parti à l'agent
+          // Le polling va récupérer les nouveaux messages
+        } else if (data.response) {
+          const botReply: BotMessage = {
+            id: `bot-${Date.now()}`,
+            content: data.response,
+            createdAt: new Date().toISOString(),
+            isBot: true,
+            followUp: data.escalatedToAgent ? undefined : ["Comment annuler ma réservation ?", "Comment contacter l'hôte ?", "Devenir hôte"],
+          };
 
-        setBotMessages((prev) => [...prev, botReply]);
+          setBotMessages((prev) => [...prev, botReply]);
+
+          // Si escaladé vers un agent, mettre à jour l'état
+          if (data.escalatedToAgent) {
+            setAgentRequested(true);
+          }
+        }
       } catch (error) {
         console.error("Error calling support API:", error);
         const errorReply: BotMessage = {

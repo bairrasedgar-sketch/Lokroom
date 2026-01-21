@@ -96,6 +96,7 @@ export default function AdminSupportConversationPage() {
   const [showQuickResponses, setShowQuickResponses] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const isInitialLoad = useRef(true);
 
   const user = session?.user as { id?: string; name?: string; role?: string } | undefined;
   const adminName = user?.name || "Support";
@@ -131,6 +132,11 @@ export default function AdminSupportConversationPage() {
   }, [status, user, router]);
 
   useEffect(() => {
+    // Ne pas scroller automatiquement au chargement initial
+    if (isInitialLoad.current) {
+      isInitialLoad.current = false;
+      return;
+    }
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [conversation?.messages]);
 
@@ -419,14 +425,27 @@ export default function AdminSupportConversationPage() {
             </div>
           </div>
         ) : (
-          <div className="border-t border-gray-200 p-4 text-center">
-            <p className="text-sm text-gray-500">
-              {conversation.status === "WAITING_AGENT"
-                ? "Prenez en charge cette conversation pour répondre."
-                : conversation.assignedAdminId && !isAssignedToMe
+          <div className="border-t border-gray-200 p-6 text-center">
+            {conversation.status === "WAITING_AGENT" ? (
+              <div className="flex flex-col items-center gap-3">
+                <p className="text-sm text-gray-500">
+                  Cette conversation attend d'être prise en charge
+                </p>
+                <button
+                  onClick={handleAssign}
+                  disabled={assigning}
+                  className="rounded-lg bg-gray-900 px-6 py-3 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+                >
+                  {assigning ? "Assignation..." : "Prendre en charge ce litige"}
+                </button>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">
+                {conversation.assignedAdminId && !isAssignedToMe
                   ? `Gérée par ${conversation.assignedAdmin?.name || "un autre admin"}`
                   : `Conversation ${conversation.status === "RESOLVED" ? "résolue" : "fermée"}`}
-            </p>
+              </p>
+            )}
           </div>
         )}
       </div>

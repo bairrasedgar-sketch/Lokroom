@@ -99,14 +99,57 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Récupérer la session utilisateur
+    const session = await getServerSession(authOptions);
+
+    // Vérifier si l'utilisateur a une conversation active avec un agent
+    if (session?.user?.email) {
+      const user = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        select: { id: true },
+      });
+
+      if (user) {
+        // Chercher une conversation active avec un agent
+        const activeConversation = await prisma.supportConversation.findFirst({
+          where: {
+            userId: user.id,
+            status: { in: ["WAITING_AGENT", "WITH_AGENT"] },
+          },
+        });
+
+        // Si une conversation avec agent existe, ajouter le message directement
+        if (activeConversation) {
+          await prisma.supportMessage.create({
+            data: {
+              conversationId: activeConversation.id,
+              senderId: user.id,
+              content: message,
+              type: "USER",
+            },
+          });
+
+          // Mettre à jour le timestamp de la conversation
+          await prisma.supportConversation.update({
+            where: { id: activeConversation.id },
+            data: { updatedAt: new Date() },
+          });
+
+          return NextResponse.json({
+            response: null, // Pas de réponse auto, l'agent répondra
+            timestamp: new Date().toISOString(),
+            messageSent: true,
+            conversationId: activeConversation.id,
+          });
+        }
+      }
+    }
+
     // Vérifier si c'est une demande critique ou une demande explicite d'agent
     const isCritical = isCriticalMessage(message);
 
     // Si l'utilisateur demande explicitement un agent ou si c'est critique
     if (requestAgent || isCritical) {
-      // Récupérer la session utilisateur
-      const session = await getServerSession(authOptions);
-
       if (session?.user?.email) {
         const user = await prisma.user.findUnique({
           where: { email: session.user.email },
