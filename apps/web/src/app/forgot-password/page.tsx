@@ -22,6 +22,11 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState(0);
+
+  // Limite de renvoi: 3 renvois par 5 minutes
+  const [resendCount, setResendCount] = useState(0);
+  const [resendBlockedUntil, setResendBlockedUntil] = useState<number | null>(null);
 
   // Dictionnaire i18n
   const [dict, setDict] = useState(getDictionaryForLocale("fr"));
@@ -33,6 +38,30 @@ export default function ForgotPasswordPage() {
     const locale = (m?.[1] || "fr") as SupportedLocale;
     setDict(getDictionaryForLocale(locale));
   }, []);
+
+  // Countdown pour renvoyer le code
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
+
+  // Vérifier si le blocage de renvoi est expiré
+  useEffect(() => {
+    if (resendBlockedUntil && Date.now() >= resendBlockedUntil) {
+      setResendBlockedUntil(null);
+      setResendCount(0);
+    }
+  }, [resendBlockedUntil, countdown]);
+
+  // Calculer le temps restant avant déblocage
+  const getBlockedTimeRemaining = () => {
+    if (!resendBlockedUntil) return 0;
+    return Math.max(0, Math.ceil((resendBlockedUntil - Date.now()) / 1000));
+  };
+
+  const isResendBlocked = resendBlockedUntil !== null && Date.now() < resendBlockedUntil;
 
   const t = dict.auth;
 
@@ -75,6 +104,8 @@ export default function ForgotPasswordPage() {
 
       // Toujours passer à l'étape code (même si l'email n'existe pas, pour des raisons de sécurité)
       setStep("code");
+      setCountdown(60);
+      setResendCount(prev => prev + 1);
     } catch {
       setError(t.genericError);
     } finally {
@@ -150,6 +181,15 @@ export default function ForgotPasswordPage() {
 
   // Renvoyer le code
   async function handleResendCode() {
+    if (countdown > 0 || isResendBlocked) return;
+
+    // Vérifier la limite de 3 renvois par 5 minutes
+    if (resendCount >= 3) {
+      setResendBlockedUntil(Date.now() + 5 * 60 * 1000);
+      setError("Vous avez atteint la limite de 3 renvois. Veuillez patienter 5 minutes.");
+      return;
+    }
+
     setError(null);
     setLoading(true);
 
@@ -162,6 +202,8 @@ export default function ForgotPasswordPage() {
 
       if (res.ok) {
         setCode("");
+        setCountdown(60);
+        setResendCount(prev => prev + 1);
         setError(null);
       }
     } catch {
@@ -310,14 +352,25 @@ export default function ForgotPasswordPage() {
               Vérifier le code
             </button>
 
-            <button
-              type="button"
-              onClick={handleResendCode}
-              disabled={loading}
-              className="w-full text-center text-xs font-medium text-gray-500 hover:text-gray-900 hover:underline disabled:opacity-50"
-            >
-              {loading ? "Envoi en cours..." : "Renvoyer le code"}
-            </button>
+            <div className="text-center space-y-2">
+              <button
+                type="button"
+                onClick={handleResendCode}
+                disabled={countdown > 0 || loading || isResendBlocked}
+                className="w-full text-center text-xs font-medium text-gray-500 hover:text-gray-900 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isResendBlocked
+                  ? `Trop de tentatives. Réessayez dans ${Math.floor(getBlockedTimeRemaining() / 60)}:${String(getBlockedTimeRemaining() % 60).padStart(2, '0')}`
+                  : countdown > 0
+                  ? `Renvoyer le code (${countdown}s)`
+                  : "Renvoyer le code"}
+              </button>
+              {resendCount > 0 && !isResendBlocked && (
+                <p className="text-[10px] text-gray-400">
+                  {3 - resendCount} renvoi{3 - resendCount > 1 ? 's' : ''} restant{3 - resendCount > 1 ? 's' : ''}
+                </p>
+              )}
+            </div>
           </form>
         )}
 

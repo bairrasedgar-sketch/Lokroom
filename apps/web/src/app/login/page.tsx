@@ -29,6 +29,10 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(0);
 
+  // Limite de renvoi: 3 renvois par 5 minutes
+  const [resendCount, setResendCount] = useState(0);
+  const [resendBlockedUntil, setResendBlockedUntil] = useState<number | null>(null);
+
   // Dictionnaire i18n
   const [dict, setDict] = useState(getDictionaryForLocale("fr"));
 
@@ -55,6 +59,22 @@ export default function LoginPage() {
       return () => clearTimeout(timer);
     }
   }, [countdown]);
+
+  // Vérifier si le blocage de renvoi est expiré
+  useEffect(() => {
+    if (resendBlockedUntil && Date.now() >= resendBlockedUntil) {
+      setResendBlockedUntil(null);
+      setResendCount(0);
+    }
+  }, [resendBlockedUntil, countdown]);
+
+  // Calculer le temps restant avant déblocage
+  const getBlockedTimeRemaining = () => {
+    if (!resendBlockedUntil) return 0;
+    return Math.max(0, Math.ceil((resendBlockedUntil - Date.now()) / 1000));
+  };
+
+  const isResendBlocked = resendBlockedUntil !== null && Date.now() < resendBlockedUntil;
 
   const t = dict.auth;
 
@@ -268,7 +288,14 @@ export default function LoginPage() {
 
   // Renvoyer le code
   async function handleResendCode() {
-    if (countdown > 0) return;
+    if (countdown > 0 || isResendBlocked) return;
+
+    // Vérifier la limite de 3 renvois par 5 minutes
+    if (resendCount >= 3) {
+      setResendBlockedUntil(Date.now() + 5 * 60 * 1000); // Bloquer pendant 5 minutes
+      setError("Vous avez atteint la limite de 3 renvois. Veuillez patienter 5 minutes.");
+      return;
+    }
 
     setError(null);
     setLoading(true);
@@ -282,6 +309,7 @@ export default function LoginPage() {
 
       if (res.ok) {
         setCountdown(60);
+        setResendCount(prev => prev + 1);
         setVerificationCode(["", "", "", "", "", ""]);
       } else {
         const data = await res.json();
@@ -296,6 +324,15 @@ export default function LoginPage() {
 
   // Envoyer un magic link (option de secours)
   async function handleSendMagicLink() {
+    if (isResendBlocked) return;
+
+    // Vérifier la limite de 3 renvois par 5 minutes
+    if (resendCount >= 3) {
+      setResendBlockedUntil(Date.now() + 5 * 60 * 1000);
+      setError("Vous avez atteint la limite de 3 renvois. Veuillez patienter 5 minutes.");
+      return;
+    }
+
     setError(null);
     setLoading(true);
 
@@ -310,6 +347,8 @@ export default function LoginPage() {
         setError(t.sendError);
       } else {
         setStep("magic-link-sent");
+        setCountdown(60);
+        setResendCount(prev => prev + 1);
       }
     } catch {
       setError(t.genericError);
@@ -540,32 +579,63 @@ export default function LoginPage() {
               )}
             </button>
 
-            <div className="text-center">
+            <div className="text-center space-y-2">
               <button
                 type="button"
                 onClick={handleResendCode}
-                disabled={countdown > 0 || loading}
+                disabled={countdown > 0 || loading || isResendBlocked}
                 className="text-xs font-medium text-gray-500 hover:text-gray-900 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {countdown > 0 ? `Renvoyer le code (${countdown}s)` : "Renvoyer le code"}
+                {isResendBlocked
+                  ? `Trop de tentatives. Réessayez dans ${Math.floor(getBlockedTimeRemaining() / 60)}:${String(getBlockedTimeRemaining() % 60).padStart(2, '0')}`
+                  : countdown > 0
+                  ? `Renvoyer le code (${countdown}s)`
+                  : "Renvoyer le code"}
               </button>
+              {resendCount > 0 && !isResendBlocked && (
+                <p className="text-[10px] text-gray-400">
+                  {3 - resendCount} renvoi{3 - resendCount > 1 ? 's' : ''} restant{3 - resendCount > 1 ? 's' : ''}
+                </p>
+              )}
             </div>
           </div>
         )}
 
         {/* ========== ÉTAPE 4: MAGIC LINK ENVOYÉ ========== */}
         {step === "magic-link-sent" && (
-          <div className="mt-6 rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800 border border-emerald-100">
-            <div className="flex items-start gap-3">
-              <svg className="h-5 w-5 text-emerald-600 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <div>
-                <p className="font-semibold">{t.linkSent}</p>
-                <p className="mt-1 text-emerald-700">
-                  {t.linkSentDesc.replace("{email}", email)}
-                </p>
+          <div className="mt-6 space-y-4">
+            <div className="rounded-xl bg-emerald-50 p-4 text-sm text-emerald-800 border border-emerald-100">
+              <div className="flex items-start gap-3">
+                <svg className="h-5 w-5 text-emerald-600 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <p className="font-semibold">{t.linkSent}</p>
+                  <p className="mt-1 text-emerald-700">
+                    {t.linkSentDesc.replace("{email}", email)}
+                  </p>
+                </div>
               </div>
+            </div>
+
+            <div className="text-center space-y-2">
+              <button
+                type="button"
+                onClick={handleSendMagicLink}
+                disabled={countdown > 0 || loading || isResendBlocked}
+                className="text-xs font-medium text-gray-500 hover:text-gray-900 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isResendBlocked
+                  ? `Trop de tentatives. Réessayez dans ${Math.floor(getBlockedTimeRemaining() / 60)}:${String(getBlockedTimeRemaining() % 60).padStart(2, '0')}`
+                  : countdown > 0
+                  ? `Renvoyer le lien (${countdown}s)`
+                  : "Renvoyer le lien"}
+              </button>
+              {resendCount > 0 && !isResendBlocked && (
+                <p className="text-[10px] text-gray-400">
+                  {3 - resendCount} renvoi{3 - resendCount > 1 ? 's' : ''} restant{3 - resendCount > 1 ? 's' : ''}
+                </p>
+              )}
             </div>
           </div>
         )}
