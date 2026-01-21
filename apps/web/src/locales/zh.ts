@@ -537,6 +537,8 @@ const zh = {
     legalName: "法定姓名",
     chosenName: "选择的名字",
     emailAddress: "电子邮件地址",
+    contactSupport: "联系支持",
+    privateInfoNote: "此信息是私密的，仅对您可见。",
     phoneNumber: "电话号码",
     accountVerification: "账户验证号",
     identityVerificationLabel: "身份验证",

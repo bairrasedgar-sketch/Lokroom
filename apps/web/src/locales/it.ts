@@ -537,6 +537,8 @@ const it = {
     legalName: "Nome legale",
     chosenName: "Nome scelto",
     emailAddress: "Indirizzo email",
+    contactSupport: "Contatta supporto",
+    privateInfoNote: "Queste informazioni sono private e visibili solo a te.",
     phoneNumber: "Numero di telefono",
     accountVerification: "Numero di verifica account",
     identityVerificationLabel: "Verifica identità",

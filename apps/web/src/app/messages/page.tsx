@@ -20,6 +20,7 @@ import {
   CurrencyEuroIcon,
   MapPinIcon,
   PaperClipIcon,
+  ArrowPathIcon,
 } from "@heroicons/react/24/outline";
 import { CheckIcon, SparklesIcon } from "@heroicons/react/24/solid";
 import TypingIndicator from "@/components/messages/TypingIndicator";
@@ -28,6 +29,45 @@ import { useRealtimeMessages, useTypingIndicator } from "@/lib/realtime";
 
 // Support bot ID
 const SUPPORT_BOT_ID = "lokroom-support";
+
+// Mots-clés critiques qui déclenchent l'affichage du bouton "Parler à un agent"
+const CRITICAL_KEYWORDS = [
+  "remboursement",
+  "rembourser",
+  "changer email",
+  "changer mon email",
+  "modifier email",
+  "modifier mon email",
+  "changer adresse mail",
+  "modifier adresse mail",
+  "supprimer compte",
+  "supprimer mon compte",
+  "fermer compte",
+  "litige",
+  "arnaque",
+  "fraude",
+  "vol",
+  "escroquerie",
+  "urgent",
+  "urgence",
+  "problème grave",
+  "plainte",
+  "avocat",
+  "juridique",
+  "police",
+  "signaler",
+  "harcèlement",
+  "menace",
+  "danger",
+  "bloqué",
+  "compte bloqué",
+  "paiement refusé",
+  "argent volé",
+  "parler à un agent",
+  "parler à quelqu'un",
+  "agent humain",
+  "vrai personne",
+];
 
 // Fonction pour convertir les liens markdown [texte](url) en éléments cliquables
 // Validation sécurisée des URLs pour prévenir les attaques XSS
@@ -139,7 +179,20 @@ type BotMessage = {
   content: string;
   createdAt: string;
   isBot: boolean;
+  isAdmin?: boolean;
+  isSystem?: boolean;
   followUp?: string[];
+};
+
+// Type pour l'historique des conversations support
+type SupportHistoryItem = {
+  id: string;
+  subject: string | null;
+  status: string;
+  createdAt: string;
+  closedAt: string | null;
+  messages: { content: string }[];
+  _count: { messages: number };
 };
 
 export default function MessagesPage() {
@@ -157,10 +210,19 @@ export default function MessagesPage() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [showMobileChat, setShowMobileChat] = useState(false);
   const [botTyping, setBotTyping] = useState(false);
+  const [agentRequested, setAgentRequested] = useState(false);
+  const [supportHistory, setSupportHistory] = useState<SupportHistoryItem[]>([]);
+  const [selectedHistoryId, setSelectedHistoryId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const currentUserId = session?.user?.id;
+
+  // Fonction pour détecter si la conversation contient des mots-clés critiques
+  const hasCriticalKeywords = useCallback(() => {
+    const allMessages = botMessages.map(m => m.content.toLowerCase()).join(" ");
+    return CRITICAL_KEYWORDS.some(keyword => allMessages.includes(keyword.toLowerCase()));
+  }, [botMessages]);
 
   // Temps réel - Hook pour les messages en temps réel
   const realConvId = selectedConvId !== SUPPORT_BOT_ID ? selectedConvId : null;
@@ -212,13 +274,59 @@ export default function MessagesPage() {
     });
   }, [setOnMessage, currentUserId, markAsRead]);
 
-  // Auto-open support bot if ?support=true
+  // Auto-open support bot if ?support=true and handle autoMessage
   useEffect(() => {
     const supportParam = searchParams.get("support");
+    const autoMessage = searchParams.get("autoMessage");
+
     if (supportParam === "true") {
       setViewMode("support");
       setSelectedConvId(SUPPORT_BOT_ID);
       setShowMobileChat(true);
+
+      // Si un message automatique est fourni, l'envoyer automatiquement
+      if (autoMessage) {
+        const decodedMessage = decodeURIComponent(autoMessage);
+        // Marquer l'agent comme déjà demandé puisqu'on escalade directement
+        setAgentRequested(true);
+
+        // Attendre que le bot soit initialisé puis envoyer le message
+        setTimeout(async () => {
+          // Ajouter le message utilisateur
+          const userMessage: BotMessage = {
+            id: `user-${Date.now()}`,
+            content: decodedMessage,
+            createdAt: new Date().toISOString(),
+            isBot: false,
+          };
+          setBotMessages((prev) => [...prev, userMessage]);
+          setBotTyping(true);
+
+          // Appeler l'API avec requestAgent=true pour escalader directement
+          try {
+            const res = await fetch("/api/support/chat", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ message: decodedMessage, requestAgent: true }),
+            });
+
+            const data = await res.json();
+
+            const botReply: BotMessage = {
+              id: `bot-${Date.now()}`,
+              content: data.response || "Désolé, je n'ai pas pu traiter votre demande.",
+              createdAt: new Date().toISOString(),
+              isBot: true,
+            };
+
+            setBotMessages((prev) => [...prev, botReply]);
+          } catch (error) {
+            console.error("Error calling support API:", error);
+          } finally {
+            setBotTyping(false);
+          }
+        }, 500);
+      }
     }
   }, [searchParams]);
 
@@ -236,6 +344,19 @@ export default function MessagesPage() {
       }
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  // Fetch support history
+  const fetchSupportHistory = useCallback(async () => {
+    try {
+      const res = await fetch("/api/support/history");
+      if (res.ok) {
+        const data = await res.json();
+        setSupportHistory(data.conversations || []);
+      }
+    } catch (error) {
+      console.error("Error fetching support history:", error);
     }
   }, []);
 
@@ -262,19 +383,45 @@ export default function MessagesPage() {
     if (status === "authenticated") {
       const controller = new AbortController();
       fetchConversations(controller.signal);
+      fetchSupportHistory(); // Charger l'historique support
       return () => controller.abort();
     }
-  }, [status, fetchConversations]);
+  }, [status, fetchConversations, fetchSupportHistory]);
 
   // Load messages when conversation selected
   useEffect(() => {
     if (selectedConvId === SUPPORT_BOT_ID) {
-      // Initialize bot conversation
+      // Initialize bot conversation with welcome message
       setMessages([]);
-      setBotMessages([
-        {
-          id: "welcome",
-          content: `Bonjour ! 👋 Je suis l'assistant Lok'Room.
+
+      // Charger les messages existants de la conversation support
+      const loadSupportMessages = async () => {
+        try {
+          const res = await fetch("/api/support/conversation");
+          if (res.ok) {
+            const data = await res.json();
+            if (data.conversation && data.conversation.messages && data.conversation.messages.length > 0) {
+              // Convertir les messages de la conversation support en format BotMessage
+              const existingMessages: BotMessage[] = data.conversation.messages.map((msg: { id: string; content: string; type: string; createdAt: string }) => ({
+                id: msg.id,
+                content: msg.content,
+                createdAt: msg.createdAt,
+                isBot: msg.type !== "USER",
+                isAdmin: msg.type === "ADMIN",
+                isSystem: msg.type === "SYSTEM",
+              }));
+              setBotMessages(existingMessages);
+
+              // Si un agent a été demandé, mettre à jour l'état
+              if (data.conversation.status === "WAITING_AGENT" || data.conversation.status === "WITH_AGENT") {
+                setAgentRequested(true);
+              }
+            } else {
+              // Pas de conversation existante, afficher le message de bienvenue
+              setBotMessages([
+                {
+                  id: "welcome",
+                  content: `Bonjour ! 👋 Je suis l'assistant Lok'Room.
 
 Comment puis-je vous aider aujourd'hui ?
 
@@ -284,11 +431,58 @@ Posez-moi vos questions sur :
 • 💳 Les paiements
 • 🏠 Devenir hôte
 • 🔒 La sécurité du compte`,
-          createdAt: new Date().toISOString(),
-          isBot: true,
-          followUp: ["Comment annuler ma réservation ?", "Comment contacter l'hôte ?", "Devenir hôte"],
-        },
-      ]);
+                  createdAt: new Date().toISOString(),
+                  isBot: true,
+                  followUp: ["Comment annuler ma réservation ?", "Comment contacter l'hôte ?", "Devenir hôte"],
+                },
+              ]);
+            }
+          } else {
+            // Erreur, afficher le message de bienvenue par défaut
+            setBotMessages([
+              {
+                id: "welcome",
+                content: `Bonjour ! 👋 Je suis l'assistant Lok'Room.
+
+Comment puis-je vous aider aujourd'hui ?
+
+Posez-moi vos questions sur :
+• 📅 Les réservations
+• ❌ L'annulation et les remboursements
+• 💳 Les paiements
+• 🏠 Devenir hôte
+• 🔒 La sécurité du compte`,
+                createdAt: new Date().toISOString(),
+                isBot: true,
+                followUp: ["Comment annuler ma réservation ?", "Comment contacter l'hôte ?", "Devenir hôte"],
+              },
+            ]);
+          }
+        } catch (error) {
+          console.error("Error loading support messages:", error);
+          // En cas d'erreur, afficher le message de bienvenue
+          setBotMessages([
+            {
+              id: "welcome",
+              content: `Bonjour ! 👋 Je suis l'assistant Lok'Room.
+
+Comment puis-je vous aider aujourd'hui ?
+
+Posez-moi vos questions sur :
+• 📅 Les réservations
+• ❌ L'annulation et les remboursements
+• 💳 Les paiements
+• 🏠 Devenir hôte
+• 🔒 La sécurité du compte`,
+              createdAt: new Date().toISOString(),
+              isBot: true,
+              followUp: ["Comment annuler ma réservation ?", "Comment contacter l'hôte ?", "Devenir hôte"],
+            },
+          ]);
+        }
+      };
+
+      loadSupportMessages();
     } else if (selectedConvId) {
       setBotMessages([]);
       const controller = new AbortController();
@@ -297,16 +491,47 @@ Posez-moi vos questions sur :
     }
   }, [selectedConvId, fetchMessages]);
 
-  // Poll for new messages (skip for bot)
+  // Poll for new support messages (pour recevoir les messages de l'admin)
   useEffect(() => {
-    if (!selectedConvId || selectedConvId === SUPPORT_BOT_ID) return;
+    if (selectedConvId !== SUPPORT_BOT_ID) return;
 
-    const interval = setInterval(() => {
-      fetchMessages(selectedConvId);
-    }, 3000);
+    const pollSupportMessages = async () => {
+      try {
+        const res = await fetch("/api/support/conversation");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.conversation && data.conversation.messages) {
+            const existingMessages: BotMessage[] = data.conversation.messages.map((msg: { id: string; content: string; type: string; createdAt: string }) => ({
+              id: msg.id,
+              content: msg.content,
+              createdAt: msg.createdAt,
+              isBot: msg.type !== "USER",
+              isAdmin: msg.type === "ADMIN",
+              isSystem: msg.type === "SYSTEM",
+            }));
 
+            // Mettre à jour seulement si le nombre de messages a changé
+            setBotMessages((prev) => {
+              if (prev.length !== existingMessages.length) {
+                return existingMessages;
+              }
+              return prev;
+            });
+
+            // Mettre à jour l'état de l'agent
+            if (data.conversation.status === "WAITING_AGENT" || data.conversation.status === "WITH_AGENT") {
+              setAgentRequested(true);
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error polling support messages:", error);
+      }
+    };
+
+    const interval = setInterval(pollSupportMessages, 3000);
     return () => clearInterval(interval);
-  }, [selectedConvId, fetchMessages]);
+  }, [selectedConvId]);
 
   // Scroll to bottom on new messages - only scroll within the messages container
   const scrollToBottom = useCallback(() => {
@@ -340,6 +565,71 @@ Posez-moi vos questions sur :
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
     }
   }, [newMessage]);
+
+  // Reset support conversation
+  const handleResetConversation = async () => {
+    try {
+      const res = await fetch("/api/support/reset", {
+        method: "POST",
+      });
+
+      if (res.ok) {
+        // Réinitialiser l'état local
+        setAgentRequested(false);
+        setSelectedHistoryId(null);
+        setBotMessages([
+          {
+            id: "welcome",
+            content: `Bonjour ! 👋 Je suis l'assistant Lok'Room.
+
+Comment puis-je vous aider aujourd'hui ?
+
+Posez-moi vos questions sur :
+• 📅 Les réservations
+• ❌ L'annulation et les remboursements
+• 💳 Les paiements
+• 🏠 Devenir hôte
+• 🔒 La sécurité du compte`,
+            createdAt: new Date().toISOString(),
+            isBot: true,
+            followUp: ["Comment annuler ma réservation ?", "Comment contacter l'hôte ?", "Devenir hôte"],
+          },
+        ]);
+        // Rafraîchir l'historique
+        fetchSupportHistory();
+      }
+    } catch (error) {
+      console.error("Error resetting conversation:", error);
+    }
+  };
+
+  // Load history conversation
+  const handleLoadHistoryConversation = async (historyId: string) => {
+    setSelectedHistoryId(historyId);
+    setSelectedConvId(SUPPORT_BOT_ID);
+    setShowMobileChat(true);
+
+    try {
+      const res = await fetch(`/api/support/history/${historyId}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.conversation && data.conversation.messages) {
+          const historyMessages: BotMessage[] = data.conversation.messages.map((msg: { id: string; content: string; type: string; createdAt: string }) => ({
+            id: msg.id,
+            content: msg.content,
+            createdAt: msg.createdAt,
+            isBot: msg.type !== "USER",
+            isAdmin: msg.type === "ADMIN",
+            isSystem: msg.type === "SYSTEM",
+          }));
+          setBotMessages(historyMessages);
+          setAgentRequested(true); // Désactiver l'input pour l'historique
+        }
+      }
+    } catch (error) {
+      console.error("Error loading history conversation:", error);
+    }
+  };
 
   // Send message
   const handleSend = async () => {
@@ -644,14 +934,17 @@ Posez-moi vos questions sur :
               </div>
             ) : viewMode === "support" ? (
               <div className="space-y-1 pb-4">
-                {/* Support Bot - Only in support mode */}
+                {/* Support Bot - Nouvelle conversation */}
                 <button
                   onClick={() => {
                     setSelectedConvId(SUPPORT_BOT_ID);
+                    setSelectedHistoryId(null);
                     setShowMobileChat(true);
+                    // Recharger la conversation active
+                    setAgentRequested(false);
                   }}
                   className={`group flex w-full items-start gap-3 rounded-2xl p-3 text-left transition-all ${
-                    selectedConvId === SUPPORT_BOT_ID
+                    selectedConvId === SUPPORT_BOT_ID && !selectedHistoryId
                       ? "bg-gradient-to-r from-violet-50 to-purple-50"
                       : "hover:bg-gray-50"
                   }`}
@@ -672,6 +965,62 @@ Posez-moi vos questions sur :
                     </p>
                   </div>
                 </button>
+
+                {/* Historique des conversations */}
+                {supportHistory.length > 0 && (
+                  <>
+                    <div className="px-3 py-2 mt-2">
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+                        Historique (7 derniers jours)
+                      </p>
+                    </div>
+                    {supportHistory.map((history) => (
+                      <button
+                        key={history.id}
+                        onClick={() => handleLoadHistoryConversation(history.id)}
+                        className={`group flex w-full items-start gap-3 rounded-2xl p-3 text-left transition-all ${
+                          selectedHistoryId === history.id
+                            ? "bg-gray-100"
+                            : "hover:bg-gray-50"
+                        }`}
+                      >
+                        <div className="relative flex-shrink-0">
+                          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-200">
+                            <ClockIcon className="h-5 w-5 text-gray-500" />
+                          </div>
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-medium text-gray-700 truncate text-sm">
+                              {history.subject || "Conversation support"}
+                            </h3>
+                            <span className="text-xs text-gray-400">
+                              {new Date(history.createdAt).toLocaleDateString("fr-FR", {
+                                day: "numeric",
+                                month: "short",
+                              })}
+                            </span>
+                          </div>
+                          <p className="mt-0.5 text-xs text-gray-500 truncate">
+                            {history.messages[0]?.content || "Aucun message"}
+                          </p>
+                          <div className="mt-1 flex items-center gap-2">
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              history.status === "RESOLVED"
+                                ? "bg-emerald-100 text-emerald-600"
+                                : "bg-gray-100 text-gray-500"
+                            }`}>
+                              {history.status === "RESOLVED" ? "Résolu" : "Fermé"}
+                            </span>
+                            <span className="text-xs text-gray-400">
+                              {history._count.messages} messages
+                            </span>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </>
+                )}
               </div>
             ) : filteredConversations.length === 0 ? (
               <div className="flex h-64 flex-col items-center justify-center px-4 text-center">
@@ -932,12 +1281,23 @@ Posez-moi vos questions sur :
 
                 {/* Actions */}
                 {selectedConvId === SUPPORT_BOT_ID ? (
-                  <Link
-                    href="/help"
-                    className="hidden items-center gap-2 rounded-full bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 sm:flex"
-                  >
-                    Centre d&apos;aide
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    {/* Bouton Nouvelle conversation */}
+                    <button
+                      onClick={handleResetConversation}
+                      className="hidden items-center gap-2 rounded-full bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 sm:flex"
+                      title="Démarrer une nouvelle conversation"
+                    >
+                      <ArrowPathIcon className="h-4 w-4" />
+                      Nouvelle conversation
+                    </button>
+                    <Link
+                      href="/help"
+                      className="hidden items-center gap-2 rounded-full bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 sm:flex"
+                    >
+                      Centre d&apos;aide
+                    </Link>
+                  </div>
                 ) : selectedConv?.listing ? (
                   <Link
                     href={`/listings/${selectedConv.listing.id}`}
@@ -1017,64 +1377,93 @@ Posez-moi vos questions sur :
                 {/* Bot Messages */}
                 {selectedConvId === SUPPORT_BOT_ID ? (
                   <div className="space-y-4">
-                    {botMessages.map((msg, index) => (
-                      <div
-                        key={msg.id}
-                        className={`flex items-end gap-2 ${!msg.isBot ? "flex-row-reverse" : ""}`}
-                      >
-                        {/* Bot Avatar */}
-                        {msg.isBot && (
-                          <div className="w-8 flex-shrink-0">
-                            {(index === 0 || !botMessages[index - 1].isBot) && (
-                              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600">
-                                <SparklesIcon className="h-4 w-4 text-white" />
-                              </div>
-                            )}
+                    {botMessages.map((msg, index) => {
+                      // Messages système au centre
+                      if (msg.isSystem) {
+                        return (
+                          <div key={msg.id} className="text-center">
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5 text-xs text-gray-600">
+                              <ClockIcon className="h-3.5 w-3.5" />
+                              {msg.content}
+                            </span>
                           </div>
-                        )}
+                        );
+                      }
 
-                        {/* Message Bubble */}
-                        <div className={`max-w-[80%] ${!msg.isBot ? "items-end" : "items-start"}`}>
-                          <div
-                            className={`rounded-2xl px-4 py-3 ${
-                              !msg.isBot
-                                ? "rounded-br-md bg-gray-900 text-white"
-                                : "rounded-bl-md bg-white text-gray-900 shadow-sm"
-                            }`}
-                          >
-                            <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
-                              {msg.isBot ? parseMarkdownLinks(msg.content) : msg.content}
-                            </p>
-                          </div>
+                      // Messages utilisateur à droite, messages bot/admin à gauche
+                      const isFromUser = !msg.isBot;
 
-                          {/* Follow-up suggestions */}
-                          {msg.isBot && msg.followUp && msg.followUp.length > 0 && (
-                            <div className="mt-2 flex flex-wrap gap-2">
-                              {msg.followUp.map((suggestion) => (
-                                <button
-                                  key={suggestion}
-                                  onClick={() => handleQuickReply(suggestion)}
-                                  className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 transition-colors hover:bg-violet-100"
-                                >
-                                  {suggestion}
-                                </button>
-                              ))}
+                      return (
+                        <div
+                          key={msg.id}
+                          className={`flex items-end gap-2 ${isFromUser ? "justify-end" : "justify-start"}`}
+                        >
+                          {/* Avatar à gauche pour bot/admin */}
+                          {!isFromUser && (
+                            <div className="w-8 flex-shrink-0">
+                              {(index === 0 || botMessages[index - 1].isBot !== msg.isBot || botMessages[index - 1].isAdmin !== msg.isAdmin) && (
+                                msg.isAdmin ? (
+                                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500">
+                                    <UserCircleIcon className="h-4 w-4 text-white" />
+                                  </div>
+                                ) : (
+                                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600">
+                                    <SparklesIcon className="h-4 w-4 text-white" />
+                                  </div>
+                                )
+                              )}
                             </div>
                           )}
 
-                          <p
-                            className={`mt-1 text-[11px] text-gray-400 ${
-                              !msg.isBot ? "text-right" : "text-left"
-                            }`}
-                          >
-                            {new Date(msg.createdAt).toLocaleTimeString("fr-FR", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </p>
+                          {/* Message Bubble */}
+                          <div className={`max-w-[80%] ${isFromUser ? "items-end" : "items-start"}`}>
+                            <div
+                              className={`rounded-2xl px-4 py-3 ${
+                                isFromUser
+                                  ? "rounded-br-md bg-gray-700/90 text-white"
+                                  : msg.isAdmin
+                                    ? "rounded-bl-md bg-emerald-50 text-gray-900 shadow-sm border border-emerald-100"
+                                    : "rounded-bl-md bg-gray-200/70 text-gray-900 shadow-sm"
+                              }`}
+                            >
+                              <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
+                                {!isFromUser ? parseMarkdownLinks(msg.content) : msg.content}
+                              </p>
+                            </div>
+
+                            {/* Follow-up suggestions */}
+                            {msg.isBot && !msg.isAdmin && msg.followUp && msg.followUp.length > 0 && (
+                              <div className="mt-2 flex flex-wrap gap-2">
+                                {msg.followUp.map((suggestion) => (
+                                  <button
+                                    key={suggestion}
+                                    onClick={() => handleQuickReply(suggestion)}
+                                    className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 transition-colors hover:bg-violet-100"
+                                  >
+                                    {suggestion}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+
+                            <p
+                              className={`mt-1 text-[11px] text-gray-400 ${
+                                isFromUser ? "text-right" : "text-left"
+                              }`}
+                            >
+                              {msg.isAdmin && "Agent Lok'Room • "}
+                              {new Date(msg.createdAt).toLocaleTimeString("fr-FR", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </p>
+                          </div>
+
+                          {/* Espace à droite pour les messages utilisateur */}
+                          {isFromUser && <div className="w-8 flex-shrink-0" />}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
 
                     {/* Typing indicator */}
                     {botTyping && (
@@ -1153,8 +1542,8 @@ Posez-moi vos questions sur :
                             <div
                               className={`rounded-2xl px-4 py-2.5 ${
                                 isMine
-                                  ? "rounded-br-md bg-gray-900 text-white"
-                                  : "rounded-bl-md bg-white text-gray-900 shadow-sm"
+                                  ? "rounded-br-md bg-gray-700/90 text-white"
+                                  : "rounded-bl-md bg-gray-200/70 text-gray-900 shadow-sm"
                               }`}
                             >
                               <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
@@ -1245,7 +1634,89 @@ Posez-moi vos questions sur :
                   />
                 )}
 
-                {/* Input */}
+                {/* Bouton Parler à un agent (uniquement si mots-clés critiques détectés et pas encore demandé) */}
+                {selectedConvId === SUPPORT_BOT_ID && botMessages.length > 1 && hasCriticalKeywords() && !agentRequested && (
+                  <div className="mb-3">
+                    <button
+                      onClick={async () => {
+                        // Désactiver le bouton immédiatement
+                        setAgentRequested(true);
+
+                        // Envoyer une demande pour parler à un agent
+                        const userMessage: BotMessage = {
+                          id: `user-${Date.now()}`,
+                          content: "Je souhaite parler à un agent",
+                          createdAt: new Date().toISOString(),
+                          isBot: false,
+                        };
+                        setBotMessages((prev) => [...prev, userMessage]);
+                        setBotTyping(true);
+
+                        try {
+                          const res = await fetch("/api/support/chat", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ message: "Je souhaite parler à un agent", requestAgent: true }),
+                          });
+
+                          const data = await res.json();
+
+                          const botReply: BotMessage = {
+                            id: `bot-${Date.now()}`,
+                            content: data.response || "Veuillez patienter, nous vous mettons en relation avec un agent.",
+                            createdAt: new Date().toISOString(),
+                            isBot: true,
+                          };
+
+                          setBotMessages((prev) => [...prev, botReply]);
+                        } catch (error) {
+                          console.error("Error requesting agent:", error);
+                          // En cas d'erreur, réactiver le bouton
+                          setAgentRequested(false);
+                        } finally {
+                          setBotTyping(false);
+                        }
+                      }}
+                      className="w-full flex items-center justify-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-4 py-2.5 text-sm font-medium text-orange-700 transition-colors hover:bg-orange-100"
+                    >
+                      <UserCircleIcon className="h-5 w-5" />
+                      Parler à un agent
+                    </button>
+                  </div>
+                )}
+
+                {/* Message si agent déjà demandé */}
+                {selectedConvId === SUPPORT_BOT_ID && agentRequested && !selectedHistoryId && (
+                  <div className="mb-3 flex items-center justify-center gap-2 rounded-xl bg-emerald-50 px-4 py-2.5 text-sm text-emerald-700">
+                    <CheckCircleIcon className="h-5 w-5" />
+                    Un agent va vous répondre sous peu
+                  </div>
+                )}
+
+                {/* Message si consultation historique (lecture seule) */}
+                {selectedConvId === SUPPORT_BOT_ID && selectedHistoryId && (
+                  <div className="mb-3 flex items-center justify-between rounded-xl bg-gray-100 px-4 py-2.5 text-sm text-gray-600">
+                    <div className="flex items-center gap-2">
+                      <ClockIcon className="h-5 w-5" />
+                      Conversation archivée (lecture seule)
+                    </div>
+                    <button
+                      onClick={() => {
+                        setSelectedHistoryId(null);
+                        setAgentRequested(false);
+                        // Recharger la conversation active
+                        setSelectedConvId(null);
+                        setTimeout(() => setSelectedConvId(SUPPORT_BOT_ID), 10);
+                      }}
+                      className="text-xs font-medium text-gray-900 hover:underline"
+                    >
+                      Nouvelle conversation
+                    </button>
+                  </div>
+                )}
+
+                {/* Input - Masqué si historique */}
+                {!selectedHistoryId && (
                 <div className="flex items-end gap-3">
                   <div className="flex-1 relative">
                     <textarea
@@ -1294,6 +1765,7 @@ Posez-moi vos questions sur :
                     )}
                   </button>
                 </div>
+                )}
 
                 {/* Connexion temps réel status */}
                 {selectedConvId !== SUPPORT_BOT_ID && (

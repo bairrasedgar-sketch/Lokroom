@@ -547,6 +547,7 @@ const fr = {
     legalName: "Nom légal",
     chosenName: "Nom choisi",
     emailAddress: "Adresse courriel",
+    contactSupport: "Contacter le support",
     phoneNumber: "Numéro de téléphone",
     accountVerification: "Numéro de vérification du compte",
     identityVerificationLabel: "Vérification de l'identité",
@@ -573,6 +574,8 @@ const fr = {
     saved: "Sauvegardé ✓",
     errorSaving: "Erreur lors de l'enregistrement",
     comingSoon: "Cette modification arrivera bientôt sur Lok'Room.",
+    // Private info note
+    privateInfoNote: "Ces informations sont privées et visibles uniquement par vous.",
     // Public info modal
     editPublicInfoTitle: "Modifier mes infos publiques",
     jobPlaceholder: "Ex : Étudiant en droit",

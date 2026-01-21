@@ -965,19 +965,20 @@ function AboutSection(props: AboutProps) {
 
       {/* 🔥 MODAL PROFIL (avatar + info compte avec petites bulles Modifier) */}
       {isEditingProfile && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center">
+        <div className="fixed inset-0 z-40 flex items-center justify-center p-4 pb-8 pt-12">
           {/* Backdrop flouté */}
           <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setIsEditingProfile(false)}
           />
 
           {/* Bulle d'édition */}
           <section
-            className="relative z-50 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-6 shadow-xl"
+            className="relative z-50 flex max-h-[80vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mb-4 flex items-center justify-between">
+            {/* Header fixe */}
+            <div className="flex items-center justify-between border-b border-gray-100 p-4 sm:p-6">
               <h3 className="text-base font-semibold">
                 {t.photoAndInfo}
               </h3>
@@ -989,6 +990,9 @@ function AboutSection(props: AboutProps) {
                 {t.close}
               </button>
             </div>
+
+            {/* Contenu scrollable */}
+            <div className="flex-1 overflow-y-auto p-4 pb-6 sm:p-6 sm:pb-8 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar]:mr-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:my-6 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 hover:[&::-webkit-scrollbar-thumb]:bg-gray-400">
 
             {/* Avatar + input fichier custom */}
             <div className="mb-4 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
@@ -1060,6 +1064,14 @@ function AboutSection(props: AboutProps) {
             <p className="mb-4 text-xs text-gray-500">
               {t.email} : <span className="font-mono">{email}</span>
             </p>
+
+            {/* Message de confidentialité */}
+            <div className="mb-4 flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-600">
+              <svg className="h-4 w-4 shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+              </svg>
+              <span>{t.privateInfoNote}</span>
+            </div>
 
             {/* 🔽 Informations du compte (chaque ligne modifiable) */}
             <form onSubmit={onSave}>
@@ -1160,10 +1172,13 @@ function AboutSection(props: AboutProps) {
                   </div>
                   <button
                     type="button"
-                    onClick={handleSoon}
+                    onClick={() => {
+                      // Rediriger vers le support avec message automatique pour changement d'email
+                      window.location.href = "/messages?support=true&autoMessage=changement%20d%27adresse%20mail";
+                    }}
                     className="text-sm font-medium text-gray-700 hover:underline"
                   >
-                    {t.modify}
+                    {t.contactSupport}
                   </button>
                 </div>
 
@@ -1399,22 +1414,24 @@ function AboutSection(props: AboutProps) {
                 )}
               </div>
             </form>
+            </div>
           </section>
         </div>
       )}
 
       {/* 🔥 MODAL INFOS PUBLIQUES (travail, langues, description, centres d'intérêt) */}
       {isEditingPublic && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center">
+        <div className="fixed inset-0 z-40 flex items-center justify-center p-4 pb-8 pt-12">
           <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setIsEditingPublic(false)}
           />
           <section
-            className="relative z-50 max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-3xl bg-white p-6 shadow-xl"
+            className="relative z-50 flex max-h-[80vh] w-full max-w-xl flex-col overflow-hidden rounded-3xl bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mb-4 flex items-center justify-between">
+            {/* Header fixe */}
+            <div className="flex items-center justify-between border-b border-gray-100 p-4 sm:p-6">
               <h3 className="text-base font-semibold">
                 {t.editPublicInfoTitle}
               </h3>
@@ -1427,6 +1444,8 @@ function AboutSection(props: AboutProps) {
               </button>
             </div>
 
+            {/* Contenu scrollable */}
+            <div className="flex-1 overflow-y-auto p-4 pb-6 sm:p-6 sm:pb-8 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar]:mr-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:my-6 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 hover:[&::-webkit-scrollbar-thumb]:bg-gray-400">
             <form className="space-y-4 text-sm" onSubmit={onSavePublic}>
               <div>
                 <label className="mb-1 block font-medium">{t.myJob}</label>
@@ -1497,6 +1516,7 @@ function AboutSection(props: AboutProps) {
                 </p>
               </div>
             </form>
+            </div>
           </section>
         </div>
       )}

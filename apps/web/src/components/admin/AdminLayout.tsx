@@ -24,6 +24,7 @@ import {
   IdentificationIcon,
   StarIcon,
   ChatBubbleLeftRightIcon,
+  LifebuoyIcon,
 } from "@heroicons/react/24/outline";
 import { signOut } from "next-auth/react";
 
@@ -59,6 +60,7 @@ const navigation: NavItem[] = [
   { name: "Réservations", href: "/admin/bookings", icon: CalendarDaysIcon, roles: ["ADMIN", "MODERATOR", "SUPPORT"] },
   { name: "Avis", href: "/admin/reviews", icon: StarIcon, roles: ["ADMIN", "MODERATOR"] },
   { name: "Litiges", href: "/admin/disputes", icon: ExclamationTriangleIcon, roles: ["ADMIN", "MODERATOR", "SUPPORT"] },
+  { name: "Support utilisateurs", href: "/admin/support", icon: LifebuoyIcon, roles: ["ADMIN", "MODERATOR", "SUPPORT"] },
   { name: "Paiements", href: "/admin/payments", icon: BanknotesIcon, roles: ["ADMIN"] },
   { name: "Messages", href: "/admin/messages", icon: ChatBubbleLeftRightIcon, roles: ["ADMIN", "MODERATOR"] },
   { name: "Analytiques", href: "/admin/analytics", icon: ChartBarIcon, roles: ["ADMIN", "ANALYST"] },
@@ -69,11 +71,12 @@ const navigation: NavItem[] = [
 
 type Alert = {
   id: string;
-  type: "dispute" | "listing" | "user" | "booking";
+  type: "dispute" | "listing" | "user" | "booking" | "support";
   title: string;
   message: string;
   priority: "high" | "medium" | "low";
   createdAt: string;
+  actionUrl?: string;
 };
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -95,6 +98,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     pendingListings: 0,
     openDisputes: 0,
     todayBookings: 0,
+    pendingSupport: 0,
   });
 
   const user = session?.user as { id?: string; name?: string; email?: string; role?: string } | undefined;
@@ -193,15 +197,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 md:w-72 transform bg-white shadow-xl transition-transform duration-300 lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 transform bg-white shadow-xl transition-transform duration-300 lg:translate-x-0 flex flex-col ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* Logo */}
-        <div className="flex h-14 md:h-16 items-center justify-between border-b border-gray-200 px-4 md:px-6">
+        <div className="flex h-14 flex-shrink-0 items-center justify-between border-b border-gray-200 px-4">
           <Link href="/admin" className="flex items-center gap-2">
-            <ShieldCheckIcon className="h-6 w-6 md:h-8 md:w-8 text-red-500" />
-            <span className="text-lg md:text-xl font-bold text-gray-900">Lok&apos;Room Admin</span>
+            <ShieldCheckIcon className="h-6 w-6 text-red-500" />
+            <span className="text-lg font-bold text-gray-900">Lok&apos;Room Admin</span>
           </Link>
           <button
             onClick={() => setSidebarOpen(false)}
@@ -213,24 +217,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         {/* User info */}
-        <div className="border-b border-gray-200 p-3 md:p-4">
-          <div className="flex items-center gap-2 md:gap-3">
-            <div className="h-8 w-8 md:h-10 md:w-10 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white font-semibold text-sm md:text-base">
+        <div className="flex-shrink-0 border-b border-gray-200 p-3">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white font-semibold text-sm">
               {user?.name?.charAt(0) || "A"}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs md:text-sm font-medium text-gray-900 truncate">
+              <p className="text-sm font-medium text-gray-900 truncate">
                 {user?.name || "Admin"}
               </p>
-              <span className={`inline-flex items-center px-1.5 md:px-2 py-0.5 rounded text-[10px] md:text-xs font-medium ${ROLE_COLORS[userRole as AdminRole] || "bg-gray-100 text-gray-800"}`}>
+              <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${ROLE_COLORS[userRole as AdminRole] || "bg-gray-100 text-gray-800"}`}>
                 {ROLE_LABELS[userRole as AdminRole] || userRole}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto p-3 md:p-4 space-y-1">
+        {/* Navigation - scrollable */}
+        <nav className="flex-1 overflow-y-auto p-3 space-y-1">
           {filteredNav.map((item) => {
             const isActive = pathname === item.href ||
               (item.href !== "/admin" && pathname?.startsWith(item.href));
@@ -239,22 +243,27 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-2 md:gap-3 px-2 md:px-3 py-2 md:py-2.5 rounded-lg text-xs md:text-sm font-medium transition-colors ${
+                className={`flex items-center gap-2 px-2 py-2 rounded-lg text-sm font-medium transition-colors ${
                   isActive
                     ? "bg-red-50 text-red-700"
                     : "text-gray-700 hover:bg-gray-100"
                 }`}
               >
-                <item.icon className={`h-4 w-4 md:h-5 md:w-5 flex-shrink-0 ${isActive ? "text-red-500" : "text-gray-400"}`} />
+                <item.icon className={`h-5 w-5 flex-shrink-0 ${isActive ? "text-red-500" : "text-gray-400"}`} />
                 <span className="truncate">{item.name}</span>
                 {item.name === "Litiges" && stats.openDisputes > 0 && (
-                  <span className="ml-auto bg-red-500 text-white text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 rounded-full">
+                  <span className="ml-auto bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full">
                     {stats.openDisputes}
                   </span>
                 )}
                 {item.name === "Annonces" && stats.pendingListings > 0 && (
-                  <span className="ml-auto bg-yellow-500 text-white text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 rounded-full">
+                  <span className="ml-auto bg-yellow-500 text-white text-xs px-1.5 py-0.5 rounded-full">
                     {stats.pendingListings}
+                  </span>
+                )}
+                {item.name === "Support utilisateurs" && stats.pendingSupport > 0 && (
+                  <span className="ml-auto bg-orange-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                    {stats.pendingSupport}
                   </span>
                 )}
               </Link>
@@ -263,29 +272,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </nav>
 
         {/* Bottom actions */}
-        <div className="border-t border-gray-200 p-3 md:p-4 space-y-1 md:space-y-2">
+        <div className="flex-shrink-0 border-t border-gray-200 p-3 space-y-1">
           <Link
             href="/"
-            className="flex items-center gap-2 md:gap-3 px-2 md:px-3 py-2 md:py-2.5 rounded-lg text-xs md:text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
+            className="flex items-center gap-2 px-2 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors"
           >
-            <HomeIcon className="h-4 w-4 md:h-5 md:w-5 text-gray-400" />
+            <HomeIcon className="h-5 w-5 text-gray-400" />
             Retour au site
           </Link>
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
-            className="w-full flex items-center gap-2 md:gap-3 px-2 md:px-3 py-2 md:py-2.5 rounded-lg text-xs md:text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+            className="w-full flex items-center gap-2 px-2 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
           >
-            <ArrowRightOnRectangleIcon className="h-4 w-4 md:h-5 md:w-5" />
+            <ArrowRightOnRectangleIcon className="h-5 w-5" />
             Déconnexion
           </button>
         </div>
       </aside>
 
       {/* Main content */}
-      <div className="lg:pl-64 xl:pl-72 2xl:pl-72 min-w-0">
+      <div className="ml-0 lg:ml-64">
         {/* Top bar */}
         <header className="sticky top-0 z-30 bg-white border-b border-gray-200">
-          <div className="flex h-14 md:h-16 items-center gap-2 md:gap-4 px-3 sm:px-4 md:px-6">
+          <div className="flex h-14 items-center gap-4 px-4">
             {/* Mobile menu button */}
             <button
               onClick={() => setSidebarOpen(true)}
@@ -423,9 +432,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         </p>
                       ) : (
                         alerts.slice(0, 5).map((alert) => (
-                          <div
+                          <Link
                             key={alert.id}
-                            className={`p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${
+                            href={alert.actionUrl || "#"}
+                            onClick={() => setShowAlerts(false)}
+                            className={`block p-3 border-b border-gray-100 hover:bg-gray-50 ${
                               alert.priority === "high" ? "bg-red-50" : ""
                             }`}
                           >
@@ -435,7 +446,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             <p className="text-xs text-gray-500 mt-1">
                               {alert.message}
                             </p>
-                          </div>
+                          </Link>
                         ))
                       )}
                     </div>
@@ -463,7 +474,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* Page content */}
-        <main className="p-4 sm:p-6 lg:p-8 xl:p-10 2xl:p-12 max-w-[2000px] 3xl:max-w-[2400px] mx-auto">
+        <main className="p-4">
           {children}
         </main>
       </div>

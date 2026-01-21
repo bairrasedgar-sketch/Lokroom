@@ -1172,7 +1172,15 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
                 </p>
               </div>
             </div>
-            <span className="text-xs text-gray-400">{extT.contactSupport || "Contacter le support"}</span>
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = "/messages?support=true&autoMessage=changement%20d%27adresse%20mail";
+              }}
+              className="text-xs font-medium text-gray-700 hover:text-gray-900 hover:underline"
+            >
+              {extT.contactSupport || "Contacter le support"}
+            </button>
           </div>
         </div>
 

@@ -17,24 +17,51 @@ export async function GET() {
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     // Stats rapides
-    const [pendingListings, openDisputes, todayBookings] = await Promise.all([
+    const [pendingListings, openDisputes, todayBookings, pendingSupport] = await Promise.all([
       prisma.listingModeration.count({ where: { status: "PENDING_REVIEW" } }),
       prisma.dispute.count({
         where: { status: { in: ["OPEN", "UNDER_REVIEW", "AWAITING_HOST", "AWAITING_GUEST"] } },
       }),
       prisma.booking.count({ where: { createdAt: { gte: startOfToday } } }),
+      prisma.supportConversation.count({ where: { status: "WAITING_AGENT" } }),
     ]);
 
     // Alertes prioritaires
     type Alert = {
       id: string;
-      type: "dispute" | "listing" | "user" | "booking";
+      type: "dispute" | "listing" | "user" | "booking" | "support";
       title: string;
       message: string;
       priority: "high" | "medium" | "low";
       createdAt: string;
+      actionUrl?: string;
     };
     const alerts: Alert[] = [];
+
+    // Demandes de support en attente (priorité haute)
+    const pendingSupportConversations = await prisma.supportConversation.findMany({
+      where: { status: "WAITING_AGENT" },
+      select: {
+        id: true,
+        subject: true,
+        createdAt: true,
+        user: { select: { name: true, email: true } },
+      },
+      orderBy: { createdAt: "asc" },
+      take: 5,
+    });
+
+    pendingSupportConversations.forEach((s) => {
+      alerts.push({
+        id: `support-${s.id}`,
+        type: "support" as const,
+        title: `Demande de support`,
+        message: `${s.user.name || s.user.email} : ${s.subject || "Besoin d'aide"}`,
+        priority: "high" as const,
+        createdAt: s.createdAt.toISOString(),
+        actionUrl: `/admin/support/${s.id}`,
+      });
+    });
 
     // Litiges haute priorité
     const highPriorityDisputes = await prisma.dispute.findMany({
@@ -60,6 +87,7 @@ export async function GET() {
         message: `${d.reason.replace(/_/g, " ")} - ${d.openedBy.name || "Utilisateur"}`,
         priority: "high" as const,
         createdAt: d.createdAt.toISOString(),
+        actionUrl: `/admin/disputes/${d.id}`,
       });
     });
 
@@ -86,6 +114,7 @@ export async function GET() {
         message: `"${l.title}" attend depuis +24h`,
         priority: "medium" as const,
         createdAt: l.createdAt.toISOString(),
+        actionUrl: `/admin/listings/${l.id}`,
       });
     });
 
@@ -101,6 +130,7 @@ export async function GET() {
         pendingListings,
         openDisputes,
         todayBookings,
+        pendingSupport,
       },
     });
   } catch (error) {

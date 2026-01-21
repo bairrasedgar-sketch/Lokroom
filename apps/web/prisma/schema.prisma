@@ -77,6 +77,12 @@ model User {
   hostKit                           HostKit?
   twoFactorSecret                   TwoFactorSecret?
   twoFactorLogs                     TwoFactorLog[]
+  /// Conversations de support (en tant qu'utilisateur)
+  supportConversations              SupportConversation[]
+  /// Conversations de support assignées (en tant qu'admin)
+  assignedSupportConversations      SupportConversation[] @relation("SupportAdmin")
+  /// Messages de support envoyés
+  supportMessagesSent               SupportMessage[]      @relation("SupportMessageSender")
 }
 
 /// Secret TOTP pour l'authentification à deux facteurs
@@ -1585,4 +1591,95 @@ model SecurityDepositPolicy {
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+}
+
+/// Conversation de support entre un utilisateur et l'équipe Lok'Room
+model SupportConversation {
+  id              String                  @id @default(cuid())
+  userId          String
+  user            User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Admin assigné à cette conversation (null si pas encore pris en charge)
+  assignedAdminId String?
+  assignedAdmin   User?                   @relation("SupportAdmin", fields: [assignedAdminId], references: [id])
+
+  /// Statut de la conversation
+  status          SupportConversationStatus @default(WAITING_AGENT)
+
+  /// Sujet/raison de la demande
+  subject         String?
+
+  /// Priorité (1 = urgent, 5 = basse)
+  priority        Int                     @default(3)
+
+  /// Date de prise en charge par un admin
+  assignedAt      DateTime?
+
+  /// Date de clôture
+  closedAt        DateTime?
+
+  /// Date du premier email de notification envoyé aux admins
+  initialEmailSentAt    DateTime?
+
+  /// Date du dernier rappel email envoyé (pour le rappel 15min)
+  reminderEmailSentAt   DateTime?
+
+  /// Email de confirmation d'assignation envoyé
+  assignmentEmailSent   Boolean   @default(false)
+
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  messages        SupportMessage[]
+
+  @@index([userId])
+  @@index([assignedAdminId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+/// Message dans une conversation de support
+model SupportMessage {
+  id              String              @id @default(cuid())
+  conversationId  String
+  conversation    SupportConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  /// Expéditeur (utilisateur ou admin)
+  senderId        String?
+  sender          User?               @relation("SupportMessageSender", fields: [senderId], references: [id])
+
+  /// Contenu du message
+  content         String
+
+  /// Type de message
+  type            SupportMessageType  @default(USER)
+
+  /// Lu par l'utilisateur
+  readByUser      Boolean             @default(false)
+  readByUserAt    DateTime?
+
+  /// Lu par l'admin
+  readByAdmin     Boolean             @default(false)
+  readByAdminAt   DateTime?
+
+  createdAt       DateTime            @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+/// Statut d'une conversation de support
+enum SupportConversationStatus {
+  WITH_AI           /// En cours avec l'IA
+  WAITING_AGENT     /// En attente d'un agent humain
+  WITH_AGENT        /// Pris en charge par un agent
+  RESOLVED          /// Résolu
+  CLOSED            /// Fermé
+}
+
+/// Type de message de support
+enum SupportMessageType {
+  USER              /// Message de l'utilisateur
+  AI                /// Message de l'IA
+  ADMIN             /// Message d'un admin
+  SYSTEM            /// Message système (ex: "Un agent va vous répondre")
 }

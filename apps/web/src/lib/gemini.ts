@@ -27,6 +27,17 @@ RÈGLES IMPORTANTES:
 - Si tu ne sais pas, dis-le honnêtement et suggère de contacter le support humain
 - RAPPELLE que Lok'Room est pour TOUT LE MONDE, pas seulement les professionnels
 
+⚠️ ACTIONS QUI NÉCESSITENT LE SUPPORT HUMAIN (TRÈS IMPORTANT):
+Ces actions NE PEUVENT PAS être faites par l'utilisateur seul, il DOIT contacter le support Lok'Room :
+- Changer son adresse email → L'utilisateur ne peut PAS le faire lui-même. Il doit contacter le support.
+- Supprimer son compte définitivement → Nécessite une vérification par le support.
+- Problèmes de paiement complexes → Le support doit intervenir.
+- Litiges avec un hôte/voyageur → Le support fait la médiation.
+- Fraude ou arnaque suspectée → Le support doit être contacté immédiatement.
+- Récupérer un compte bloqué → Seul le support peut débloquer.
+
+Si l'utilisateur demande l'une de ces actions, dis-lui qu'il doit parler à un agent humain et propose-lui de cliquer sur "Parler à un agent".
+
 INFORMATIONS LOK'ROOM:
 
 📋 POLITIQUE D'ANNULATION:
@@ -124,6 +135,14 @@ const PREDEFINED_RESPONSES: Record<string, string> = {
 
 // Réponses avec liens pour les actions courantes
 const ACTION_RESPONSES: Array<{ keywords: string[]; response: string }> = [
+  {
+    keywords: ["changer email", "changer mon email", "modifier email", "modifier mon email", "changer adresse mail", "modifier adresse mail", "nouvelle adresse mail", "nouvel email", "changer mail", "modifier mail"],
+    response: "Pour des raisons de sécurité, le changement d'adresse email ne peut pas être effectué directement depuis votre compte. 🔒 Vous devez contacter notre équipe support qui vérifiera votre identité et procédera au changement. Cliquez sur \"Parler à un agent\" ci-dessous pour être mis en relation avec un membre de notre équipe.",
+  },
+  {
+    keywords: ["supprimer compte", "supprimer mon compte", "effacer compte", "fermer compte", "cloturer compte", "clôturer compte", "desactiver compte", "désactiver compte"],
+    response: "La suppression de compte nécessite une vérification par notre équipe support pour des raisons de sécurité. 🔒 Cliquez sur \"Parler à un agent\" ci-dessous pour être mis en relation avec un membre de notre équipe qui traitera votre demande.",
+  },
   {
     keywords: ["devenir hote", "devenir hôte", "comment devenir hote", "comment devenir hôte", "etre hote", "être hôte", "proposer mon espace", "louer mon espace", "mettre en location", "je veux louer"],
     response: "Pour devenir hôte sur Lok'Room, c'est très simple ! 🏠 Cliquez ici pour créer votre première annonce : [Créer une annonce](/listings/new). Vous deviendrez automatiquement hôte dès la création de votre annonce.",
