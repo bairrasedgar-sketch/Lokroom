@@ -762,7 +762,7 @@ const cityTypes: Record<string, CityType> = {
   "Alençon": "countryside", "Évreux": "countryside", "Rouen": "countryside",
   "Amiens": "countryside", "Arras": "countryside", "Douai": "countryside",
   "Valenciennes": "countryside", "Lens": "countryside", "Béthune": "countryside",
-  "Calais": "countryside", "Saint-Quentin": "countryside", "Charleville-Mézières": "countryside",
+  "Saint-Quentin": "countryside", "Charleville-Mézières": "countryside",
   "Metz": "countryside", "Nancy": "countryside", "Verdun": "countryside",
   "Bar-le-Duc": "countryside", "Chaumont": "countryside", "Saint-Dizier": "countryside",
   "Vesoul": "countryside", "Lons-le-Saunier": "countryside", "Dole": "countryside",
