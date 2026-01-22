@@ -36,14 +36,14 @@ export async function POST(request: Request) {
     // Créer une conversation de support
     const conversation = await prisma.supportConversation.create({
       data: {
-        userId: existingUser?.id || null,
+        userId: existingUser?.id,
         status: "WAITING_AGENT",
         subject: `Contact maintenance - ${name || email}`,
         messages: {
           create: {
             content: `**Nom:** ${name || "Non renseigné"}\n**Email:** ${email}\n\n${message}`,
             type: "USER",
-            senderId: existingUser?.id || null,
+            senderId: existingUser?.id,
           },
         },
       },
