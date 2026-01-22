@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     // Envoyer un email de notification aux admins
     const admins = await prisma.user.findMany({
       where: {
-        role: { in: ["ADMIN", "SUPPORT"] },
+        role: "ADMIN",
       },
       select: { email: true, name: true },
     });
