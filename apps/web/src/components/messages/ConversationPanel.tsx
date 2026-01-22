@@ -46,6 +46,7 @@ export function ConversationPanel({
   });
   const [showTranslationSettings, setShowTranslationSettings] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Charger les preferences de traduction
   useEffect(() => {
@@ -92,8 +93,8 @@ export function ConversationPanel({
 
   // Auto-scroll
   useEffect(() => {
-    if (bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: "smooth" });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
   }, [messages.length]);
 
@@ -210,7 +211,7 @@ export function ConversationPanel({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 space-y-3 overflow-y-auto p-4">
+      <div ref={messagesContainerRef} className="flex-1 space-y-3 overflow-y-auto p-4">
         {loading && messages.length === 0 ? (
           <p className="text-sm text-gray-400">Chargement des messages...</p>
         ) : messages.length === 0 ? (

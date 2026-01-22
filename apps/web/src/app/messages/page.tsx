@@ -535,9 +535,8 @@ Posez-moi vos questions sur :
 
   // Scroll to bottom on new messages - only scroll within the messages container
   const scrollToBottom = useCallback(() => {
-    if (messagesEndRef.current) {
-      // Scroll only within the parent container, not the whole page
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
   }, []);
 

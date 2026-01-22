@@ -95,6 +95,7 @@ export default function AdminSupportConversationPage() {
   const [assigning, setAssigning] = useState(false);
   const [showQuickResponses, setShowQuickResponses] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isInitialLoad = useRef(true);
 
@@ -137,7 +138,9 @@ export default function AdminSupportConversationPage() {
       isInitialLoad.current = false;
       return;
     }
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   }, [conversation?.messages]);
 
   useEffect(() => {
@@ -247,24 +250,24 @@ export default function AdminSupportConversationPage() {
   return (
     <div>
       {/* Header */}
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
           <Link
             href="/admin/support"
-            className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100"
           >
             <ArrowLeftIcon className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">
+            <h1 className="text-lg font-semibold text-gray-900">
               {conversation.user.name || conversation.user.email}
             </h1>
-            <p className="text-sm text-gray-500">{conversation.user.email}</p>
+            <p className="text-xs text-gray-500">{conversation.user.email}</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className={`rounded-lg px-3 py-1.5 text-xs font-medium ${
+        <div className="flex items-center gap-2">
+          <span className={`rounded-lg px-2.5 py-1 text-xs font-medium ${
             conversation.status === "WAITING_AGENT" ? "bg-amber-100 text-amber-700" :
             conversation.status === "WITH_AGENT" ? "bg-emerald-100 text-emerald-700" :
             conversation.status === "RESOLVED" ? "bg-blue-100 text-blue-700" :
@@ -279,7 +282,7 @@ export default function AdminSupportConversationPage() {
             <button
               onClick={handleAssign}
               disabled={assigning}
-              className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+              className="rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
             >
               {assigning ? "..." : "Prendre en charge"}
             </button>
@@ -288,7 +291,7 @@ export default function AdminSupportConversationPage() {
           {isAssignedToMe && conversation.status === "WITH_AGENT" && (
             <button
               onClick={handleResolve}
-              className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+              className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700"
             >
               <CheckCircleIcon className="h-4 w-4" />
               Résolu
@@ -299,7 +302,7 @@ export default function AdminSupportConversationPage() {
 
       {/* Sujet */}
       {conversation.subject && (
-        <div className="mb-6 rounded-lg bg-gray-100 px-4 py-3">
+        <div className="mb-3 rounded-lg bg-gray-100 px-3 py-2">
           <p className="text-sm text-gray-700">
             <span className="font-medium">Sujet :</span> {conversation.subject}
           </p>
@@ -307,8 +310,8 @@ export default function AdminSupportConversationPage() {
       )}
 
       {/* Messages */}
-      <div className="mb-6 rounded-lg border border-gray-200 bg-white">
-        <div className="h-[500px] overflow-y-auto p-4">
+      <div className="rounded-lg border border-gray-200 bg-white">
+        <div ref={messagesContainerRef} className="h-[calc(100vh-280px)] min-h-[300px] max-h-[500px] overflow-y-auto p-4">
           {/* Date */}
           <div className="mb-4 text-center">
             <span className="text-xs text-gray-400">{formatDate(conversation.createdAt)}</span>
@@ -362,23 +365,23 @@ export default function AdminSupportConversationPage() {
 
         {/* Input */}
         {canSendMessage ? (
-          <div className="border-t border-gray-200 p-4">
+          <div className="border-t border-gray-200 p-3">
             {/* Réponses rapides */}
             {showQuickResponses && (
-              <div className="mb-3">
-                <div className="mb-2 flex items-center justify-between">
+              <div className="mb-2">
+                <div className="mb-1.5 flex items-center justify-between">
                   <span className="text-xs font-medium text-gray-500">Réponses rapides</span>
                   <button onClick={() => setShowQuickResponses(false)} className="text-gray-400 hover:text-gray-600">
                     <XMarkIcon className="h-4 w-4" />
                   </button>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5">
                   {QUICK_RESPONSES.map((r) => (
                     <button
                       key={r.id}
                       onClick={() => handleSend(r.template(adminName))}
                       disabled={sending}
-                      className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200 disabled:opacity-50"
+                      className="rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700 hover:bg-gray-200 disabled:opacity-50"
                     >
                       {r.label}
                     </button>
@@ -390,12 +393,12 @@ export default function AdminSupportConversationPage() {
             <div className="flex items-end gap-2">
               <button
                 onClick={() => setShowQuickResponses(!showQuickResponses)}
-                className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                className={`flex h-9 w-9 items-center justify-center rounded-lg ${
                   showQuickResponses ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
                 title="Réponses rapides"
               >
-                <BoltIcon className="h-5 w-5" />
+                <BoltIcon className="h-4 w-4" />
               </button>
 
               <textarea
@@ -405,38 +408,38 @@ export default function AdminSupportConversationPage() {
                 onKeyDown={handleKeyDown}
                 placeholder="Votre message..."
                 rows={1}
-                className="flex-1 resize-none rounded-lg border border-gray-200 px-4 py-2.5 text-sm focus:border-gray-400 focus:outline-none"
-                style={{ maxHeight: "120px" }}
+                className="flex-1 resize-none rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-gray-400 focus:outline-none"
+                style={{ maxHeight: "80px" }}
               />
 
               <button
                 onClick={() => handleSend()}
                 disabled={!newMessage.trim() || sending}
-                className={`flex h-10 w-10 items-center justify-center rounded-lg ${
+                className={`flex h-9 w-9 items-center justify-center rounded-lg ${
                   newMessage.trim() ? "bg-gray-900 text-white hover:bg-gray-800" : "bg-gray-100 text-gray-400"
                 }`}
               >
                 {sending ? (
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                 ) : (
-                  <PaperAirplaneIcon className="h-5 w-5" />
+                  <PaperAirplaneIcon className="h-4 w-4" />
                 )}
               </button>
             </div>
           </div>
         ) : (
-          <div className="border-t border-gray-200 p-6 text-center">
+          <div className="border-t border-gray-200 p-4 text-center">
             {conversation.status === "WAITING_AGENT" ? (
-              <div className="flex flex-col items-center gap-3">
+              <div className="flex flex-col items-center gap-2">
                 <p className="text-sm text-gray-500">
                   Cette conversation attend d'être prise en charge
                 </p>
                 <button
                   onClick={handleAssign}
                   disabled={assigning}
-                  className="rounded-lg bg-gray-900 px-6 py-3 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+                  className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
                 >
-                  {assigning ? "Assignation..." : "Prendre en charge ce litige"}
+                  {assigning ? "Assignation..." : "Prendre en charge"}
                 </button>
               </div>
             ) : (

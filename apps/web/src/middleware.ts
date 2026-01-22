@@ -39,6 +39,7 @@ const PUBLIC_ROUTES = [
   "/listings",
   "/login",
   "/api",
+  "/maintenance",
 ];
 
 // Langues supportées par Lok'Room
@@ -236,11 +237,58 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // ─────────────────────────────────────────────────────────────
+  // 0. MODE MAINTENANCE - Vérification avant tout
+  // ─────────────────────────────────────────────────────────────
+  const isMaintenancePage = pathname === "/maintenance";
+  const isAdminRoute = ADMIN_ROUTES.some((route) => pathname.startsWith(route));
+  const isApiRoute = pathname.startsWith("/api");
+
+  // Ne pas vérifier la maintenance pour: page maintenance, admin, API
+  if (!isMaintenancePage && !isAdminRoute && !isApiRoute) {
+    try {
+      // Vérifier le mode maintenance via l'API interne
+      const maintenanceCheckUrl = new URL("/api/maintenance/check", req.url);
+      const maintenanceRes = await fetch(maintenanceCheckUrl.toString(), {
+        headers: { "x-middleware-check": "true" },
+      });
+
+      if (maintenanceRes.ok) {
+        const data = await maintenanceRes.json();
+        if (data.maintenanceMode === true) {
+          // Rediriger vers la page de maintenance
+          return NextResponse.redirect(new URL("/maintenance", req.url));
+        }
+      }
+    } catch {
+      // En cas d'erreur, on continue normalement
+    }
+  }
+
+  // Si on est sur /maintenance mais que le mode n'est pas actif, rediriger vers l'accueil
+  if (isMaintenancePage) {
+    try {
+      const maintenanceCheckUrl = new URL("/api/maintenance/check", req.url);
+      const maintenanceRes = await fetch(maintenanceCheckUrl.toString(), {
+        headers: { "x-middleware-check": "true" },
+      });
+
+      if (maintenanceRes.ok) {
+        const data = await maintenanceRes.json();
+        if (data.maintenanceMode !== true) {
+          return NextResponse.redirect(new URL("/", req.url));
+        }
+      }
+    } catch {
+      // En cas d'erreur, rediriger vers l'accueil
+      return NextResponse.redirect(new URL("/", req.url));
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
   // 1. PROTECTION DES ROUTES - Vérification authentification
   // ─────────────────────────────────────────────────────────────
   const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
   const isProtectedRoute = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
-  const isAdminRoute = ADMIN_ROUTES.some((route) => pathname.startsWith(route));
 
   // Routes admin - nécessitent authentification + rôle admin
   if (isAdminRoute) {

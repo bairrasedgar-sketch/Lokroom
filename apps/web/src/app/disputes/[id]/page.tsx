@@ -124,6 +124,7 @@ export default function DisputeDetailPage() {
   const router = useRouter();
   const disputeId = params.id as string;
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const [loading, setLoading] = useState(true);
   const [dispute, setDispute] = useState<DisputeData | null>(null);
@@ -158,7 +159,9 @@ export default function DisputeDetailPage() {
   }, [disputeId]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   }, [dispute?.messages]);
 
   const handleSendMessage = async () => {
@@ -377,7 +380,7 @@ export default function DisputeDetailPage() {
                   Messages ({dispute.messages.length})
                 </h2>
               </div>
-              <div className="max-h-96 overflow-y-auto p-4 space-y-4">
+              <div ref={messagesContainerRef} className="max-h-96 overflow-y-auto p-4 space-y-4">
                 {dispute.messages.length === 0 ? (
                   <p className="text-center text-gray-500 py-8">Aucun message pour le moment</p>
                 ) : (

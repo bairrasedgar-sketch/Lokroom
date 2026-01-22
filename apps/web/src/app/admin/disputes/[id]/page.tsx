@@ -148,6 +148,7 @@ export default function AdminDisputeDetailPage() {
   const router = useRouter();
   const disputeId = params.id as string;
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const timelineContainerRef = useRef<HTMLDivElement>(null);
 
   const [dispute, setDispute] = useState<DisputeData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -179,7 +180,9 @@ export default function AdminDisputeDetailPage() {
   }, [fetchDispute]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (timelineContainerRef.current) {
+      timelineContainerRef.current.scrollTop = timelineContainerRef.current.scrollHeight;
+    }
   }, [dispute?.timeline]);
 
   const handleAction = async (action: string, data?: Record<string, unknown>) => {
@@ -382,7 +385,7 @@ export default function AdminDisputeDetailPage() {
               <span className="text-sm text-gray-500">{dispute.timeline.length} événements</span>
             </div>
 
-            <div className="max-h-[500px] overflow-y-auto p-4 space-y-4">
+            <div ref={timelineContainerRef} className="max-h-[500px] overflow-y-auto p-4 space-y-4">
               {dispute.timeline.map((item) => (
                 <div key={item.id} className="flex gap-3">
                   {/* Avatar / Icon */}

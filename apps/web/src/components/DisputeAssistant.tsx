@@ -70,6 +70,7 @@ export default function DisputeAssistant({
   const [loading, setLoading] = useState(false);
   const [summary, setSummary] = useState<Summary | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Message d'accueil
@@ -98,7 +99,9 @@ Pouvez-vous me décrire en quelques mots ce qui s'est passé ?`,
 
   // Scroll vers le bas
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
   }, [messages]);
 
   // Focus sur l'input quand ouvert
@@ -240,7 +243,7 @@ Pouvez-vous me décrire en quelques mots ce qui s'est passé ?`,
       {!isMinimized && (
         <>
           {/* Messages */}
-          <div className="h-80 overflow-y-auto p-4 space-y-4">
+          <div ref={messagesContainerRef} className="h-80 overflow-y-auto p-4 space-y-4">
             {messages.map((msg) => (
               <div
                 key={msg.id}
