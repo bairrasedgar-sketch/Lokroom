@@ -33,24 +33,26 @@ export async function POST(request: Request) {
       where: { email },
     });
 
-    // Créer une conversation de support
-    const conversation = await prisma.supportConversation.create({
-      data: {
-        userId: existingUser?.id,
-        status: "WAITING_AGENT",
-        subject: `Contact maintenance - ${name || email}`,
-        messages: {
-          create: {
-            content: `**Nom:** ${name || "Non renseigné"}\n**Email:** ${email}\n\n${message}`,
-            type: "USER",
-            senderId: existingUser?.id,
+    let conversationId: string | null = null;
+
+    // Si l'utilisateur existe, créer une conversation de support
+    if (existingUser) {
+      const conversation = await prisma.supportConversation.create({
+        data: {
+          userId: existingUser.id,
+          status: "WAITING_AGENT",
+          subject: `Contact maintenance - ${name || email}`,
+          messages: {
+            create: {
+              content: `**Nom:** ${name || "Non renseigné"}\n**Email:** ${email}\n\n${message}`,
+              type: "USER",
+              senderId: existingUser.id,
+            },
           },
         },
-      },
-      include: {
-        messages: true,
-      },
-    });
+      });
+      conversationId = conversation.id;
+    }
 
     // Envoyer un email de notification aux admins
     const admins = await prisma.user.findMany({
@@ -59,6 +61,10 @@ export async function POST(request: Request) {
       },
       select: { email: true, name: true },
     });
+
+    const adminLink = conversationId
+      ? `${process.env.NEXT_PUBLIC_APP_URL}/admin/support/${conversationId}`
+      : `${process.env.NEXT_PUBLIC_APP_URL}/admin/support`;
 
     // Envoyer l'email à chaque admin
     for (const admin of admins) {
@@ -73,14 +79,19 @@ export async function POST(request: Request) {
             <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <p><strong>Nom:</strong> ${name || "Non renseigné"}</p>
               <p><strong>Email:</strong> ${email}</p>
+              <p><strong>Utilisateur enregistré:</strong> ${existingUser ? "Oui" : "Non"}</p>
               <p><strong>Message:</strong></p>
               <p style="white-space: pre-wrap;">${message}</p>
             </div>
 
-            <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/support/${conversation.id}"
+            <a href="${adminLink}"
                style="display: inline-block; background: #1f2937; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none;">
               Voir dans l'admin
             </a>
+
+            ${!existingUser ? `<p style="color: #6b7280; margin-top: 20px; font-size: 14px;">
+              Note: Cet utilisateur n'a pas de compte. Répondez directement à son email: <a href="mailto:${email}">${email}</a>
+            </p>` : ""}
           </div>
         `,
       });
