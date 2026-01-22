@@ -3,7 +3,7 @@
  * Affichée quand le mode maintenance est activé
  */
 import { prisma } from "@/lib/db";
-import Link from "next/link";
+import { ContactForm } from "./ContactForm";
 
 async function getMaintenanceMessage() {
   try {
@@ -131,27 +131,8 @@ export default async function MaintenancePage() {
             <p className="text-sm text-gray-500 mt-3">Maintenance en cours...</p>
           </div>
 
-          {/* Actions */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-full font-medium hover:bg-black transition-all hover:scale-105"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Réessayer
-            </Link>
-            <a
-              href="mailto:support@lokroom.com"
-              className="inline-flex items-center gap-2 px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-full font-medium hover:border-gray-300 hover:bg-gray-50 transition-all"
-            >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              Nous contacter
-            </a>
-          </div>
+          {/* Formulaire de contact */}
+          <ContactForm />
         </div>
       </main>
 
