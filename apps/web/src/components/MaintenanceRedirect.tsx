@@ -8,16 +8,41 @@ export function MaintenanceRedirect({ isMaintenanceMode }: { isMaintenanceMode: 
   const router = useRouter();
 
   useEffect(() => {
-    if (!isMaintenanceMode) return;
+    // Si on est sur la page maintenance, vérifier périodiquement si la maintenance est terminée
+    if (pathname === "/maintenance") {
+      const checkMaintenance = async () => {
+        try {
+          const res = await fetch("/api/maintenance/check");
+          const data = await res.json();
 
-    // Ne pas rediriger si on est sur une page exclue
-    const isExcluded =
-      pathname === "/maintenance" ||
-      pathname.startsWith("/admin") ||
-      pathname.startsWith("/login");
+          if (!data.maintenanceMode) {
+            // Maintenance terminée, rediriger vers l'accueil
+            router.replace("/");
+          }
+        } catch {
+          // En cas d'erreur, on ne fait rien
+        }
+      };
 
-    if (!isExcluded) {
-      router.replace("/maintenance");
+      // Vérifier toutes les 5 secondes
+      const interval = setInterval(checkMaintenance, 5000);
+
+      // Vérifier immédiatement aussi
+      checkMaintenance();
+
+      return () => clearInterval(interval);
+    }
+
+    // Si maintenance active et pas sur une page exclue, rediriger vers maintenance
+    if (isMaintenanceMode) {
+      const isExcluded =
+        pathname === "/maintenance" ||
+        pathname.startsWith("/admin") ||
+        pathname.startsWith("/login");
+
+      if (!isExcluded) {
+        router.replace("/maintenance");
+      }
     }
   }, [isMaintenanceMode, pathname, router]);
 

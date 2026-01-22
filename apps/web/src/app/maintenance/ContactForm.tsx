@@ -1,18 +1,41 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { EnvelopeIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 
 export function ContactForm() {
+  const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
   const [form, setForm] = useState({
     name: "",
     email: "",
     message: "",
   });
+
+  const handleRetry = async () => {
+    setChecking(true);
+    try {
+      const res = await fetch("/api/maintenance/check");
+      const data = await res.json();
+
+      if (!data.maintenanceMode) {
+        router.replace("/");
+      } else {
+        // Toujours en maintenance, afficher un message
+        setError("Le site est toujours en maintenance. Réessayez dans quelques instants.");
+        setTimeout(() => setError(null), 3000);
+      }
+    } catch {
+      window.location.reload();
+    } finally {
+      setChecking(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,23 +80,40 @@ export function ContactForm() {
 
   if (!showForm) {
     return (
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-        <button
-          onClick={() => window.location.reload()}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-full font-medium hover:bg-black transition-all hover:scale-105"
-        >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          Réessayer
-        </button>
-        <button
-          onClick={() => setShowForm(true)}
-          className="inline-flex items-center gap-2 px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-full font-medium hover:border-gray-300 hover:bg-gray-50 transition-all"
-        >
-          <EnvelopeIcon className="w-5 h-5" />
-          Nous contacter
-        </button>
+      <div className="space-y-4">
+        {error && (
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-sm max-w-md mx-auto">
+            {error}
+          </div>
+        )}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          <button
+            onClick={handleRetry}
+            disabled={checking}
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gray-900 text-white rounded-full font-medium hover:bg-black transition-all hover:scale-105 disabled:opacity-50"
+          >
+            {checking ? (
+              <>
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                Vérification...
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Réessayer
+              </>
+            )}
+          </button>
+          <button
+            onClick={() => setShowForm(true)}
+            className="inline-flex items-center gap-2 px-6 py-3 border-2 border-gray-200 text-gray-700 rounded-full font-medium hover:border-gray-300 hover:bg-gray-50 transition-all"
+          >
+            <EnvelopeIcon className="w-5 h-5" />
+            Nous contacter
+          </button>
+        </div>
       </div>
     );
   }
