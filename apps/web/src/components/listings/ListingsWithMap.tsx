@@ -938,10 +938,49 @@ export default function ListingsWithMap({
 
           {/* Contenu scrollable */}
           <div
-            className="overflow-y-auto overscroll-contain pb-6 px-4"
+            className="overflow-y-auto overscroll-none pb-6 px-4"
             style={{
               height: 'calc(100% - 75px)',
               WebkitOverflowScrolling: 'touch',
+            }}
+            onTouchStart={(e) => {
+              const scrollContainer = e.currentTarget;
+              if (scrollContainer.scrollTop <= 0) {
+                dragStartY.current = e.touches[0].clientY;
+                dragStartHeight.current = sheetHeight;
+              }
+            }}
+            onTouchMove={(e) => {
+              const scrollContainer = e.currentTarget;
+              const touch = e.touches[0];
+              const isAtTop = scrollContainer.scrollTop <= 0;
+              const pullingDown = touch.clientY > dragStartY.current;
+
+              // Si on est en haut et qu'on tire vers le bas, on drag le sheet
+              if (isAtTop && pullingDown) {
+                e.preventDefault();
+                const deltaY = dragStartY.current - touch.clientY;
+                const deltaPercent = (deltaY / window.innerHeight) * 100;
+                const newHeight = Math.max(12, Math.min(88, dragStartHeight.current + deltaPercent));
+                setSheetHeight(newHeight);
+                setIsDragging(true);
+              }
+            }}
+            onTouchEnd={() => {
+              if (isDragging) {
+                setIsDragging(false);
+                // Snap to nearest position
+                if (sheetHeight < 28) {
+                  setSheetHeight(12);
+                  setMobileSheetPosition('collapsed');
+                } else if (sheetHeight < 66) {
+                  setSheetHeight(45);
+                  setMobileSheetPosition('partial');
+                } else {
+                  setSheetHeight(88);
+                  setMobileSheetPosition('expanded');
+                }
+              }
             }}
           >
             {/* Liste des annonces */}
