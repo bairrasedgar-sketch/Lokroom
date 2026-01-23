@@ -964,6 +964,55 @@ export default function ListingsWithMap({
               height: 'calc(100% - 75px)',
               WebkitOverflowScrolling: 'touch',
             }}
+            onTouchStart={(e) => {
+              const scrollContainer = e.currentTarget;
+              dragStartY.current = e.touches[0].clientY;
+              dragStartHeight.current = sheetHeight;
+              lastTouchY.current = e.touches[0].clientY;
+            }}
+            onTouchMove={(e) => {
+              const scrollContainer = e.currentTarget;
+              const touch = e.touches[0];
+              const isAtTop = scrollContainer.scrollTop <= 0;
+              const pullingDown = touch.clientY > lastTouchY.current;
+
+              // Si on est en haut de la liste ET qu'on tire vers le bas, réduire le sheet progressivement
+              if (isAtTop && pullingDown) {
+                e.preventDefault();
+                const deltaY = touch.clientY - dragStartY.current;
+                const deltaPercent = (deltaY / window.innerHeight) * 100;
+                const newHeight = Math.max(8, dragStartHeight.current - deltaPercent);
+                setSheetHeight(newHeight);
+                setIsDragging(true);
+
+                // Mettre à jour la position pour le footer
+                if (newHeight <= 15) {
+                  updateSheetPosition('collapsed');
+                } else if (newHeight <= 60) {
+                  updateSheetPosition('partial');
+                } else {
+                  updateSheetPosition('expanded');
+                }
+              }
+
+              lastTouchY.current = touch.clientY;
+            }}
+            onTouchEnd={() => {
+              if (isDragging) {
+                setIsDragging(false);
+                // Snap to nearest position
+                if (sheetHeight < 25) {
+                  setSheetHeight(8);
+                  updateSheetPosition('collapsed');
+                } else if (sheetHeight < 70) {
+                  setSheetHeight(50);
+                  updateSheetPosition('partial');
+                } else {
+                  setSheetHeight(100);
+                  updateSheetPosition('expanded');
+                }
+              }
+            }}
           >
             {/* Liste des annonces */}
             {!isLoadingMap && listings.length > 0 && (
