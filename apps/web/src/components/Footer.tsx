@@ -114,25 +114,25 @@ export default function Footer() {
               </ul>
             </div>
           ))}
-        </div>
 
-        {/* Illustration à droite avec fondu - Desktop only (xl+) */}
-        <div className="hidden xl:flex items-start justify-center mt-[-200px]">
-          <div className="relative">
-            <div
-              className="absolute inset-0 pointer-events-none z-10"
-              style={{
-                background: 'radial-gradient(ellipse at center, transparent 50%, rgba(245, 245, 245, 0.6) 75%, rgb(245, 245, 245) 100%)',
-              }}
-            />
-            <Image
-              src="/illustration final.png"
-              alt="Illustration Lok'Room"
-              width={900}
-              height={600}
-              className="object-contain max-h-[350px] w-auto"
-              priority
-            />
+          {/* Illustration à droite avec fondu - Desktop only */}
+          <div className="hidden xl:flex xl:col-span-2 2xl:col-span-3 items-start justify-center" style={{ marginTop: '-2.25rem' }}>
+            <div className="relative">
+              <div
+                className="absolute inset-0 pointer-events-none z-10"
+                style={{
+                  background: 'radial-gradient(ellipse at center, transparent 50%, rgba(245, 245, 245, 0.6) 75%, rgb(245, 245, 245) 100%)',
+                }}
+              />
+              <Image
+                src="/illustration final.png"
+                alt="Illustration Lok'Room"
+                width={900}
+                height={600}
+                className="object-contain max-h-[350px] w-auto"
+                priority
+              />
+            </div>
           </div>
         </div>
       </div>
