@@ -786,7 +786,7 @@ export default function ListingsWithMap({
             height: `${sheetHeight}vh`,
             maxHeight: 'calc(100vh - 124px)',
             minHeight: '80px',
-            transition: isDragging ? 'none' : 'height 0.35s cubic-bezier(0.32, 0.72, 0, 1)',
+            transition: isDragging ? 'none' : 'height 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
             willChange: 'height',
             touchAction: 'none',
           }}
@@ -854,7 +854,7 @@ export default function ListingsWithMap({
               const SNAP_EXPANDED = 88;
 
               // Seuil de vélocité pour déclencher un snap directionnel
-              const VELOCITY_THRESHOLD = 0.4; // pixels/ms
+              const VELOCITY_THRESHOLD = 0.25; // pixels/ms - plus bas = plus sensible
 
               let targetHeight: number;
               let targetPosition: 'collapsed' | 'partial' | 'expanded';
@@ -943,10 +943,20 @@ export default function ListingsWithMap({
               height: 'calc(100% - 75px)',
               WebkitOverflowScrolling: 'touch',
             }}
+            onScroll={(e) => {
+              const scrollContainer = e.currentTarget;
+              const isAtTop = scrollContainer.scrollTop <= 5;
+
+              // Si on remonte en haut du scroll et qu'on est en expanded, passer en partial
+              if (isAtTop && mobileSheetPosition === 'expanded') {
+                setSheetHeight(45);
+                setMobileSheetPosition('partial');
+              }
+            }}
             onTouchStart={(e) => {
               // Permettre le scroll du contenu seulement si on n'est pas en train de drag le sheet
               const scrollContainer = e.currentTarget;
-              const isAtTop = scrollContainer.scrollTop === 0;
+              const isAtTop = scrollContainer.scrollTop <= 5;
 
               // Si on est en haut du scroll et qu'on tire vers le bas, on drag le sheet
               if (isAtTop) {
@@ -958,7 +968,7 @@ export default function ListingsWithMap({
             }}
             onTouchMove={(e) => {
               const scrollContainer = e.currentTarget;
-              const isAtTop = scrollContainer.scrollTop === 0;
+              const isAtTop = scrollContainer.scrollTop <= 5;
               const touch = e.touches[0];
               const movingDown = touch.clientY > dragStartY.current;
 
@@ -1006,7 +1016,7 @@ export default function ListingsWithMap({
                 const SNAP_COLLAPSED = 12;
                 const SNAP_PARTIAL = 45;
                 const SNAP_EXPANDED = 88;
-                const VELOCITY_THRESHOLD = 0.4;
+                const VELOCITY_THRESHOLD = 0.25;
 
                 let targetHeight: number;
                 let targetPosition: 'collapsed' | 'partial' | 'expanded';
