@@ -1414,7 +1414,7 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
       </section>
 
       {/* CTA SECTION */}
-      <section className="bg-gray-50 py-4 sm:py-6 lg:py-8">
+      <section className="bg-[#f5f5f5] py-4 sm:py-6 lg:py-8">
         <div className="mx-auto max-w-[1800px] 3xl:max-w-[2200px] px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
           <div className="rounded-2xl bg-gray-900 px-6 py-8 sm:px-8 sm:py-10 md:px-12 md:py-12 text-center">
             <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold text-white">
