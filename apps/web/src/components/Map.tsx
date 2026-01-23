@@ -377,6 +377,10 @@ export default function Map({
       maxZoom: 18,
       restriction: { latLngBounds: WORLD_BOUNDS, strictBounds: true },
       styles: MAP_STYLES,
+      // Optimisations pour un zoom/pan plus fluide sur mobile
+      isFractionalZoomEnabled: true, // Zoom fractionnaire pour plus de fluidite
+      draggableCursor: 'grab',
+      draggingCursor: 'grabbing',
     };
 
     const map = new g.maps.Map(containerRef.current, mapOptions);

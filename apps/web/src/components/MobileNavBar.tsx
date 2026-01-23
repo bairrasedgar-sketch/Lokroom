@@ -3,16 +3,22 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useMobileSheetSafe } from "@/contexts/MobileSheetContext";
 
 export default function MobileNavBar() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const mobileSheet = useMobileSheetSafe();
 
   // Ne pas afficher sur certaines pages
   const hiddenPaths = ["/login", "/onboarding", "/admin", "/maintenance"];
   if (hiddenPaths.some(path => pathname.startsWith(path))) {
     return null;
   }
+
+  // Determiner si on doit cacher le footer (sur /listings quand le sheet est collapsed)
+  const isOnListingsPage = pathname === "/listings" || pathname.startsWith("/listings?");
+  const shouldHideFooter = isOnListingsPage && mobileSheet?.isSheetActive && mobileSheet?.sheetPosition === 'collapsed';
 
   const navItems = [
     {
@@ -63,7 +69,11 @@ export default function MobileNavBar() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 md:hidden safe-area-bottom">
+    <nav
+      className={`fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 md:hidden safe-area-bottom transition-all duration-300 ease-out ${
+        shouldHideFooter ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'
+      }`}
+    >
       <div className="flex items-center justify-around py-2 pb-safe">
         {navItems.map((item) => {
           const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));

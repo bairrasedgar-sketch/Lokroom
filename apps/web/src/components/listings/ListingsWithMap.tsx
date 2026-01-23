@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Map, { type MapMarker } from "@/components/Map";
 import FavoriteButton from "@/components/FavoriteButton";
+import { useMobileSheet } from "@/contexts/MobileSheetContext";
 
 // Helper pour obtenir le label de chaque type de listing
 const LISTING_TYPE_LABELS: Record<string, string> = {
@@ -332,6 +333,9 @@ export default function ListingsWithMap({
   currentPage = 1,
   totalPages = 1,
 }: ListingsWithMapProps) {
+  // Contexte pour partager l'etat du sheet avec MobileNavBar
+  const { setSheetPosition, setIsSheetActive } = useMobileSheet();
+
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [isLoadingMap, setIsLoadingMap] = useState(false);
   const [listings, setListings] = useState<ListingCardData[]>(initialListings);
@@ -340,7 +344,7 @@ export default function ListingsWithMap({
   const [totalCount, setTotalCount] = useState(initialListings.length);
   const [isMapSearchEnabled, setIsMapSearchEnabled] = useState(true);
   const [skipFitBounds, setSkipFitBounds] = useState(false);
-  const [mobileSheetPosition, setMobileSheetPosition] = useState<'collapsed' | 'partial' | 'expanded'>('partial');
+  const [mobileSheetPosition, setMobileSheetPositionLocal] = useState<'collapsed' | 'partial' | 'expanded'>('partial');
   const [isDragging, setIsDragging] = useState(false);
   const [sheetHeight, setSheetHeight] = useState(45); // pourcentage de la hauteur
 
@@ -358,6 +362,21 @@ export default function ListingsWithMap({
 
   // Tracker si on a fait un fetch manuel (pour éviter de re-fitBounds)
   const hasFetchedFromMapRef = useRef(false);
+
+  // Activer le sheet au montage et le desactiver au demontage
+  useEffect(() => {
+    setIsSheetActive(true);
+    return () => {
+      setIsSheetActive(false);
+      setSheetPosition('partial');
+    };
+  }, [setIsSheetActive, setSheetPosition]);
+
+  // Synchroniser la position locale avec le contexte global
+  const updateSheetPosition = useCallback((position: 'collapsed' | 'partial' | 'expanded') => {
+    setMobileSheetPositionLocal(position);
+    setSheetPosition(position);
+  }, [setSheetPosition]);
 
   // Gérer le comportement sticky de la map (s'arrête au niveau de la pagination)
   useEffect(() => {
@@ -901,7 +920,7 @@ export default function ListingsWithMap({
               }
 
               setSheetHeight(targetHeight);
-              setMobileSheetPosition(targetPosition);
+              updateSheetPosition(targetPosition);
               velocityY.current = 0;
             }}
           >
@@ -974,13 +993,13 @@ export default function ListingsWithMap({
                 // Snap to nearest position
                 if (sheetHeight < 30) {
                   setSheetHeight(8);
-                  setMobileSheetPosition('collapsed');
+                  updateSheetPosition('collapsed');
                 } else if (sheetHeight < 75) {
                   setSheetHeight(50);
-                  setMobileSheetPosition('partial');
+                  updateSheetPosition('partial');
                 } else {
                   setSheetHeight(100);
-                  setMobileSheetPosition('expanded');
+                  updateSheetPosition('expanded');
                 }
               }
             }}
@@ -1052,13 +1071,13 @@ export default function ListingsWithMap({
             onClick={() => {
               if (mobileSheetPosition === 'expanded') {
                 setSheetHeight(45);
-                setMobileSheetPosition('partial');
+                updateSheetPosition('partial');
               } else if (mobileSheetPosition === 'partial') {
                 setSheetHeight(12);
-                setMobileSheetPosition('collapsed');
+                updateSheetPosition('collapsed');
               } else {
                 setSheetHeight(45);
-                setMobileSheetPosition('partial');
+                updateSheetPosition('partial');
               }
             }}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-lg backdrop-blur-sm"
