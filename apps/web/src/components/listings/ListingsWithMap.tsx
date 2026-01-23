@@ -959,63 +959,10 @@ export default function ListingsWithMap({
 
           {/* Contenu scrollable */}
           <div
-            className="overflow-y-auto overscroll-none pb-6 px-4"
+            className="overflow-y-auto overscroll-contain pb-6 px-4"
             style={{
               height: 'calc(100% - 75px)',
               WebkitOverflowScrolling: 'touch',
-            }}
-            onScroll={(e) => {
-              const scrollContainer = e.currentTarget;
-              // Si on scroll vers le bas (scrollTop augmente) et qu'on n'est pas expanded, expand progressivement
-              if (scrollContainer.scrollTop > 5 && sheetHeight < 100 && !isDragging) {
-                // Expansion progressive basée sur le scroll
-                const progress = Math.min(scrollContainer.scrollTop / 50, 1);
-                const targetHeight = sheetHeight + (100 - sheetHeight) * progress;
-                setSheetHeight(Math.min(100, targetHeight));
-                if (targetHeight >= 95) {
-                  updateSheetPosition('expanded');
-                }
-              }
-            }}
-            onTouchStart={(e) => {
-              const scrollContainer = e.currentTarget;
-              dragStartY.current = e.touches[0].clientY;
-              dragStartHeight.current = sheetHeight;
-              lastTouchY.current = e.touches[0].clientY;
-            }}
-            onTouchMove={(e) => {
-              const scrollContainer = e.currentTarget;
-              const touch = e.touches[0];
-              const isAtTop = scrollContainer.scrollTop <= 0;
-              const pullingDown = touch.clientY > dragStartY.current;
-
-              // Seulement si on est TOUT EN HAUT de la liste ET qu'on tire vers le bas
-              // alors on commence à collapse le sheet
-              if (isAtTop && pullingDown && sheetHeight > 8) {
-                e.preventDefault();
-                const deltaY = dragStartY.current - touch.clientY;
-                const deltaPercent = (deltaY / window.innerHeight) * 100;
-                const newHeight = Math.max(8, Math.min(100, dragStartHeight.current + deltaPercent));
-                setSheetHeight(newHeight);
-                setIsDragging(true);
-              }
-              // Sinon, laisser le scroll natif fonctionner normalement
-            }}
-            onTouchEnd={() => {
-              if (isDragging) {
-                setIsDragging(false);
-                // Snap to nearest position
-                if (sheetHeight < 30) {
-                  setSheetHeight(8);
-                  updateSheetPosition('collapsed');
-                } else if (sheetHeight < 75) {
-                  setSheetHeight(50);
-                  updateSheetPosition('partial');
-                } else {
-                  setSheetHeight(100);
-                  updateSheetPosition('expanded');
-                }
-              }
             }}
           >
             {/* Liste des annonces */}
