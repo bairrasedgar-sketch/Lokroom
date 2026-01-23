@@ -764,7 +764,9 @@ export default function ListingsWithMap({
           className="fixed inset-0 z-0"
           style={{
             top: '64px',
-            bottom: '60px',
+            bottom: '0px',
+            opacity: sheetHeight >= 95 ? 0 : 1,
+            transition: isDragging ? 'none' : 'opacity 0.3s ease',
           }}
         >
           <Map
@@ -782,11 +784,11 @@ export default function ListingsWithMap({
           ref={sheetRef}
           className="fixed left-0 right-0 z-30 bg-white rounded-t-[20px] shadow-[0_-4px_25px_-5px_rgba(0,0,0,0.15)]"
           style={{
-            bottom: '60px',
+            bottom: sheetHeight <= 15 ? '0px' : '0px',
             height: `${sheetHeight}vh`,
-            maxHeight: 'calc(100vh - 124px)',
-            minHeight: '80px',
-            transition: isDragging ? 'none' : 'height 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+            maxHeight: 'calc(100vh - 64px)',
+            minHeight: '60px',
+            transition: isDragging ? 'none' : 'height 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
             willChange: 'height',
             touchAction: 'none',
           }}
@@ -831,27 +833,27 @@ export default function ListingsWithMap({
               const rawHeight = dragStartHeight.current + deltaPercent;
               let newHeight: number;
 
-              if (rawHeight > 88) {
+              if (rawHeight > 100) {
                 // Résistance élastique en haut
-                const overflow = rawHeight - 88;
-                newHeight = 88 + overflow * 0.15;
-              } else if (rawHeight < 12) {
+                const overflow = rawHeight - 100;
+                newHeight = 100 + overflow * 0.1;
+              } else if (rawHeight < 8) {
                 // Résistance élastique en bas
-                const overflow = 12 - rawHeight;
-                newHeight = 12 - overflow * 0.15;
+                const overflow = 8 - rawHeight;
+                newHeight = 8 - overflow * 0.1;
               } else {
                 newHeight = rawHeight;
               }
 
-              setSheetHeight(Math.min(95, Math.max(5, newHeight)));
+              setSheetHeight(Math.min(105, Math.max(5, newHeight)));
             }}
             onTouchEnd={() => {
               setIsDragging(false);
 
-              // Points de snap: collapsed (12%), partial (45%), expanded (88%)
-              const SNAP_COLLAPSED = 12;
-              const SNAP_PARTIAL = 45;
-              const SNAP_EXPANDED = 88;
+              // Points de snap: collapsed (8%), partial (50%), expanded (100%)
+              const SNAP_COLLAPSED = 8;
+              const SNAP_PARTIAL = 50;
+              const SNAP_EXPANDED = 100;
 
               // Seuil de vélocité pour déclencher un snap directionnel
               const VELOCITY_THRESHOLD = 0.25; // pixels/ms - plus bas = plus sensible
@@ -961,7 +963,7 @@ export default function ListingsWithMap({
                 e.preventDefault();
                 const deltaY = dragStartY.current - touch.clientY;
                 const deltaPercent = (deltaY / window.innerHeight) * 100;
-                const newHeight = Math.max(12, Math.min(88, dragStartHeight.current + deltaPercent));
+                const newHeight = Math.max(8, Math.min(100, dragStartHeight.current + deltaPercent));
                 setSheetHeight(newHeight);
                 setIsDragging(true);
               }
@@ -970,14 +972,14 @@ export default function ListingsWithMap({
               if (isDragging) {
                 setIsDragging(false);
                 // Snap to nearest position
-                if (sheetHeight < 28) {
-                  setSheetHeight(12);
+                if (sheetHeight < 30) {
+                  setSheetHeight(8);
                   setMobileSheetPosition('collapsed');
-                } else if (sheetHeight < 66) {
-                  setSheetHeight(45);
+                } else if (sheetHeight < 75) {
+                  setSheetHeight(50);
                   setMobileSheetPosition('partial');
                 } else {
-                  setSheetHeight(88);
+                  setSheetHeight(100);
                   setMobileSheetPosition('expanded');
                 }
               }
