@@ -965,7 +965,6 @@ export default function ListingsWithMap({
               WebkitOverflowScrolling: 'touch',
             }}
             onTouchStart={(e) => {
-              const scrollContainer = e.currentTarget;
               dragStartY.current = e.touches[0].clientY;
               dragStartHeight.current = sheetHeight;
               lastTouchY.current = e.touches[0].clientY;
@@ -973,14 +972,14 @@ export default function ListingsWithMap({
             onTouchMove={(e) => {
               const scrollContainer = e.currentTarget;
               const touch = e.touches[0];
-              const isAtTop = scrollContainer.scrollTop <= 0;
-              const pullingDown = touch.clientY > lastTouchY.current;
+              const isAtTop = scrollContainer.scrollTop <= 5;
+              const deltaFromStart = touch.clientY - dragStartY.current;
 
-              // Si on est en haut de la liste ET qu'on tire vers le bas, réduire le sheet progressivement
-              if (isAtTop && pullingDown) {
+              // Si on est en haut de la liste ET qu'on tire vers le bas (deltaFromStart > 0)
+              if (isAtTop && deltaFromStart > 10) {
                 e.preventDefault();
-                const deltaY = touch.clientY - dragStartY.current;
-                const deltaPercent = (deltaY / window.innerHeight) * 100;
+                // Réduire le sheet proportionnellement au mouvement du doigt
+                const deltaPercent = (deltaFromStart / window.innerHeight) * 150; // Plus sensible
                 const newHeight = Math.max(8, dragStartHeight.current - deltaPercent);
                 setSheetHeight(newHeight);
                 setIsDragging(true);
@@ -994,8 +993,6 @@ export default function ListingsWithMap({
                   updateSheetPosition('expanded');
                 }
               }
-
-              lastTouchY.current = touch.clientY;
             }}
             onTouchEnd={() => {
               if (isDragging) {
