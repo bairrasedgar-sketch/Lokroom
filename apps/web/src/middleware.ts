@@ -40,6 +40,7 @@ const PUBLIC_ROUTES = [
   "/login",
   "/api",
   "/maintenance",
+  "/onboarding",
 ];
 
 // Langues supportées par Lok'Room
@@ -235,6 +236,28 @@ function generateCSP(isDev: boolean): string {
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  // ─────────────────────────────────────────────────────────────
+  // 0. ONBOARDING - Forcer la complétion du profil
+  // ─────────────────────────────────────────────────────────────
+  const isOnboardingExcluded =
+    pathname === "/onboarding" ||
+    pathname.startsWith("/api") ||
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/admin");
+
+  if (!isOnboardingExcluded) {
+    const token = await getToken({
+      req,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+
+    // Si connecté mais onboarding non complété, rediriger vers /onboarding
+    if (token && token.onboardingCompleted === false) {
+      return NextResponse.redirect(new URL("/onboarding", req.url));
+    }
+  }
 
   // ─────────────────────────────────────────────────────────────
   // 1. PROTECTION DES ROUTES - Vérification authentification

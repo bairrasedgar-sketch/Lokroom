@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import useTranslation from "@/hooks/useTranslation";
 import PasswordInput, { validatePassword } from "@/components/PasswordInput";
 
@@ -36,6 +37,7 @@ export default function OnboardingForm({ email, initialData, returnFromStripe }:
   const { dict } = useTranslation();
   const t = dict.onboarding;
   const router = useRouter();
+  const { update: updateSession } = useSession();
 
   // Déterminer l'étape initiale
   const getInitialStep = (): Step => {
@@ -355,6 +357,9 @@ export default function OnboardingForm({ email, initialData, returnFromStripe }:
         setError(t.errorSave);
         return;
       }
+
+      // Rafraîchir la session pour mettre à jour onboardingCompleted dans le token
+      await updateSession();
 
       router.push("/");
     } catch {

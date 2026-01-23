@@ -288,16 +288,31 @@ export const authOptions: NextAuthOptions = {
         token.role = (user as { role?: string }).role as typeof token.role;
       }
 
-      // Rafraîchir le role depuis la DB à chaque refresh (pour mise à jour en temps réel)
-      if (trigger === "update" || !token.role) {
+      // Rafraîchir le role et onboardingCompleted depuis la DB
+      if (trigger === "update" || !token.role || token.onboardingCompleted === undefined) {
         const email = token.email as string | undefined;
         if (email) {
           const dbUser = await prisma.user.findUnique({
             where: { email },
-            select: { role: true },
+            select: {
+              role: true,
+              passwordHash: true,
+              profile: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                },
+              },
+            },
           });
           if (dbUser) {
             token.role = dbUser.role;
+            // Onboarding complété si l'utilisateur a un mot de passe ET un profil avec nom/prénom
+            token.onboardingCompleted = !!(
+              dbUser.passwordHash &&
+              dbUser.profile?.firstName &&
+              dbUser.profile?.lastName
+            );
           }
         }
       }
