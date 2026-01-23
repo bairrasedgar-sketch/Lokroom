@@ -811,7 +811,7 @@ export default function ListingsWithMap({
         >
           {/* Handle de drag - Zone tactile agrandie */}
           <div
-            className="relative flex flex-col items-center pt-2 pb-3 cursor-grab active:cursor-grabbing select-none"
+            className="sticky top-0 z-10 bg-white rounded-t-[20px] flex flex-col items-center pt-2 pb-3 cursor-grab active:cursor-grabbing select-none"
             style={{ touchAction: 'none' }}
             onTouchStart={(e) => {
               const touch = e.touches[0];
@@ -956,9 +956,9 @@ export default function ListingsWithMap({
 
           {/* Contenu scrollable */}
           <div
-            className="overflow-y-auto overscroll-contain pt-2 pb-6 px-4"
+            className="overflow-y-auto overscroll-contain pb-6 px-4"
             style={{
-              height: 'calc(100% - 80px)',
+              height: 'calc(100% - 85px)',
               WebkitOverflowScrolling: 'touch',
             }}
             onTouchStart={(e) => {
