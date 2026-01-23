@@ -349,8 +349,12 @@ export default function ListingsWithMap({
   const lastFetchedBounds = useRef<{ north: number; south: number; east: number; west: number } | null>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
   const dragStartY = useRef(0);
   const dragStartHeight = useRef(0);
+  const lastTouchY = useRef(0);
+  const lastTouchTime = useRef(0);
+  const velocityY = useRef(0);
 
   // Tracker si on a fait un fetch manuel (pour éviter de re-fitBounds)
   const hasFetchedFromMapRef = useRef(false);
@@ -760,7 +764,7 @@ export default function ListingsWithMap({
           className="fixed inset-0 z-0"
           style={{
             top: '64px',
-            bottom: `calc(${sheetHeight}vh + 60px)`,
+            bottom: '60px',
           }}
         >
           <Map
@@ -773,61 +777,282 @@ export default function ListingsWithMap({
           />
         </div>
 
-        {/* Bottom Sheet draggable */}
+        {/* Bottom Sheet draggable - Style Airbnb */}
         <div
-          className="fixed left-0 right-0 z-30 bg-white rounded-t-3xl shadow-2xl"
+          ref={sheetRef}
+          className="fixed left-0 right-0 z-30 bg-white rounded-t-[20px] shadow-[0_-4px_25px_-5px_rgba(0,0,0,0.15)]"
           style={{
             bottom: '60px',
             height: `${sheetHeight}vh`,
             maxHeight: 'calc(100vh - 124px)',
-            transition: isDragging ? 'none' : 'height 0.3s ease-out'
+            minHeight: '80px',
+            transition: isDragging ? 'none' : 'height 0.35s cubic-bezier(0.32, 0.72, 0, 1)',
+            willChange: 'height',
+            touchAction: 'none',
           }}
         >
-          {/* Handle de drag */}
+          {/* Handle de drag - Zone tactile agrandie */}
           <div
-            className="flex flex-col items-center pt-3 pb-2 cursor-grab active:cursor-grabbing"
+            className="relative flex flex-col items-center pt-2 pb-3 cursor-grab active:cursor-grabbing select-none"
+            style={{ touchAction: 'none' }}
             onTouchStart={(e) => {
+              const touch = e.touches[0];
               setIsDragging(true);
-              dragStartY.current = e.touches[0].clientY;
+              dragStartY.current = touch.clientY;
               dragStartHeight.current = sheetHeight;
+              lastTouchY.current = touch.clientY;
+              lastTouchTime.current = Date.now();
+              velocityY.current = 0;
             }}
             onTouchMove={(e) => {
               if (!isDragging) return;
-              const deltaY = dragStartY.current - e.touches[0].clientY;
+              e.preventDefault();
+
+              const touch = e.touches[0];
+              const currentY = touch.clientY;
+              const currentTime = Date.now();
+
+              // Calculer la vélocité (pixels par milliseconde)
+              const timeDelta = currentTime - lastTouchTime.current;
+              if (timeDelta > 0) {
+                const instantVelocity = (lastTouchY.current - currentY) / timeDelta;
+                // Lissage de la vélocité avec moyenne pondérée
+                velocityY.current = velocityY.current * 0.7 + instantVelocity * 0.3;
+              }
+
+              lastTouchY.current = currentY;
+              lastTouchTime.current = currentTime;
+
+              // Calculer la nouvelle hauteur
+              const deltaY = dragStartY.current - currentY;
               const deltaPercent = (deltaY / window.innerHeight) * 100;
-              const newHeight = Math.min(85, Math.max(10, dragStartHeight.current + deltaPercent));
-              setSheetHeight(newHeight);
+
+              // Limites avec résistance élastique aux bords
+              const rawHeight = dragStartHeight.current + deltaPercent;
+              let newHeight: number;
+
+              if (rawHeight > 88) {
+                // Résistance élastique en haut
+                const overflow = rawHeight - 88;
+                newHeight = 88 + overflow * 0.15;
+              } else if (rawHeight < 12) {
+                // Résistance élastique en bas
+                const overflow = 12 - rawHeight;
+                newHeight = 12 - overflow * 0.15;
+              } else {
+                newHeight = rawHeight;
+              }
+
+              setSheetHeight(Math.min(95, Math.max(5, newHeight)));
             }}
             onTouchEnd={() => {
               setIsDragging(false);
-              // Snap to positions
-              if (sheetHeight < 20) {
-                setSheetHeight(10);
-                setMobileSheetPosition('collapsed');
-              } else if (sheetHeight < 60) {
-                setSheetHeight(45);
-                setMobileSheetPosition('partial');
+
+              // Points de snap: collapsed (12%), partial (45%), expanded (88%)
+              const SNAP_COLLAPSED = 12;
+              const SNAP_PARTIAL = 45;
+              const SNAP_EXPANDED = 88;
+
+              // Seuil de vélocité pour déclencher un snap directionnel
+              const VELOCITY_THRESHOLD = 0.4; // pixels/ms
+
+              let targetHeight: number;
+              let targetPosition: 'collapsed' | 'partial' | 'expanded';
+
+              // Si la vélocité est suffisante, snap dans la direction du mouvement
+              if (Math.abs(velocityY.current) > VELOCITY_THRESHOLD) {
+                if (velocityY.current > 0) {
+                  // Mouvement vers le haut (agrandir)
+                  if (sheetHeight < SNAP_PARTIAL) {
+                    targetHeight = SNAP_PARTIAL;
+                    targetPosition = 'partial';
+                  } else {
+                    targetHeight = SNAP_EXPANDED;
+                    targetPosition = 'expanded';
+                  }
+                } else {
+                  // Mouvement vers le bas (réduire)
+                  if (sheetHeight > SNAP_PARTIAL) {
+                    targetHeight = SNAP_PARTIAL;
+                    targetPosition = 'partial';
+                  } else {
+                    targetHeight = SNAP_COLLAPSED;
+                    targetPosition = 'collapsed';
+                  }
+                }
               } else {
-                setSheetHeight(85);
-                setMobileSheetPosition('expanded');
+                // Snap au point le plus proche basé sur la position
+                const distToCollapsed = Math.abs(sheetHeight - SNAP_COLLAPSED);
+                const distToPartial = Math.abs(sheetHeight - SNAP_PARTIAL);
+                const distToExpanded = Math.abs(sheetHeight - SNAP_EXPANDED);
+
+                if (distToCollapsed <= distToPartial && distToCollapsed <= distToExpanded) {
+                  targetHeight = SNAP_COLLAPSED;
+                  targetPosition = 'collapsed';
+                } else if (distToPartial <= distToExpanded) {
+                  targetHeight = SNAP_PARTIAL;
+                  targetPosition = 'partial';
+                } else {
+                  targetHeight = SNAP_EXPANDED;
+                  targetPosition = 'expanded';
+                }
               }
+
+              setSheetHeight(targetHeight);
+              setMobileSheetPosition(targetPosition);
+              velocityY.current = 0;
             }}
           >
-            <div className="w-10 h-1 bg-gray-300 rounded-full" />
-            <p className="mt-2 text-sm font-medium text-gray-900">
-              {listings.length} logement{listings.length !== 1 ? 's' : ''} disponible{listings.length !== 1 ? 's' : ''}
-            </p>
+            {/* Barre de drag visuelle */}
+            <div className="w-9 h-[5px] bg-gray-300 rounded-full" />
+
+            {/* Compteur d'annonces */}
+            <div className="mt-3 flex items-center gap-2">
+              <p className="text-[15px] font-semibold text-gray-900">
+                {listings.length} logement{listings.length !== 1 ? 's' : ''}
+              </p>
+              {isLoadingMap && (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+              )}
+            </div>
+
+            {/* Indicateur de position (points) */}
+            <div className="flex gap-1.5 mt-2">
+              <div
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  mobileSheetPosition === 'collapsed' ? 'w-4 bg-gray-800' : 'w-1.5 bg-gray-300'
+                }`}
+              />
+              <div
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  mobileSheetPosition === 'partial' ? 'w-4 bg-gray-800' : 'w-1.5 bg-gray-300'
+                }`}
+              />
+              <div
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  mobileSheetPosition === 'expanded' ? 'w-4 bg-gray-800' : 'w-1.5 bg-gray-300'
+                }`}
+              />
+            </div>
           </div>
 
           {/* Contenu scrollable */}
           <div
-            className="overflow-y-auto overscroll-contain pb-4 px-4"
+            className="overflow-y-auto overscroll-contain pb-6 px-4"
             style={{
-              height: 'calc(100% - 60px)',
-              WebkitOverflowScrolling: 'touch'
+              height: 'calc(100% - 75px)',
+              WebkitOverflowScrolling: 'touch',
+            }}
+            onTouchStart={(e) => {
+              // Permettre le scroll du contenu seulement si on n'est pas en train de drag le sheet
+              const scrollContainer = e.currentTarget;
+              const isAtTop = scrollContainer.scrollTop === 0;
+
+              // Si on est en haut du scroll et qu'on tire vers le bas, on drag le sheet
+              if (isAtTop) {
+                dragStartY.current = e.touches[0].clientY;
+                dragStartHeight.current = sheetHeight;
+                lastTouchY.current = e.touches[0].clientY;
+                lastTouchTime.current = Date.now();
+              }
+            }}
+            onTouchMove={(e) => {
+              const scrollContainer = e.currentTarget;
+              const isAtTop = scrollContainer.scrollTop === 0;
+              const touch = e.touches[0];
+              const movingDown = touch.clientY > dragStartY.current;
+
+              // Si on est en haut et qu'on tire vers le bas, drag le sheet
+              if (isAtTop && movingDown && !isDragging) {
+                setIsDragging(true);
+              }
+
+              if (isDragging) {
+                e.preventDefault();
+                const currentY = touch.clientY;
+                const currentTime = Date.now();
+
+                const timeDelta = currentTime - lastTouchTime.current;
+                if (timeDelta > 0) {
+                  const instantVelocity = (lastTouchY.current - currentY) / timeDelta;
+                  velocityY.current = velocityY.current * 0.7 + instantVelocity * 0.3;
+                }
+
+                lastTouchY.current = currentY;
+                lastTouchTime.current = currentTime;
+
+                const deltaY = dragStartY.current - currentY;
+                const deltaPercent = (deltaY / window.innerHeight) * 100;
+                const rawHeight = dragStartHeight.current + deltaPercent;
+
+                let newHeight: number;
+                if (rawHeight > 88) {
+                  const overflow = rawHeight - 88;
+                  newHeight = 88 + overflow * 0.15;
+                } else if (rawHeight < 12) {
+                  const overflow = 12 - rawHeight;
+                  newHeight = 12 - overflow * 0.15;
+                } else {
+                  newHeight = rawHeight;
+                }
+
+                setSheetHeight(Math.min(95, Math.max(5, newHeight)));
+              }
+            }}
+            onTouchEnd={() => {
+              if (isDragging) {
+                setIsDragging(false);
+
+                const SNAP_COLLAPSED = 12;
+                const SNAP_PARTIAL = 45;
+                const SNAP_EXPANDED = 88;
+                const VELOCITY_THRESHOLD = 0.4;
+
+                let targetHeight: number;
+                let targetPosition: 'collapsed' | 'partial' | 'expanded';
+
+                if (Math.abs(velocityY.current) > VELOCITY_THRESHOLD) {
+                  if (velocityY.current > 0) {
+                    if (sheetHeight < SNAP_PARTIAL) {
+                      targetHeight = SNAP_PARTIAL;
+                      targetPosition = 'partial';
+                    } else {
+                      targetHeight = SNAP_EXPANDED;
+                      targetPosition = 'expanded';
+                    }
+                  } else {
+                    if (sheetHeight > SNAP_PARTIAL) {
+                      targetHeight = SNAP_PARTIAL;
+                      targetPosition = 'partial';
+                    } else {
+                      targetHeight = SNAP_COLLAPSED;
+                      targetPosition = 'collapsed';
+                    }
+                  }
+                } else {
+                  const distToCollapsed = Math.abs(sheetHeight - SNAP_COLLAPSED);
+                  const distToPartial = Math.abs(sheetHeight - SNAP_PARTIAL);
+                  const distToExpanded = Math.abs(sheetHeight - SNAP_EXPANDED);
+
+                  if (distToCollapsed <= distToPartial && distToCollapsed <= distToExpanded) {
+                    targetHeight = SNAP_COLLAPSED;
+                    targetPosition = 'collapsed';
+                  } else if (distToPartial <= distToExpanded) {
+                    targetHeight = SNAP_PARTIAL;
+                    targetPosition = 'partial';
+                  } else {
+                    targetHeight = SNAP_EXPANDED;
+                    targetPosition = 'expanded';
+                  }
+                }
+
+                setSheetHeight(targetHeight);
+                setMobileSheetPosition(targetPosition);
+                velocityY.current = 0;
+              }
             }}
           >
-            {/* Liste des annonces - 1 par ligne sur mobile */}
+            {/* Liste des annonces */}
             {!isLoadingMap && listings.length > 0 && (
               <div className="space-y-4">
                 {listings.filter((listing, index, self) =>
@@ -865,21 +1090,58 @@ export default function ListingsWithMap({
           </div>
         </div>
 
-        {/* Boutons de contrôle sur la carte */}
-        <div className="fixed top-20 left-4 right-4 z-20 flex justify-between pointer-events-none">
-          {/* Toggle recherche sur carte */}
+        {/* Bouton de contrôle sur la carte */}
+        <div className="fixed top-20 left-4 z-20">
           <button
             onClick={() => setIsMapSearchEnabled(!isMapSearchEnabled)}
-            className={`pointer-events-auto flex items-center gap-2 rounded-full px-3 py-2 text-xs font-medium shadow-lg ${
+            className={`flex items-center gap-2 rounded-full px-3 py-2 text-xs font-medium shadow-lg backdrop-blur-sm ${
               isMapSearchEnabled
-                ? "bg-gray-900 text-white"
-                : "bg-white text-gray-700"
+                ? "bg-gray-900/90 text-white"
+                : "bg-white/90 text-gray-700"
             }`}
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
             {isMapSearchEnabled ? "Auto" : "Manuel"}
+          </button>
+        </div>
+
+        {/* Boutons de snap rapide */}
+        <div
+          className="fixed right-4 z-20 flex flex-col gap-2"
+          style={{
+            bottom: `calc(${sheetHeight}vh + 70px)`,
+            transition: isDragging ? 'none' : 'bottom 0.35s cubic-bezier(0.32, 0.72, 0, 1)'
+          }}
+        >
+          <button
+            onClick={() => {
+              if (mobileSheetPosition === 'expanded') {
+                setSheetHeight(45);
+                setMobileSheetPosition('partial');
+              } else if (mobileSheetPosition === 'partial') {
+                setSheetHeight(12);
+                setMobileSheetPosition('collapsed');
+              } else {
+                setSheetHeight(45);
+                setMobileSheetPosition('partial');
+              }
+            }}
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-lg backdrop-blur-sm"
+            aria-label={mobileSheetPosition === 'collapsed' ? 'Voir les annonces' : 'Voir la carte'}
+          >
+            <svg
+              className={`h-5 w-5 text-gray-700 transition-transform duration-300 ${
+                mobileSheetPosition === 'collapsed' ? 'rotate-180' : ''
+              }`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
           </button>
         </div>
       </div>
