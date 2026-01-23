@@ -1330,25 +1330,11 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
             <p className="mt-1 text-sm text-gray-500">Essayez une autre catégorie ou explorez tous nos espaces</p>
           </div>
         ) : (
-          <>
-            {/* Mobile: Scroll horizontal style Airbnb */}
-            <div className="sm:hidden -mx-4 px-4 overflow-x-auto scrollbar-hide">
-              <div className="flex gap-4" style={{ width: 'max-content' }}>
-                {filteredCards.map((card, i) => (
-                  <div key={card.id} className="w-[280px] flex-shrink-0">
-                    <ListingCard card={card} index={i} />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Desktop: Grille classique */}
-            <div className="hidden sm:grid gap-4 sm:gap-4 md:gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6">
-              {filteredCards.map((card, i) => (
-                <ListingCard key={card.id} card={card} index={i} />
-              ))}
-            </div>
-          </>
+          <div className="grid gap-4 sm:gap-4 md:gap-6 grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6">
+            {filteredCards.map((card, i) => (
+              <ListingCard key={card.id} card={card} index={i} />
+            ))}
+          </div>
         )}
       </section>
 
