@@ -752,7 +752,14 @@ export default function ListingsWithMap({
       {/* ========== MOBILE: Carte plein écran + Bottom Sheet style Airbnb ========== */}
       <div className="lg:hidden">
         {/* Carte en arrière-plan - plein écran */}
-        <div className="fixed inset-0 z-0" style={{ top: '64px', bottom: '60px' }}>
+        <div
+          className="fixed inset-0 z-0"
+          style={{
+            top: '64px',
+            bottom: mobileSheetPosition === 'collapsed' ? '140px' : mobileSheetPosition === 'partial' ? '45vh' : '60px',
+            pointerEvents: mobileSheetPosition === 'expanded' ? 'none' : 'auto'
+          }}
+        >
           <Map
             markers={markers}
             panOnHover={false}
@@ -765,12 +772,9 @@ export default function ListingsWithMap({
 
         {/* Bottom Sheet draggable */}
         <div
-          className={`fixed left-0 right-0 z-30 bg-white rounded-t-3xl shadow-2xl transition-all duration-300 ease-out ${
-            mobileSheetPosition === 'collapsed' ? 'bottom-[60px]' :
-            mobileSheetPosition === 'partial' ? 'bottom-[60px]' :
-            'bottom-[60px]'
-          }`}
+          className={`fixed left-0 right-0 z-30 bg-white rounded-t-3xl shadow-2xl transition-all duration-300 ease-out`}
           style={{
+            bottom: '60px',
             height: mobileSheetPosition === 'collapsed' ? '80px' :
                     mobileSheetPosition === 'partial' ? '45vh' :
                     'calc(100vh - 124px)',
@@ -779,11 +783,11 @@ export default function ListingsWithMap({
         >
           {/* Handle de drag */}
           <div
-            className="flex flex-col items-center pt-3 pb-2 cursor-grab active:cursor-grabbing"
+            className="flex flex-col items-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none"
             onClick={() => {
               if (mobileSheetPosition === 'collapsed') setMobileSheetPosition('partial');
               else if (mobileSheetPosition === 'partial') setMobileSheetPosition('expanded');
-              else setMobileSheetPosition('partial');
+              else setMobileSheetPosition('collapsed');
             }}
           >
             <div className="w-10 h-1 bg-gray-300 rounded-full" />
@@ -793,7 +797,13 @@ export default function ListingsWithMap({
           </div>
 
           {/* Contenu scrollable */}
-          <div className="overflow-y-auto h-full pb-4 px-4" style={{ maxHeight: 'calc(100% - 60px)' }}>
+          <div
+            className="overflow-y-auto overscroll-contain pb-4 px-4"
+            style={{
+              height: 'calc(100% - 60px)',
+              WebkitOverflowScrolling: 'touch'
+            }}
+          >
             {/* Liste des annonces - 1 par ligne sur mobile */}
             {!isLoadingMap && listings.length > 0 && (
               <div className="space-y-4">
