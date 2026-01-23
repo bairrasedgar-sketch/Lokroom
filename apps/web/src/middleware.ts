@@ -8,7 +8,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { prisma } from "@/lib/db";
 
 // Rôles admin autorisés
 const ADMIN_ROLES = ["ADMIN", "MODERATOR", "SUPPORT", "FINANCE"];
@@ -238,7 +237,7 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // ─────────────────────────────────────────────────────────────
-  // 0. MODE MAINTENANCE - Vérification côté serveur
+  // 0. MODE MAINTENANCE - Vérification via API interne
   // ─────────────────────────────────────────────────────────────
   const isMaintenanceExcluded =
     pathname === "/maintenance" ||
@@ -248,16 +247,17 @@ export async function middleware(req: NextRequest) {
 
   if (!isMaintenanceExcluded) {
     try {
-      const config = await prisma.systemConfig.findUnique({
-        where: { key: "maintenanceMode" },
+      const baseUrl = req.nextUrl.origin;
+      const res = await fetch(`${baseUrl}/api/maintenance/check`, {
+        cache: "no-store",
       });
+      const data = await res.json();
 
-      if (config?.value === true) {
-        // Maintenance active - rediriger immédiatement
+      if (data.maintenanceMode === true) {
         return NextResponse.redirect(new URL("/maintenance", req.url));
       }
     } catch {
-      // En cas d'erreur DB, on continue normalement
+      // En cas d'erreur, on continue normalement
     }
   }
 
