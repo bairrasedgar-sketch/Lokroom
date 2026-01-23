@@ -1,11 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { EnvelopeIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
 
 export function ContactForm() {
-  const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -20,11 +18,11 @@ export function ContactForm() {
   const handleRetry = async () => {
     setChecking(true);
     try {
-      const res = await fetch("/api/maintenance/check");
+      const res = await fetch("/api/maintenance/check", { cache: "no-store" });
       const data = await res.json();
 
       if (!data.maintenanceMode) {
-        router.replace("/");
+        window.location.href = "/";
       } else {
         // Toujours en maintenance, afficher un message
         setError("Le site est toujours en maintenance. Réessayez dans quelques instants.");
