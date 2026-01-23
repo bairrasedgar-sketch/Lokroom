@@ -96,7 +96,7 @@ export default function Footer() {
       {/* Main footer content */}
       <div className="mx-auto max-w-7xl 2xl:max-w-[1600px] 3xl:max-w-[1920px] px-4 py-6 sm:py-5 sm:px-6 lg:px-8 xl:px-10">
         {/* Mobile: Sections en accordéon / Desktop: Grille */}
-        <div className="grid grid-cols-1 gap-6 sm:gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 mt-4">
+        <div className="grid grid-cols-1 gap-4 sm:gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 mt-4">
           {footerSections.map((section, index) => (
             <div key={section.title} className={`${index === 2 ? "md:ml-16" : ""}`}>
               <h3 className="text-sm font-semibold text-gray-900">{section.title}</h3>
