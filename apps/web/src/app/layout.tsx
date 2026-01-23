@@ -4,8 +4,6 @@ import "./globals.css";
 import Providers from "@/components/providers";
 import { ConditionalNavbar, ConditionalFooter, ConditionalCookieBanner } from "@/components/ConditionalLayout";
 import SkipLink from "@/components/accessibility/SkipLink";
-import { prisma } from "@/lib/db";
-import { MaintenanceRedirect } from "@/components/MaintenanceRedirect";
 
 const SUPPORTED_LOCALES = ["fr", "en", "es", "de", "it", "pt", "zh"] as const;
 type LocaleCode = (typeof SUPPORTED_LOCALES)[number];
@@ -113,17 +111,6 @@ export const metadata: Metadata = {
   },
 };
 
-async function checkMaintenanceMode() {
-  try {
-    const config = await prisma.systemConfig.findUnique({
-      where: { key: "maintenanceMode" },
-    });
-    return config?.value === true;
-  } catch {
-    return false;
-  }
-}
-
 // Désactiver le cache pour vérifier le mode maintenance à chaque requête
 export const dynamic = "force-dynamic";
 
@@ -133,7 +120,6 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const locale = getInitialLocale();
-  const isMaintenanceMode = await checkMaintenanceMode();
 
   return (
     <html
@@ -143,7 +129,6 @@ export default async function RootLayout({
     >
       <body className="min-h-screen bg-white text-gray-900 antialiased relative">
         <Providers>
-          <MaintenanceRedirect isMaintenanceMode={isMaintenanceMode} />
           <SkipLink />
           <ConditionalNavbar />
           <main id="main-content" className="flex-1" role="main" tabIndex={-1}>

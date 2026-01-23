@@ -8,6 +8,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { prisma } from "@/lib/db";
 
 // Rôles admin autorisés
 const ADMIN_ROLES = ["ADMIN", "MODERATOR", "SUPPORT", "FINANCE"];
@@ -235,6 +236,30 @@ function generateCSP(isDev: boolean): string {
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  // ─────────────────────────────────────────────────────────────
+  // 0. MODE MAINTENANCE - Vérification côté serveur
+  // ─────────────────────────────────────────────────────────────
+  const isMaintenanceExcluded =
+    pathname === "/maintenance" ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/api");
+
+  if (!isMaintenanceExcluded) {
+    try {
+      const config = await prisma.systemConfig.findUnique({
+        where: { key: "maintenanceMode" },
+      });
+
+      if (config?.value === true) {
+        // Maintenance active - rediriger immédiatement
+        return NextResponse.redirect(new URL("/maintenance", req.url));
+      }
+    } catch {
+      // En cas d'erreur DB, on continue normalement
+    }
+  }
 
   // ─────────────────────────────────────────────────────────────
   // 1. PROTECTION DES ROUTES - Vérification authentification
