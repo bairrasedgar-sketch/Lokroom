@@ -966,16 +966,22 @@ export default function ListingsWithMap({
             }}
             onTouchStart={(e) => {
               const scrollContainer = e.currentTarget;
-              if (scrollContainer.scrollTop <= 0) {
-                dragStartY.current = e.touches[0].clientY;
-                dragStartHeight.current = sheetHeight;
-              }
+              dragStartY.current = e.touches[0].clientY;
+              dragStartHeight.current = sheetHeight;
             }}
             onTouchMove={(e) => {
               const scrollContainer = e.currentTarget;
               const touch = e.touches[0];
               const isAtTop = scrollContainer.scrollTop <= 0;
               const pullingDown = touch.clientY > dragStartY.current;
+              const pullingUp = touch.clientY < dragStartY.current;
+
+              // Si on tire vers le haut (scroll down) et qu'on n'est pas expanded, expand automatiquement
+              if (pullingUp && sheetHeight < 100) {
+                setSheetHeight(100);
+                updateSheetPosition('expanded');
+                return;
+              }
 
               // Si on est en haut et qu'on tire vers le bas, on drag le sheet
               if (isAtTop && pullingDown) {
