@@ -95,28 +95,31 @@ export default function Footer() {
     <footer className="relative z-30 pb-20 md:pb-0" style={{ backgroundColor: '#f5f5f5' }}>
       {/* Main footer content */}
       <div className="mx-auto max-w-7xl 2xl:max-w-[1600px] 3xl:max-w-[1920px] px-4 py-6 sm:py-5 sm:px-6 lg:px-8 xl:px-10">
-        {/* Mobile: Sections en accordéon / Desktop: Grille */}
-        <div className="grid grid-cols-1 gap-4 sm:gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 mt-4">
-          {footerSections.map((section, index) => (
-            <div key={section.title} className={`${index === 2 ? "md:ml-16" : ""}`}>
-              <h3 className="text-sm font-semibold text-gray-900">{section.title}</h3>
-              <ul className="mt-3 sm:mt-4 space-y-2 sm:space-y-3">
-                {section.links.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="text-xs sm:text-sm text-gray-600 hover:text-gray-900 hover:underline transition-colors"
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+        {/* Mobile: Sections en accordéon / Desktop: Grille avec illustration */}
+        <div className="xl:flex xl:gap-8">
+          {/* Sections du footer */}
+          <div className="grid grid-cols-1 gap-4 sm:gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-3 mt-4 xl:flex-1">
+            {footerSections.map((section, index) => (
+              <div key={section.title} className={`${index === 2 ? "md:ml-16 xl:ml-0" : ""}`}>
+                <h3 className="text-sm font-semibold text-gray-900">{section.title}</h3>
+                <ul className="mt-3 sm:mt-4 space-y-2 sm:space-y-3">
+                  {section.links.map((link) => (
+                    <li key={link.href}>
+                      <Link
+                        href={link.href}
+                        className="text-xs sm:text-sm text-gray-600 hover:text-gray-900 hover:underline transition-colors"
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
 
-          {/* Illustration à droite avec fondu - Desktop only */}
-          <div className="hidden xl:flex xl:col-span-2 2xl:col-span-3 items-start justify-center" style={{ marginTop: '-2.25rem' }}>
+          {/* Illustration à droite avec fondu - Desktop only (xl+) */}
+          <div className="hidden xl:flex items-start justify-center xl:w-[500px] 2xl:w-[700px]" style={{ marginTop: '-2.25rem' }}>
             <div className="relative">
               <div
                 className="absolute inset-0 pointer-events-none z-10"
