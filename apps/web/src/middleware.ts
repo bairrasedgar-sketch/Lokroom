@@ -237,31 +237,6 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // ─────────────────────────────────────────────────────────────
-  // 0. MODE MAINTENANCE - Vérification via API interne
-  // ─────────────────────────────────────────────────────────────
-  const isMaintenanceExcluded =
-    pathname === "/maintenance" ||
-    pathname.startsWith("/admin") ||
-    pathname.startsWith("/login") ||
-    pathname.startsWith("/api");
-
-  if (!isMaintenanceExcluded) {
-    try {
-      const baseUrl = req.nextUrl.origin;
-      const res = await fetch(`${baseUrl}/api/maintenance/check`, {
-        cache: "no-store",
-      });
-      const data = await res.json();
-
-      if (data.maintenanceMode === true) {
-        return NextResponse.redirect(new URL("/maintenance", req.url));
-      }
-    } catch {
-      // En cas d'erreur, on continue normalement
-    }
-  }
-
-  // ─────────────────────────────────────────────────────────────
   // 1. PROTECTION DES ROUTES - Vérification authentification
   // ─────────────────────────────────────────────────────────────
   const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
