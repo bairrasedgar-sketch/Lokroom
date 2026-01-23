@@ -106,7 +106,7 @@ html {
 
   /* Supprimer l'espace blanc entre CTA et Footer sur mobile */
   footer {
-    margin-top: -1rem;
+    margin-top: -3rem;
   }
 }
 
