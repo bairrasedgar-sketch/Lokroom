@@ -784,8 +784,6 @@ export default function ListingsWithMap({
           style={{
             top: '64px',
             bottom: '0px',
-            opacity: sheetHeight >= 95 ? 0 : 1,
-            transition: isDragging ? 'none' : 'opacity 0.3s ease',
           }}
         >
           <Map
@@ -803,13 +801,12 @@ export default function ListingsWithMap({
           ref={sheetRef}
           className="fixed left-0 right-0 z-30 bg-white rounded-t-[20px] shadow-[0_-4px_25px_-5px_rgba(0,0,0,0.15)]"
           style={{
-            bottom: sheetHeight <= 15 ? '0px' : '0px',
+            bottom: 0,
             height: `${sheetHeight}vh`,
             maxHeight: 'calc(100vh - 64px)',
             minHeight: '60px',
-            transition: isDragging ? 'none' : 'height 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+            transition: isDragging ? 'none' : 'height 0.35s cubic-bezier(0.32, 0.72, 0, 1)',
             willChange: 'height',
-            touchAction: 'none',
           }}
         >
           {/* Handle de drag - Zone tactile agrandie */}
