@@ -945,10 +945,18 @@ export default function ListingsWithMap({
             }}
             onScroll={(e) => {
               const scrollContainer = e.currentTarget;
-              const isAtTop = scrollContainer.scrollTop <= 5;
+              const scrollTop = scrollContainer.scrollTop;
+              const isAtTop = scrollTop <= 5;
 
-              // Si on remonte en haut du scroll et qu'on est en expanded, passer en partial
-              if (isAtTop && mobileSheetPosition === 'expanded') {
+              // Comportement style Airbnb:
+              // - Quand l'utilisateur scroll vers le bas (scrollTop > 0), expand le sheet pour masquer la carte
+              // - Quand l'utilisateur remonte tout en haut (scrollTop = 0), redescendre le sheet pour montrer la carte
+              if (scrollTop > 20 && mobileSheetPosition !== 'expanded') {
+                // L'utilisateur scroll vers le bas -> expand pour masquer la carte
+                setSheetHeight(88);
+                setMobileSheetPosition('expanded');
+              } else if (isAtTop && mobileSheetPosition === 'expanded') {
+                // L'utilisateur est remonté tout en haut -> montrer la carte
                 setSheetHeight(45);
                 setMobileSheetPosition('partial');
               }
