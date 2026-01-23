@@ -500,8 +500,8 @@ function ListingCard({ card, index }: { card: ListingCard; index: number }) {
         </Link>
 
         {/* Image Navigation Dots - en dehors du Link */}
-        {hasMultipleImages && isHovered && (
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+        {hasMultipleImages && (
+          <div className={`absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 ${isHovered ? 'opacity-100' : 'sm:opacity-0'}`}>
             {images.slice(0, 5).map((_, i) => (
               <button
                 key={i}
@@ -516,7 +516,7 @@ function ListingCard({ card, index }: { card: ListingCard; index: number }) {
         )}
 
         {/* Navigation Arrows - en dehors du Link */}
-        {hasMultipleImages && isHovered && (
+        {hasMultipleImages && (
           <>
             <button
               onClick={(e) => {
@@ -525,9 +525,9 @@ function ListingCard({ card, index }: { card: ListingCard; index: number }) {
                 setImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
               }}
               aria-label="Image precedente"
-              className="absolute left-2 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow-sm border border-gray-200/50 transition-all hover:bg-white hover:scale-105 hover:shadow-md z-10"
+              className={`absolute left-2 top-1/2 -translate-y-1/2 flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-white/90 shadow-sm border border-gray-200/50 transition-all hover:bg-white hover:scale-105 hover:shadow-md z-10 ${isHovered ? 'opacity-100' : 'sm:opacity-0'}`}
             >
-              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <svg className="h-2.5 w-2.5 sm:h-3 sm:w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
@@ -538,9 +538,9 @@ function ListingCard({ card, index }: { card: ListingCard; index: number }) {
                 setImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
               }}
               aria-label="Image suivante"
-              className="absolute right-2 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow-sm border border-gray-200/50 transition-all hover:bg-white hover:scale-105 hover:shadow-md z-10"
+              className={`absolute right-2 top-1/2 -translate-y-1/2 flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-white/90 shadow-sm border border-gray-200/50 transition-all hover:bg-white hover:scale-105 hover:shadow-md z-10 ${isHovered ? 'opacity-100' : 'sm:opacity-0'}`}
             >
-              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <svg className="h-2.5 w-2.5 sm:h-3 sm:w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>
