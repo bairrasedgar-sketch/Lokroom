@@ -341,12 +341,16 @@ export default function ListingsWithMap({
   const [isMapSearchEnabled, setIsMapSearchEnabled] = useState(true);
   const [skipFitBounds, setSkipFitBounds] = useState(false);
   const [mobileSheetPosition, setMobileSheetPosition] = useState<'collapsed' | 'partial' | 'expanded'>('partial');
+  const [isDragging, setIsDragging] = useState(false);
+  const [sheetHeight, setSheetHeight] = useState(45); // pourcentage de la hauteur
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const isFirstLoad = useRef(true);
   const lastFetchedBounds = useRef<{ north: number; south: number; east: number; west: number } | null>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
+  const dragStartY = useRef(0);
+  const dragStartHeight = useRef(0);
 
   // Tracker si on a fait un fetch manuel (pour éviter de re-fitBounds)
   const hasFetchedFromMapRef = useRef(false);
@@ -756,8 +760,7 @@ export default function ListingsWithMap({
           className="fixed inset-0 z-0"
           style={{
             top: '64px',
-            bottom: mobileSheetPosition === 'collapsed' ? '140px' : mobileSheetPosition === 'partial' ? '45vh' : '60px',
-            pointerEvents: mobileSheetPosition === 'expanded' ? 'none' : 'auto'
+            bottom: `calc(${sheetHeight}vh + 60px)`,
           }}
         >
           <Map
@@ -772,22 +775,42 @@ export default function ListingsWithMap({
 
         {/* Bottom Sheet draggable */}
         <div
-          className={`fixed left-0 right-0 z-30 bg-white rounded-t-3xl shadow-2xl transition-all duration-300 ease-out`}
+          className="fixed left-0 right-0 z-30 bg-white rounded-t-3xl shadow-2xl"
           style={{
             bottom: '60px',
-            height: mobileSheetPosition === 'collapsed' ? '80px' :
-                    mobileSheetPosition === 'partial' ? '45vh' :
-                    'calc(100vh - 124px)',
-            maxHeight: 'calc(100vh - 124px)'
+            height: `${sheetHeight}vh`,
+            maxHeight: 'calc(100vh - 124px)',
+            transition: isDragging ? 'none' : 'height 0.3s ease-out'
           }}
         >
           {/* Handle de drag */}
           <div
-            className="flex flex-col items-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none"
-            onClick={() => {
-              if (mobileSheetPosition === 'collapsed') setMobileSheetPosition('partial');
-              else if (mobileSheetPosition === 'partial') setMobileSheetPosition('expanded');
-              else setMobileSheetPosition('collapsed');
+            className="flex flex-col items-center pt-3 pb-2 cursor-grab active:cursor-grabbing"
+            onTouchStart={(e) => {
+              setIsDragging(true);
+              dragStartY.current = e.touches[0].clientY;
+              dragStartHeight.current = sheetHeight;
+            }}
+            onTouchMove={(e) => {
+              if (!isDragging) return;
+              const deltaY = dragStartY.current - e.touches[0].clientY;
+              const deltaPercent = (deltaY / window.innerHeight) * 100;
+              const newHeight = Math.min(85, Math.max(10, dragStartHeight.current + deltaPercent));
+              setSheetHeight(newHeight);
+            }}
+            onTouchEnd={() => {
+              setIsDragging(false);
+              // Snap to positions
+              if (sheetHeight < 20) {
+                setSheetHeight(10);
+                setMobileSheetPosition('collapsed');
+              } else if (sheetHeight < 60) {
+                setSheetHeight(45);
+                setMobileSheetPosition('partial');
+              } else {
+                setSheetHeight(85);
+                setMobileSheetPosition('expanded');
+              }
             }}
           >
             <div className="w-10 h-1 bg-gray-300 rounded-full" />
