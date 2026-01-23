@@ -959,9 +959,9 @@ export default function ListingsWithMap({
 
           {/* Contenu scrollable */}
           <div
-            className="overflow-y-auto overscroll-contain pb-6 px-4"
+            className="overflow-y-auto overscroll-contain pt-2 pb-6 px-4"
             style={{
-              height: 'calc(100% - 75px)',
+              height: 'calc(100% - 80px)',
               WebkitOverflowScrolling: 'touch',
             }}
             onTouchStart={(e) => {
