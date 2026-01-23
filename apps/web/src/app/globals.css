@@ -108,6 +108,18 @@ html {
   footer {
     margin-top: -10rem;
   }
+
+  /* Boutons de navigation des images sur mobile - petits et discrets */
+  .mobile-nav-arrow {
+    height: 16px !important;
+    width: 16px !important;
+    background-color: rgba(200, 200, 200, 0.6) !important;
+  }
+
+  .mobile-nav-arrow svg {
+    height: 10px !important;
+    width: 10px !important;
+  }
 }
 
 /* ============================================
