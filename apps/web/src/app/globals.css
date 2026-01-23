@@ -89,6 +89,22 @@ html {
   }
 }
 
+/* Safe area pour la barre de navigation mobile */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Padding pour le contenu au-dessus de la barre de navigation mobile */
+@media screen and (max-width: 767px) {
+  main {
+    padding-bottom: 70px;
+  }
+}
+
 /* ============================================
    RESPONSIVE UTILITIES - Adaptation tous écrans
    ============================================ */

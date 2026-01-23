@@ -335,12 +335,12 @@ export default function ListingsWithMap({
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [isLoadingMap, setIsLoadingMap] = useState(false);
   const [listings, setListings] = useState<ListingCardData[]>(initialListings);
-  const [previousListings, setPreviousListings] = useState<ListingCardData[]>(initialListings); // Garde les anciennes pendant le chargement
+  const [previousListings, setPreviousListings] = useState<ListingCardData[]>(initialListings);
   const [markers, setMarkers] = useState<MapMarker[]>(initialMarkers);
   const [totalCount, setTotalCount] = useState(initialListings.length);
   const [isMapSearchEnabled, setIsMapSearchEnabled] = useState(true);
   const [skipFitBounds, setSkipFitBounds] = useState(false);
-  const [mobileView, setMobileView] = useState<'list' | 'map'>('list'); // Vue mobile: liste ou carte
+  const [mobileSheetPosition, setMobileSheetPosition] = useState<'collapsed' | 'partial' | 'expanded'>('partial');
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const isFirstLoad = useRef(true);
@@ -749,9 +749,10 @@ export default function ListingsWithMap({
         )}
       </div>
 
-      {/* Carte mobile et tablette */}
-      <section className={`mt-6 sm:mt-8 lg:hidden ${mobileView === 'map' ? 'fixed inset-0 z-40 mt-0' : ''}`}>
-        <div className={`overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm ${mobileView === 'map' ? 'h-full rounded-none border-0' : 'h-64 sm:h-72 md:h-80'}`}>
+      {/* ========== MOBILE: Carte plein écran + Bottom Sheet style Airbnb ========== */}
+      <div className="lg:hidden">
+        {/* Carte en arrière-plan - plein écran */}
+        <div className="fixed inset-0 z-0" style={{ top: '64px', bottom: '60px' }}>
           <Map
             markers={markers}
             panOnHover={false}
@@ -761,42 +762,93 @@ export default function ListingsWithMap({
             skipFitBounds={skipFitBounds}
           />
         </div>
-        {/* Bouton fermer la carte plein écran */}
-        {mobileView === 'map' && (
+
+        {/* Bottom Sheet draggable */}
+        <div
+          className={`fixed left-0 right-0 z-30 bg-white rounded-t-3xl shadow-2xl transition-all duration-300 ease-out ${
+            mobileSheetPosition === 'collapsed' ? 'bottom-[60px]' :
+            mobileSheetPosition === 'partial' ? 'bottom-[60px]' :
+            'bottom-[60px]'
+          }`}
+          style={{
+            height: mobileSheetPosition === 'collapsed' ? '80px' :
+                    mobileSheetPosition === 'partial' ? '45vh' :
+                    'calc(100vh - 124px)',
+            maxHeight: 'calc(100vh - 124px)'
+          }}
+        >
+          {/* Handle de drag */}
+          <div
+            className="flex flex-col items-center pt-3 pb-2 cursor-grab active:cursor-grabbing"
+            onClick={() => {
+              if (mobileSheetPosition === 'collapsed') setMobileSheetPosition('partial');
+              else if (mobileSheetPosition === 'partial') setMobileSheetPosition('expanded');
+              else setMobileSheetPosition('partial');
+            }}
+          >
+            <div className="w-10 h-1 bg-gray-300 rounded-full" />
+            <p className="mt-2 text-sm font-medium text-gray-900">
+              {listings.length} logement{listings.length !== 1 ? 's' : ''} disponible{listings.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+
+          {/* Contenu scrollable */}
+          <div className="overflow-y-auto h-full pb-4 px-4" style={{ maxHeight: 'calc(100% - 60px)' }}>
+            {/* Liste des annonces - 1 par ligne sur mobile */}
+            {!isLoadingMap && listings.length > 0 && (
+              <div className="space-y-4">
+                {listings.filter((listing, index, self) =>
+                  index === self.findIndex(l => l.id === listing.id)
+                ).map((listing, index) => (
+                  <ListingCard
+                    key={listing.id}
+                    listing={listing}
+                    isHovered={hoveredId === listing.id}
+                    onHover={() => setHoveredId(listing.id)}
+                    onLeave={() => setHoveredId(null)}
+                    t={t}
+                    index={index}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Skeletons pendant le chargement */}
+            {isLoadingMap && (
+              <div className="space-y-4">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <ListingCardSkeleton key={`skeleton-mobile-${index}`} />
+                ))}
+              </div>
+            )}
+
+            {/* Message si aucune annonce */}
+            {listings.length === 0 && !isLoadingMap && (
+              <div className="py-8 text-center">
+                <p className="text-gray-600 font-medium">Aucune annonce dans cette zone</p>
+                <p className="mt-1 text-sm text-gray-400">Déplacez la carte pour voir plus d&apos;annonces</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Boutons de contrôle sur la carte */}
+        <div className="fixed top-20 left-4 right-4 z-20 flex justify-between pointer-events-none">
+          {/* Toggle recherche sur carte */}
           <button
-            onClick={() => setMobileView('list')}
-            className="absolute top-4 left-4 z-50 flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-gray-900 shadow-lg"
+            onClick={() => setIsMapSearchEnabled(!isMapSearchEnabled)}
+            className={`pointer-events-auto flex items-center gap-2 rounded-full px-3 py-2 text-xs font-medium shadow-lg ${
+              isMapSearchEnabled
+                ? "bg-gray-900 text-white"
+                : "bg-white text-gray-700"
+            }`}
           >
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            Fermer
+            {isMapSearchEnabled ? "Auto" : "Manuel"}
           </button>
-        )}
-      </section>
-
-      {/* Bouton flottant Liste/Carte - Mobile uniquement - style Airbnb */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 lg:hidden">
-        <button
-          onClick={() => setMobileView(mobileView === 'list' ? 'map' : 'list')}
-          className="flex items-center gap-2 rounded-full bg-gray-900 px-5 py-3 text-sm font-medium text-white shadow-xl hover:bg-black transition-all active:scale-95"
-        >
-          {mobileView === 'list' ? (
-            <>
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-              </svg>
-              Carte
-            </>
-          ) : (
-            <>
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-              </svg>
-              Liste
-            </>
-          )}
-        </button>
+        </div>
       </div>
     </div>
   );

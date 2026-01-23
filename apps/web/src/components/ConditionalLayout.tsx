@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/Footer";
 import { CookieBanner } from "@/components/CookieBanner";
+import MobileNavBar from "@/components/MobileNavBar";
 
 export function ConditionalNavbar() {
   const pathname = usePathname();
@@ -18,7 +19,12 @@ export function ConditionalFooter() {
   const isAdminPage = pathname?.startsWith("/admin");
 
   if (isAdminPage) return null;
-  return <Footer />;
+  return (
+    <>
+      <Footer />
+      <MobileNavBar />
+    </>
+  );
 }
 
 export function ConditionalCookieBanner() {

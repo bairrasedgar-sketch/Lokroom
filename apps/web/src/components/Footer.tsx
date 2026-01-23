@@ -92,7 +92,7 @@ export default function Footer() {
   // (anciennement masqué sur /listings)
 
   return (
-    <footer className="relative z-30" style={{ backgroundColor: '#f5f5f5' }}>
+    <footer className="relative z-30 hidden md:block" style={{ backgroundColor: '#f5f5f5' }}>
       {/* Main footer content */}
       <div className="mx-auto max-w-7xl 2xl:max-w-[1600px] 3xl:max-w-[1920px] px-4 py-4 sm:py-5 sm:px-6 lg:px-8 xl:px-10">
         <div className="grid grid-cols-1 gap-6 sm:gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 mt-4">
