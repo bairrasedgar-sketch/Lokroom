@@ -387,7 +387,7 @@ export default function BookingForm({
               value={startDate}
               min={todayStr}
               onChange={(e) => setStartDate(e.target.value)}
-              className="h-9 rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-black focus:ring-1 focus:ring-black"
+              className="h-11 rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-black focus:ring-1 focus:ring-black"
             />
           </div>
 
@@ -400,7 +400,7 @@ export default function BookingForm({
               value={endDate}
               min={startDate || todayStr}
               onChange={(e) => setEndDate(e.target.value)}
-              className="h-9 rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-black focus:ring-1 focus:ring-black"
+              className="h-11 rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-black focus:ring-1 focus:ring-black"
             />
           </div>
         </div>
@@ -493,14 +493,14 @@ export default function BookingForm({
                 value={promoCode}
                 onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
                 placeholder="Entrez votre code"
-                className="flex-1 h-9 rounded-lg border border-gray-300 px-3 text-sm uppercase outline-none focus:border-black focus:ring-1 focus:ring-black"
+                className="flex-1 h-11 rounded-lg border border-gray-300 px-3 text-sm uppercase outline-none focus:border-black focus:ring-1 focus:ring-black"
                 disabled={promoLoading}
               />
               <button
                 type="button"
                 onClick={validatePromoCode}
                 disabled={promoLoading || !promoCode.trim()}
-                className="px-4 h-9 rounded-lg bg-gray-100 text-sm font-medium text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 h-11 rounded-lg bg-gray-100 text-sm font-medium text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {promoLoading ? "..." : "Appliquer"}
               </button>
