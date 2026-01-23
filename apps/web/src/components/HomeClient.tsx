@@ -1330,7 +1330,7 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
             <p className="mt-1 text-sm text-gray-500">Essayez une autre catégorie ou explorez tous nos espaces</p>
           </div>
         ) : (
-          <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6">
+          <div className="grid gap-4 sm:gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6">
             {filteredCards.map((card, i) => (
               <ListingCard key={card.id} card={card} index={i} />
             ))}

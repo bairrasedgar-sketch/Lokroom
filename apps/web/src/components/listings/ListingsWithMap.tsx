@@ -340,6 +340,7 @@ export default function ListingsWithMap({
   const [totalCount, setTotalCount] = useState(initialListings.length);
   const [isMapSearchEnabled, setIsMapSearchEnabled] = useState(true);
   const [skipFitBounds, setSkipFitBounds] = useState(false);
+  const [mobileView, setMobileView] = useState<'list' | 'map'>('list'); // Vue mobile: liste ou carte
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const isFirstLoad = useRef(true);
@@ -749,8 +750,8 @@ export default function ListingsWithMap({
       </div>
 
       {/* Carte mobile et tablette */}
-      <section className="mt-6 sm:mt-8 lg:hidden">
-        <div className="h-64 sm:h-72 md:h-80 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <section className={`mt-6 sm:mt-8 lg:hidden ${mobileView === 'map' ? 'fixed inset-0 z-40 mt-0' : ''}`}>
+        <div className={`overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm ${mobileView === 'map' ? 'h-full rounded-none border-0' : 'h-64 sm:h-72 md:h-80'}`}>
           <Map
             markers={markers}
             panOnHover={false}
@@ -760,7 +761,43 @@ export default function ListingsWithMap({
             skipFitBounds={skipFitBounds}
           />
         </div>
+        {/* Bouton fermer la carte plein écran */}
+        {mobileView === 'map' && (
+          <button
+            onClick={() => setMobileView('list')}
+            className="absolute top-4 left-4 z-50 flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-medium text-gray-900 shadow-lg"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Fermer
+          </button>
+        )}
       </section>
+
+      {/* Bouton flottant Liste/Carte - Mobile uniquement - style Airbnb */}
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 lg:hidden">
+        <button
+          onClick={() => setMobileView(mobileView === 'list' ? 'map' : 'list')}
+          className="flex items-center gap-2 rounded-full bg-gray-900 px-5 py-3 text-sm font-medium text-white shadow-xl hover:bg-black transition-all active:scale-95"
+        >
+          {mobileView === 'list' ? (
+            <>
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+              </svg>
+              Carte
+            </>
+          ) : (
+            <>
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+              </svg>
+              Liste
+            </>
+          )}
+        </button>
+      </div>
     </div>
   );
 }
