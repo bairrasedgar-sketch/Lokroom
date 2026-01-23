@@ -258,6 +258,541 @@ function ListingCard({
   );
 }
 
+// ========== MOBILE BOTTOM SHEET - Style Airbnb avec comportement fluide ==========
+type MobileBottomSheetProps = {
+  listings: ListingCardData[];
+  markers: MapMarker[];
+  hoveredId: string | null;
+  setHoveredId: (id: string | null) => void;
+  isLoadingMap: boolean;
+  isMapSearchEnabled: boolean;
+  setIsMapSearchEnabled: (enabled: boolean) => void;
+  handleBoundsChange: (bounds: { north: number; south: number; east: number; west: number }) => void;
+  skipFitBounds: boolean;
+  t: ListingsWithMapProps["translations"];
+};
+
+// Points de snap en pixels depuis le bas (au lieu de pourcentages)
+const SNAP_COLLAPSED = 100; // Juste la barre visible
+const SNAP_PARTIAL = 45; // 45% de la hauteur
+const SNAP_EXPANDED = 88; // 88% de la hauteur
+
+function MobileBottomSheet({
+  listings,
+  markers,
+  hoveredId,
+  setHoveredId,
+  isLoadingMap,
+  isMapSearchEnabled,
+  setIsMapSearchEnabled,
+  handleBoundsChange,
+  skipFitBounds,
+  t,
+}: MobileBottomSheetProps) {
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const handleRef = useRef<HTMLDivElement>(null);
+
+  // Utiliser une ref pour la hauteur actuelle (évite les re-renders pendant le drag)
+  const currentHeightRef = useRef(SNAP_PARTIAL);
+  const [displayHeight, setDisplayHeight] = useState(SNAP_PARTIAL);
+  const [sheetPosition, setSheetPosition] = useState<'collapsed' | 'partial' | 'expanded'>('partial');
+
+  // Refs pour le tracking du drag
+  const isDraggingRef = useRef(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartY = useRef(0);
+  const dragStartHeight = useRef(0);
+
+  // Tracking de la velocite pour le momentum
+  const touchHistory = useRef<{ y: number; time: number }[]>([]);
+  const animationFrameRef = useRef<number | null>(null);
+
+  // Tracking du scroll pour la liaison scroll/hauteur
+  const lastScrollTop = useRef(0);
+  const isScrollingContent = useRef(false);
+  const scrollLinkEnabled = useRef(true);
+
+  // Fonction pour animer vers une hauteur cible avec spring physics
+  const animateToHeight = useCallback((targetHeight: number, velocity = 0) => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+
+    const startHeight = currentHeightRef.current;
+    const distance = targetHeight - startHeight;
+
+    // Si la distance est negligeable, snap directement
+    if (Math.abs(distance) < 0.5) {
+      currentHeightRef.current = targetHeight;
+      setDisplayHeight(targetHeight);
+      return;
+    }
+
+    // Spring physics parameters
+    const tension = 300;
+    const friction = 26;
+    let currentVelocity = velocity * 0.1; // Convertir la velocite du touch en velocite d'animation
+    let currentPosition = startHeight;
+
+    const animate = () => {
+      // Spring force
+      const springForce = (targetHeight - currentPosition) * (tension / 1000);
+      // Damping force
+      const dampingForce = -currentVelocity * (friction / 10);
+      // Acceleration
+      const acceleration = springForce + dampingForce;
+
+      // Update velocity and position
+      currentVelocity += acceleration;
+      currentPosition += currentVelocity;
+
+      // Clamp to valid range
+      currentPosition = Math.max(8, Math.min(92, currentPosition));
+
+      currentHeightRef.current = currentPosition;
+      setDisplayHeight(currentPosition);
+
+      // Continue animation if not settled
+      const isSettled = Math.abs(currentVelocity) < 0.01 && Math.abs(targetHeight - currentPosition) < 0.1;
+
+      if (!isSettled) {
+        animationFrameRef.current = requestAnimationFrame(animate);
+      } else {
+        // Snap to exact target
+        currentHeightRef.current = targetHeight;
+        setDisplayHeight(targetHeight);
+      }
+    };
+
+    animationFrameRef.current = requestAnimationFrame(animate);
+  }, []);
+
+  // Calculer la velocite a partir de l'historique des touches
+  const calculateVelocity = useCallback(() => {
+    const history = touchHistory.current;
+    if (history.length < 2) return 0;
+
+    // Utiliser les 3 derniers points pour calculer la velocite
+    const recentHistory = history.slice(-3);
+    const first = recentHistory[0];
+    const last = recentHistory[recentHistory.length - 1];
+
+    const timeDelta = last.time - first.time;
+    if (timeDelta === 0) return 0;
+
+    // Velocite en pixels par milliseconde, convertie en % de viewport
+    const pixelVelocity = (first.y - last.y) / timeDelta;
+    return (pixelVelocity / window.innerHeight) * 100 * 16; // Normaliser pour 60fps
+  }, []);
+
+  // Determiner le snap point cible base sur la position et la velocite
+  const getSnapTarget = useCallback((currentHeight: number, velocity: number): { height: number; position: 'collapsed' | 'partial' | 'expanded' } => {
+    const VELOCITY_THRESHOLD = 0.3; // Seuil de velocite pour snap directionnel
+
+    // Si la velocite est suffisante, snap dans la direction du mouvement
+    if (Math.abs(velocity) > VELOCITY_THRESHOLD) {
+      if (velocity > 0) {
+        // Mouvement vers le haut (agrandir)
+        if (currentHeight < SNAP_PARTIAL) {
+          return { height: SNAP_PARTIAL, position: 'partial' };
+        }
+        return { height: SNAP_EXPANDED, position: 'expanded' };
+      } else {
+        // Mouvement vers le bas (reduire)
+        if (currentHeight > SNAP_PARTIAL) {
+          return { height: SNAP_PARTIAL, position: 'partial' };
+        }
+        return { height: SNAP_COLLAPSED, position: 'collapsed' };
+      }
+    }
+
+    // Sinon, snap au point le plus proche
+    const distToCollapsed = Math.abs(currentHeight - SNAP_COLLAPSED);
+    const distToPartial = Math.abs(currentHeight - SNAP_PARTIAL);
+    const distToExpanded = Math.abs(currentHeight - SNAP_EXPANDED);
+
+    if (distToCollapsed <= distToPartial && distToCollapsed <= distToExpanded) {
+      return { height: SNAP_COLLAPSED, position: 'collapsed' };
+    } else if (distToPartial <= distToExpanded) {
+      return { height: SNAP_PARTIAL, position: 'partial' };
+    }
+    return { height: SNAP_EXPANDED, position: 'expanded' };
+  }, []);
+
+  // Handler pour le debut du drag sur la poignee
+  const handleHandleTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    isDraggingRef.current = true;
+    setIsDragging(true);
+    dragStartY.current = touch.clientY;
+    dragStartHeight.current = currentHeightRef.current;
+    touchHistory.current = [{ y: touch.clientY, time: Date.now() }];
+    scrollLinkEnabled.current = false;
+
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+  }, []);
+
+  // Handler pour le mouvement du drag
+  const handleHandleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isDraggingRef.current) return;
+    e.preventDefault();
+
+    const touch = e.touches[0];
+    const currentY = touch.clientY;
+
+    // Ajouter au historique pour le calcul de velocite
+    touchHistory.current.push({ y: currentY, time: Date.now() });
+    // Garder seulement les 5 derniers points
+    if (touchHistory.current.length > 5) {
+      touchHistory.current.shift();
+    }
+
+    // Calculer le delta en pourcentage de la hauteur du viewport
+    const deltaY = dragStartY.current - currentY;
+    const deltaPercent = (deltaY / window.innerHeight) * 100;
+
+    // Nouvelle hauteur avec resistance elastique aux bords
+    let newHeight = dragStartHeight.current + deltaPercent;
+
+    // Resistance elastique
+    if (newHeight > SNAP_EXPANDED) {
+      const overflow = newHeight - SNAP_EXPANDED;
+      newHeight = SNAP_EXPANDED + overflow * 0.2;
+    } else if (newHeight < SNAP_COLLAPSED) {
+      const overflow = SNAP_COLLAPSED - newHeight;
+      newHeight = SNAP_COLLAPSED - overflow * 0.2;
+    }
+
+    // Clamp final
+    newHeight = Math.max(5, Math.min(95, newHeight));
+
+    currentHeightRef.current = newHeight;
+    setDisplayHeight(newHeight);
+  }, []);
+
+  // Handler pour la fin du drag
+  const handleHandleTouchEnd = useCallback(() => {
+    if (!isDraggingRef.current) return;
+
+    isDraggingRef.current = false;
+    setIsDragging(false);
+
+    const velocity = calculateVelocity();
+    const { height: targetHeight, position } = getSnapTarget(currentHeightRef.current, velocity);
+
+    setSheetPosition(position);
+    animateToHeight(targetHeight, velocity);
+
+    // Re-activer le lien scroll apres un court delai
+    setTimeout(() => {
+      scrollLinkEnabled.current = true;
+    }, 300);
+
+    touchHistory.current = [];
+  }, [calculateVelocity, getSnapTarget, animateToHeight]);
+
+  // Handler pour le scroll du contenu - liaison fluide avec la hauteur
+  const handleContentScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    if (!scrollLinkEnabled.current || isDraggingRef.current) return;
+
+    const scrollContainer = e.currentTarget;
+    const scrollTop = scrollContainer.scrollTop;
+    const scrollDelta = scrollTop - lastScrollTop.current;
+    const isAtTop = scrollTop <= 2;
+
+    // Si on scroll vers le bas et qu'on n'est pas encore expanded
+    if (scrollDelta > 0 && currentHeightRef.current < SNAP_EXPANDED - 1) {
+      // Expansion progressive basee sur le scroll
+      const expansionRate = 0.15; // Vitesse d'expansion
+      const newHeight = Math.min(SNAP_EXPANDED, currentHeightRef.current + scrollDelta * expansionRate);
+
+      currentHeightRef.current = newHeight;
+      setDisplayHeight(newHeight);
+
+      if (newHeight >= SNAP_EXPANDED - 1) {
+        setSheetPosition('expanded');
+      }
+    }
+    // Si on est en haut et qu'on essaie de scroller plus haut (pull down)
+    else if (isAtTop && scrollDelta < 0 && currentHeightRef.current > SNAP_PARTIAL + 1) {
+      // Ne rien faire ici - le pull down sera gere par le touch handler
+    }
+
+    lastScrollTop.current = scrollTop;
+  }, []);
+
+  // Handler pour le touch sur le contenu (pour le pull-down quand on est en haut)
+  const contentTouchStartY = useRef(0);
+  const contentTouchStartScrollTop = useRef(0);
+  const isPullingDown = useRef(false);
+
+  const handleContentTouchStart = useCallback((e: React.TouchEvent) => {
+    const scrollContainer = contentRef.current;
+    if (!scrollContainer) return;
+
+    contentTouchStartY.current = e.touches[0].clientY;
+    contentTouchStartScrollTop.current = scrollContainer.scrollTop;
+    isPullingDown.current = false;
+    touchHistory.current = [{ y: e.touches[0].clientY, time: Date.now() }];
+  }, []);
+
+  const handleContentTouchMove = useCallback((e: React.TouchEvent) => {
+    const scrollContainer = contentRef.current;
+    if (!scrollContainer) return;
+
+    const touch = e.touches[0];
+    const currentY = touch.clientY;
+    const deltaY = currentY - contentTouchStartY.current;
+    const isAtTop = scrollContainer.scrollTop <= 2;
+
+    // Ajouter au historique
+    touchHistory.current.push({ y: currentY, time: Date.now() });
+    if (touchHistory.current.length > 5) {
+      touchHistory.current.shift();
+    }
+
+    // Si on est en haut du scroll et qu'on tire vers le bas
+    if (isAtTop && deltaY > 10 && !isScrollingContent.current) {
+      isPullingDown.current = true;
+      isDraggingRef.current = true;
+      setIsDragging(true);
+
+      // Calculer la nouvelle hauteur
+      const deltaPercent = (deltaY / window.innerHeight) * 100;
+      let newHeight = currentHeightRef.current - deltaPercent * 0.8;
+
+      // Resistance elastique en bas
+      if (newHeight < SNAP_COLLAPSED) {
+        const overflow = SNAP_COLLAPSED - newHeight;
+        newHeight = SNAP_COLLAPSED - overflow * 0.2;
+      }
+
+      newHeight = Math.max(5, Math.min(95, newHeight));
+      currentHeightRef.current = newHeight;
+      setDisplayHeight(newHeight);
+
+      e.preventDefault();
+    } else if (!isPullingDown.current) {
+      isScrollingContent.current = true;
+    }
+  }, []);
+
+  const handleContentTouchEnd = useCallback(() => {
+    if (isPullingDown.current) {
+      isDraggingRef.current = false;
+      setIsDragging(false);
+
+      const velocity = calculateVelocity();
+      const { height: targetHeight, position } = getSnapTarget(currentHeightRef.current, -velocity);
+
+      setSheetPosition(position);
+      animateToHeight(targetHeight, -velocity);
+    }
+
+    isPullingDown.current = false;
+    isScrollingContent.current = false;
+    touchHistory.current = [];
+  }, [calculateVelocity, getSnapTarget, animateToHeight]);
+
+  // Bouton pour basculer entre les positions
+  const togglePosition = useCallback(() => {
+    if (sheetPosition === 'expanded') {
+      setSheetPosition('partial');
+      animateToHeight(SNAP_PARTIAL);
+    } else if (sheetPosition === 'partial') {
+      setSheetPosition('collapsed');
+      animateToHeight(SNAP_COLLAPSED);
+    } else {
+      setSheetPosition('partial');
+      animateToHeight(SNAP_PARTIAL);
+    }
+  }, [sheetPosition, animateToHeight]);
+
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, []);
+
+  return (
+    <div className="lg:hidden">
+      {/* Carte en arriere-plan - plein ecran */}
+      <div
+        className="fixed inset-0 z-0"
+        style={{
+          top: '64px',
+          bottom: '60px',
+        }}
+      >
+        <Map
+          markers={markers}
+          panOnHover={false}
+          hoveredId={hoveredId}
+          onMarkerHover={setHoveredId}
+          onBoundsChange={handleBoundsChange}
+          skipFitBounds={skipFitBounds}
+        />
+      </div>
+
+      {/* Bottom Sheet */}
+      <div
+        ref={sheetRef}
+        className="fixed left-0 right-0 z-30 bg-white rounded-t-[20px] shadow-[0_-4px_25px_-5px_rgba(0,0,0,0.15)]"
+        style={{
+          bottom: '60px',
+          height: `${displayHeight}vh`,
+          maxHeight: 'calc(100vh - 124px)',
+          minHeight: '80px',
+          transition: isDragging ? 'none' : 'height 0.01s linear',
+          willChange: 'height',
+          contain: 'layout style',
+        }}
+      >
+        {/* Handle de drag */}
+        <div
+          ref={handleRef}
+          className="relative flex flex-col items-center pt-2 pb-3 cursor-grab active:cursor-grabbing select-none touch-none"
+          onTouchStart={handleHandleTouchStart}
+          onTouchMove={handleHandleTouchMove}
+          onTouchEnd={handleHandleTouchEnd}
+        >
+          {/* Barre de drag visuelle */}
+          <div className="w-9 h-[5px] bg-gray-300 rounded-full" />
+
+          {/* Compteur d'annonces */}
+          <div className="mt-3 flex items-center gap-2">
+            <p className="text-[15px] font-semibold text-gray-900">
+              {listings.length} logement{listings.length !== 1 ? 's' : ''}
+            </p>
+            {isLoadingMap && (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+            )}
+          </div>
+
+          {/* Indicateur de position */}
+          <div className="flex gap-1.5 mt-2">
+            <div
+              className={`h-1.5 rounded-full transition-all duration-200 ${
+                sheetPosition === 'collapsed' ? 'w-4 bg-gray-800' : 'w-1.5 bg-gray-300'
+              }`}
+            />
+            <div
+              className={`h-1.5 rounded-full transition-all duration-200 ${
+                sheetPosition === 'partial' ? 'w-4 bg-gray-800' : 'w-1.5 bg-gray-300'
+              }`}
+            />
+            <div
+              className={`h-1.5 rounded-full transition-all duration-200 ${
+                sheetPosition === 'expanded' ? 'w-4 bg-gray-800' : 'w-1.5 bg-gray-300'
+              }`}
+            />
+          </div>
+        </div>
+
+        {/* Contenu scrollable */}
+        <div
+          ref={contentRef}
+          className="overflow-y-auto overscroll-contain pb-6 px-4"
+          style={{
+            height: 'calc(100% - 75px)',
+            WebkitOverflowScrolling: 'touch',
+          }}
+          onScroll={handleContentScroll}
+          onTouchStart={handleContentTouchStart}
+          onTouchMove={handleContentTouchMove}
+          onTouchEnd={handleContentTouchEnd}
+        >
+          {/* Liste des annonces */}
+          {!isLoadingMap && listings.length > 0 && (
+            <div className="space-y-4">
+              {listings.filter((listing, index, self) =>
+                index === self.findIndex(l => l.id === listing.id)
+              ).map((listing, index) => (
+                <ListingCard
+                  key={listing.id}
+                  listing={listing}
+                  isHovered={hoveredId === listing.id}
+                  onHover={() => setHoveredId(listing.id)}
+                  onLeave={() => setHoveredId(null)}
+                  t={t}
+                  index={index}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Skeletons pendant le chargement */}
+          {isLoadingMap && (
+            <div className="space-y-4">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <ListingCardSkeleton key={`skeleton-mobile-${index}`} />
+              ))}
+            </div>
+          )}
+
+          {/* Message si aucune annonce */}
+          {listings.length === 0 && !isLoadingMap && (
+            <div className="py-8 text-center">
+              <p className="text-gray-600 font-medium">Aucune annonce dans cette zone</p>
+              <p className="mt-1 text-sm text-gray-400">Deplacez la carte pour voir plus d&apos;annonces</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Bouton de controle sur la carte */}
+      <div className="fixed top-20 left-4 z-20 lg:hidden">
+        <button
+          onClick={() => setIsMapSearchEnabled(!isMapSearchEnabled)}
+          className={`flex items-center gap-2 rounded-full px-3 py-2 text-xs font-medium shadow-lg backdrop-blur-sm ${
+            isMapSearchEnabled
+              ? "bg-gray-900/90 text-white"
+              : "bg-white/90 text-gray-700"
+          }`}
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          {isMapSearchEnabled ? "Auto" : "Manuel"}
+        </button>
+      </div>
+
+      {/* Bouton de toggle position */}
+      <div
+        className="fixed right-4 z-20 lg:hidden flex flex-col gap-2"
+        style={{
+          bottom: `calc(${displayHeight}vh + 70px)`,
+          transition: isDragging ? 'none' : 'bottom 0.15s ease-out'
+        }}
+      >
+        <button
+          onClick={togglePosition}
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-lg backdrop-blur-sm active:scale-95 transition-transform"
+          aria-label={sheetPosition === 'collapsed' ? 'Voir les annonces' : 'Voir la carte'}
+        >
+          <svg
+            className={`h-5 w-5 text-gray-700 transition-transform duration-200 ${
+              sheetPosition === 'collapsed' ? 'rotate-180' : ''
+            }`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // Helper pour comparer les bounds (éviter les re-fetches inutiles)
 // Détecte les micro-mouvements (quelques pixels / millimètres sur la carte)
 function boundsAreEqual(
@@ -340,21 +875,12 @@ export default function ListingsWithMap({
   const [totalCount, setTotalCount] = useState(initialListings.length);
   const [isMapSearchEnabled, setIsMapSearchEnabled] = useState(true);
   const [skipFitBounds, setSkipFitBounds] = useState(false);
-  const [mobileSheetPosition, setMobileSheetPosition] = useState<'collapsed' | 'partial' | 'expanded'>('partial');
-  const [isDragging, setIsDragging] = useState(false);
-  const [sheetHeight, setSheetHeight] = useState(45); // pourcentage de la hauteur
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const isFirstLoad = useRef(true);
   const lastFetchedBounds = useRef<{ north: number; south: number; east: number; west: number } | null>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
-  const sheetRef = useRef<HTMLDivElement>(null);
-  const dragStartY = useRef(0);
-  const dragStartHeight = useRef(0);
-  const lastTouchY = useRef(0);
-  const lastTouchTime = useRef(0);
-  const velocityY = useRef(0);
 
   // Tracker si on a fait un fetch manuel (pour éviter de re-fitBounds)
   const hasFetchedFromMapRef = useRef(false);
@@ -758,411 +1284,18 @@ export default function ListingsWithMap({
       </div>
 
       {/* ========== MOBILE: Carte plein écran + Bottom Sheet style Airbnb ========== */}
-      <div className="lg:hidden">
-        {/* Carte en arrière-plan - plein écran */}
-        <div
-          className="fixed inset-0 z-0"
-          style={{
-            top: '64px',
-            bottom: '60px',
-          }}
-        >
-          <Map
-            markers={markers}
-            panOnHover={false}
-            hoveredId={hoveredId}
-            onMarkerHover={setHoveredId}
-            onBoundsChange={handleBoundsChange}
-            skipFitBounds={skipFitBounds}
-          />
-        </div>
-
-        {/* Bottom Sheet draggable - Style Airbnb */}
-        <div
-          ref={sheetRef}
-          className="fixed left-0 right-0 z-30 bg-white rounded-t-[20px] shadow-[0_-4px_25px_-5px_rgba(0,0,0,0.15)]"
-          style={{
-            bottom: '60px',
-            height: `${sheetHeight}vh`,
-            maxHeight: 'calc(100vh - 124px)',
-            minHeight: '80px',
-            transition: isDragging ? 'none' : 'height 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-            willChange: 'height',
-            touchAction: 'none',
-          }}
-        >
-          {/* Handle de drag - Zone tactile agrandie */}
-          <div
-            className="relative flex flex-col items-center pt-2 pb-3 cursor-grab active:cursor-grabbing select-none"
-            style={{ touchAction: 'none' }}
-            onTouchStart={(e) => {
-              const touch = e.touches[0];
-              setIsDragging(true);
-              dragStartY.current = touch.clientY;
-              dragStartHeight.current = sheetHeight;
-              lastTouchY.current = touch.clientY;
-              lastTouchTime.current = Date.now();
-              velocityY.current = 0;
-            }}
-            onTouchMove={(e) => {
-              if (!isDragging) return;
-              e.preventDefault();
-
-              const touch = e.touches[0];
-              const currentY = touch.clientY;
-              const currentTime = Date.now();
-
-              // Calculer la vélocité (pixels par milliseconde)
-              const timeDelta = currentTime - lastTouchTime.current;
-              if (timeDelta > 0) {
-                const instantVelocity = (lastTouchY.current - currentY) / timeDelta;
-                // Lissage de la vélocité avec moyenne pondérée
-                velocityY.current = velocityY.current * 0.7 + instantVelocity * 0.3;
-              }
-
-              lastTouchY.current = currentY;
-              lastTouchTime.current = currentTime;
-
-              // Calculer la nouvelle hauteur
-              const deltaY = dragStartY.current - currentY;
-              const deltaPercent = (deltaY / window.innerHeight) * 100;
-
-              // Limites avec résistance élastique aux bords
-              const rawHeight = dragStartHeight.current + deltaPercent;
-              let newHeight: number;
-
-              if (rawHeight > 88) {
-                // Résistance élastique en haut
-                const overflow = rawHeight - 88;
-                newHeight = 88 + overflow * 0.15;
-              } else if (rawHeight < 12) {
-                // Résistance élastique en bas
-                const overflow = 12 - rawHeight;
-                newHeight = 12 - overflow * 0.15;
-              } else {
-                newHeight = rawHeight;
-              }
-
-              setSheetHeight(Math.min(95, Math.max(5, newHeight)));
-            }}
-            onTouchEnd={() => {
-              setIsDragging(false);
-
-              // Points de snap: collapsed (12%), partial (45%), expanded (88%)
-              const SNAP_COLLAPSED = 12;
-              const SNAP_PARTIAL = 45;
-              const SNAP_EXPANDED = 88;
-
-              // Seuil de vélocité pour déclencher un snap directionnel
-              const VELOCITY_THRESHOLD = 0.25; // pixels/ms - plus bas = plus sensible
-
-              let targetHeight: number;
-              let targetPosition: 'collapsed' | 'partial' | 'expanded';
-
-              // Si la vélocité est suffisante, snap dans la direction du mouvement
-              if (Math.abs(velocityY.current) > VELOCITY_THRESHOLD) {
-                if (velocityY.current > 0) {
-                  // Mouvement vers le haut (agrandir)
-                  if (sheetHeight < SNAP_PARTIAL) {
-                    targetHeight = SNAP_PARTIAL;
-                    targetPosition = 'partial';
-                  } else {
-                    targetHeight = SNAP_EXPANDED;
-                    targetPosition = 'expanded';
-                  }
-                } else {
-                  // Mouvement vers le bas (réduire)
-                  if (sheetHeight > SNAP_PARTIAL) {
-                    targetHeight = SNAP_PARTIAL;
-                    targetPosition = 'partial';
-                  } else {
-                    targetHeight = SNAP_COLLAPSED;
-                    targetPosition = 'collapsed';
-                  }
-                }
-              } else {
-                // Snap au point le plus proche basé sur la position
-                const distToCollapsed = Math.abs(sheetHeight - SNAP_COLLAPSED);
-                const distToPartial = Math.abs(sheetHeight - SNAP_PARTIAL);
-                const distToExpanded = Math.abs(sheetHeight - SNAP_EXPANDED);
-
-                if (distToCollapsed <= distToPartial && distToCollapsed <= distToExpanded) {
-                  targetHeight = SNAP_COLLAPSED;
-                  targetPosition = 'collapsed';
-                } else if (distToPartial <= distToExpanded) {
-                  targetHeight = SNAP_PARTIAL;
-                  targetPosition = 'partial';
-                } else {
-                  targetHeight = SNAP_EXPANDED;
-                  targetPosition = 'expanded';
-                }
-              }
-
-              setSheetHeight(targetHeight);
-              setMobileSheetPosition(targetPosition);
-              velocityY.current = 0;
-            }}
-          >
-            {/* Barre de drag visuelle */}
-            <div className="w-9 h-[5px] bg-gray-300 rounded-full" />
-
-            {/* Compteur d'annonces */}
-            <div className="mt-3 flex items-center gap-2">
-              <p className="text-[15px] font-semibold text-gray-900">
-                {listings.length} logement{listings.length !== 1 ? 's' : ''}
-              </p>
-              {isLoadingMap && (
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
-              )}
-            </div>
-
-            {/* Indicateur de position (points) */}
-            <div className="flex gap-1.5 mt-2">
-              <div
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  mobileSheetPosition === 'collapsed' ? 'w-4 bg-gray-800' : 'w-1.5 bg-gray-300'
-                }`}
-              />
-              <div
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  mobileSheetPosition === 'partial' ? 'w-4 bg-gray-800' : 'w-1.5 bg-gray-300'
-                }`}
-              />
-              <div
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  mobileSheetPosition === 'expanded' ? 'w-4 bg-gray-800' : 'w-1.5 bg-gray-300'
-                }`}
-              />
-            </div>
-          </div>
-
-          {/* Contenu scrollable */}
-          <div
-            className="overflow-y-auto overscroll-contain pb-6 px-4"
-            style={{
-              height: 'calc(100% - 75px)',
-              WebkitOverflowScrolling: 'touch',
-            }}
-            onScroll={(e) => {
-              const scrollContainer = e.currentTarget;
-              const scrollTop = scrollContainer.scrollTop;
-              const isAtTop = scrollTop <= 5;
-
-              // Comportement style Airbnb:
-              // - Quand l'utilisateur scroll vers le bas (scrollTop > 0), expand le sheet pour masquer la carte
-              // - Quand l'utilisateur remonte tout en haut (scrollTop = 0), redescendre le sheet pour montrer la carte
-              if (scrollTop > 20 && mobileSheetPosition !== 'expanded') {
-                // L'utilisateur scroll vers le bas -> expand pour masquer la carte
-                setSheetHeight(88);
-                setMobileSheetPosition('expanded');
-              } else if (isAtTop && mobileSheetPosition === 'expanded') {
-                // L'utilisateur est remonté tout en haut -> montrer la carte
-                setSheetHeight(45);
-                setMobileSheetPosition('partial');
-              }
-            }}
-            onTouchStart={(e) => {
-              // Permettre le scroll du contenu seulement si on n'est pas en train de drag le sheet
-              const scrollContainer = e.currentTarget;
-              const isAtTop = scrollContainer.scrollTop <= 5;
-
-              // Si on est en haut du scroll et qu'on tire vers le bas, on drag le sheet
-              if (isAtTop) {
-                dragStartY.current = e.touches[0].clientY;
-                dragStartHeight.current = sheetHeight;
-                lastTouchY.current = e.touches[0].clientY;
-                lastTouchTime.current = Date.now();
-              }
-            }}
-            onTouchMove={(e) => {
-              const scrollContainer = e.currentTarget;
-              const isAtTop = scrollContainer.scrollTop <= 5;
-              const touch = e.touches[0];
-              const movingDown = touch.clientY > dragStartY.current;
-
-              // Si on est en haut et qu'on tire vers le bas, drag le sheet
-              if (isAtTop && movingDown && !isDragging) {
-                setIsDragging(true);
-              }
-
-              if (isDragging) {
-                e.preventDefault();
-                const currentY = touch.clientY;
-                const currentTime = Date.now();
-
-                const timeDelta = currentTime - lastTouchTime.current;
-                if (timeDelta > 0) {
-                  const instantVelocity = (lastTouchY.current - currentY) / timeDelta;
-                  velocityY.current = velocityY.current * 0.7 + instantVelocity * 0.3;
-                }
-
-                lastTouchY.current = currentY;
-                lastTouchTime.current = currentTime;
-
-                const deltaY = dragStartY.current - currentY;
-                const deltaPercent = (deltaY / window.innerHeight) * 100;
-                const rawHeight = dragStartHeight.current + deltaPercent;
-
-                let newHeight: number;
-                if (rawHeight > 88) {
-                  const overflow = rawHeight - 88;
-                  newHeight = 88 + overflow * 0.15;
-                } else if (rawHeight < 12) {
-                  const overflow = 12 - rawHeight;
-                  newHeight = 12 - overflow * 0.15;
-                } else {
-                  newHeight = rawHeight;
-                }
-
-                setSheetHeight(Math.min(95, Math.max(5, newHeight)));
-              }
-            }}
-            onTouchEnd={() => {
-              if (isDragging) {
-                setIsDragging(false);
-
-                const SNAP_COLLAPSED = 12;
-                const SNAP_PARTIAL = 45;
-                const SNAP_EXPANDED = 88;
-                const VELOCITY_THRESHOLD = 0.25;
-
-                let targetHeight: number;
-                let targetPosition: 'collapsed' | 'partial' | 'expanded';
-
-                if (Math.abs(velocityY.current) > VELOCITY_THRESHOLD) {
-                  if (velocityY.current > 0) {
-                    if (sheetHeight < SNAP_PARTIAL) {
-                      targetHeight = SNAP_PARTIAL;
-                      targetPosition = 'partial';
-                    } else {
-                      targetHeight = SNAP_EXPANDED;
-                      targetPosition = 'expanded';
-                    }
-                  } else {
-                    if (sheetHeight > SNAP_PARTIAL) {
-                      targetHeight = SNAP_PARTIAL;
-                      targetPosition = 'partial';
-                    } else {
-                      targetHeight = SNAP_COLLAPSED;
-                      targetPosition = 'collapsed';
-                    }
-                  }
-                } else {
-                  const distToCollapsed = Math.abs(sheetHeight - SNAP_COLLAPSED);
-                  const distToPartial = Math.abs(sheetHeight - SNAP_PARTIAL);
-                  const distToExpanded = Math.abs(sheetHeight - SNAP_EXPANDED);
-
-                  if (distToCollapsed <= distToPartial && distToCollapsed <= distToExpanded) {
-                    targetHeight = SNAP_COLLAPSED;
-                    targetPosition = 'collapsed';
-                  } else if (distToPartial <= distToExpanded) {
-                    targetHeight = SNAP_PARTIAL;
-                    targetPosition = 'partial';
-                  } else {
-                    targetHeight = SNAP_EXPANDED;
-                    targetPosition = 'expanded';
-                  }
-                }
-
-                setSheetHeight(targetHeight);
-                setMobileSheetPosition(targetPosition);
-                velocityY.current = 0;
-              }
-            }}
-          >
-            {/* Liste des annonces */}
-            {!isLoadingMap && listings.length > 0 && (
-              <div className="space-y-4">
-                {listings.filter((listing, index, self) =>
-                  index === self.findIndex(l => l.id === listing.id)
-                ).map((listing, index) => (
-                  <ListingCard
-                    key={listing.id}
-                    listing={listing}
-                    isHovered={hoveredId === listing.id}
-                    onHover={() => setHoveredId(listing.id)}
-                    onLeave={() => setHoveredId(null)}
-                    t={t}
-                    index={index}
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* Skeletons pendant le chargement */}
-            {isLoadingMap && (
-              <div className="space-y-4">
-                {Array.from({ length: 4 }).map((_, index) => (
-                  <ListingCardSkeleton key={`skeleton-mobile-${index}`} />
-                ))}
-              </div>
-            )}
-
-            {/* Message si aucune annonce */}
-            {listings.length === 0 && !isLoadingMap && (
-              <div className="py-8 text-center">
-                <p className="text-gray-600 font-medium">Aucune annonce dans cette zone</p>
-                <p className="mt-1 text-sm text-gray-400">Déplacez la carte pour voir plus d&apos;annonces</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Bouton de contrôle sur la carte */}
-        <div className="fixed top-20 left-4 z-20">
-          <button
-            onClick={() => setIsMapSearchEnabled(!isMapSearchEnabled)}
-            className={`flex items-center gap-2 rounded-full px-3 py-2 text-xs font-medium shadow-lg backdrop-blur-sm ${
-              isMapSearchEnabled
-                ? "bg-gray-900/90 text-white"
-                : "bg-white/90 text-gray-700"
-            }`}
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            {isMapSearchEnabled ? "Auto" : "Manuel"}
-          </button>
-        </div>
-
-        {/* Boutons de snap rapide */}
-        <div
-          className="fixed right-4 z-20 flex flex-col gap-2"
-          style={{
-            bottom: `calc(${sheetHeight}vh + 70px)`,
-            transition: isDragging ? 'none' : 'bottom 0.35s cubic-bezier(0.32, 0.72, 0, 1)'
-          }}
-        >
-          <button
-            onClick={() => {
-              if (mobileSheetPosition === 'expanded') {
-                setSheetHeight(45);
-                setMobileSheetPosition('partial');
-              } else if (mobileSheetPosition === 'partial') {
-                setSheetHeight(12);
-                setMobileSheetPosition('collapsed');
-              } else {
-                setSheetHeight(45);
-                setMobileSheetPosition('partial');
-              }
-            }}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 shadow-lg backdrop-blur-sm"
-            aria-label={mobileSheetPosition === 'collapsed' ? 'Voir les annonces' : 'Voir la carte'}
-          >
-            <svg
-              className={`h-5 w-5 text-gray-700 transition-transform duration-300 ${
-                mobileSheetPosition === 'collapsed' ? 'rotate-180' : ''
-              }`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </button>
-        </div>
-      </div>
+      <MobileBottomSheet
+        listings={listings}
+        markers={markers}
+        hoveredId={hoveredId}
+        setHoveredId={setHoveredId}
+        isLoadingMap={isLoadingMap}
+        isMapSearchEnabled={isMapSearchEnabled}
+        setIsMapSearchEnabled={setIsMapSearchEnabled}
+        handleBoundsChange={handleBoundsChange}
+        skipFitBounds={skipFitBounds}
+        t={t}
+      />
     </div>
   );
 }
