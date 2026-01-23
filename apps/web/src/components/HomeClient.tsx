@@ -526,9 +526,9 @@ function ListingCard({ card, index }: { card: ListingCard; index: number }) {
                 setImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
               }}
               aria-label="Image precedente"
-              className={`absolute left-1.5 top-1/2 -translate-y-1/2 flex h-3.5 w-3.5 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-white/60 sm:bg-white/90 sm:shadow-sm sm:border sm:border-gray-200/50 transition-all sm:hover:bg-white sm:hover:scale-105 sm:hover:shadow-md z-10 ${isHovered ? 'sm:opacity-100' : 'sm:opacity-0'}`}
+              className={`absolute left-1.5 top-1/2 -translate-y-1/2 flex h-3 w-3 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-white/50 sm:bg-white/90 sm:shadow-sm sm:border sm:border-gray-200/50 transition-all sm:hover:bg-white sm:hover:scale-105 sm:hover:shadow-md z-10 ${isHovered ? 'sm:opacity-100' : 'sm:opacity-0'}`}
             >
-              <svg className="h-2 w-2 sm:h-3 sm:w-3 text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <svg className="h-1.5 w-1.5 sm:h-3 sm:w-3 text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
@@ -539,9 +539,9 @@ function ListingCard({ card, index }: { card: ListingCard; index: number }) {
                 setImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
               }}
               aria-label="Image suivante"
-              className={`absolute right-1.5 top-1/2 -translate-y-1/2 flex h-3.5 w-3.5 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-white/60 sm:bg-white/90 sm:shadow-sm sm:border sm:border-gray-200/50 transition-all sm:hover:bg-white sm:hover:scale-105 sm:hover:shadow-md z-10 ${isHovered ? 'sm:opacity-100' : 'sm:opacity-0'}`}
+              className={`absolute right-1.5 top-1/2 -translate-y-1/2 flex h-3 w-3 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-white/50 sm:bg-white/90 sm:shadow-sm sm:border sm:border-gray-200/50 transition-all sm:hover:bg-white sm:hover:scale-105 sm:hover:shadow-md z-10 ${isHovered ? 'sm:opacity-100' : 'sm:opacity-0'}`}
             >
-              <svg className="h-2 w-2 sm:h-3 sm:w-3 text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <svg className="h-1.5 w-1.5 sm:h-3 sm:w-3 text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>
@@ -1384,7 +1384,7 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
                     <div className="-mx-4 px-4 overflow-x-auto scrollbar-hide">
                       <div className="flex gap-3" style={{ width: 'max-content' }}>
                         {catCards.slice(0, 10).map((card, i) => (
-                          <div key={card.id} className="w-[260px] flex-shrink-0">
+                          <div key={card.id} className="w-[240px] flex-shrink-0">
                             <ListingCard card={card} index={i} />
                           </div>
                         ))}
