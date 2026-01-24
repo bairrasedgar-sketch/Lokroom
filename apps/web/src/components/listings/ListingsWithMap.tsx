@@ -944,7 +944,7 @@ export default function ListingsWithMap({
         {/* Bottom Sheet draggable - Style Airbnb */}
         <div
           ref={sheetRef}
-          className="fixed left-0 right-0 z-30 bg-white rounded-t-[20px] shadow-[0_-4px_25px_-5px_rgba(0,0,0,0.15)]"
+          className="fixed left-0 right-0 z-40 bg-white rounded-t-[20px] shadow-[0_-4px_25px_-5px_rgba(0,0,0,0.15)]"
           style={{
             bottom: 0,
             height: `${sheetHeight}vh`,
