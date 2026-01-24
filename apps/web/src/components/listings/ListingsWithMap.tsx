@@ -222,64 +222,37 @@ function ListingCard({
           <FavoriteButton listingId={listing.id} size={24} variant="card" />
         </div>
 
-        {/* Flèches de navigation - style différent mobile vs desktop */}
-        {hasMultipleImages && (
+        {/* Flèches de navigation - Desktop uniquement (sur mobile on utilise le swipe) */}
+        {hasMultipleImages && !isMobile && (
           <>
-            {isMobile ? (
-              /* Mobile: petites flèches transparentes grisées */
-              <>
-                <button
-                  onClick={prevImage}
-                  className="absolute left-1.5 top-1/2 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white/90 backdrop-blur-sm transition-all active:scale-90"
-                  aria-label="Image précédente"
-                >
-                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                <button
-                  onClick={nextImage}
-                  className="absolute right-1.5 top-1/2 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white/90 backdrop-blur-sm transition-all active:scale-90"
-                  aria-label="Image suivante"
-                >
-                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </>
-            ) : (
-              /* Desktop: flèches blanches au hover */
-              <>
-                <button
-                  onClick={prevImage}
-                  className={`absolute left-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-gray-700 shadow-md border border-gray-200/50 transition-all hover:bg-white hover:scale-105 hover:shadow-lg active:scale-95 ${
-                    isHovered ? "opacity-100" : "opacity-0"
-                  }`}
-                  aria-label="Image précédente"
-                >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                <button
-                  onClick={nextImage}
-                  className={`absolute right-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-gray-700 shadow-md border border-gray-200/50 transition-all hover:bg-white hover:scale-105 hover:shadow-lg active:scale-95 ${
-                    isHovered ? "opacity-100" : "opacity-0"
-                  }`}
-                  aria-label="Image suivante"
-                >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </>
-            )}
+            <button
+              onClick={prevImage}
+              className={`absolute left-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-gray-700 shadow-md border border-gray-200/50 transition-all hover:bg-white hover:scale-105 hover:shadow-lg active:scale-95 ${
+                isHovered ? "opacity-100" : "opacity-0"
+              }`}
+              aria-label="Image précédente"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button
+              onClick={nextImage}
+              className={`absolute right-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-gray-700 shadow-md border border-gray-200/50 transition-all hover:bg-white hover:scale-105 hover:shadow-lg active:scale-95 ${
+                isHovered ? "opacity-100" : "opacity-0"
+              }`}
+              aria-label="Image suivante"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
           </>
         )}
 
         {/* Points indicateurs d'images */}
         {hasMultipleImages && (
-          <div className={`absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 gap-1 ${isMobile ? "" : "hidden md:flex"}`}>
+          <div className={`absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 ${isMobile ? "gap-[3px]" : "gap-1 hidden md:flex"}`}>
             {images.slice(0, 5).map((_, idx) => (
               <button
                 key={idx}
@@ -290,7 +263,7 @@ function ListingCard({
                 }}
                 className={`rounded-full transition-all ${
                   isMobile
-                    ? `h-1.5 ${idx === currentImageIndex ? "w-1.5 bg-white" : "w-1.5 bg-white/50"}`
+                    ? `h-[5px] w-[5px] ${idx === currentImageIndex ? "bg-white" : "bg-white/40"}`
                     : `h-1.5 ${idx === currentImageIndex ? "w-2 bg-white" : "w-1.5 bg-white/60 hover:bg-white/80"}`
                 }`}
                 aria-label={`Voir image ${idx + 1}`}
