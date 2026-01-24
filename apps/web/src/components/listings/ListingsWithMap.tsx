@@ -948,7 +948,7 @@ export default function ListingsWithMap({
           style={{
             bottom: 0,
             height: `${sheetHeight}vh`,
-            maxHeight: 'calc(100vh - 140px)',
+            maxHeight: 'calc(100vh - 160px)',
             minHeight: '60px',
             transition: isDragging ? 'none' : 'height 0.35s cubic-bezier(0.32, 0.72, 0, 1)',
             willChange: 'height',
