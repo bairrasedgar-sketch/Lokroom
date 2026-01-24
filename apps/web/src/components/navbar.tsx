@@ -341,6 +341,14 @@ export default function Navbar() {
   const [currentLocale, setCurrentLocale] = useState<LocaleCode>("fr");
   const [currentCurrency, setCurrentCurrency] = useState<string>("EUR");
 
+  // Détecter iOS côté client
+  const [isIOS, setIsIOS] = useState(false);
+
+  useEffect(() => {
+    const userAgent = navigator.userAgent.toLowerCase();
+    setIsIOS(/iphone|ipad|ipod/.test(userAgent));
+  }, []);
+
   // Récupérer les catégories et l'état du scroll depuis le contexte
   const searchBarContext = useSearchBarSafe();
   const showSearchBar = searchBarContext?.showInNavbar || false;
@@ -445,7 +453,7 @@ export default function Navbar() {
 
             {/* Bouton Utiliser l'appli */}
             <a
-              href={typeof navigator !== 'undefined' && /iphone|ipad|ipod/i.test(navigator.userAgent)
+              href={isIOS
                 ? "https://apps.apple.com/app/lokroom/id123456789"
                 : "https://play.google.com/store/apps/details?id=com.lokroom.app"}
               className="bg-[#0066FF] hover:bg-[#0052CC] active:bg-[#004499] text-white text-[11px] font-semibold px-3 py-1.5 rounded-full transition-colors shadow-sm flex items-center justify-center leading-none"
