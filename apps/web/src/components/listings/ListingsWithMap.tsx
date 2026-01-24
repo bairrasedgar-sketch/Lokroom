@@ -179,37 +179,37 @@ function ListingCard({
           <FavoriteButton listingId={listing.id} size={24} variant="card" />
         </div>
 
-        {/* Flèches de navigation (visibles au hover) - style Airbnb */}
+        {/* Flèches de navigation - toujours visibles sur mobile, au hover sur desktop */}
         {hasMultipleImages && (
           <>
             <button
               onClick={prevImage}
-              className={`absolute left-2 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-sm border border-gray-200/50 transition-all hover:bg-white hover:scale-105 hover:shadow-md ${
-                isHovered ? "opacity-100" : "opacity-0"
+              className={`absolute left-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-gray-700 shadow-md border border-gray-200/50 transition-all hover:bg-white hover:scale-105 hover:shadow-lg active:scale-95 ${
+                isHovered ? "opacity-100" : "opacity-100 md:opacity-0"
               }`}
               aria-label="Image précédente"
             >
-              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <button
               onClick={nextImage}
-              className={`absolute right-2 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-sm border border-gray-200/50 transition-all hover:bg-white hover:scale-105 hover:shadow-md ${
-                isHovered ? "opacity-100" : "opacity-0"
+              className={`absolute right-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-gray-700 shadow-md border border-gray-200/50 transition-all hover:bg-white hover:scale-105 hover:shadow-lg active:scale-95 ${
+                isHovered ? "opacity-100" : "opacity-100 md:opacity-0"
               }`}
               aria-label="Image suivante"
             >
-              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
               </svg>
             </button>
           </>
         )}
 
-        {/* Points indicateurs d'images */}
+        {/* Points indicateurs d'images - cachés sur mobile, visibles sur desktop */}
         {hasMultipleImages && (
-          <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
+          <div className="absolute bottom-3 left-1/2 z-10 hidden md:flex -translate-x-1/2 gap-1.5">
             {images.slice(0, 5).map((_, idx) => (
               <button
                 key={idx}
