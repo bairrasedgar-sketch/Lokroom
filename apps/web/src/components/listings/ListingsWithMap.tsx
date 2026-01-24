@@ -145,11 +145,9 @@ function ListingCard({
   const [touchStartTime, setTouchStartTime] = useState(0);
   const [swipeDirection, setSwipeDirection] = useState<'horizontal' | 'vertical' | null>(null);
   const [dragOffset, setDragOffset] = useState(0);
-  const [isTouchingImage, setIsTouchingImage] = useState(false);
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    e.stopPropagation();
     const touch = e.touches[0];
     setTouchStartX(touch.clientX);
     setTouchEndX(touch.clientX);
@@ -157,12 +155,9 @@ function ListingCard({
     setTouchStartTime(Date.now());
     setSwipeDirection(null);
     setDragOffset(0);
-    setIsTouchingImage(true);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (!isTouchingImage) return;
-
     const touch = e.touches[0];
     const currentX = touch.clientX;
     const currentY = touch.clientY;
@@ -171,35 +166,32 @@ function ListingCard({
     const absDiffX = Math.abs(diffX);
     const absDiffY = Math.abs(diffY);
 
-    // Déterminer la direction du swipe une seule fois au début
-    if (swipeDirection === null && (absDiffX > 3 || absDiffY > 3)) {
-      if (absDiffX >= absDiffY) {
+    // Déterminer la direction une seule fois
+    if (swipeDirection === null && (absDiffX > 8 || absDiffY > 8)) {
+      // Si horizontal est clairement plus grand (1.5x), c'est un swipe d'image
+      if (absDiffX > absDiffY * 1.5) {
         setSwipeDirection('horizontal');
       } else {
+        // Sinon c'est vertical, on laisse le scroll normal
         setSwipeDirection('vertical');
-        // Si c'est vertical, on arrête de gérer le touch sur l'image
-        setIsTouchingImage(false);
         return;
       }
     }
 
-    // Si c'est un swipe horizontal, TOUJOURS bloquer le scroll
+    // Si c'est horizontal, on gère le swipe d'image
     if (swipeDirection === 'horizontal') {
       e.preventDefault();
       e.stopPropagation();
       setTouchEndX(currentX);
 
-      // Calculer le décalage pour suivre le doigt
       let offset = diffX;
-
-      // Résistance élastique aux bords (mais on bloque quand même le scroll)
+      // Résistance aux bords
       if (currentImageIndex === 0 && offset > 0) {
         offset = offset * 0.15;
       }
       if (currentImageIndex === images.length - 1 && offset < 0) {
         offset = offset * 0.15;
       }
-
       setDragOffset(offset);
     }
   };
@@ -214,7 +206,6 @@ function ListingCard({
       const swipeDistance = touchEndX - touchStartX;
       const velocity = Math.abs(swipeDistance) / swipeDuration;
 
-      // Changer d'image si swipe rapide OU drag suffisant
       const isQuickSwipe = velocity > 0.25 && Math.abs(swipeDistance) > 15;
       const isLongDrag = Math.abs(dragOffset) > containerWidth * 0.15;
 
@@ -229,7 +220,6 @@ function ListingCard({
 
     setSwipeDirection(null);
     setDragOffset(0);
-    setIsTouchingImage(false);
   };
 
   const locationLabel = [listing.city ?? undefined, listing.country ?? undefined]
@@ -257,7 +247,6 @@ function ListingCard({
         onTouchStart={isMobile && hasMultipleImages ? handleTouchStart : undefined}
         onTouchMove={isMobile && hasMultipleImages ? handleTouchMove : undefined}
         onTouchEnd={isMobile && hasMultipleImages ? handleTouchEnd : undefined}
-        style={isMobile && hasMultipleImages ? { touchAction: 'none' } : undefined}
       >
         <Link
           href={`/listings/${listing.id}`}
