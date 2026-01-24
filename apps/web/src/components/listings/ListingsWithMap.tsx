@@ -143,6 +143,7 @@ function ListingCard({
   // Gestion du swipe sur mobile
   const [isSwiping, setIsSwiping] = useState(false);
   const [touchStartY, setTouchStartY] = useState(0);
+  const imageContainerRef = useRef<HTMLDivElement>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStartX(e.touches[0].clientX);
@@ -157,20 +158,18 @@ function ListingCard({
     const diffX = Math.abs(currentX - touchStartX);
     const diffY = Math.abs(currentY - touchStartY);
 
-    // Si le mouvement horizontal est plus grand que le vertical, c'est un swipe d'image
-    if (diffX > diffY && diffX > 10) {
-      setIsSwiping(true);
+    // Dès qu'on détecte un mouvement horizontal, on bloque tout
+    if (diffX > 5) {
       e.preventDefault();
       e.stopPropagation();
+      setIsSwiping(true);
     }
 
     setTouchEndX(currentX);
   };
 
   const handleTouchEnd = () => {
-    if (!isSwiping) return;
-
-    const swipeThreshold = 50;
+    const swipeThreshold = 30;
     const diff = touchStartX - touchEndX;
 
     if (Math.abs(diff) > swipeThreshold) {
@@ -202,15 +201,18 @@ function ListingCard({
       onMouseLeave={onLeave}
     >
       {/* Image container avec carousel */}
-      <div className={`relative w-full overflow-hidden bg-gray-100 ${
-        isMobile ? "aspect-[4/3.2] rounded-2xl" : "aspect-[4/3] rounded-xl"
-      }`}>
+      <div
+        className={`relative w-full overflow-hidden bg-gray-100 ${
+          isMobile ? "aspect-[4/3.2] rounded-2xl" : "aspect-[4/3] rounded-xl"
+        }`}
+        onTouchStart={isMobile && hasMultipleImages ? handleTouchStart : undefined}
+        onTouchMove={isMobile && hasMultipleImages ? handleTouchMove : undefined}
+        onTouchEnd={isMobile && hasMultipleImages ? handleTouchEnd : undefined}
+        style={isMobile && hasMultipleImages ? { touchAction: 'pan-y pinch-zoom' } : undefined}
+      >
         <Link
           href={`/listings/${listing.id}`}
           className="block h-full w-full"
-          onTouchStart={isMobile && hasMultipleImages ? handleTouchStart : undefined}
-          onTouchMove={isMobile && hasMultipleImages ? handleTouchMove : undefined}
-          onTouchEnd={isMobile && hasMultipleImages ? handleTouchEnd : undefined}
         >
           {images.length > 0 ? (
             <div
