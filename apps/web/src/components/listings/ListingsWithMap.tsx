@@ -140,108 +140,121 @@ function ListingCard({
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
-  // Gestion du swipe sur mobile - Approche "direction lock" comme Airbnb
-  // On utilise touch-action: pan-y sur le container pour laisser le browser gérer le scroll vertical
-  // et on gère uniquement le swipe horizontal en JS
+  // Gestion du swipe sur mobile avec event listeners natifs pour bloquer le scroll
   const [touchStartY, setTouchStartY] = useState(0);
   const [touchStartTime, setTouchStartTime] = useState(0);
-  const [isHorizontalSwipe, setIsHorizontalSwipe] = useState(false);
-  const [directionLocked, setDirectionLocked] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    const touch = e.touches[0];
-    setTouchStartX(touch.clientX);
-    setTouchEndX(touch.clientX);
-    setTouchStartY(touch.clientY);
-    setTouchStartTime(Date.now());
-    // Reset direction lock pour chaque nouveau touch
-    setIsHorizontalSwipe(false);
-    setDirectionLocked(false);
-    setDragOffset(0);
-  };
+  // Refs pour le swipe (plus rapide que state pour les events natifs)
+  const touchStartXRef = useRef(0);
+  const touchStartYRef = useRef(0);
+  const isHorizontalSwipeRef = useRef(false);
+  const directionLockedRef = useRef(false);
+  const dragOffsetRef = useRef(0);
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    const touch = e.touches[0];
-    const currentX = touch.clientX;
-    const currentY = touch.clientY;
-    const diffX = currentX - touchStartX;
-    const diffY = currentY - touchStartY;
-    const absDiffX = Math.abs(diffX);
-    const absDiffY = Math.abs(diffY);
+  // Utiliser useEffect pour ajouter des event listeners natifs avec passive: false
+  useEffect(() => {
+    if (!isMobile || !hasMultipleImages) return;
 
-    // Si la direction n'est pas encore verrouillée, la déterminer
-    if (!directionLocked) {
-      // Seuil minimum de 10px pour éviter les faux positifs
-      const LOCK_THRESHOLD = 10;
+    const container = imageContainerRef.current;
+    if (!container) return;
 
-      if (absDiffX >= LOCK_THRESHOLD || absDiffY >= LOCK_THRESHOLD) {
-        // Verrouiller la direction basé sur le mouvement dominant
-        // Ratio 1.2:1 - si horizontal est >= 1.2x vertical, c'est un swipe horizontal
-        const isHorizontal = absDiffX >= absDiffY * 1.2;
-        setDirectionLocked(true);
-        setIsHorizontalSwipe(isHorizontal);
+    const handleTouchStartNative = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      touchStartXRef.current = touch.clientX;
+      touchStartYRef.current = touch.clientY;
+      setTouchStartX(touch.clientX);
+      setTouchEndX(touch.clientX);
+      setTouchStartY(touch.clientY);
+      setTouchStartTime(Date.now());
+      isHorizontalSwipeRef.current = false;
+      directionLockedRef.current = false;
+      dragOffsetRef.current = 0;
+      setDragOffset(0);
+    };
 
-        if (!isHorizontal) {
-          // C'est un scroll vertical - ne rien faire, le browser gère via touch-action: pan-y
+    const handleTouchMoveNative = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      const currentX = touch.clientX;
+      const currentY = touch.clientY;
+      const diffX = currentX - touchStartXRef.current;
+      const diffY = currentY - touchStartYRef.current;
+      const absDiffX = Math.abs(diffX);
+      const absDiffY = Math.abs(diffY);
+
+      // Déterminer la direction une seule fois
+      if (!directionLockedRef.current) {
+        if (absDiffX < 8 && absDiffY < 8) {
+          return; // Pas assez de mouvement
+        }
+
+        // Si horizontal > vertical, c'est un swipe d'image
+        if (absDiffX > absDiffY) {
+          isHorizontalSwipeRef.current = true;
+          directionLockedRef.current = true;
+        } else {
+          // Vertical - laisser le scroll natif
+          isHorizontalSwipeRef.current = false;
+          directionLockedRef.current = true;
           return;
         }
-      } else {
-        // Pas encore assez de mouvement pour décider
-        return;
       }
-    }
 
-    // Si c'est un scroll vertical, laisser le browser gérer
-    if (!isHorizontalSwipe) {
-      return;
-    }
+      // Si c'est un swipe horizontal, bloquer le scroll et gérer le drag
+      if (isHorizontalSwipeRef.current) {
+        e.preventDefault(); // Bloquer le scroll vertical
 
-    // C'est un swipe horizontal - on gère le drag de l'image
-    setTouchEndX(currentX);
+        setTouchEndX(currentX);
 
-    // Calculer l'offset avec résistance élastique aux bords
-    let offset = diffX;
-    if (currentImageIndex === 0 && offset > 0) {
-      // Résistance au début (première image, swipe vers la droite)
-      offset = offset * 0.2;
-    }
-    if (currentImageIndex === images.length - 1 && offset < 0) {
-      // Résistance à la fin (dernière image, swipe vers la gauche)
-      offset = offset * 0.2;
-    }
-    setDragOffset(offset);
-  };
+        let offset = diffX;
+        if (currentImageIndex === 0 && offset > 0) {
+          offset = offset * 0.2;
+        }
+        if (currentImageIndex === images.length - 1 && offset < 0) {
+          offset = offset * 0.2;
+        }
+        dragOffsetRef.current = offset;
+        setDragOffset(offset);
+      }
+    };
 
-  const handleTouchEnd = () => {
-    // Seulement traiter si c'était un swipe horizontal
-    if (isHorizontalSwipe && directionLocked) {
-      const containerWidth = imageContainerRef.current?.offsetWidth || 300;
-      const swipeDuration = Date.now() - touchStartTime;
-      const swipeDistance = touchEndX - touchStartX;
-      const velocity = Math.abs(swipeDistance) / swipeDuration;
+    const handleTouchEndNative = () => {
+      if (isHorizontalSwipeRef.current && directionLockedRef.current) {
+        const containerWidth = container.offsetWidth || 300;
+        const swipeDuration = Date.now() - touchStartTime;
+        const swipeDistance = dragOffsetRef.current;
+        const velocity = Math.abs(swipeDistance) / swipeDuration;
 
-      // Swipe rapide (vélocité > 0.3 px/ms) ou drag long (> 20% de la largeur)
-      const isQuickSwipe = velocity > 0.3 && Math.abs(swipeDistance) > 20;
-      const isLongDrag = Math.abs(dragOffset) > containerWidth * 0.2;
+        const isQuickSwipe = velocity > 0.25 && Math.abs(swipeDistance) > 15;
+        const isLongDrag = Math.abs(swipeDistance) > containerWidth * 0.15;
 
-      if (isQuickSwipe || isLongDrag) {
-        if (swipeDistance < 0 && currentImageIndex < images.length - 1) {
-          // Swipe vers la gauche -> image suivante
-          setCurrentImageIndex(prev => prev + 1);
-        } else if (swipeDistance > 0 && currentImageIndex > 0) {
-          // Swipe vers la droite -> image précédente
-          setCurrentImageIndex(prev => prev - 1);
+        if (isQuickSwipe || isLongDrag) {
+          if (swipeDistance < 0 && currentImageIndex < images.length - 1) {
+            setCurrentImageIndex(prev => prev + 1);
+          } else if (swipeDistance > 0 && currentImageIndex > 0) {
+            setCurrentImageIndex(prev => prev - 1);
+          }
         }
       }
-    }
 
-    // Reset tous les états
-    setIsHorizontalSwipe(false);
-    setDirectionLocked(false);
-    setDragOffset(0);
-  };
+      isHorizontalSwipeRef.current = false;
+      directionLockedRef.current = false;
+      dragOffsetRef.current = 0;
+      setDragOffset(0);
+    };
+
+    // Ajouter les listeners avec passive: false pour pouvoir preventDefault
+    container.addEventListener('touchstart', handleTouchStartNative, { passive: true });
+    container.addEventListener('touchmove', handleTouchMoveNative, { passive: false });
+    container.addEventListener('touchend', handleTouchEndNative, { passive: true });
+
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStartNative);
+      container.removeEventListener('touchmove', handleTouchMoveNative);
+      container.removeEventListener('touchend', handleTouchEndNative);
+    };
+  }, [isMobile, hasMultipleImages, currentImageIndex, images.length, touchStartTime]);
 
   const locationLabel = [listing.city ?? undefined, listing.country ?? undefined]
     .filter(Boolean)
@@ -260,17 +273,11 @@ function ListingCard({
       onMouseLeave={onLeave}
     >
       {/* Image container avec carousel */}
-      {/* touch-action: pan-y permet au browser de gérer le scroll vertical nativement
-          pendant que notre JS gère le swipe horizontal - c'est la clé pour un scroll fluide */}
       <div
         ref={imageContainerRef}
         className={`relative w-full overflow-hidden bg-gray-100 ${
           isMobile ? "aspect-[4/3.2] rounded-2xl" : "aspect-[4/3] rounded-xl"
         }`}
-        style={isMobile && hasMultipleImages ? { touchAction: 'pan-y' } : undefined}
-        onTouchStart={isMobile && hasMultipleImages ? handleTouchStart : undefined}
-        onTouchMove={isMobile && hasMultipleImages ? handleTouchMove : undefined}
-        onTouchEnd={isMobile && hasMultipleImages ? handleTouchEnd : undefined}
       >
         <Link
           href={`/listings/${listing.id}`}
@@ -278,7 +285,7 @@ function ListingCard({
         >
           {images.length > 0 ? (
             <div
-              className={`flex h-full ${isHorizontalSwipe ? '' : 'transition-transform duration-300 ease-out'}`}
+              className={`flex h-full ${dragOffset !== 0 ? '' : 'transition-transform duration-300 ease-out'}`}
               style={{
                 transform: `translateX(calc(-${currentImageIndex * 100}% + ${isMobile ? dragOffset : 0}px))`
               }}
