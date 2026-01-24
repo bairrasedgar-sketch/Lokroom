@@ -167,17 +167,13 @@ function ListingCard({
     const absDiffY = Math.abs(diffY);
 
     // Déterminer la direction une seule fois après un petit mouvement
-    if (swipeDirection === null && (absDiffX > 5 || absDiffY > 5)) {
-      if (absDiffX > absDiffY) {
-        setSwipeDirection('horizontal');
-        // Bloquer immédiatement le scroll
-        e.preventDefault();
-      } else if (absDiffY > absDiffX * 2) {
-        // Seulement vertical si c'est VRAIMENT vertical (2x plus que horizontal)
+    if (swipeDirection === null && (absDiffX > 3 || absDiffY > 3)) {
+      // Seulement vertical si c'est VRAIMENT vertical (3x plus que horizontal)
+      if (absDiffY > absDiffX * 3 && absDiffY > 10) {
         setSwipeDirection('vertical');
         return;
       } else {
-        // Dans le doute, on considère horizontal
+        // Sinon c'est horizontal - bloquer le scroll
         setSwipeDirection('horizontal');
         e.preventDefault();
       }
