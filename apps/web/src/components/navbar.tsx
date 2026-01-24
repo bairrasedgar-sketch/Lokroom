@@ -670,210 +670,25 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Burger mobile */}
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            aria-label="Ouvrir le menu"
-            aria-expanded={open ? "true" : "false"}
-            className="inline-flex h-9 w-9 items-center justify-center rounded hover:bg-gray-100 md:hidden"
-          >
-            <span className="sr-only">Menu</span>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M3 6h18M3 12h18M3 18h18"
-                stroke="currentColor"
-                strokeWidth="2"
-              />
-            </svg>
-          </button>
-        </div>
-
-        {/* Panneau mobile */}
-        {open && (
-          <div className="border-t border-neutral-200 bg-neutral-50 md:hidden">
-            <nav className="mx-auto flex max-w-5xl flex-col gap-1 px-4 py-3">
-              <Link
-                href="/listings"
-                className={`rounded-lg px-3 py-2 hover:bg-gray-100 ${
-                  pathname?.startsWith("/listings") ? "font-semibold" : ""
-                }`}
-              >
-                {t.navListings}
-              </Link>
-
-              {isLoggedIn && (
-                <>
-                  <Link
-                    href="/bookings"
-                    className={`rounded-lg px-3 py-2 hover:bg-gray-100 ${
-                      pathname === "/bookings" ? "font-semibold" : ""
-                    }`}
-                  >
-                    {t.navBookings}
-                  </Link>
-                  <Link
-                    href="/profile"
-                    className={`rounded-lg px-3 py-2 hover:bg-gray-100 ${
-                      pathname === "/profile" ? "font-semibold" : ""
-                    }`}
-                  >
-                    {t.navProfile}
-                  </Link>
-
-                  <div className="my-2 border-t border-gray-100" />
-
-                  {/* Liens supplémentaires pour utilisateurs connectés */}
-                  <Link
-                    href="/wishlists"
-                    className="rounded-lg px-3 py-2 hover:bg-gray-100"
-                  >
-                    Favoris
-                  </Link>
-                  <Link
-                    href="/notifications"
-                    className="rounded-lg px-3 py-2 hover:bg-gray-100 flex items-center justify-between"
-                  >
-                    <span>Notifications</span>
-                  </Link>
-                  <Link
-                    href="/messages"
-                    className="rounded-lg px-3 py-2 hover:bg-gray-100"
-                  >
-                    Messages
-                  </Link>
-                  <Link
-                    href="/account"
-                    className="rounded-lg px-3 py-2 hover:bg-gray-100"
-                  >
-                    Paramètres
-                  </Link>
-
-                  <div className="my-2 border-t border-gray-100" />
-
-                  {/* Bouton unique : texte change selon statut hôte */}
-                  <Link
-                    href="/listings/new"
-                    className="rounded-lg px-3 py-2 font-medium hover:bg-gray-100"
-                  >
-                    {isHost ? (t.createListing || "Créer une annonce") : t.becomeHost}
-                  </Link>
-
-                  {/* Liens supplémentaires pour hôtes */}
-                  {isHost && (
-                    <>
-                      <div className="my-2 border-t border-gray-100" />
-                      <div className="px-3 py-1">
-                        <span className="text-xs font-semibold uppercase text-gray-400">Espace hôte</span>
-                      </div>
-                      <Link
-                        href="/host"
-                        className={`rounded-lg px-3 py-2 hover:bg-gray-100 flex items-center gap-2 ${
-                          pathname === "/host" ? "font-semibold bg-gray-50" : ""
-                        }`}
-                      >
-                        <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
-                        </svg>
-                        Tableau de bord
-                      </Link>
-                      <Link
-                        href="/host/listings"
-                        className={`rounded-lg px-3 py-2 hover:bg-gray-100 flex items-center gap-2 ${
-                          pathname === "/host/listings" ? "font-semibold" : ""
-                        }`}
-                      >
-                        <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545m0 6.205l3 1m1.5.5l-1.5-.5M6.75 7.364V3h-3v18m3-13.636l10.5-3.819" />
-                        </svg>
-                        Mes annonces
-                      </Link>
-                      <Link
-                        href="/host/bookings"
-                        className={`rounded-lg px-3 py-2 hover:bg-gray-100 flex items-center gap-2 ${
-                          pathname === "/host/bookings" ? "font-semibold" : ""
-                        }`}
-                      >
-                        <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                        </svg>
-                        Réservations
-                      </Link>
-                      <Link
-                        href="/host/calendar"
-                        className={`rounded-lg px-3 py-2 hover:bg-gray-100 flex items-center gap-2 ${
-                          pathname === "/host/calendar" ? "font-semibold" : ""
-                        }`}
-                      >
-                        <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        Calendrier
-                      </Link>
-                      <Link
-                        href="/host/analytics"
-                        className={`rounded-lg px-3 py-2 hover:bg-gray-100 flex items-center gap-2 ${
-                          pathname === "/host/analytics" ? "font-semibold" : ""
-                        }`}
-                      >
-                        <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-                        </svg>
-                        Analytics
-                      </Link>
-                      <Link
-                        href="/host/wallet"
-                        className={`rounded-lg px-3 py-2 hover:bg-gray-100 flex items-center gap-2 ${
-                          pathname === "/host/wallet" ? "font-semibold" : ""
-                        }`}
-                      >
-                        <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3" />
-                        </svg>
-                        Portefeuille
-                      </Link>
-                    </>
-                  )}
-                </>
-              )}
-
-              <div className="mt-3 flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setLocaleModalOpen(true)}
-                  className="flex items-center gap-1.5 rounded-full border border-gray-300 bg-white px-3 py-2 transition hover:bg-gray-100 hover:shadow-md"
-                  aria-label="Choisir la langue et la devise"
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    className="h-5 w-5 text-gray-700"
-                  >
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M2 12h20" />
-                    <path d="M12 2a15 15 0 0 1 0 20" />
-                    <path d="M12 2a15 15 0 0 0 0 20" />
-                  </svg>
-                  <span className="text-sm font-medium text-gray-700">
-                    {currentLocale.toUpperCase()} {CURRENCY_SYMBOLS[currentCurrency] || "€"}
-                  </span>
-                </button>
-
-                {!isLoggedIn && (
-                  <button
-                    type="button"
-                    onClick={() => setAuthModalOpen(true)}
-                    className="inline-flex flex-1 items-center justify-center rounded-full bg-gray-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800"
-                  >
-                    {t.loginCta}
-                  </button>
-                )}
-              </div>
-            </nav>
+          {/* Burger mobile - REMPLACÉ par bouton Utiliser l'appli */}
+          <div className="flex items-center gap-2 md:hidden">
+            <button
+              type="button"
+              onClick={() => {
+                // Détecter iOS ou Android et rediriger vers le bon store
+                const userAgent = navigator.userAgent.toLowerCase();
+                if (/iphone|ipad|ipod/.test(userAgent)) {
+                  window.location.href = "https://apps.apple.com/app/lokroom/id123456789";
+                } else {
+                  window.location.href = "https://play.google.com/store/apps/details?id=com.lokroom.app";
+                }
+              }}
+              className="bg-[#0066FF] hover:bg-[#0052CC] text-white text-xs font-semibold px-3 py-1.5 rounded-full transition-colors"
+            >
+              Utiliser l'appli
+            </button>
           </div>
-        )}
+        </div>
 
       </header>
 
