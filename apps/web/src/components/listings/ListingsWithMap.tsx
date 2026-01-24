@@ -93,6 +93,7 @@ function ListingCard({
   onLeave,
   t,
   index = 0,
+  isMobile = false,
 }: {
   listing: ListingCardData;
   isHovered: boolean;
@@ -100,10 +101,13 @@ function ListingCard({
   onLeave: () => void;
   t: ListingsWithMapProps["translations"];
   index?: number;
+  isMobile?: boolean;
 }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
+  const [touchStartX, setTouchStartX] = useState(0);
+  const [touchEndX, setTouchEndX] = useState(0);
   const images = listing.images || [];
   const hasMultipleImages = images.length > 1;
 
@@ -118,18 +122,47 @@ function ListingCard({
     return () => clearTimeout(timer);
   }, [index, listing.id]); // Re-trigger quand l'id change
 
-  const nextImage = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const nextImage = (e?: React.MouseEvent | React.TouchEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setSlideDirection('left');
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
   };
 
-  const prevImage = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const prevImage = (e?: React.MouseEvent | React.TouchEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setSlideDirection('right');
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  // Gestion du swipe sur mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.touches[0].clientX);
+    setTouchEndX(e.touches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEndX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    const swipeThreshold = 50;
+    const diff = touchStartX - touchEndX;
+
+    if (Math.abs(diff) > swipeThreshold) {
+      if (diff > 0) {
+        // Swipe vers la gauche -> image suivante
+        nextImage();
+      } else {
+        // Swipe vers la droite -> image précédente
+        prevImage();
+      }
+    }
   };
 
   const locationLabel = [listing.city ?? undefined, listing.country ?? undefined]
@@ -140,15 +173,25 @@ function ListingCard({
 
   return (
     <div
-      className={`group relative flex flex-col overflow-hidden rounded-xl transition-all duration-500 ease-out ${
+      className={`group relative flex flex-col overflow-hidden transition-all duration-500 ease-out ${
+        isMobile ? "rounded-2xl" : "rounded-xl"
+      } ${
         isHovered ? "shadow-lg scale-[1.02]" : ""
       } ${isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
       onMouseEnter={onHover}
       onMouseLeave={onLeave}
     >
-      {/* Image container avec carousel - aspect ratio 4:3 pour moins de hauteur */}
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl bg-gray-100">
-        <Link href={`/listings/${listing.id}`} className="block h-full w-full">
+      {/* Image container avec carousel */}
+      <div className={`relative w-full overflow-hidden bg-gray-100 ${
+        isMobile ? "aspect-[4/3.2] rounded-2xl" : "aspect-[4/3] rounded-xl"
+      }`}>
+        <Link
+          href={`/listings/${listing.id}`}
+          className="block h-full w-full"
+          onTouchStart={isMobile && hasMultipleImages ? handleTouchStart : undefined}
+          onTouchMove={isMobile && hasMultipleImages ? handleTouchMove : undefined}
+          onTouchEnd={isMobile && hasMultipleImages ? handleTouchEnd : undefined}
+        >
           {images.length > 0 ? (
             <div
               className="flex h-full transition-transform duration-300 ease-out"
@@ -179,37 +222,64 @@ function ListingCard({
           <FavoriteButton listingId={listing.id} size={24} variant="card" />
         </div>
 
-        {/* Flèches de navigation - toujours visibles sur mobile, au hover sur desktop */}
+        {/* Flèches de navigation - style différent mobile vs desktop */}
         {hasMultipleImages && (
           <>
-            <button
-              onClick={prevImage}
-              className={`absolute left-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-gray-700 shadow-md border border-gray-200/50 transition-all hover:bg-white hover:scale-105 hover:shadow-lg active:scale-95 ${
-                isHovered ? "opacity-100" : "opacity-100 md:opacity-0"
-              }`}
-              aria-label="Image précédente"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <button
-              onClick={nextImage}
-              className={`absolute right-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-gray-700 shadow-md border border-gray-200/50 transition-all hover:bg-white hover:scale-105 hover:shadow-lg active:scale-95 ${
-                isHovered ? "opacity-100" : "opacity-100 md:opacity-0"
-              }`}
-              aria-label="Image suivante"
-            >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
+            {isMobile ? (
+              /* Mobile: petites flèches transparentes grisées */
+              <>
+                <button
+                  onClick={prevImage}
+                  className="absolute left-1.5 top-1/2 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white/90 backdrop-blur-sm transition-all active:scale-90"
+                  aria-label="Image précédente"
+                >
+                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button
+                  onClick={nextImage}
+                  className="absolute right-1.5 top-1/2 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-black/30 text-white/90 backdrop-blur-sm transition-all active:scale-90"
+                  aria-label="Image suivante"
+                >
+                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </>
+            ) : (
+              /* Desktop: flèches blanches au hover */
+              <>
+                <button
+                  onClick={prevImage}
+                  className={`absolute left-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-gray-700 shadow-md border border-gray-200/50 transition-all hover:bg-white hover:scale-105 hover:shadow-lg active:scale-95 ${
+                    isHovered ? "opacity-100" : "opacity-0"
+                  }`}
+                  aria-label="Image précédente"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button
+                  onClick={nextImage}
+                  className={`absolute right-2 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-gray-700 shadow-md border border-gray-200/50 transition-all hover:bg-white hover:scale-105 hover:shadow-lg active:scale-95 ${
+                    isHovered ? "opacity-100" : "opacity-0"
+                  }`}
+                  aria-label="Image suivante"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </>
+            )}
           </>
         )}
 
-        {/* Points indicateurs d'images - cachés sur mobile, visibles sur desktop */}
+        {/* Points indicateurs d'images */}
         {hasMultipleImages && (
-          <div className="absolute bottom-3 left-1/2 z-10 hidden md:flex -translate-x-1/2 gap-1.5">
+          <div className={`absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 gap-1 ${isMobile ? "" : "hidden md:flex"}`}>
             {images.slice(0, 5).map((_, idx) => (
               <button
                 key={idx}
@@ -218,10 +288,10 @@ function ListingCard({
                   e.stopPropagation();
                   setCurrentImageIndex(idx);
                 }}
-                className={`h-1.5 w-1.5 rounded-full transition-all ${
-                  idx === currentImageIndex
-                    ? "bg-white w-2"
-                    : "bg-white/60 hover:bg-white/80"
+                className={`rounded-full transition-all ${
+                  isMobile
+                    ? `h-1.5 ${idx === currentImageIndex ? "w-1.5 bg-white" : "w-1.5 bg-white/50"}`
+                    : `h-1.5 ${idx === currentImageIndex ? "w-2 bg-white" : "w-1.5 bg-white/60 hover:bg-white/80"}`
                 }`}
                 aria-label={`Voir image ${idx + 1}`}
               />
@@ -1010,7 +1080,7 @@ export default function ListingsWithMap({
           >
             {/* Liste des annonces */}
             {!isLoadingMap && listings.length > 0 && (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {listings.filter((listing, index, self) =>
                   index === self.findIndex(l => l.id === listing.id)
                 ).map((listing, index) => (
@@ -1022,6 +1092,7 @@ export default function ListingsWithMap({
                     onLeave={() => setHoveredId(null)}
                     t={t}
                     index={index}
+                    isMobile={true}
                   />
                 ))}
               </div>
