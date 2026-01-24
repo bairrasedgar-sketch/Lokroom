@@ -252,14 +252,14 @@ function ListingCard({
 
         {/* Points indicateurs d'images */}
         {hasMultipleImages && isMobile && (
-          <div className="absolute left-1/2 z-10 flex -translate-x-1/2 bottom-1 gap-[1px]">
+          <div className="absolute left-1/2 z-10 flex -translate-x-1/2 bottom-1 gap-[2px]">
             {images.slice(0, 5).map((_, idx) => (
               <span
                 key={idx}
                 className={`rounded-full ${
                   idx === currentImageIndex
-                    ? "h-[3px] w-[3px] bg-white"
-                    : "h-[3px] w-[3px] bg-white/40"
+                    ? "h-[5px] w-[5px] bg-white"
+                    : "h-[5px] w-[5px] bg-white/40"
                 }`}
               />
             ))}
