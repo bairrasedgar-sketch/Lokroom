@@ -422,73 +422,42 @@ export default function Navbar() {
     <>
       <header className="sticky top-0 z-50 bg-neutral-50">
         {/* Barre mobile - Logo + Télécharger l'appli + Utiliser l'appli */}
-        <div className="flex md:hidden items-center justify-between px-3 py-2.5 border-b border-gray-100">
+        <div className="flex md:hidden items-center justify-between px-3 py-2 border-b border-gray-100">
           {/* Logo Lok'Room */}
-          <Link href="/" className="flex-shrink-0">
+          <Link href="/" className="flex-shrink-0 flex items-center">
             <Image
               src="/logo.svg"
               alt="Lok'Room"
-              width={100}
-              height={32}
-              className="h-7 w-auto"
+              width={85}
+              height={28}
+              className="h-6 w-auto"
               priority
               unoptimized
             />
           </Link>
 
           {/* Partie droite : Télécharger l'appli + illustration + bouton */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {/* Texte Télécharger l'appli */}
-            <span className="text-[11px] text-gray-600 font-medium hidden min-[360px]:block">
+            <span className="text-[10px] text-gray-500 hidden min-[340px]:block">
               Télécharger l'appli
             </span>
 
-            {/* Illustration stylée - Téléphone avec étoiles */}
-            <div className="relative flex items-center justify-center w-8 h-8">
-              {/* Téléphone stylisé */}
-              <svg className="w-6 h-6 text-gray-700" viewBox="0 0 24 24" fill="none">
-                {/* Corps du téléphone */}
-                <rect x="5" y="2" width="14" height="20" rx="3" stroke="currentColor" strokeWidth="1.5" fill="white"/>
-                {/* Écran */}
-                <rect x="7" y="5" width="10" height="12" rx="1" fill="url(#gradient-screen)"/>
-                {/* Bouton home */}
-                <circle cx="12" cy="19" r="1" fill="currentColor"/>
-                {/* Encoche caméra */}
-                <rect x="10" y="3" width="4" height="1" rx="0.5" fill="currentColor" opacity="0.5"/>
-                {/* Gradient pour l'écran */}
-                <defs>
-                  <linearGradient id="gradient-screen" x1="7" y1="5" x2="17" y2="17" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#0066FF" stopOpacity="0.2"/>
-                    <stop offset="1" stopColor="#0066FF" stopOpacity="0.5"/>
-                  </linearGradient>
-                </defs>
-              </svg>
-              {/* Étoiles scintillantes autour */}
-              <svg className="absolute -top-0.5 -right-0.5 w-3 h-3 text-yellow-400" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2L13.09 8.26L19 9.27L14.5 13.14L15.82 19.02L12 16.27L8.18 19.02L9.5 13.14L5 9.27L10.91 8.26L12 2Z"/>
-              </svg>
-              <svg className="absolute -bottom-0.5 -left-0.5 w-2 h-2 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2L13.09 8.26L19 9.27L14.5 13.14L15.82 19.02L12 16.27L8.18 19.02L9.5 13.14L5 9.27L10.91 8.26L12 2Z"/>
-              </svg>
-              {/* Petit cercle décoratif */}
-              <div className="absolute top-0 left-0 w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"/>
-            </div>
+            {/* Flèche animée vers le bouton */}
+            <svg className="w-4 h-4 text-[#0066FF] animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14"/>
+              <path d="M12 5l7 7-7 7"/>
+            </svg>
 
             {/* Bouton Utiliser l'appli */}
-            <button
-              type="button"
-              onClick={() => {
-                const userAgent = navigator.userAgent.toLowerCase();
-                if (/iphone|ipad|ipod/.test(userAgent)) {
-                  window.location.href = "https://apps.apple.com/app/lokroom/id123456789";
-                } else {
-                  window.location.href = "https://play.google.com/store/apps/details?id=com.lokroom.app";
-                }
-              }}
-              className="bg-[#0066FF] hover:bg-[#0052CC] text-white text-[11px] font-semibold px-3 py-1.5 rounded-full transition-colors shadow-sm"
+            <a
+              href={typeof navigator !== 'undefined' && /iphone|ipad|ipod/i.test(navigator.userAgent)
+                ? "https://apps.apple.com/app/lokroom/id123456789"
+                : "https://play.google.com/store/apps/details?id=com.lokroom.app"}
+              className="bg-[#0066FF] hover:bg-[#0052CC] active:bg-[#004499] text-white text-[11px] font-semibold px-3 py-1.5 rounded-full transition-colors shadow-sm"
             >
               Utiliser l'appli
-            </button>
+            </a>
           </div>
         </div>
 
