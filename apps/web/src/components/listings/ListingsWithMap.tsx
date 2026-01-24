@@ -950,8 +950,8 @@ export default function ListingsWithMap({
             height: `${sheetHeight}vh`,
             maxHeight: 'calc(100vh - 180px)',
             minHeight: '60px',
-            transition: isDragging ? 'none' : 'height 0.35s cubic-bezier(0.32, 0.72, 0, 1)',
-            willChange: 'height',
+            transition: isDragging ? 'none' : 'height 0.4s cubic-bezier(0.25, 1, 0.5, 1)',
+            willChange: 'height, transform',
           }}
         >
           {/* Handle de drag - Zone tactile agrandie - TOUJOURS VISIBLE */}
@@ -979,8 +979,8 @@ export default function ListingsWithMap({
               const timeDelta = currentTime - lastTouchTime.current;
               if (timeDelta > 0) {
                 const instantVelocity = (lastTouchY.current - currentY) / timeDelta;
-                // Lissage de la vélocité avec moyenne pondérée
-                velocityY.current = velocityY.current * 0.7 + instantVelocity * 0.3;
+                // Lissage de la vélocité avec moyenne pondérée - plus réactif
+                velocityY.current = velocityY.current * 0.5 + instantVelocity * 0.5;
               }
 
               lastTouchY.current = currentY;
@@ -1017,7 +1017,7 @@ export default function ListingsWithMap({
               const SNAP_EXPANDED = 100;
 
               // Seuil de vélocité pour déclencher un snap directionnel
-              const VELOCITY_THRESHOLD = 0.25; // pixels/ms - plus bas = plus sensible
+              const VELOCITY_THRESHOLD = 0.15; // pixels/ms - plus bas = plus sensible
 
               let targetHeight: number;
               let targetPosition: 'collapsed' | 'partial' | 'expanded';
@@ -1120,7 +1120,7 @@ export default function ListingsWithMap({
               if (mobileSheetPosition === 'partial' && deltaFromStart < -5) {
                 // Bloquer le scroll natif et agrandir le sheet
                 e.preventDefault();
-                const deltaPercent = (Math.abs(deltaFromStart) / window.innerHeight) * 100;
+                const deltaPercent = (Math.abs(deltaFromStart) / window.innerHeight) * 120;
                 const newHeight = Math.min(100, 50 + deltaPercent);
                 setSheetHeight(newHeight);
                 setIsDragging(true);
