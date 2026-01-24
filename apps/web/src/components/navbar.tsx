@@ -436,25 +436,19 @@ export default function Navbar() {
             />
           </Link>
 
-          {/* Partie droite : Télécharger l'appli + illustration + bouton */}
-          <div className="flex items-center gap-1.5">
+          {/* Partie droite : Télécharger l'appli + bouton */}
+          <div className="flex items-center gap-2">
             {/* Texte Télécharger l'appli */}
             <span className="text-[10px] text-gray-500 hidden min-[340px]:block">
               Télécharger l'appli
             </span>
-
-            {/* Flèche animée vers le bouton */}
-            <svg className="w-4 h-4 text-[#0066FF] animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 12h14"/>
-              <path d="M12 5l7 7-7 7"/>
-            </svg>
 
             {/* Bouton Utiliser l'appli */}
             <a
               href={typeof navigator !== 'undefined' && /iphone|ipad|ipod/i.test(navigator.userAgent)
                 ? "https://apps.apple.com/app/lokroom/id123456789"
                 : "https://play.google.com/store/apps/details?id=com.lokroom.app"}
-              className="bg-[#0066FF] hover:bg-[#0052CC] active:bg-[#004499] text-white text-[11px] font-semibold px-3 py-1.5 rounded-full transition-colors shadow-sm"
+              className="bg-[#0066FF] hover:bg-[#0052CC] active:bg-[#004499] text-white text-[11px] font-semibold px-3 py-1.5 rounded-full transition-colors shadow-sm flex items-center justify-center leading-none"
             >
               Utiliser l'appli
             </a>
