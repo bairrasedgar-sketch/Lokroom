@@ -949,7 +949,7 @@ export default function ListingsWithMap({
             bottom: 0,
             height: `${sheetHeight}vh`,
             maxHeight: 'calc(100vh - 64px)',
-            minHeight: '80px',
+            minHeight: '60px',
             transition: isDragging ? 'none' : 'height 0.35s cubic-bezier(0.32, 0.72, 0, 1)',
             willChange: 'height',
           }}
@@ -998,10 +998,10 @@ export default function ListingsWithMap({
                 // Résistance élastique en haut
                 const overflow = rawHeight - 100;
                 newHeight = 100 + overflow * 0.1;
-              } else if (rawHeight < 12) {
+              } else if (rawHeight < 8) {
                 // Résistance élastique en bas
-                const overflow = 12 - rawHeight;
-                newHeight = 12 - overflow * 0.1;
+                const overflow = 8 - rawHeight;
+                newHeight = 8 - overflow * 0.1;
               } else {
                 newHeight = rawHeight;
               }
@@ -1011,8 +1011,8 @@ export default function ListingsWithMap({
             onTouchEnd={() => {
               setIsDragging(false);
 
-              // Points de snap: collapsed (12%), partial (50%), expanded (100%)
-              const SNAP_COLLAPSED = 12;
+              // Points de snap: collapsed (8%), partial (50%), expanded (100%)
+              const SNAP_COLLAPSED = 8;
               const SNAP_PARTIAL = 50;
               const SNAP_EXPANDED = 100;
 
@@ -1122,7 +1122,7 @@ export default function ListingsWithMap({
                 e.preventDefault();
                 // Réduire le sheet proportionnellement au mouvement du doigt
                 const deltaPercent = (deltaFromStart / window.innerHeight) * 150; // Plus sensible
-                const newHeight = Math.max(12, dragStartHeight.current - deltaPercent);
+                const newHeight = Math.max(8, dragStartHeight.current - deltaPercent);
                 setSheetHeight(newHeight);
                 setIsDragging(true);
 
@@ -1195,7 +1195,7 @@ export default function ListingsWithMap({
         {/* Bouton Carte flottant style Airbnb - centré juste au-dessus du footer */}
         <button
           onClick={() => {
-            setSheetHeight(12);
+            setSheetHeight(8);
             updateSheetPosition('collapsed');
           }}
           className={`fixed left-1/2 -translate-x-1/2 bottom-20 z-40 flex items-center gap-2 rounded-full bg-gray-900 px-4 py-3 text-sm font-semibold text-white shadow-lg active:scale-95 transition-all duration-300 ease-out ${
