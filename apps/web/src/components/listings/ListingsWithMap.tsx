@@ -158,6 +158,11 @@ function ListingCard({
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
+    // Si déjà identifié comme vertical, ne rien faire du tout
+    if (swipeDirection === 'vertical') {
+      return;
+    }
+
     const touch = e.touches[0];
     const currentX = touch.clientX;
     const currentY = touch.clientY;
@@ -167,44 +172,46 @@ function ListingCard({
     const absDiffY = Math.abs(diffY);
 
     // Déterminer la direction une seule fois
-    if (swipeDirection === null && (absDiffX > 5 || absDiffY > 5)) {
-      if (absDiffY > absDiffX * 2) {
-        // Clairement vertical - simuler le scroll
-        setSwipeDirection('vertical');
-      } else {
-        // Horizontal ou diagonal - swipe image
-        setSwipeDirection('horizontal');
+    if (swipeDirection === null) {
+      // Attendre un minimum de mouvement
+      if (absDiffX < 10 && absDiffY < 10) {
+        return;
       }
+
+      // Si le mouvement vertical est dominant, c'est un scroll - on arrête tout
+      if (absDiffY >= absDiffX) {
+        setSwipeDirection('vertical');
+        return;
+      }
+
+      // Sinon c'est horizontal
+      setSwipeDirection('horizontal');
     }
 
-    if (swipeDirection === 'horizontal') {
-      setTouchEndX(currentX);
-      let offset = diffX;
-      if (currentImageIndex === 0 && offset > 0) {
-        offset = offset * 0.15;
-      }
-      if (currentImageIndex === images.length - 1 && offset < 0) {
-        offset = offset * 0.15;
-      }
-      setDragOffset(offset);
-    } else if (swipeDirection === 'vertical') {
-      // Simuler le scroll en trouvant le conteneur scrollable parent
-      const scrollContainer = imageContainerRef.current?.closest('.overflow-y-auto');
-      if (scrollContainer) {
-        scrollContainer.scrollTop -= (currentY - touchStartY) * 0.1;
-      }
+    // Ici on est sûr que c'est horizontal
+    e.preventDefault();
+    e.stopPropagation();
+
+    setTouchEndX(currentX);
+    let offset = diffX;
+    if (currentImageIndex === 0 && offset > 0) {
+      offset = offset * 0.15;
     }
+    if (currentImageIndex === images.length - 1 && offset < 0) {
+      offset = offset * 0.15;
+    }
+    setDragOffset(offset);
   };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
+  const handleTouchEnd = () => {
     if (swipeDirection === 'horizontal') {
       const containerWidth = imageContainerRef.current?.offsetWidth || 300;
       const swipeDuration = Date.now() - touchStartTime;
       const swipeDistance = touchEndX - touchStartX;
       const velocity = Math.abs(swipeDistance) / swipeDuration;
 
-      const isQuickSwipe = velocity > 0.25 && Math.abs(swipeDistance) > 15;
-      const isLongDrag = Math.abs(dragOffset) > containerWidth * 0.15;
+      const isQuickSwipe = velocity > 0.3 && Math.abs(swipeDistance) > 20;
+      const isLongDrag = Math.abs(dragOffset) > containerWidth * 0.2;
 
       if (isQuickSwipe || isLongDrag) {
         if (swipeDistance < 0 && currentImageIndex < images.length - 1) {
@@ -244,7 +251,6 @@ function ListingCard({
         onTouchStart={isMobile && hasMultipleImages ? handleTouchStart : undefined}
         onTouchMove={isMobile && hasMultipleImages ? handleTouchMove : undefined}
         onTouchEnd={isMobile && hasMultipleImages ? handleTouchEnd : undefined}
-        style={isMobile && hasMultipleImages ? { touchAction: 'none' } : undefined}
       >
         <Link
           href={`/listings/${listing.id}`}
