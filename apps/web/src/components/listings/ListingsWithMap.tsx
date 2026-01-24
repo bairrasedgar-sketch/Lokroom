@@ -944,7 +944,7 @@ export default function ListingsWithMap({
         {/* Bottom Sheet draggable - Style Airbnb */}
         <div
           ref={sheetRef}
-          className="fixed left-0 right-0 z-40 bg-white rounded-t-[20px] shadow-[0_-4px_25px_-5px_rgba(0,0,0,0.15)]"
+          className="fixed left-0 right-0 z-40 bg-white rounded-t-[20px] shadow-[0_-4px_25px_-5px_rgba(0,0,0,0.15)] flex flex-col"
           style={{
             bottom: 0,
             height: `${sheetHeight}vh`,
@@ -954,9 +954,9 @@ export default function ListingsWithMap({
             willChange: 'height',
           }}
         >
-          {/* Handle de drag - Zone tactile agrandie */}
+          {/* Handle de drag - Zone tactile agrandie - TOUJOURS VISIBLE */}
           <div
-            className="sticky top-0 z-10 bg-white rounded-t-[20px] flex flex-col items-center pt-2 pb-3 cursor-grab active:cursor-grabbing select-none"
+            className="flex-shrink-0 bg-white rounded-t-[20px] flex flex-col items-center pt-2 pb-3 cursor-grab active:cursor-grabbing select-none"
             style={{ touchAction: 'none' }}
             onTouchStart={(e) => {
               const touch = e.touches[0];
@@ -1101,9 +1101,8 @@ export default function ListingsWithMap({
 
           {/* Contenu scrollable */}
           <div
-            className="overflow-y-auto overscroll-contain pb-6 px-4"
+            className="flex-1 overflow-y-auto overscroll-contain pb-6 px-4"
             style={{
-              height: 'calc(100% - 85px)',
               WebkitOverflowScrolling: 'touch',
             }}
             onTouchStart={(e) => {
