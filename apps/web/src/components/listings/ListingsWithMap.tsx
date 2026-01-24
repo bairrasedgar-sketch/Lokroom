@@ -571,7 +571,7 @@ export default function ListingsWithMap({
       if (mobileSheetPositionRef.current === 'partial' && deltaFromStart < 0) {
         e.preventDefault();
         isExpandingRef.current = true;
-        const deltaPercent = (Math.abs(deltaFromStart) / window.innerHeight) * 150;
+        const deltaPercent = (Math.abs(deltaFromStart) / window.innerHeight) * 120;
         const newHeight = Math.min(100, 50 + deltaPercent);
         setSheetHeight(newHeight);
         setIsDragging(true);
@@ -580,7 +580,7 @@ export default function ListingsWithMap({
       // Si on est en haut de la liste ET qu'on tire vers le bas -> réduire le sheet
       if (isAtTop && deltaFromStart > 5 && !isExpandingRef.current) {
         e.preventDefault();
-        const deltaPercent = (deltaFromStart / window.innerHeight) * 180;
+        const deltaPercent = (deltaFromStart / window.innerHeight) * 120;
         const newHeight = Math.max(8, dragStartHeight.current - deltaPercent);
         setSheetHeight(newHeight);
         setIsDragging(true);
@@ -1041,7 +1041,7 @@ export default function ListingsWithMap({
             height: `${sheetHeight}vh`,
             maxHeight: 'calc(100vh - 180px)',
             minHeight: '60px',
-            transition: isDragging ? 'none' : 'height 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
+            transition: isDragging ? 'none' : 'height 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
             willChange: 'height, transform',
           }}
         >
@@ -1244,7 +1244,7 @@ export default function ListingsWithMap({
             setSheetHeight(8);
             updateSheetPosition('collapsed');
           }}
-          className={`fixed left-1/2 -translate-x-1/2 bottom-20 z-40 flex items-center gap-2 rounded-full bg-gray-900 px-4 py-3 text-sm font-semibold text-white shadow-lg active:scale-95 transition-all duration-300 ease-out ${
+          className={`fixed left-1/2 -translate-x-1/2 bottom-20 z-40 flex items-center gap-2 rounded-full bg-gray-900 px-4 py-3 text-sm font-semibold text-white shadow-lg active:scale-95 transition-all duration-500 ease-out ${
             mobileSheetPosition !== 'collapsed'
               ? 'opacity-100 translate-y-0'
               : 'opacity-0 translate-y-4 pointer-events-none'
@@ -1262,7 +1262,7 @@ export default function ListingsWithMap({
             setSheetHeight(50);
             updateSheetPosition('partial');
           }}
-          className={`fixed left-1/2 -translate-x-1/2 bottom-20 z-40 flex items-center gap-2 rounded-full bg-gray-900 px-4 py-3 text-sm font-semibold text-white shadow-lg active:scale-95 transition-all duration-300 ease-out ${
+          className={`fixed left-1/2 -translate-x-1/2 bottom-20 z-40 flex items-center gap-2 rounded-full bg-gray-900 px-4 py-3 text-sm font-semibold text-white shadow-lg active:scale-95 transition-all duration-500 ease-out ${
             mobileSheetPosition === 'collapsed'
               ? 'opacity-100 translate-y-0'
               : 'opacity-0 translate-y-4 pointer-events-none'
