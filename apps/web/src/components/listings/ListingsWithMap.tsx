@@ -142,6 +142,7 @@ function ListingCard({
 
   // Gestion du swipe sur mobile
   const [touchStartY, setTouchStartY] = useState(0);
+  const [touchStartTime, setTouchStartTime] = useState(0);
   const [swipeDirection, setSwipeDirection] = useState<'horizontal' | 'vertical' | null>(null);
   const [dragOffset, setDragOffset] = useState(0);
   const imageContainerRef = useRef<HTMLDivElement>(null);
@@ -151,6 +152,7 @@ function ListingCard({
     setTouchStartX(e.touches[0].clientX);
     setTouchEndX(e.touches[0].clientX);
     setTouchStartY(e.touches[0].clientY);
+    setTouchStartTime(Date.now());
     setSwipeDirection(null);
     setDragOffset(0);
   };
@@ -162,8 +164,8 @@ function ListingCard({
     const diffY = Math.abs(currentY - touchStartY);
 
     // Déterminer la direction du swipe une seule fois au début
-    if (swipeDirection === null && (diffX > 8 || diffY > 8)) {
-      if (diffX > diffY * 1.2) {
+    if (swipeDirection === null && (diffX > 5 || diffY > 5)) {
+      if (diffX > diffY) {
         setSwipeDirection('horizontal');
       } else {
         setSwipeDirection('vertical');
@@ -192,16 +194,26 @@ function ListingCard({
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    // Seulement changer d'image si c'était un swipe horizontal
     if (swipeDirection === 'horizontal') {
       e.stopPropagation();
-      const containerWidth = imageContainerRef.current?.offsetWidth || 300;
-      const threshold = containerWidth * 0.2;
 
-      if (dragOffset < -threshold && currentImageIndex < images.length - 1) {
-        setCurrentImageIndex(prev => prev + 1);
-      } else if (dragOffset > threshold && currentImageIndex > 0) {
-        setCurrentImageIndex(prev => prev - 1);
+      const containerWidth = imageContainerRef.current?.offsetWidth || 300;
+      const swipeDuration = Date.now() - touchStartTime;
+      const swipeDistance = touchEndX - touchStartX;
+      const velocity = Math.abs(swipeDistance) / swipeDuration;
+
+      // Changer d'image si:
+      // 1. Swipe rapide (vélocité > 0.3) avec au moins 20px de mouvement
+      // 2. OU drag lent mais dépassé 20% de la largeur
+      const isQuickSwipe = velocity > 0.3 && Math.abs(swipeDistance) > 20;
+      const isLongDrag = Math.abs(dragOffset) > containerWidth * 0.2;
+
+      if (isQuickSwipe || isLongDrag) {
+        if (swipeDistance < 0 && currentImageIndex < images.length - 1) {
+          setCurrentImageIndex(prev => prev + 1);
+        } else if (swipeDistance > 0 && currentImageIndex > 0) {
+          setCurrentImageIndex(prev => prev - 1);
+        }
       }
     }
 
