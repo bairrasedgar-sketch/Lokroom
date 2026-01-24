@@ -1110,11 +1110,18 @@ export default function ListingsWithMap({
               dragStartHeight.current = sheetHeight;
               lastTouchY.current = e.touches[0].clientY;
             }}
+            onScroll={(e) => {
+              const scrollContainer = e.currentTarget;
+              // Si on scroll vers le bas et qu'on est en partial, passer en expanded fluidement
+              if (scrollContainer.scrollTop > 10 && mobileSheetPosition === 'partial') {
+                setSheetHeight(100);
+                updateSheetPosition('expanded');
+              }
+            }}
             onTouchMove={(e) => {
               const scrollContainer = e.currentTarget;
               const touch = e.touches[0];
               const isAtTop = scrollContainer.scrollTop <= 5;
-              const isAtBottom = scrollContainer.scrollHeight - scrollContainer.scrollTop <= scrollContainer.clientHeight + 5;
               const deltaFromStart = touch.clientY - dragStartY.current;
 
               // Si on est en haut de la liste ET qu'on tire vers le bas (deltaFromStart > 0) -> réduire le sheet
@@ -1122,23 +1129,6 @@ export default function ListingsWithMap({
                 e.preventDefault();
                 const deltaPercent = (deltaFromStart / window.innerHeight) * 150;
                 const newHeight = Math.max(8, dragStartHeight.current - deltaPercent);
-                setSheetHeight(newHeight);
-                setIsDragging(true);
-
-                if (newHeight <= 15) {
-                  updateSheetPosition('collapsed');
-                } else if (newHeight <= 60) {
-                  updateSheetPosition('partial');
-                } else {
-                  updateSheetPosition('expanded');
-                }
-              }
-
-              // Si on est en bas de la liste ET qu'on tire vers le haut (deltaFromStart < 0) ET pas encore expanded -> agrandir le sheet
-              if (isAtBottom && deltaFromStart < -10 && sheetHeight < 100) {
-                e.preventDefault();
-                const deltaPercent = (Math.abs(deltaFromStart) / window.innerHeight) * 150;
-                const newHeight = Math.min(100, dragStartHeight.current + deltaPercent);
                 setSheetHeight(newHeight);
                 setIsDragging(true);
 
