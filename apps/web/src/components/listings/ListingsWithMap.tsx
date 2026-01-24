@@ -174,33 +174,44 @@ function ListingCard({
     // Déterminer la direction une seule fois
     if (swipeDirection === null) {
       // Attendre un minimum de mouvement
-      if (absDiffX < 10 && absDiffY < 10) {
+      if (absDiffX < 8 && absDiffY < 8) {
         return;
       }
 
-      // Si le mouvement vertical est dominant, c'est un scroll - on arrête tout
-      if (absDiffY >= absDiffX) {
+      // Si le mouvement vertical est clairement dominant (plus de 1.5x), c'est un scroll
+      if (absDiffY > absDiffX * 1.5) {
         setSwipeDirection('vertical');
         return;
       }
 
-      // Sinon c'est horizontal
-      setSwipeDirection('horizontal');
+      // Si le mouvement horizontal est dominant, c'est un swipe image
+      if (absDiffX > absDiffY) {
+        setSwipeDirection('horizontal');
+        // Bloquer immédiatement le scroll
+        e.preventDefault();
+        e.stopPropagation();
+      } else {
+        // Cas diagonal ambigu - on laisse le scroll
+        setSwipeDirection('vertical');
+        return;
+      }
     }
 
     // Ici on est sûr que c'est horizontal
-    e.preventDefault();
-    e.stopPropagation();
+    if (swipeDirection === 'horizontal') {
+      e.preventDefault();
+      e.stopPropagation();
 
-    setTouchEndX(currentX);
-    let offset = diffX;
-    if (currentImageIndex === 0 && offset > 0) {
-      offset = offset * 0.15;
+      setTouchEndX(currentX);
+      let offset = diffX;
+      if (currentImageIndex === 0 && offset > 0) {
+        offset = offset * 0.15;
+      }
+      if (currentImageIndex === images.length - 1 && offset < 0) {
+        offset = offset * 0.15;
+      }
+      setDragOffset(offset);
     }
-    if (currentImageIndex === images.length - 1 && offset < 0) {
-      offset = offset * 0.15;
-    }
-    setDragOffset(offset);
   };
 
   const handleTouchEnd = () => {
