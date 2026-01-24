@@ -248,6 +248,7 @@ function ListingCard({
         onTouchStart={isMobile && hasMultipleImages ? handleTouchStart : undefined}
         onTouchMove={isMobile && hasMultipleImages ? handleTouchMove : undefined}
         onTouchEnd={isMobile && hasMultipleImages ? handleTouchEnd : undefined}
+        style={isMobile && hasMultipleImages ? { touchAction: 'pan-x' } : undefined}
       >
         <Link
           href={`/listings/${listing.id}`}
