@@ -930,13 +930,7 @@ export default function ListingsWithMap({
       {/* ========== MOBILE: Carte plein écran + Bottom Sheet style Airbnb ========== */}
       <div className="lg:hidden">
         {/* Carte en arrière-plan - plein écran */}
-        <div
-          className="fixed inset-0 z-0"
-          style={{
-            top: '64px',
-            bottom: '0px',
-          }}
-        >
+        <div className="fixed inset-0 z-0">
           <Map
             markers={markers}
             panOnHover={false}
