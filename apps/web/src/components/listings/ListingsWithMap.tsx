@@ -140,10 +140,13 @@ function ListingCard({
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
-  // Gestion du swipe sur mobile
+  // Gestion du swipe sur mobile - Approche "direction lock" comme Airbnb
+  // On utilise touch-action: pan-y sur le container pour laisser le browser gérer le scroll vertical
+  // et on gère uniquement le swipe horizontal en JS
   const [touchStartY, setTouchStartY] = useState(0);
   const [touchStartTime, setTouchStartTime] = useState(0);
-  const [swipeDirection, setSwipeDirection] = useState<'horizontal' | 'vertical' | null>(null);
+  const [isHorizontalSwipe, setIsHorizontalSwipe] = useState(false);
+  const [directionLocked, setDirectionLocked] = useState(false);
   const [dragOffset, setDragOffset] = useState(0);
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
@@ -153,16 +156,13 @@ function ListingCard({
     setTouchEndX(touch.clientX);
     setTouchStartY(touch.clientY);
     setTouchStartTime(Date.now());
-    setSwipeDirection(null);
+    // Reset direction lock pour chaque nouveau touch
+    setIsHorizontalSwipe(false);
+    setDirectionLocked(false);
     setDragOffset(0);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    // Si déjà identifié comme vertical, ne rien faire du tout
-    if (swipeDirection === 'vertical') {
-      return;
-    }
-
     const touch = e.touches[0];
     const currentX = touch.clientX;
     const currentY = touch.clientY;
@@ -171,69 +171,75 @@ function ListingCard({
     const absDiffX = Math.abs(diffX);
     const absDiffY = Math.abs(diffY);
 
-    // Déterminer la direction une seule fois
-    if (swipeDirection === null) {
-      // Attendre un minimum de mouvement
-      if (absDiffX < 8 && absDiffY < 8) {
-        return;
-      }
+    // Si la direction n'est pas encore verrouillée, la déterminer
+    if (!directionLocked) {
+      // Seuil minimum de 10px pour éviter les faux positifs
+      const LOCK_THRESHOLD = 10;
 
-      // Si le mouvement vertical est clairement dominant (plus de 1.5x), c'est un scroll
-      if (absDiffY > absDiffX * 1.5) {
-        setSwipeDirection('vertical');
-        return;
-      }
+      if (absDiffX >= LOCK_THRESHOLD || absDiffY >= LOCK_THRESHOLD) {
+        // Verrouiller la direction basé sur le mouvement dominant
+        // Ratio 1.2:1 - si horizontal est >= 1.2x vertical, c'est un swipe horizontal
+        const isHorizontal = absDiffX >= absDiffY * 1.2;
+        setDirectionLocked(true);
+        setIsHorizontalSwipe(isHorizontal);
 
-      // Si le mouvement horizontal est dominant, c'est un swipe image
-      if (absDiffX > absDiffY) {
-        setSwipeDirection('horizontal');
-        // Bloquer immédiatement le scroll
-        e.preventDefault();
-        e.stopPropagation();
+        if (!isHorizontal) {
+          // C'est un scroll vertical - ne rien faire, le browser gère via touch-action: pan-y
+          return;
+        }
       } else {
-        // Cas diagonal ambigu - on laisse le scroll
-        setSwipeDirection('vertical');
+        // Pas encore assez de mouvement pour décider
         return;
       }
     }
 
-    // Ici on est sûr que c'est horizontal
-    if (swipeDirection === 'horizontal') {
-      e.preventDefault();
-      e.stopPropagation();
-
-      setTouchEndX(currentX);
-      let offset = diffX;
-      if (currentImageIndex === 0 && offset > 0) {
-        offset = offset * 0.15;
-      }
-      if (currentImageIndex === images.length - 1 && offset < 0) {
-        offset = offset * 0.15;
-      }
-      setDragOffset(offset);
+    // Si c'est un scroll vertical, laisser le browser gérer
+    if (!isHorizontalSwipe) {
+      return;
     }
+
+    // C'est un swipe horizontal - on gère le drag de l'image
+    setTouchEndX(currentX);
+
+    // Calculer l'offset avec résistance élastique aux bords
+    let offset = diffX;
+    if (currentImageIndex === 0 && offset > 0) {
+      // Résistance au début (première image, swipe vers la droite)
+      offset = offset * 0.2;
+    }
+    if (currentImageIndex === images.length - 1 && offset < 0) {
+      // Résistance à la fin (dernière image, swipe vers la gauche)
+      offset = offset * 0.2;
+    }
+    setDragOffset(offset);
   };
 
   const handleTouchEnd = () => {
-    if (swipeDirection === 'horizontal') {
+    // Seulement traiter si c'était un swipe horizontal
+    if (isHorizontalSwipe && directionLocked) {
       const containerWidth = imageContainerRef.current?.offsetWidth || 300;
       const swipeDuration = Date.now() - touchStartTime;
       const swipeDistance = touchEndX - touchStartX;
       const velocity = Math.abs(swipeDistance) / swipeDuration;
 
+      // Swipe rapide (vélocité > 0.3 px/ms) ou drag long (> 20% de la largeur)
       const isQuickSwipe = velocity > 0.3 && Math.abs(swipeDistance) > 20;
       const isLongDrag = Math.abs(dragOffset) > containerWidth * 0.2;
 
       if (isQuickSwipe || isLongDrag) {
         if (swipeDistance < 0 && currentImageIndex < images.length - 1) {
+          // Swipe vers la gauche -> image suivante
           setCurrentImageIndex(prev => prev + 1);
         } else if (swipeDistance > 0 && currentImageIndex > 0) {
+          // Swipe vers la droite -> image précédente
           setCurrentImageIndex(prev => prev - 1);
         }
       }
     }
 
-    setSwipeDirection(null);
+    // Reset tous les états
+    setIsHorizontalSwipe(false);
+    setDirectionLocked(false);
     setDragOffset(0);
   };
 
@@ -254,11 +260,14 @@ function ListingCard({
       onMouseLeave={onLeave}
     >
       {/* Image container avec carousel */}
+      {/* touch-action: pan-y permet au browser de gérer le scroll vertical nativement
+          pendant que notre JS gère le swipe horizontal - c'est la clé pour un scroll fluide */}
       <div
         ref={imageContainerRef}
         className={`relative w-full overflow-hidden bg-gray-100 ${
           isMobile ? "aspect-[4/3.2] rounded-2xl" : "aspect-[4/3] rounded-xl"
         }`}
+        style={isMobile && hasMultipleImages ? { touchAction: 'pan-y' } : undefined}
         onTouchStart={isMobile && hasMultipleImages ? handleTouchStart : undefined}
         onTouchMove={isMobile && hasMultipleImages ? handleTouchMove : undefined}
         onTouchEnd={isMobile && hasMultipleImages ? handleTouchEnd : undefined}
@@ -269,7 +278,7 @@ function ListingCard({
         >
           {images.length > 0 ? (
             <div
-              className={`flex h-full ${swipeDirection === 'horizontal' ? '' : 'transition-transform duration-300 ease-out'}`}
+              className={`flex h-full ${isHorizontalSwipe ? '' : 'transition-transform duration-300 ease-out'}`}
               style={{
                 transform: `translateX(calc(-${currentImageIndex * 100}% + ${isMobile ? dragOffset : 0}px))`
               }}
