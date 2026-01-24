@@ -143,6 +143,7 @@ function ListingCard({
   // Gestion du swipe sur mobile
   const [isSwiping, setIsSwiping] = useState(false);
   const [touchStartY, setTouchStartY] = useState(0);
+  const [swipeDirection, setSwipeDirection] = useState<'horizontal' | 'vertical' | null>(null);
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -150,6 +151,7 @@ function ListingCard({
     setTouchEndX(e.touches[0].clientX);
     setTouchStartY(e.touches[0].clientY);
     setIsSwiping(false);
+    setSwipeDirection(null);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -158,30 +160,44 @@ function ListingCard({
     const diffX = Math.abs(currentX - touchStartX);
     const diffY = Math.abs(currentY - touchStartY);
 
-    // Dès qu'on détecte un mouvement horizontal, on bloque tout
-    if (diffX > 5) {
+    // Déterminer la direction du swipe une seule fois au début
+    if (swipeDirection === null && (diffX > 10 || diffY > 10)) {
+      if (diffX > diffY) {
+        setSwipeDirection('horizontal');
+      } else {
+        setSwipeDirection('vertical');
+      }
+    }
+
+    // Si c'est un swipe horizontal, bloquer le scroll et enregistrer la position
+    if (swipeDirection === 'horizontal') {
       e.preventDefault();
       e.stopPropagation();
       setIsSwiping(true);
+      setTouchEndX(currentX);
     }
-
-    setTouchEndX(currentX);
+    // Si c'est vertical, ne rien faire (laisser le scroll normal)
   };
 
   const handleTouchEnd = () => {
-    const swipeThreshold = 30;
-    const diff = touchStartX - touchEndX;
+    // Seulement changer d'image si c'était un swipe horizontal
+    if (swipeDirection === 'horizontal' && isSwiping) {
+      const swipeThreshold = 40;
+      const diff = touchStartX - touchEndX;
 
-    if (Math.abs(diff) > swipeThreshold) {
-      if (diff > 0) {
-        // Swipe vers la gauche -> image suivante
-        nextImage();
-      } else {
-        // Swipe vers la droite -> image précédente
-        prevImage();
+      if (Math.abs(diff) > swipeThreshold) {
+        if (diff > 0) {
+          // Swipe vers la gauche -> image suivante
+          nextImage();
+        } else {
+          // Swipe vers la droite -> image précédente
+          prevImage();
+        }
       }
     }
+
     setIsSwiping(false);
+    setSwipeDirection(null);
   };
 
   const locationLabel = [listing.city ?? undefined, listing.country ?? undefined]
