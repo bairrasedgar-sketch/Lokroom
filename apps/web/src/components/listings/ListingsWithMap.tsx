@@ -950,7 +950,7 @@ export default function ListingsWithMap({
             height: `${sheetHeight}vh`,
             maxHeight: 'calc(100vh - 180px)',
             minHeight: '60px',
-            transition: isDragging ? 'none' : 'height 0.4s cubic-bezier(0.25, 1, 0.5, 1)',
+            transition: isDragging ? 'none' : 'height 0.5s cubic-bezier(0.22, 1, 0.36, 1)',
             willChange: 'height, transform',
           }}
         >
@@ -1117,19 +1117,19 @@ export default function ListingsWithMap({
               const deltaFromStart = touch.clientY - dragStartY.current;
 
               // Si on est en mode partial et qu'on tire vers le haut (veut voir plus d'annonces)
-              if (mobileSheetPosition === 'partial' && deltaFromStart < -5) {
+              if (mobileSheetPosition === 'partial' && deltaFromStart < -3) {
                 // Bloquer le scroll natif et agrandir le sheet
                 e.preventDefault();
-                const deltaPercent = (Math.abs(deltaFromStart) / window.innerHeight) * 120;
+                const deltaPercent = (Math.abs(deltaFromStart) / window.innerHeight) * 150;
                 const newHeight = Math.min(100, 50 + deltaPercent);
                 setSheetHeight(newHeight);
                 setIsDragging(true);
               }
 
               // Si on est en haut de la liste ET qu'on tire vers le bas (deltaFromStart > 0) -> réduire le sheet
-              if (isAtTop && deltaFromStart > 10) {
+              if (isAtTop && deltaFromStart > 5) {
                 e.preventDefault();
-                const deltaPercent = (deltaFromStart / window.innerHeight) * 150;
+                const deltaPercent = (deltaFromStart / window.innerHeight) * 180;
                 const newHeight = Math.max(8, dragStartHeight.current - deltaPercent);
                 setSheetHeight(newHeight);
                 setIsDragging(true);
