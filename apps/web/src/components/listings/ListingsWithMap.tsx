@@ -251,8 +251,22 @@ function ListingCard({
         )}
 
         {/* Points indicateurs d'images */}
-        {hasMultipleImages && (
-          <div className={`absolute left-1/2 z-10 flex -translate-x-1/2 bottom-1 gap-[1.5px] md:bottom-2 md:gap-1 ${!isMobile && "hidden md:flex"}`}>
+        {hasMultipleImages && isMobile && (
+          <div className="absolute left-1/2 z-10 flex -translate-x-1/2 bottom-1 gap-[1px]">
+            {images.slice(0, 5).map((_, idx) => (
+              <span
+                key={idx}
+                className={`rounded-full ${
+                  idx === currentImageIndex
+                    ? "h-[3px] w-[3px] bg-white"
+                    : "h-[3px] w-[3px] bg-white/40"
+                }`}
+              />
+            ))}
+          </div>
+        )}
+        {hasMultipleImages && !isMobile && (
+          <div className="absolute left-1/2 z-10 hidden md:flex -translate-x-1/2 bottom-2 gap-1">
             {images.slice(0, 5).map((_, idx) => (
               <button
                 key={idx}
@@ -261,10 +275,10 @@ function ListingCard({
                   e.stopPropagation();
                   setCurrentImageIndex(idx);
                 }}
-                className={`rounded-full transition-all h-[2px] w-[2px] md:h-1.5 md:w-1.5 ${
+                className={`rounded-full transition-all h-1.5 ${
                   idx === currentImageIndex
-                    ? "bg-white md:w-2"
-                    : "bg-white/40 md:bg-white/60 md:hover:bg-white/80"
+                    ? "w-2 bg-white"
+                    : "w-1.5 bg-white/60 hover:bg-white/80"
                 }`}
                 aria-label={`Voir image ${idx + 1}`}
               />
