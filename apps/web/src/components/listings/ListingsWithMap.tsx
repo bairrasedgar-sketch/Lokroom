@@ -505,11 +505,13 @@ export default function ListingsWithMap({
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const dragStartY = useRef(0);
   const dragStartHeight = useRef(0);
   const lastTouchY = useRef(0);
   const lastTouchTime = useRef(0);
   const velocityY = useRef(0);
+  const isExpandingRef = useRef(false);
 
   // Tracker si on a fait un fetch manuel (pour éviter de re-fitBounds)
   const hasFetchedFromMapRef = useRef(false);
@@ -1101,7 +1103,8 @@ export default function ListingsWithMap({
 
           {/* Contenu scrollable */}
           <div
-            className="flex-1 overflow-y-auto overscroll-contain pb-6 px-4"
+            ref={scrollContainerRef}
+            className={`flex-1 overflow-y-auto overscroll-contain pb-6 px-4 ${mobileSheetPosition === 'partial' ? 'overflow-hidden' : ''}`}
             style={{
               WebkitOverflowScrolling: 'touch',
             }}
@@ -1109,6 +1112,7 @@ export default function ListingsWithMap({
               dragStartY.current = e.touches[0].clientY;
               dragStartHeight.current = sheetHeight;
               lastTouchY.current = e.touches[0].clientY;
+              isExpandingRef.current = false;
             }}
             onTouchMove={(e) => {
               const scrollContainer = e.currentTarget;
@@ -1117,9 +1121,8 @@ export default function ListingsWithMap({
               const deltaFromStart = touch.clientY - dragStartY.current;
 
               // Si on est en mode partial et qu'on tire vers le haut (veut voir plus d'annonces)
-              if (mobileSheetPosition === 'partial' && deltaFromStart < -3) {
-                // Bloquer le scroll natif et agrandir le sheet
-                e.preventDefault();
+              if (mobileSheetPosition === 'partial' && deltaFromStart < 0) {
+                isExpandingRef.current = true;
                 const deltaPercent = (Math.abs(deltaFromStart) / window.innerHeight) * 150;
                 const newHeight = Math.min(100, 50 + deltaPercent);
                 setSheetHeight(newHeight);
@@ -1127,7 +1130,7 @@ export default function ListingsWithMap({
               }
 
               // Si on est en haut de la liste ET qu'on tire vers le bas (deltaFromStart > 0) -> réduire le sheet
-              if (isAtTop && deltaFromStart > 5) {
+              if (isAtTop && deltaFromStart > 5 && !isExpandingRef.current) {
                 e.preventDefault();
                 const deltaPercent = (deltaFromStart / window.innerHeight) * 180;
                 const newHeight = Math.max(8, dragStartHeight.current - deltaPercent);
@@ -1144,8 +1147,9 @@ export default function ListingsWithMap({
               }
             }}
             onTouchEnd={() => {
-              if (isDragging) {
+              if (isDragging || isExpandingRef.current) {
                 setIsDragging(false);
+                isExpandingRef.current = false;
                 // Snap to nearest position
                 if (sheetHeight < 25) {
                   setSheetHeight(8);
