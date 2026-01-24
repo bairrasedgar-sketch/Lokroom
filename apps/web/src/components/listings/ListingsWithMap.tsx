@@ -516,6 +516,24 @@ export default function ListingsWithMap({
   // Tracker si on a fait un fetch manuel (pour éviter de re-fitBounds)
   const hasFetchedFromMapRef = useRef(false);
 
+  // Refs pour le state accessible dans les event listeners natifs
+  const mobileSheetPositionRef = useRef(mobileSheetPosition);
+  const sheetHeightRef = useRef(sheetHeight);
+  const isDraggingRef = useRef(isDragging);
+
+  // Mettre à jour les refs quand le state change
+  useEffect(() => {
+    mobileSheetPositionRef.current = mobileSheetPosition;
+  }, [mobileSheetPosition]);
+
+  useEffect(() => {
+    sheetHeightRef.current = sheetHeight;
+  }, [sheetHeight]);
+
+  useEffect(() => {
+    isDraggingRef.current = isDragging;
+  }, [isDragging]);
+
   // Activer le sheet au montage et le desactiver au demontage
   useEffect(() => {
     setIsSheetActive(true);
@@ -529,6 +547,77 @@ export default function ListingsWithMap({
   const updateSheetPosition = useCallback((position: 'collapsed' | 'partial' | 'expanded') => {
     setMobileSheetPositionLocal(position);
     setSheetPosition(position);
+  }, [setSheetPosition]);
+
+  // Event listeners natifs pour le scroll container avec passive: false
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      dragStartY.current = touch.clientY;
+      dragStartHeight.current = sheetHeightRef.current;
+      lastTouchY.current = touch.clientY;
+      isExpandingRef.current = false;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      const isAtTop = container.scrollTop <= 5;
+      const deltaFromStart = touch.clientY - dragStartY.current;
+
+      // Si on est en mode partial et qu'on tire vers le haut -> agrandir le sheet
+      if (mobileSheetPositionRef.current === 'partial' && deltaFromStart < 0) {
+        e.preventDefault();
+        isExpandingRef.current = true;
+        const deltaPercent = (Math.abs(deltaFromStart) / window.innerHeight) * 150;
+        const newHeight = Math.min(100, 50 + deltaPercent);
+        setSheetHeight(newHeight);
+        setIsDragging(true);
+      }
+
+      // Si on est en haut de la liste ET qu'on tire vers le bas -> réduire le sheet
+      if (isAtTop && deltaFromStart > 5 && !isExpandingRef.current) {
+        e.preventDefault();
+        const deltaPercent = (deltaFromStart / window.innerHeight) * 180;
+        const newHeight = Math.max(8, dragStartHeight.current - deltaPercent);
+        setSheetHeight(newHeight);
+        setIsDragging(true);
+      }
+    };
+
+    const handleTouchEnd = () => {
+      if (isDraggingRef.current || isExpandingRef.current) {
+        setIsDragging(false);
+        isExpandingRef.current = false;
+
+        const currentHeight = sheetHeightRef.current;
+        if (currentHeight < 25) {
+          setSheetHeight(8);
+          setMobileSheetPositionLocal('collapsed');
+          setSheetPosition('collapsed');
+        } else if (currentHeight < 70) {
+          setSheetHeight(50);
+          setMobileSheetPositionLocal('partial');
+          setSheetPosition('partial');
+        } else {
+          setSheetHeight(100);
+          setMobileSheetPositionLocal('expanded');
+          setSheetPosition('expanded');
+        }
+      }
+    };
+
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    container.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
+    };
   }, [setSheetPosition]);
 
   // Gérer le comportement sticky de la map (s'arrête au niveau de la pagination)
@@ -1104,64 +1193,10 @@ export default function ListingsWithMap({
           {/* Contenu scrollable */}
           <div
             ref={scrollContainerRef}
-            className={`flex-1 overflow-y-auto overscroll-contain pb-6 px-4 ${mobileSheetPosition === 'partial' ? 'overflow-hidden' : ''}`}
+            className="flex-1 overscroll-contain pb-6 px-4"
             style={{
               WebkitOverflowScrolling: 'touch',
-            }}
-            onTouchStart={(e) => {
-              dragStartY.current = e.touches[0].clientY;
-              dragStartHeight.current = sheetHeight;
-              lastTouchY.current = e.touches[0].clientY;
-              isExpandingRef.current = false;
-            }}
-            onTouchMove={(e) => {
-              const scrollContainer = e.currentTarget;
-              const touch = e.touches[0];
-              const isAtTop = scrollContainer.scrollTop <= 5;
-              const deltaFromStart = touch.clientY - dragStartY.current;
-
-              // Si on est en mode partial et qu'on tire vers le haut (veut voir plus d'annonces)
-              if (mobileSheetPosition === 'partial' && deltaFromStart < 0) {
-                isExpandingRef.current = true;
-                const deltaPercent = (Math.abs(deltaFromStart) / window.innerHeight) * 150;
-                const newHeight = Math.min(100, 50 + deltaPercent);
-                setSheetHeight(newHeight);
-                setIsDragging(true);
-              }
-
-              // Si on est en haut de la liste ET qu'on tire vers le bas (deltaFromStart > 0) -> réduire le sheet
-              if (isAtTop && deltaFromStart > 5 && !isExpandingRef.current) {
-                e.preventDefault();
-                const deltaPercent = (deltaFromStart / window.innerHeight) * 180;
-                const newHeight = Math.max(8, dragStartHeight.current - deltaPercent);
-                setSheetHeight(newHeight);
-                setIsDragging(true);
-
-                if (newHeight <= 15) {
-                  updateSheetPosition('collapsed');
-                } else if (newHeight <= 60) {
-                  updateSheetPosition('partial');
-                } else {
-                  updateSheetPosition('expanded');
-                }
-              }
-            }}
-            onTouchEnd={() => {
-              if (isDragging || isExpandingRef.current) {
-                setIsDragging(false);
-                isExpandingRef.current = false;
-                // Snap to nearest position
-                if (sheetHeight < 25) {
-                  setSheetHeight(8);
-                  updateSheetPosition('collapsed');
-                } else if (sheetHeight < 70) {
-                  setSheetHeight(50);
-                  updateSheetPosition('partial');
-                } else {
-                  setSheetHeight(100);
-                  updateSheetPosition('expanded');
-                }
-              }
+              overflowY: mobileSheetPosition === 'partial' ? 'hidden' : 'auto',
             }}
           >
             {/* Liste des annonces */}
