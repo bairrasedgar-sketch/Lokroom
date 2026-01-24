@@ -149,44 +149,50 @@ function ListingCard({
 
   const handleTouchStart = (e: React.TouchEvent) => {
     e.stopPropagation();
-    setTouchStartX(e.touches[0].clientX);
-    setTouchEndX(e.touches[0].clientX);
-    setTouchStartY(e.touches[0].clientY);
+    const touch = e.touches[0];
+    setTouchStartX(touch.clientX);
+    setTouchEndX(touch.clientX);
+    setTouchStartY(touch.clientY);
     setTouchStartTime(Date.now());
     setSwipeDirection(null);
     setDragOffset(0);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    const currentX = e.touches[0].clientX;
-    const currentY = e.touches[0].clientY;
-    const diffX = Math.abs(currentX - touchStartX);
-    const diffY = Math.abs(currentY - touchStartY);
+    const touch = e.touches[0];
+    const currentX = touch.clientX;
+    const currentY = touch.clientY;
+    const diffX = currentX - touchStartX;
+    const diffY = currentY - touchStartY;
+    const absDiffX = Math.abs(diffX);
+    const absDiffY = Math.abs(diffY);
 
     // Déterminer la direction du swipe une seule fois au début
-    if (swipeDirection === null && (diffX > 5 || diffY > 5)) {
-      if (diffX > diffY) {
+    if (swipeDirection === null && (absDiffX > 3 || absDiffY > 3)) {
+      if (absDiffX >= absDiffY) {
         setSwipeDirection('horizontal');
+        // Bloquer immédiatement le scroll
+        e.preventDefault();
       } else {
         setSwipeDirection('vertical');
       }
     }
 
-    // Si c'est un swipe horizontal, bloquer le scroll et suivre le doigt
+    // Si c'est un swipe horizontal
     if (swipeDirection === 'horizontal') {
       e.preventDefault();
       e.stopPropagation();
       setTouchEndX(currentX);
 
-      // Calculer le décalage en pixels pour suivre le doigt
-      let offset = currentX - touchStartX;
+      // Calculer le décalage pour suivre le doigt
+      let offset = diffX;
 
-      // Limiter le drag si on est à la première ou dernière image
+      // Résistance élastique aux bords
       if (currentImageIndex === 0 && offset > 0) {
-        offset = offset * 0.2;
+        offset = offset * 0.15;
       }
       if (currentImageIndex === images.length - 1 && offset < 0) {
-        offset = offset * 0.2;
+        offset = offset * 0.15;
       }
 
       setDragOffset(offset);
@@ -195,6 +201,7 @@ function ListingCard({
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (swipeDirection === 'horizontal') {
+      e.preventDefault();
       e.stopPropagation();
 
       const containerWidth = imageContainerRef.current?.offsetWidth || 300;
@@ -202,11 +209,9 @@ function ListingCard({
       const swipeDistance = touchEndX - touchStartX;
       const velocity = Math.abs(swipeDistance) / swipeDuration;
 
-      // Changer d'image si:
-      // 1. Swipe rapide (vélocité > 0.3) avec au moins 20px de mouvement
-      // 2. OU drag lent mais dépassé 20% de la largeur
-      const isQuickSwipe = velocity > 0.3 && Math.abs(swipeDistance) > 20;
-      const isLongDrag = Math.abs(dragOffset) > containerWidth * 0.2;
+      // Changer d'image si swipe rapide OU drag suffisant
+      const isQuickSwipe = velocity > 0.25 && Math.abs(swipeDistance) > 15;
+      const isLongDrag = Math.abs(dragOffset) > containerWidth * 0.15;
 
       if (isQuickSwipe || isLongDrag) {
         if (swipeDistance < 0 && currentImageIndex < images.length - 1) {
