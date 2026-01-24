@@ -145,6 +145,7 @@ function ListingCard({
   const [touchStartTime, setTouchStartTime] = useState(0);
   const [swipeDirection, setSwipeDirection] = useState<'horizontal' | 'vertical' | null>(null);
   const [dragOffset, setDragOffset] = useState(0);
+  const [isTouchingImage, setIsTouchingImage] = useState(false);
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -156,9 +157,12 @@ function ListingCard({
     setTouchStartTime(Date.now());
     setSwipeDirection(null);
     setDragOffset(0);
+    setIsTouchingImage(true);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isTouchingImage) return;
+
     const touch = e.touches[0];
     const currentX = touch.clientX;
     const currentY = touch.clientY;
@@ -171,14 +175,15 @@ function ListingCard({
     if (swipeDirection === null && (absDiffX > 3 || absDiffY > 3)) {
       if (absDiffX >= absDiffY) {
         setSwipeDirection('horizontal');
-        // Bloquer immédiatement le scroll
-        e.preventDefault();
       } else {
         setSwipeDirection('vertical');
+        // Si c'est vertical, on arrête de gérer le touch sur l'image
+        setIsTouchingImage(false);
+        return;
       }
     }
 
-    // Si c'est un swipe horizontal
+    // Si c'est un swipe horizontal, TOUJOURS bloquer le scroll
     if (swipeDirection === 'horizontal') {
       e.preventDefault();
       e.stopPropagation();
@@ -187,7 +192,7 @@ function ListingCard({
       // Calculer le décalage pour suivre le doigt
       let offset = diffX;
 
-      // Résistance élastique aux bords
+      // Résistance élastique aux bords (mais on bloque quand même le scroll)
       if (currentImageIndex === 0 && offset > 0) {
         offset = offset * 0.15;
       }
@@ -224,6 +229,7 @@ function ListingCard({
 
     setSwipeDirection(null);
     setDragOffset(0);
+    setIsTouchingImage(false);
   };
 
   const locationLabel = [listing.city ?? undefined, listing.country ?? undefined]
