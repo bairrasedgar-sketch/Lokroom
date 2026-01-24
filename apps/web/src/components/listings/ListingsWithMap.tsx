@@ -252,7 +252,7 @@ function ListingCard({
 
         {/* Points indicateurs d'images */}
         {hasMultipleImages && (
-          <div className={`absolute left-1/2 z-10 flex -translate-x-1/2 ${isMobile ? "bottom-1 gap-[1.5px]" : "bottom-2 gap-1 hidden md:flex"}`}>
+          <div className={`absolute left-1/2 z-10 flex -translate-x-1/2 bottom-1 gap-[1.5px] md:bottom-2 md:gap-1 ${!isMobile && "hidden md:flex"}`}>
             {images.slice(0, 5).map((_, idx) => (
               <button
                 key={idx}
@@ -261,10 +261,10 @@ function ListingCard({
                   e.stopPropagation();
                   setCurrentImageIndex(idx);
                 }}
-                className={`rounded-full transition-all ${
-                  isMobile
-                    ? `h-[2px] w-[2px] ${idx === currentImageIndex ? "bg-white" : "bg-white/40"}`
-                    : `h-1.5 ${idx === currentImageIndex ? "w-2 bg-white" : "w-1.5 bg-white/60 hover:bg-white/80"}`
+                className={`rounded-full transition-all h-[2px] w-[2px] md:h-1.5 md:w-1.5 ${
+                  idx === currentImageIndex
+                    ? "bg-white md:w-2"
+                    : "bg-white/40 md:bg-white/60 md:hover:bg-white/80"
                 }`}
                 aria-label={`Voir image ${idx + 1}`}
               />
