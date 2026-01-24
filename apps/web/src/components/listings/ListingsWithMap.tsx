@@ -263,7 +263,7 @@ function ListingCard({
                 }}
                 className={`rounded-full transition-all ${
                   isMobile
-                    ? `h-[4px] w-[4px] ${idx === currentImageIndex ? "bg-white" : "bg-white/40"}`
+                    ? `h-[2px] w-[2px] ${idx === currentImageIndex ? "bg-white" : "bg-white/40"}`
                     : `h-1.5 ${idx === currentImageIndex ? "w-2 bg-white" : "w-1.5 bg-white/60 hover:bg-white/80"}`
                 }`}
                 aria-label={`Voir image ${idx + 1}`}
