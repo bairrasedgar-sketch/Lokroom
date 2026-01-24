@@ -166,27 +166,20 @@ function ListingCard({
     const absDiffX = Math.abs(diffX);
     const absDiffY = Math.abs(diffY);
 
-    // Déterminer la direction une seule fois après un petit mouvement
-    if (swipeDirection === null && (absDiffX > 3 || absDiffY > 3)) {
-      // Seulement vertical si c'est VRAIMENT vertical (3x plus que horizontal)
-      if (absDiffY > absDiffX * 3 && absDiffY > 10) {
+    // Déterminer la direction une seule fois
+    if (swipeDirection === null && (absDiffX > 5 || absDiffY > 5)) {
+      if (absDiffY > absDiffX * 2) {
+        // Clairement vertical - simuler le scroll
         setSwipeDirection('vertical');
-        return;
       } else {
-        // Sinon c'est horizontal - bloquer le scroll
+        // Horizontal ou diagonal - swipe image
         setSwipeDirection('horizontal');
-        e.preventDefault();
       }
     }
 
-    // Si c'est horizontal, on gère le swipe d'image
     if (swipeDirection === 'horizontal') {
-      e.preventDefault();
-      e.stopPropagation();
       setTouchEndX(currentX);
-
       let offset = diffX;
-      // Résistance aux bords
       if (currentImageIndex === 0 && offset > 0) {
         offset = offset * 0.15;
       }
@@ -194,14 +187,17 @@ function ListingCard({
         offset = offset * 0.15;
       }
       setDragOffset(offset);
+    } else if (swipeDirection === 'vertical') {
+      // Simuler le scroll en trouvant le conteneur scrollable parent
+      const scrollContainer = imageContainerRef.current?.closest('.overflow-y-auto');
+      if (scrollContainer) {
+        scrollContainer.scrollTop -= (currentY - touchStartY) * 0.1;
+      }
     }
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (swipeDirection === 'horizontal') {
-      e.preventDefault();
-      e.stopPropagation();
-
       const containerWidth = imageContainerRef.current?.offsetWidth || 300;
       const swipeDuration = Date.now() - touchStartTime;
       const swipeDistance = touchEndX - touchStartX;
@@ -248,7 +244,7 @@ function ListingCard({
         onTouchStart={isMobile && hasMultipleImages ? handleTouchStart : undefined}
         onTouchMove={isMobile && hasMultipleImages ? handleTouchMove : undefined}
         onTouchEnd={isMobile && hasMultipleImages ? handleTouchEnd : undefined}
-        style={isMobile && hasMultipleImages ? { touchAction: 'pan-x' } : undefined}
+        style={isMobile && hasMultipleImages ? { touchAction: 'none' } : undefined}
       >
         <Link
           href={`/listings/${listing.id}`}
