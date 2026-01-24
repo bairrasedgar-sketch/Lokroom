@@ -141,17 +141,16 @@ function ListingCard({
   };
 
   // Gestion du swipe sur mobile
-  const [isSwiping, setIsSwiping] = useState(false);
   const [touchStartY, setTouchStartY] = useState(0);
   const [swipeDirection, setSwipeDirection] = useState<'horizontal' | 'vertical' | null>(null);
   const [dragOffset, setDragOffset] = useState(0);
   const imageContainerRef = useRef<HTMLDivElement>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
+    e.stopPropagation();
     setTouchStartX(e.touches[0].clientX);
     setTouchEndX(e.touches[0].clientX);
     setTouchStartY(e.touches[0].clientY);
-    setIsSwiping(false);
     setSwipeDirection(null);
     setDragOffset(0);
   };
@@ -163,8 +162,8 @@ function ListingCard({
     const diffY = Math.abs(currentY - touchStartY);
 
     // Déterminer la direction du swipe une seule fois au début
-    if (swipeDirection === null && (diffX > 10 || diffY > 10)) {
-      if (diffX > diffY) {
+    if (swipeDirection === null && (diffX > 8 || diffY > 8)) {
+      if (diffX > diffY * 1.2) {
         setSwipeDirection('horizontal');
       } else {
         setSwipeDirection('vertical');
@@ -175,41 +174,37 @@ function ListingCard({
     if (swipeDirection === 'horizontal') {
       e.preventDefault();
       e.stopPropagation();
-      setIsSwiping(true);
       setTouchEndX(currentX);
 
       // Calculer le décalage en pixels pour suivre le doigt
-      const containerWidth = imageContainerRef.current?.offsetWidth || 300;
       let offset = currentX - touchStartX;
 
       // Limiter le drag si on est à la première ou dernière image
       if (currentImageIndex === 0 && offset > 0) {
-        offset = offset * 0.3; // Résistance élastique
+        offset = offset * 0.2;
       }
       if (currentImageIndex === images.length - 1 && offset < 0) {
-        offset = offset * 0.3; // Résistance élastique
+        offset = offset * 0.2;
       }
 
       setDragOffset(offset);
     }
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e: React.TouchEvent) => {
     // Seulement changer d'image si c'était un swipe horizontal
-    if (swipeDirection === 'horizontal' && isSwiping) {
+    if (swipeDirection === 'horizontal') {
+      e.stopPropagation();
       const containerWidth = imageContainerRef.current?.offsetWidth || 300;
-      const threshold = containerWidth * 0.25; // 25% de la largeur pour changer d'image
+      const threshold = containerWidth * 0.2;
 
       if (dragOffset < -threshold && currentImageIndex < images.length - 1) {
-        // Swipe vers la gauche -> image suivante
         setCurrentImageIndex(prev => prev + 1);
       } else if (dragOffset > threshold && currentImageIndex > 0) {
-        // Swipe vers la droite -> image précédente
         setCurrentImageIndex(prev => prev - 1);
       }
     }
 
-    setIsSwiping(false);
     setSwipeDirection(null);
     setDragOffset(0);
   };
@@ -247,7 +242,7 @@ function ListingCard({
         >
           {images.length > 0 ? (
             <div
-              className={`flex h-full ${isSwiping ? '' : 'transition-transform duration-300 ease-out'}`}
+              className={`flex h-full ${swipeDirection === 'horizontal' ? '' : 'transition-transform duration-300 ease-out'}`}
               style={{
                 transform: `translateX(calc(-${currentImageIndex * 100}% + ${isMobile ? dragOffset : 0}px))`
               }}
