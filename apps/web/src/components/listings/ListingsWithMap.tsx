@@ -1110,14 +1110,6 @@ export default function ListingsWithMap({
               dragStartHeight.current = sheetHeight;
               lastTouchY.current = e.touches[0].clientY;
             }}
-            onScroll={(e) => {
-              const scrollContainer = e.currentTarget;
-              // Si on scroll vers le bas et qu'on est en partial, passer en expanded fluidement
-              if (scrollContainer.scrollTop > 10 && mobileSheetPosition === 'partial') {
-                setSheetHeight(100);
-                updateSheetPosition('expanded');
-              }
-            }}
             onTouchMove={(e) => {
               const scrollContainer = e.currentTarget;
               const touch = e.touches[0];
@@ -1137,6 +1129,19 @@ export default function ListingsWithMap({
                 } else if (newHeight <= 60) {
                   updateSheetPosition('partial');
                 } else {
+                  updateSheetPosition('expanded');
+                }
+              }
+
+              // Si on est en haut ET qu'on tire vers le haut (deltaFromStart < 0) ET en mode partial -> agrandir le sheet
+              if (isAtTop && deltaFromStart < -10 && mobileSheetPosition === 'partial') {
+                e.preventDefault();
+                const deltaPercent = (Math.abs(deltaFromStart) / window.innerHeight) * 150;
+                const newHeight = Math.min(100, dragStartHeight.current + deltaPercent);
+                setSheetHeight(newHeight);
+                setIsDragging(true);
+
+                if (newHeight > 60) {
                   updateSheetPosition('expanded');
                 }
               }
