@@ -256,10 +256,10 @@ function ListingCard({
             {images.slice(0, 5).map((_, idx) => (
               <span
                 key={idx}
-                className={`rounded-full ${
+                className={`rounded-full transition-all duration-200 ${
                   idx === currentImageIndex
-                    ? "h-[5px] w-[5px] bg-white"
-                    : "h-[5px] w-[5px] bg-white/40"
+                    ? "h-[6px] w-[12px] bg-white"
+                    : "h-[6px] w-[6px] bg-white/40"
                 }`}
               />
             ))}
