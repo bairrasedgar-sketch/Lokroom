@@ -1116,6 +1116,16 @@ export default function ListingsWithMap({
               const isAtTop = scrollContainer.scrollTop <= 5;
               const deltaFromStart = touch.clientY - dragStartY.current;
 
+              // Si on est en mode partial et qu'on tire vers le haut (veut voir plus d'annonces)
+              if (mobileSheetPosition === 'partial' && deltaFromStart < -5) {
+                // Bloquer le scroll natif et agrandir le sheet
+                e.preventDefault();
+                const deltaPercent = (Math.abs(deltaFromStart) / window.innerHeight) * 100;
+                const newHeight = Math.min(100, 50 + deltaPercent);
+                setSheetHeight(newHeight);
+                setIsDragging(true);
+              }
+
               // Si on est en haut de la liste ET qu'on tire vers le bas (deltaFromStart > 0) -> réduire le sheet
               if (isAtTop && deltaFromStart > 10) {
                 e.preventDefault();
@@ -1129,19 +1139,6 @@ export default function ListingsWithMap({
                 } else if (newHeight <= 60) {
                   updateSheetPosition('partial');
                 } else {
-                  updateSheetPosition('expanded');
-                }
-              }
-
-              // Si on est en haut ET qu'on tire vers le haut (deltaFromStart < 0) ET en mode partial -> agrandir le sheet
-              if (isAtTop && deltaFromStart < -10 && mobileSheetPosition === 'partial') {
-                e.preventDefault();
-                const deltaPercent = (Math.abs(deltaFromStart) / window.innerHeight) * 150;
-                const newHeight = Math.min(100, dragStartHeight.current + deltaPercent);
-                setSheetHeight(newHeight);
-                setIsDragging(true);
-
-                if (newHeight > 60) {
                   updateSheetPosition('expanded');
                 }
               }
