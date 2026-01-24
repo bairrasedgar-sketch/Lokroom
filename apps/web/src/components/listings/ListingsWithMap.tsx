@@ -141,16 +141,35 @@ function ListingCard({
   };
 
   // Gestion du swipe sur mobile
+  const [isSwiping, setIsSwiping] = useState(false);
+  const [touchStartY, setTouchStartY] = useState(0);
+
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStartX(e.touches[0].clientX);
     setTouchEndX(e.touches[0].clientX);
+    setTouchStartY(e.touches[0].clientY);
+    setIsSwiping(false);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    setTouchEndX(e.touches[0].clientX);
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+    const diffX = Math.abs(currentX - touchStartX);
+    const diffY = Math.abs(currentY - touchStartY);
+
+    // Si le mouvement horizontal est plus grand que le vertical, c'est un swipe d'image
+    if (diffX > diffY && diffX > 10) {
+      setIsSwiping(true);
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    setTouchEndX(currentX);
   };
 
   const handleTouchEnd = () => {
+    if (!isSwiping) return;
+
     const swipeThreshold = 50;
     const diff = touchStartX - touchEndX;
 
@@ -163,6 +182,7 @@ function ListingCard({
         prevImage();
       }
     }
+    setIsSwiping(false);
   };
 
   const locationLabel = [listing.city ?? undefined, listing.country ?? undefined]
