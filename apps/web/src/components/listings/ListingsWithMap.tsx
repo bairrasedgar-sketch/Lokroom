@@ -186,11 +186,11 @@ function ListingCard({
       const diff = touchStartX - touchEndX;
 
       if (Math.abs(diff) > swipeThreshold) {
-        if (diff > 0) {
-          // Swipe vers la gauche -> image suivante
+        if (diff > 0 && currentImageIndex < images.length - 1) {
+          // Swipe vers la gauche -> image suivante (seulement si pas à la dernière)
           nextImage();
-        } else {
-          // Swipe vers la droite -> image précédente
+        } else if (diff < 0 && currentImageIndex > 0) {
+          // Swipe vers la droite -> image précédente (seulement si pas à la première)
           prevImage();
         }
       }
