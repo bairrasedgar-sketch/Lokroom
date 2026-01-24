@@ -570,8 +570,8 @@ export default function Map({
       >
         <div ref={containerRef} className="h-full w-full rounded-3xl" />
 
-        {/* Boutons zoom custom */}
-        <div className="absolute bottom-4 left-4 z-10 flex flex-col gap-2">
+        {/* Boutons zoom custom - desktop uniquement */}
+        <div className="absolute bottom-4 left-4 z-10 hidden md:flex flex-col gap-2">
           <button
             type="button"
             onClick={() => {
