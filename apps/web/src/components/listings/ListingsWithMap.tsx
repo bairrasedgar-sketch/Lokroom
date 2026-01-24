@@ -166,15 +166,20 @@ function ListingCard({
     const absDiffX = Math.abs(diffX);
     const absDiffY = Math.abs(diffY);
 
-    // Déterminer la direction une seule fois
-    if (swipeDirection === null && (absDiffX > 8 || absDiffY > 8)) {
-      // Si horizontal est clairement plus grand (1.5x), c'est un swipe d'image
-      if (absDiffX > absDiffY * 1.5) {
+    // Déterminer la direction une seule fois après un petit mouvement
+    if (swipeDirection === null && (absDiffX > 5 || absDiffY > 5)) {
+      if (absDiffX > absDiffY) {
         setSwipeDirection('horizontal');
-      } else {
-        // Sinon c'est vertical, on laisse le scroll normal
+        // Bloquer immédiatement le scroll
+        e.preventDefault();
+      } else if (absDiffY > absDiffX * 2) {
+        // Seulement vertical si c'est VRAIMENT vertical (2x plus que horizontal)
         setSwipeDirection('vertical');
         return;
+      } else {
+        // Dans le doute, on considère horizontal
+        setSwipeDirection('horizontal');
+        e.preventDefault();
       }
     }
 
