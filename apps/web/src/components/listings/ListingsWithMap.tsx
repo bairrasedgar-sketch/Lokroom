@@ -1035,7 +1035,7 @@ export default function ListingsWithMap({
         {/* Barre de recherche fixe - toujours visible */}
         <div
           className={`fixed left-0 right-0 z-30 bg-white/95 backdrop-blur-sm px-3 py-2 border-b border-gray-100 transition-all duration-300 ${
-            mobileSheetPosition === 'expanded' ? 'top-0' : 'top-[45px]'
+            mobileSheetPosition === 'expanded' ? 'top-2' : 'top-[52px]'
           }`}
         >
           <button
