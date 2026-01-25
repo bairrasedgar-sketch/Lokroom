@@ -56,6 +56,13 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
   const { data: session } = useSession();
   const modalRef = useRef<HTMLDivElement>(null);
 
+  // Détecter si on est sur mobile pour éviter l'autoFocus du clavier
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 640);
+  }, []);
+
   const [activeTab, setActiveTab] = useState<"destination" | "dates" | "guests">(initialTab);
   const [destination, setDestination] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
@@ -365,7 +372,7 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
                   onChange={setDestination}
                   onSelect={handleLocationSelect}
                   placeholder="Rechercher une ville, un pays..."
-                  autoFocus
+                  autoFocus={!isMobile}
                   popularCities={POPULAR_DESTINATIONS.map(d => ({
                     main: d.city,
                     secondary: d.country,
