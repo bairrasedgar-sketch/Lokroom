@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Map, { type MapMarker } from "@/components/Map";
 import FavoriteButton from "@/components/FavoriteButton";
+import SearchModal from "@/components/SearchModal";
 import { useMobileSheet } from "@/contexts/MobileSheetContext";
 
 // Helper pour obtenir le label de chaque type de listing
@@ -498,6 +499,8 @@ export default function ListingsWithMap({
   const [mobileSheetPosition, setMobileSheetPositionLocal] = useState<'collapsed' | 'partial' | 'expanded'>('partial');
   const [isDragging, setIsDragging] = useState(false);
   const [sheetHeight, setSheetHeight] = useState(45); // pourcentage de la hauteur
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [isFiltersModalOpen, setIsFiltersModalOpen] = useState(false);
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const isFirstLoad = useRef(true);
@@ -1084,11 +1087,7 @@ export default function ListingsWithMap({
             {/* Barre de recherche */}
             <button
               type="button"
-              onClick={() => {
-                if (typeof window !== "undefined") {
-                  window.dispatchEvent(new CustomEvent("openSearchModal"));
-                }
-              }}
+              onClick={() => setIsSearchModalOpen(true)}
               className="flex-1 flex items-center gap-3 bg-white rounded-full border border-gray-200 shadow-sm px-4 py-2.5 active:scale-[0.98] transition-transform"
             >
               <svg className="h-5 w-5 text-gray-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -1103,9 +1102,7 @@ export default function ListingsWithMap({
             {/* Bouton Filtres séparé */}
             <button
               type="button"
-              onClick={() => {
-                // TODO: Ouvrir modal filtres
-              }}
+              onClick={() => setIsFiltersModalOpen(true)}
               className="flex-shrink-0 h-12 w-12 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center active:scale-95 transition-transform"
             >
               <svg className="h-5 w-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -1354,6 +1351,146 @@ export default function ListingsWithMap({
           </button>
         )}
       </div>
+
+      {/* Modal de recherche */}
+      <SearchModal
+        isOpen={isSearchModalOpen}
+        onClose={() => setIsSearchModalOpen(false)}
+      />
+
+      {/* Modal de filtres */}
+      {isFiltersModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/50 backdrop-blur-sm">
+          <div
+            className="w-full h-[85vh] bg-white rounded-t-[20px] shadow-2xl flex flex-col animate-slide-up"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
+              <button
+                onClick={() => setIsFiltersModalOpen(false)}
+                className="flex items-center justify-center h-8 w-8 rounded-full hover:bg-gray-100 transition-colors"
+              >
+                <svg className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <h2 className="text-base font-semibold text-gray-900">Filtres</h2>
+              <div className="w-8" />
+            </div>
+
+            {/* Contenu des filtres */}
+            <div className="flex-1 overflow-y-auto px-4 py-4">
+              {/* Type de logement */}
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">Type de logement</h3>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(LISTING_TYPE_LABELS).map(([key, label]) => (
+                    <button
+                      key={key}
+                      className="px-4 py-2 rounded-full border border-gray-200 text-sm text-gray-700 hover:border-gray-900 transition-colors"
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Fourchette de prix */}
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">Fourchette de prix</h3>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <label className="text-xs text-gray-500 mb-1 block">Minimum</label>
+                    <input
+                      type="number"
+                      placeholder="0 €"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                    />
+                  </div>
+                  <span className="text-gray-400 mt-5">—</span>
+                  <div className="flex-1">
+                    <label className="text-xs text-gray-500 mb-1 block">Maximum</label>
+                    <input
+                      type="number"
+                      placeholder="1000 €"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Nombre de voyageurs */}
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">Voyageurs</h3>
+                <div className="flex items-center justify-between p-3 border border-gray-200 rounded-xl">
+                  <span className="text-sm text-gray-700">Nombre de voyageurs</span>
+                  <div className="flex items-center gap-3">
+                    <button className="h-8 w-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-900 transition-colors">
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
+                      </svg>
+                    </button>
+                    <span className="text-sm font-medium w-6 text-center">1</span>
+                    <button className="h-8 w-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-900 transition-colors">
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Note minimum */}
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">Note minimum</h3>
+                <div className="flex gap-2">
+                  {[3, 3.5, 4, 4.5].map((rating) => (
+                    <button
+                      key={rating}
+                      className="flex items-center gap-1 px-3 py-2 rounded-full border border-gray-200 text-sm text-gray-700 hover:border-gray-900 transition-colors"
+                    >
+                      <svg className="h-4 w-4 fill-current text-yellow-400" viewBox="0 0 24 24">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                      </svg>
+                      {rating}+
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer avec boutons */}
+            <div className="flex items-center justify-between px-4 py-4 border-t border-gray-100 bg-white">
+              <button
+                onClick={() => {}}
+                className="text-sm font-medium text-gray-700 underline"
+              >
+                Tout effacer
+              </button>
+              <button
+                onClick={() => setIsFiltersModalOpen(false)}
+                className="px-6 py-3 bg-gray-900 text-white rounded-lg text-sm font-semibold hover:bg-black transition-colors"
+              >
+                Afficher les résultats
+              </button>
+            </div>
+          </div>
+
+          <style jsx>{`
+            @keyframes slide-up {
+              from {
+                transform: translateY(100%);
+              }
+              to {
+                transform: translateY(0);
+              }
+            }
+            .animate-slide-up {
+              animation: slide-up 0.3s ease-out forwards;
+            }
+          `}</style>
+        </div>
+      )}
     </div>
   );
 }
