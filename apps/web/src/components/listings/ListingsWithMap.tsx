@@ -1246,7 +1246,7 @@ export default function ListingsWithMap({
               setSheetHeight(50);
               updateSheetPosition('partial');
             }}
-            className="fixed left-1/2 -translate-x-1/2 bottom-20 z-50 flex items-center gap-2 rounded-full bg-gray-900 px-4 py-3 text-sm font-semibold text-white shadow-lg active:scale-95 transition-transform"
+            className="fixed left-1/2 -translate-x-1/2 bottom-20 z-50 flex items-center gap-2 rounded-full bg-gray-900/90 px-4 py-3 text-sm font-semibold text-white shadow-lg active:scale-95 transition-transform"
           >
             <span>Liste</span>
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -1260,7 +1260,7 @@ export default function ListingsWithMap({
               setSheetHeight(8);
               updateSheetPosition('collapsed');
             }}
-            className="fixed left-1/2 -translate-x-1/2 bottom-20 z-50 flex items-center gap-2 rounded-full bg-gray-900 px-4 py-3 text-sm font-semibold text-white shadow-lg active:scale-95 transition-transform"
+            className="fixed left-1/2 -translate-x-1/2 bottom-20 z-50 flex items-center gap-2 rounded-full bg-gray-900/90 px-4 py-3 text-sm font-semibold text-white shadow-lg active:scale-95 transition-transform"
           >
             <span>Carte</span>
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
