@@ -1080,28 +1080,39 @@ export default function ListingsWithMap({
             mobileSheetPosition === 'expanded' ? 'top-0 pt-3 pb-2 bg-neutral-50' : 'top-[56px] py-2'
           }`}
         >
-          <button
-            type="button"
-            onClick={() => {
-              if (typeof window !== "undefined") {
-                window.dispatchEvent(new CustomEvent("openSearchModal"));
-              }
-            }}
-            className="w-full flex items-center gap-3 bg-white rounded-full border border-gray-200 shadow-sm px-4 py-2.5 active:scale-[0.98] transition-transform"
-          >
-            <svg className="h-5 w-5 text-gray-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-            </svg>
-            <div className="flex-1 text-left">
-              <p className="text-sm font-medium text-gray-900">Où allez-vous ?</p>
-              <p className="text-xs text-gray-500">Destination · Dates · Voyageurs</p>
-            </div>
-            <div className="flex-shrink-0 h-8 w-8 rounded-full border border-gray-200 flex items-center justify-center">
-              <svg className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <div className="flex items-center gap-2">
+            {/* Barre de recherche */}
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== "undefined") {
+                  window.dispatchEvent(new CustomEvent("openSearchModal"));
+                }
+              }}
+              className="flex-1 flex items-center gap-3 bg-white rounded-full border border-gray-200 shadow-sm px-4 py-2.5 active:scale-[0.98] transition-transform"
+            >
+              <svg className="h-5 w-5 text-gray-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+              </svg>
+              <div className="flex-1 text-left">
+                <p className="text-sm font-medium text-gray-900">Où allez-vous ?</p>
+                <p className="text-xs text-gray-500">Destination · Dates · Voyageurs</p>
+              </div>
+            </button>
+
+            {/* Bouton Filtres séparé */}
+            <button
+              type="button"
+              onClick={() => {
+                // TODO: Ouvrir modal filtres
+              }}
+              className="flex-shrink-0 h-12 w-12 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center active:scale-95 transition-transform"
+            >
+              <svg className="h-5 w-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
               </svg>
-            </div>
-          </button>
+            </button>
+          </div>
         </div>
 
         {/* Bottom Sheet draggable - Style Airbnb */}
