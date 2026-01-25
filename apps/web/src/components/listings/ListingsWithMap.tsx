@@ -545,13 +545,7 @@ export default function ListingsWithMap({
 
   // Synchroniser la position locale avec le contexte global
   const updateSheetPosition = useCallback((position: 'collapsed' | 'partial' | 'expanded') => {
-    // Reset tous les états de drag pour éviter les blocages
-    setIsDragging(false);
-    isExpandingRef.current = false;
-    velocityY.current = 0;
-
     setMobileSheetPositionLocal(position);
-    mobileSheetPositionRef.current = position; // Mise à jour immédiate de la ref
     setSheetPosition(position);
   }, [setSheetPosition]);
 
@@ -560,31 +554,23 @@ export default function ListingsWithMap({
     const container = scrollContainerRef.current;
     if (!container) return;
 
-    let localDragStartY = 0;
-    let localDragStartHeight = 0;
-    let localIsExpanding = false;
-    let localIsDragging = false;
-
     const handleTouchStart = (e: TouchEvent) => {
       const touch = e.touches[0];
-      localDragStartY = touch.clientY;
-      localDragStartHeight = sheetHeightRef.current;
+      dragStartY.current = touch.clientY;
+      dragStartHeight.current = sheetHeightRef.current;
       lastTouchY.current = touch.clientY;
-      localIsExpanding = false;
-      localIsDragging = false;
+      isExpandingRef.current = false;
     };
 
     const handleTouchMove = (e: TouchEvent) => {
       const touch = e.touches[0];
       const isAtTop = container.scrollTop <= 5;
-      const deltaFromStart = touch.clientY - localDragStartY;
-      const currentPosition = mobileSheetPositionRef.current;
+      const deltaFromStart = touch.clientY - dragStartY.current;
 
       // Si on est en mode partial et qu'on tire vers le haut -> agrandir le sheet
-      if (currentPosition === 'partial' && deltaFromStart < -10) {
+      if (mobileSheetPositionRef.current === 'partial' && deltaFromStart < 0) {
         e.preventDefault();
-        localIsExpanding = true;
-        localIsDragging = true;
+        isExpandingRef.current = true;
         const deltaPercent = (Math.abs(deltaFromStart) / window.innerHeight) * 120;
         const newHeight = Math.min(100, 50 + deltaPercent);
         setSheetHeight(newHeight);
@@ -592,42 +578,35 @@ export default function ListingsWithMap({
       }
 
       // Si on est en haut de la liste ET qu'on tire vers le bas -> réduire le sheet
-      if (isAtTop && deltaFromStart > 10 && !localIsExpanding) {
+      if (isAtTop && deltaFromStart > 5 && !isExpandingRef.current) {
         e.preventDefault();
-        localIsDragging = true;
         const deltaPercent = (deltaFromStart / window.innerHeight) * 120;
-        const newHeight = Math.max(8, localDragStartHeight - deltaPercent);
+        const newHeight = Math.max(8, dragStartHeight.current - deltaPercent);
         setSheetHeight(newHeight);
         setIsDragging(true);
       }
     };
 
     const handleTouchEnd = () => {
-      if (localIsDragging || localIsExpanding) {
+      if (isDraggingRef.current || isExpandingRef.current) {
         setIsDragging(false);
+        isExpandingRef.current = false;
 
         const currentHeight = sheetHeightRef.current;
         if (currentHeight < 25) {
           setSheetHeight(8);
           setMobileSheetPositionLocal('collapsed');
-          mobileSheetPositionRef.current = 'collapsed';
           setSheetPosition('collapsed');
         } else if (currentHeight < 70) {
           setSheetHeight(50);
           setMobileSheetPositionLocal('partial');
-          mobileSheetPositionRef.current = 'partial';
           setSheetPosition('partial');
         } else {
           setSheetHeight(100);
           setMobileSheetPositionLocal('expanded');
-          mobileSheetPositionRef.current = 'expanded';
           setSheetPosition('expanded');
         }
       }
-
-      // Reset des variables locales
-      localIsExpanding = false;
-      localIsDragging = false;
     };
 
     container.addEventListener('touchstart', handleTouchStart, { passive: true });
@@ -1072,16 +1051,15 @@ export default function ListingsWithMap({
             style={{ touchAction: 'none' }}
             onTouchStart={(e) => {
               const touch = e.touches[0];
+              setIsDragging(true);
               dragStartY.current = touch.clientY;
-              dragStartHeight.current = sheetHeightRef.current;
+              dragStartHeight.current = sheetHeight;
               lastTouchY.current = touch.clientY;
               lastTouchTime.current = Date.now();
               velocityY.current = 0;
-              isDraggingRef.current = true;
-              setIsDragging(true);
             }}
             onTouchMove={(e) => {
-              if (!isDraggingRef.current) return;
+              if (!isDragging) return;
               e.preventDefault();
 
               const touch = e.touches[0];
@@ -1092,6 +1070,7 @@ export default function ListingsWithMap({
               const timeDelta = currentTime - lastTouchTime.current;
               if (timeDelta > 0) {
                 const instantVelocity = (lastTouchY.current - currentY) / timeDelta;
+                // Lissage de la vélocité avec moyenne pondérée - plus réactif
                 velocityY.current = velocityY.current * 0.5 + instantVelocity * 0.5;
               }
 
@@ -1107,37 +1086,38 @@ export default function ListingsWithMap({
               let newHeight: number;
 
               if (rawHeight > 100) {
+                // Résistance élastique en haut
                 const overflow = rawHeight - 100;
                 newHeight = 100 + overflow * 0.1;
               } else if (rawHeight < 8) {
+                // Résistance élastique en bas
                 const overflow = 8 - rawHeight;
                 newHeight = 8 - overflow * 0.1;
               } else {
                 newHeight = rawHeight;
               }
 
-              const clampedHeight = Math.min(105, Math.max(5, newHeight));
-              sheetHeightRef.current = clampedHeight;
-              setSheetHeight(clampedHeight);
+              setSheetHeight(Math.min(105, Math.max(5, newHeight)));
             }}
             onTouchEnd={() => {
-              isDraggingRef.current = false;
               setIsDragging(false);
 
-              // Points de snap
+              // Points de snap: collapsed (8%), partial (50%), expanded (100%)
               const SNAP_COLLAPSED = 8;
               const SNAP_PARTIAL = 50;
               const SNAP_EXPANDED = 100;
-              const VELOCITY_THRESHOLD = 0.15;
 
-              const currentHeight = sheetHeightRef.current;
+              // Seuil de vélocité pour déclencher un snap directionnel
+              const VELOCITY_THRESHOLD = 0.15; // pixels/ms - plus bas = plus sensible
+
               let targetHeight: number;
               let targetPosition: 'collapsed' | 'partial' | 'expanded';
 
               // Si la vélocité est suffisante, snap dans la direction du mouvement
               if (Math.abs(velocityY.current) > VELOCITY_THRESHOLD) {
                 if (velocityY.current > 0) {
-                  if (currentHeight < SNAP_PARTIAL) {
+                  // Mouvement vers le haut (agrandir)
+                  if (sheetHeight < SNAP_PARTIAL) {
                     targetHeight = SNAP_PARTIAL;
                     targetPosition = 'partial';
                   } else {
@@ -1145,7 +1125,8 @@ export default function ListingsWithMap({
                     targetPosition = 'expanded';
                   }
                 } else {
-                  if (currentHeight > SNAP_PARTIAL) {
+                  // Mouvement vers le bas (réduire)
+                  if (sheetHeight > SNAP_PARTIAL) {
                     targetHeight = SNAP_PARTIAL;
                     targetPosition = 'partial';
                   } else {
@@ -1154,10 +1135,10 @@ export default function ListingsWithMap({
                   }
                 }
               } else {
-                // Snap au point le plus proche
-                const distToCollapsed = Math.abs(currentHeight - SNAP_COLLAPSED);
-                const distToPartial = Math.abs(currentHeight - SNAP_PARTIAL);
-                const distToExpanded = Math.abs(currentHeight - SNAP_EXPANDED);
+                // Snap au point le plus proche basé sur la position
+                const distToCollapsed = Math.abs(sheetHeight - SNAP_COLLAPSED);
+                const distToPartial = Math.abs(sheetHeight - SNAP_PARTIAL);
+                const distToExpanded = Math.abs(sheetHeight - SNAP_EXPANDED);
 
                 if (distToCollapsed <= distToPartial && distToCollapsed <= distToExpanded) {
                   targetHeight = SNAP_COLLAPSED;
@@ -1171,11 +1152,8 @@ export default function ListingsWithMap({
                 }
               }
 
-              sheetHeightRef.current = targetHeight;
               setSheetHeight(targetHeight);
-              mobileSheetPositionRef.current = targetPosition;
-              setMobileSheetPositionLocal(targetPosition);
-              setSheetPosition(targetPosition);
+              updateSheetPosition(targetPosition);
               velocityY.current = 0;
             }}
           >
@@ -1261,46 +1239,40 @@ export default function ListingsWithMap({
         </div>
 
         {/* Bouton Carte flottant style Airbnb - centré juste au-dessus du footer */}
-        {mobileSheetPosition !== 'collapsed' && (
-          <button
-            onClick={() => {
-              setIsDragging(false);
-              isExpandingRef.current = false;
-              velocityY.current = 0;
-              setSheetHeight(8);
-              setMobileSheetPositionLocal('collapsed');
-              mobileSheetPositionRef.current = 'collapsed';
-              setSheetPosition('collapsed');
-            }}
-            className="fixed left-1/2 -translate-x-1/2 bottom-20 z-40 flex items-center gap-2 rounded-full bg-gray-900 px-4 py-3 text-sm font-semibold text-white shadow-lg active:scale-95 transition-transform"
-          >
-            <span>Carte</span>
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-            </svg>
-          </button>
-        )}
+        <button
+          onClick={() => {
+            setSheetHeight(8);
+            updateSheetPosition('collapsed');
+          }}
+          className={`fixed left-1/2 -translate-x-1/2 bottom-20 z-40 flex items-center gap-2 rounded-full bg-gray-900 px-4 py-3 text-sm font-semibold text-white shadow-lg active:scale-95 transition-all duration-500 ease-out ${
+            mobileSheetPosition !== 'collapsed'
+              ? 'opacity-100 translate-y-0'
+              : 'opacity-0 translate-y-4 pointer-events-none'
+          }`}
+        >
+          <span>Carte</span>
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+          </svg>
+        </button>
 
         {/* Bouton Liste flottant - visible quand on est sur la carte (collapsed) */}
-        {mobileSheetPosition === 'collapsed' && (
-          <button
-            onClick={() => {
-              setIsDragging(false);
-              isExpandingRef.current = false;
-              velocityY.current = 0;
-              setSheetHeight(50);
-              setMobileSheetPositionLocal('partial');
-              mobileSheetPositionRef.current = 'partial';
-              setSheetPosition('partial');
-            }}
-            className="fixed left-1/2 -translate-x-1/2 bottom-20 z-40 flex items-center gap-2 rounded-full bg-gray-900 px-4 py-3 text-sm font-semibold text-white shadow-lg active:scale-95 transition-transform"
-          >
-            <span>Liste</span>
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-            </svg>
-          </button>
-        )}
+        <button
+          onClick={() => {
+            setSheetHeight(50);
+            updateSheetPosition('partial');
+          }}
+          className={`fixed left-1/2 -translate-x-1/2 bottom-20 z-40 flex items-center gap-2 rounded-full bg-gray-900 px-4 py-3 text-sm font-semibold text-white shadow-lg active:scale-95 transition-all duration-500 ease-out ${
+            mobileSheetPosition === 'collapsed'
+              ? 'opacity-100 translate-y-0'
+              : 'opacity-0 translate-y-4 pointer-events-none'
+          }`}
+        >
+          <span>Liste</span>
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+          </svg>
+        </button>
       </div>
     </div>
   );
