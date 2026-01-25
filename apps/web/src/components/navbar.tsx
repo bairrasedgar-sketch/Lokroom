@@ -7,6 +7,7 @@ import Image from "next/image";
 import { signIn, useSession } from "next-auth/react";
 import { UserMenu } from "./layout/UserMenu";
 import { useSearchBarSafe } from "@/contexts/SearchBarContext";
+import { useMobileSheetSafe } from "@/contexts/MobileSheetContext";
 import { COUNTRIES, DEFAULT_COUNTRY, type Country } from "@/data/countries";
 import NotificationBell from "./NotificationBell";
 import CategoryIcon from "./CategoryIcon";
@@ -355,6 +356,11 @@ export default function Navbar() {
   const activeCategory = searchBarContext?.activeCategory || null;
   const setActiveCategory = searchBarContext?.setActiveCategory || (() => {});
 
+  // Récupérer l'état du sheet mobile pour cacher le header en mode expanded
+  const mobileSheet = useMobileSheetSafe();
+  const isOnListingsPage = pathname === "/listings" || pathname.startsWith("/listings?");
+  const shouldHideMobileHeader = isOnListingsPage && mobileSheet?.isSheetActive && mobileSheet?.sheetPosition === 'expanded';
+
   // Créer la liste complète des catégories triées
   const sortedCategories = CATEGORY_ORDER.map(key => ({
     key,
@@ -430,7 +436,11 @@ export default function Navbar() {
     <>
       <header className="sticky top-0 z-50 bg-neutral-50">
         {/* Barre mobile - Logo + Télécharger l'appli + Utiliser l'appli */}
-        <div className="flex md:hidden items-center justify-between px-3 py-2 border-b border-gray-100">
+        <div
+          className={`flex md:hidden items-center justify-between px-3 py-2 border-b border-gray-100 transition-all duration-300 ${
+            shouldHideMobileHeader ? 'opacity-0 -translate-y-full h-0 py-0 overflow-hidden' : 'opacity-100 translate-y-0'
+          }`}
+        >
           {/* Logo Lok'Room */}
           <Link href="/" className="flex-shrink-0 flex items-center">
             <Image
