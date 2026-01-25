@@ -17,32 +17,22 @@ type SearchHistory = {
 type PopularDestination = {
   city: string;
   country: string;
-  emoji: string;
+  image: string;
 };
 
 const POPULAR_DESTINATIONS: PopularDestination[] = [
   // France
-  { city: "Paris", country: "France", emoji: "" },
-  { city: "Lyon", country: "France", emoji: "" },
-  { city: "Bordeaux", country: "France", emoji: "" },
-  { city: "Nice", country: "France", emoji: "" },
-  { city: "Marseille", country: "France", emoji: "" },
-  { city: "Toulouse", country: "France", emoji: "" },
-  { city: "Nantes", country: "France", emoji: "" },
-  { city: "Strasbourg", country: "France", emoji: "" },
-  { city: "Lille", country: "France", emoji: "" },
-  { city: "Montpellier", country: "France", emoji: "" },
-  { city: "Rennes", country: "France", emoji: "" },
+  { city: "Paris", country: "France", image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=200&h=200&fit=crop" },
+  { city: "Lyon", country: "France", image: "https://images.unsplash.com/photo-1524484485831-a92ffc0de03f?w=200&h=200&fit=crop" },
+  { city: "Bordeaux", country: "France", image: "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=200&h=200&fit=crop" },
+  { city: "Nice", country: "France", image: "https://images.unsplash.com/photo-1491166617655-0723a0999cfc?w=200&h=200&fit=crop" },
+  { city: "Marseille", country: "France", image: "https://images.unsplash.com/photo-1589656966895-2f33e7653819?w=200&h=200&fit=crop" },
+  { city: "Toulouse", country: "France", image: "https://images.unsplash.com/photo-1582974131696-e8d8d4a10f2a?w=200&h=200&fit=crop" },
   // Canada
-  { city: "Montréal", country: "Canada", emoji: "" },
-  { city: "Toronto", country: "Canada", emoji: "" },
-  { city: "Québec", country: "Canada", emoji: "" },
-  { city: "Vancouver", country: "Canada", emoji: "" },
-  { city: "Ottawa", country: "Canada", emoji: "" },
-  { city: "Calgary", country: "Canada", emoji: "" },
-  { city: "Edmonton", country: "Canada", emoji: "" },
-  { city: "Winnipeg", country: "Canada", emoji: "" },
-  { city: "Halifax", country: "Canada", emoji: "" },
+  { city: "Montréal", country: "Canada", image: "https://images.unsplash.com/photo-1519178614-68673b201f36?w=200&h=200&fit=crop" },
+  { city: "Toronto", country: "Canada", image: "https://images.unsplash.com/photo-1517090504531-3bac891708fd?w=200&h=200&fit=crop" },
+  { city: "Vancouver", country: "Canada", image: "https://images.unsplash.com/photo-1559511260-66a68e7e3b97?w=200&h=200&fit=crop" },
+  { city: "Québec", country: "Canada", image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200&h=200&fit=crop" },
 ];
 
 type SearchModalProps = {
@@ -270,6 +260,442 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
 
   if (!isOpen) return null;
 
+  // ============================================
+  // VERSION MOBILE - Interface Premium
+  // ============================================
+  if (isMobile) {
+    return (
+      <div className="fixed inset-0 z-[100] bg-white">
+        {/* Header Mobile */}
+        <div className="sticky top-0 z-10 bg-white border-b border-gray-100">
+          <div className="flex items-center justify-between px-4 py-3">
+            <button
+              onClick={onClose}
+              className="flex items-center justify-center w-10 h-10 -ml-2 rounded-full hover:bg-gray-100 transition-colors"
+              aria-label="Fermer"
+            >
+              <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <h1 className="text-lg font-semibold text-gray-900">Rechercher</h1>
+            <div className="w-10" />
+          </div>
+        </div>
+
+        {/* Contenu scrollable */}
+        <div className="overflow-y-auto h-[calc(100vh-140px)] pb-4">
+          {/* Section Destination */}
+          <div className="px-4 py-5">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-rose-100 to-rose-50 rounded-2xl">
+                <svg className="w-6 h-6 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-gray-900">Où allez-vous ?</h2>
+                <p className="text-sm text-gray-500">Choisissez votre destination</p>
+              </div>
+            </div>
+
+            <div className="relative">
+              <input
+                type="text"
+                value={destination}
+                onChange={(e) => setDestination(e.target.value)}
+                placeholder="Ville, région ou pays..."
+                className="w-full px-4 py-4 pl-12 bg-gray-50 border-2 border-gray-100 rounded-2xl text-base placeholder-gray-400 focus:outline-none focus:border-gray-900 focus:bg-white transition-all"
+              />
+              <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+
+            {/* Destinations populaires avec images */}
+            <div className="mt-6">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">Destinations populaires</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {POPULAR_DESTINATIONS.slice(0, 6).map((dest) => (
+                  <button
+                    key={dest.city}
+                    onClick={() => {
+                      setDestination(dest.city);
+                      setSelectedCity(dest.city);
+                      setSelectedCountry(dest.country);
+                    }}
+                    className={`relative overflow-hidden rounded-2xl aspect-[4/3] group ${
+                      selectedCity === dest.city ? "ring-2 ring-gray-900" : ""
+                    }`}
+                  >
+                    <img
+                      src={dest.image}
+                      alt={dest.city}
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-3">
+                      <p className="text-white font-semibold text-sm">{dest.city}</p>
+                      <p className="text-white/80 text-xs">{dest.country}</p>
+                    </div>
+                    {selectedCity === dest.city && (
+                      <div className="absolute top-2 right-2 w-6 h-6 bg-gray-900 rounded-full flex items-center justify-center">
+                        <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Séparateur */}
+          <div className="h-2 bg-gray-50" />
+
+          {/* Section Dates */}
+          <div className="px-4 py-5">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-50 rounded-2xl">
+                <svg className="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-gray-900">Quand ?</h2>
+                <p className="text-sm text-gray-500">Sélectionnez vos dates</p>
+              </div>
+            </div>
+
+            {/* Toggle Jour/Heure */}
+            <div className="flex p-1 bg-gray-100 rounded-xl mb-4">
+              <button
+                onClick={() => setBookingMode("days")}
+                className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                  bookingMode === "days" ? "bg-white shadow-sm text-gray-900" : "text-gray-500"
+                }`}
+              >
+                À la journée
+              </button>
+              <button
+                onClick={() => setBookingMode("hours")}
+                className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                  bookingMode === "hours" ? "bg-white shadow-sm text-gray-900" : "text-gray-500"
+                }`}
+              >
+                À l&apos;heure
+              </button>
+            </div>
+
+            {/* Sélection rapide de dates */}
+            <div className="flex gap-2 mb-4 overflow-x-auto pb-2 -mx-4 px-4">
+              {[
+                { label: "Aujourd'hui", date: today },
+                { label: "Demain", date: new Date(Date.now() + 86400000).toISOString().split("T")[0] },
+                { label: "Ce week-end", date: (() => {
+                  const d = new Date();
+                  d.setDate(d.getDate() + (6 - d.getDay()));
+                  return d.toISOString().split("T")[0];
+                })() },
+                { label: "Semaine prochaine", date: (() => {
+                  const d = new Date();
+                  d.setDate(d.getDate() + 7);
+                  return d.toISOString().split("T")[0];
+                })() },
+              ].map((option) => (
+                <button
+                  key={option.label}
+                  onClick={() => {
+                    setStartDate(option.date);
+                    if (bookingMode === "days") {
+                      const end = new Date(option.date);
+                      end.setDate(end.getDate() + 1);
+                      setEndDate(end.toISOString().split("T")[0]);
+                    }
+                  }}
+                  className={`flex-shrink-0 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                    startDate === option.date
+                      ? "bg-gray-900 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Calendrier simplifié mobile */}
+            <div className="bg-gray-50 rounded-2xl p-4">
+              <div className="flex items-center justify-between mb-3">
+                <button
+                  onClick={goToPreviousMonth}
+                  disabled={!canGoPrevious()}
+                  className="p-2 rounded-full hover:bg-gray-200 disabled:opacity-30 transition-colors"
+                >
+                  <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <span className="text-sm font-semibold text-gray-900">
+                  {MONTHS[calendarMonth.getMonth()]} {calendarMonth.getFullYear()}
+                </span>
+                <button
+                  onClick={goToNextMonth}
+                  className="p-2 rounded-full hover:bg-gray-200 transition-colors"
+                >
+                  <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-7 gap-1">
+                {DAYS_OF_WEEK.map((day, i) => (
+                  <div key={i} className="py-2 text-center text-xs font-medium text-gray-400">
+                    {day}
+                  </div>
+                ))}
+                {(() => {
+                  const { daysInMonth, startingDay, year, month } = getDaysInMonth(calendarMonth);
+                  const days = [];
+                  for (let i = 0; i < startingDay; i++) {
+                    days.push(<div key={`empty-${i}`} className="h-10" />);
+                  }
+                  for (let day = 1; day <= daysInMonth; day++) {
+                    const dateStr = formatDateString(year, month, day);
+                    const isDisabled = isDateDisabled(dateStr);
+                    const isStart = dateStr === startDate;
+                    const isEnd = dateStr === endDate;
+                    const isInRange = isDateInRange(dateStr);
+                    const isToday = dateStr === today;
+                    days.push(
+                      <button
+                        key={day}
+                        onClick={() => handleDateClick(dateStr)}
+                        disabled={isDisabled}
+                        className={`h-10 w-full rounded-xl text-sm font-medium transition-all
+                          ${isDisabled ? "text-gray-300" : ""}
+                          ${isStart || isEnd ? "bg-gray-900 text-white" : ""}
+                          ${isInRange ? "bg-gray-200" : ""}
+                          ${!isDisabled && !isStart && !isEnd && !isInRange ? "hover:bg-gray-200" : ""}
+                          ${isToday && !isStart && !isEnd ? "ring-2 ring-gray-900 ring-inset" : ""}
+                        `}
+                      >
+                        {day}
+                      </button>
+                    );
+                  }
+                  return days;
+                })()}
+              </div>
+            </div>
+
+            {/* Sélection d'heures si mode horaire */}
+            {bookingMode === "hours" && startDate && (
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-2">Heure de début</label>
+                  <select
+                    value={selectedTime}
+                    onChange={(e) => setSelectedTime(e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm focus:outline-none focus:border-gray-900 transition-all"
+                  >
+                    <option value="">Choisir</option>
+                    {TIME_OPTIONS.map((time) => (
+                      <option key={time} value={time}>{time}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-2">Heure de fin</label>
+                  <select
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-xl text-sm focus:outline-none focus:border-gray-900 transition-all"
+                  >
+                    <option value="">Choisir</option>
+                    {TIME_OPTIONS.filter(t => !selectedTime || t > selectedTime).map((time) => (
+                      <option key={time} value={time}>{time}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Séparateur */}
+          <div className="h-2 bg-gray-50" />
+
+          {/* Section Voyageurs */}
+          <div className="px-4 py-5">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-amber-100 to-amber-50 rounded-2xl">
+                <svg className="w-6 h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-gray-900">Qui voyage ?</h2>
+                <p className="text-sm text-gray-500">Nombre de voyageurs</p>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              {/* Adultes */}
+              <div className="flex items-center justify-between py-4 border-b border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                    <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">Adultes</p>
+                    <p className="text-xs text-gray-500">13 ans et plus</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setAdults(Math.max(1, adults - 1))}
+                    disabled={adults <= 1}
+                    className="w-10 h-10 rounded-xl border-2 border-gray-200 flex items-center justify-center text-gray-600 disabled:opacity-30 transition-colors hover:border-gray-400"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
+                    </svg>
+                  </button>
+                  <span className="w-8 text-center text-lg font-semibold">{adults}</span>
+                  <button
+                    onClick={() => setAdults(Math.min(16, adults + 1))}
+                    disabled={adults >= 16}
+                    className="w-10 h-10 rounded-xl border-2 border-gray-200 flex items-center justify-center text-gray-600 disabled:opacity-30 transition-colors hover:border-gray-400"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Enfants */}
+              <div className="flex items-center justify-between py-4 border-b border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                    <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">Enfants</p>
+                    <p className="text-xs text-gray-500">2 à 12 ans</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setChildren(Math.max(0, children - 1))}
+                    disabled={children <= 0}
+                    className="w-10 h-10 rounded-xl border-2 border-gray-200 flex items-center justify-center text-gray-600 disabled:opacity-30 transition-colors hover:border-gray-400"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
+                    </svg>
+                  </button>
+                  <span className="w-8 text-center text-lg font-semibold">{children}</span>
+                  <button
+                    onClick={() => setChildren(Math.min(10, children + 1))}
+                    disabled={children >= 10}
+                    className="w-10 h-10 rounded-xl border-2 border-gray-200 flex items-center justify-center text-gray-600 disabled:opacity-30 transition-colors hover:border-gray-400"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Animaux */}
+              <div className="flex items-center justify-between py-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                    <svg className="w-5 h-5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3.744h-.753c-1.036 0-1.896.85-1.683 1.865A4.498 4.498 0 005.749 9.5c.566 0 1.105-.108 1.601-.306m-2.6-5.45c.396-.347.878-.586 1.403-.708M6.75 3.744V1.5m0 2.244a3.001 3.001 0 013 3V9.5m-3-5.756V1.5m0 2.244c-.525.122-1.007.361-1.403.708M17.25 3.744h.753c1.036 0 1.896.85 1.683 1.865a4.498 4.498 0 01-1.435 3.891 4.498 4.498 0 01-1.601-.306m2.6-5.45a3.001 3.001 0 00-1.403-.708m1.403.708V1.5m0 2.244a3.001 3.001 0 00-3 3V9.5m3-5.756V1.5m0 2.244c.525.122 1.007.361 1.403.708M12 12.75a3 3 0 110-6 3 3 0 010 6zm0 0v6.75m-3-3.75h6" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">Animaux</p>
+                    <p className="text-xs text-gray-500">Chiens, chats...</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setPets(Math.max(0, pets - 1))}
+                    disabled={pets <= 0}
+                    className="w-10 h-10 rounded-xl border-2 border-gray-200 flex items-center justify-center text-gray-600 disabled:opacity-30 transition-colors hover:border-gray-400"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
+                    </svg>
+                  </button>
+                  <span className="w-8 text-center text-lg font-semibold">{pets}</span>
+                  <button
+                    onClick={() => setPets(Math.min(5, pets + 1))}
+                    disabled={pets >= 5}
+                    className="w-10 h-10 rounded-xl border-2 border-gray-200 flex items-center justify-center text-gray-600 disabled:opacity-30 transition-colors hover:border-gray-400"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer fixe avec bouton recherche */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-3 safe-area-bottom">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                setDestination("");
+                setSelectedCity("");
+                setSelectedCountry("");
+                setStartDate("");
+                setEndDate("");
+                setAdults(1);
+                setChildren(0);
+                setPets(0);
+              }}
+              className="px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              Effacer tout
+            </button>
+            <button
+              onClick={handleSearch}
+              className="flex-1 flex items-center justify-center gap-2 py-4 bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-2xl text-base font-semibold shadow-lg shadow-gray-900/20 active:scale-[0.98] transition-transform"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              Rechercher
+            </button>
+          </div>
+        </div>
+
+        <style jsx global>{`
+          .safe-area-bottom {
+            padding-bottom: max(12px, env(safe-area-inset-bottom));
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  // ============================================
+  // VERSION DESKTOP - Interface existante
+  // ============================================
   return (
     <div className="fixed inset-0 z-[100] flex items-start sm:items-start justify-center pt-0 sm:pt-10 bg-black/50 backdrop-blur-sm">
       <div
@@ -376,7 +802,7 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
                   popularCities={POPULAR_DESTINATIONS.map(d => ({
                     main: d.city,
                     secondary: d.country,
-                    icon: d.emoji,
+                    icon: d.image,
                   }))}
                 />
               </div>
