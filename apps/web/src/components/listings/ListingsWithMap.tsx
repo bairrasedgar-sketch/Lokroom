@@ -1238,41 +1238,36 @@ export default function ListingsWithMap({
           </div>
         </div>
 
-        {/* Bouton Carte flottant style Airbnb - centré juste au-dessus du footer */}
-        <button
-          onClick={() => {
-            setSheetHeight(8);
-            updateSheetPosition('collapsed');
-          }}
-          className={`fixed left-1/2 -translate-x-1/2 bottom-20 z-40 flex items-center gap-2 rounded-full bg-gray-900 px-4 py-3 text-sm font-semibold text-white shadow-lg active:scale-95 transition-all duration-500 ease-out ${
-            mobileSheetPosition !== 'collapsed'
-              ? 'opacity-100 translate-y-0'
-              : 'opacity-0 translate-y-4 pointer-events-none'
-          }`}
-        >
-          <span>Carte</span>
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-          </svg>
-        </button>
-
-        {/* Bouton Liste flottant - visible quand on est sur la carte (collapsed) */}
-        <button
-          onClick={() => {
-            setSheetHeight(50);
-            updateSheetPosition('partial');
-          }}
-          className={`fixed left-1/2 -translate-x-1/2 bottom-20 z-40 flex items-center gap-2 rounded-full bg-gray-900 px-4 py-3 text-sm font-semibold text-white shadow-lg active:scale-95 transition-all duration-500 ease-out ${
-            mobileSheetPosition === 'collapsed'
-              ? 'opacity-100 translate-y-0'
-              : 'opacity-0 translate-y-4 pointer-events-none'
-          }`}
-        >
-          <span>Liste</span>
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-          </svg>
-        </button>
+        {/* Bouton Carte/Liste flottant - UN SEUL bouton à la fois */}
+        {mobileSheetPosition === 'collapsed' ? (
+          <button
+            key="liste-btn"
+            onClick={() => {
+              setSheetHeight(50);
+              updateSheetPosition('partial');
+            }}
+            className="fixed left-1/2 -translate-x-1/2 bottom-20 z-50 flex items-center gap-2 rounded-full bg-gray-900 px-4 py-3 text-sm font-semibold text-white shadow-lg active:scale-95 transition-transform"
+          >
+            <span>Liste</span>
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+            </svg>
+          </button>
+        ) : (
+          <button
+            key="carte-btn"
+            onClick={() => {
+              setSheetHeight(8);
+              updateSheetPosition('collapsed');
+            }}
+            className="fixed left-1/2 -translate-x-1/2 bottom-20 z-50 flex items-center gap-2 rounded-full bg-gray-900 px-4 py-3 text-sm font-semibold text-white shadow-lg active:scale-95 transition-transform"
+          >
+            <span>Carte</span>
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+            </svg>
+          </button>
+        )}
       </div>
     </div>
   );
