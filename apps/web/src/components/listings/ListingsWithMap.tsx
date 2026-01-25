@@ -485,7 +485,7 @@ export default function ListingsWithMap({
   totalPages = 1,
 }: ListingsWithMapProps) {
   // Contexte pour partager l'etat du sheet avec MobileNavBar
-  const { setSheetPosition, setIsSheetActive } = useMobileSheet();
+  const { setSheetPosition, setIsSheetActive, setIsScrollingDown } = useMobileSheet();
 
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [isLoadingMap, setIsLoadingMap] = useState(false);
@@ -619,6 +619,48 @@ export default function ListingsWithMap({
       container.removeEventListener('touchend', handleTouchEnd);
     };
   }, [setSheetPosition]);
+
+  // Détection du scroll pour cacher/montrer la navbar (uniquement en mode expanded)
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    let lastScrollTop = 0;
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (ticking) return;
+
+      ticking = true;
+      requestAnimationFrame(() => {
+        const currentScrollTop = container.scrollTop;
+        const isExpanded = mobileSheetPositionRef.current === 'expanded';
+
+        if (isExpanded) {
+          // Seuil de 10px pour éviter les micro-mouvements
+          if (currentScrollTop > lastScrollTop + 10) {
+            // Scroll vers le bas -> cacher la navbar
+            setIsScrollingDown(true);
+          } else if (currentScrollTop < lastScrollTop - 10) {
+            // Scroll vers le haut -> montrer la navbar
+            setIsScrollingDown(false);
+          }
+        } else {
+          // Toujours montrer la navbar si pas en mode expanded
+          setIsScrollingDown(false);
+        }
+
+        lastScrollTop = currentScrollTop;
+        ticking = false;
+      });
+    };
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+    };
+  }, [setIsScrollingDown]);
 
   // Gérer le comportement sticky de la map (s'arrête au niveau de la pagination)
   useEffect(() => {

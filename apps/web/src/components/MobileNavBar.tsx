@@ -16,9 +16,12 @@ export default function MobileNavBar() {
     return null;
   }
 
-  // Determiner si on doit cacher le footer (sur /listings quand le sheet est collapsed)
+  // Determiner si on doit cacher le footer
   const isOnListingsPage = pathname === "/listings" || pathname.startsWith("/listings?");
-  const shouldHideFooter = isOnListingsPage && mobileSheet?.isSheetActive && mobileSheet?.sheetPosition === 'collapsed';
+  // Cacher si collapsed OU si on scroll vers le bas en mode expanded
+  const shouldHideFooter = isOnListingsPage && mobileSheet?.isSheetActive && (
+    mobileSheet?.sheetPosition === 'collapsed' || mobileSheet?.isScrollingDown
+  );
 
   const navItems = [
     {
@@ -70,8 +73,8 @@ export default function MobileNavBar() {
 
   return (
     <nav
-      className={`fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 md:hidden safe-area-bottom transition-all duration-300 ease-out ${
-        shouldHideFooter ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'
+      className={`fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 md:hidden safe-area-bottom transition-transform duration-300 ease-out ${
+        shouldHideFooter ? 'translate-y-full' : 'translate-y-0'
       }`}
     >
       <div className="flex items-center justify-around py-2 pb-safe">

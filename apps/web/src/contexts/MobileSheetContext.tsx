@@ -11,6 +11,9 @@ type MobileSheetContextType = {
   /** Indique si on est sur une page avec bottom sheet (ex: /listings) */
   isSheetActive: boolean;
   setIsSheetActive: (active: boolean) => void;
+  /** Indique si l'utilisateur scroll vers le bas (pour cacher la navbar) */
+  isScrollingDown: boolean;
+  setIsScrollingDown: (scrolling: boolean) => void;
 };
 
 const MobileSheetContext = createContext<MobileSheetContextType | null>(null);
@@ -18,6 +21,7 @@ const MobileSheetContext = createContext<MobileSheetContextType | null>(null);
 export function MobileSheetProvider({ children }: { children: ReactNode }) {
   const [sheetPosition, setSheetPosition] = useState<MobileSheetPosition>('partial');
   const [isSheetActive, setIsSheetActive] = useState(false);
+  const [isScrollingDown, setIsScrollingDown] = useState(false);
 
   return (
     <MobileSheetContext.Provider
@@ -26,6 +30,8 @@ export function MobileSheetProvider({ children }: { children: ReactNode }) {
         setSheetPosition,
         isSheetActive,
         setIsSheetActive,
+        isScrollingDown,
+        setIsScrollingDown,
       }}
     >
       {children}
