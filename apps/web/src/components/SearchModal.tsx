@@ -27,8 +27,8 @@ const POPULAR_DESTINATIONS: PopularDestination[] = [
   { city: "Montréal", country: "Canada", image: "https://images.unsplash.com/photo-1519178614-68673b201f36?w=400&h=400&fit=crop&q=80" },
   // Lyon - Vieux Lyon et Saône
   { city: "Lyon", country: "France", image: "https://images.unsplash.com/photo-1524484485831-a92ffc0de03f?w=400&h=400&fit=crop&q=80" },
-  // Marseille - Notre-Dame de la Garde
-  { city: "Marseille", country: "France", image: "https://images.unsplash.com/photo-1602777924012-f8664ffeed27?w=400&h=400&fit=crop&q=80" },
+  // Marseille - Vieux-Port (Pexels)
+  { city: "Marseille", country: "France", image: "https://images.pexels.com/photos/1850620/pexels-photo-1850620.jpeg?auto=compress&cs=tinysrgb&w=400&h=400&fit=crop" },
   // Toronto - Skyline avec CN Tower
   { city: "Toronto", country: "Canada", image: "https://images.unsplash.com/photo-1507992781348-310259076fe0?w=400&h=400&fit=crop&q=80" },
   // Bordeaux - Place de la Bourse avec miroir d'eau (Pexels)
