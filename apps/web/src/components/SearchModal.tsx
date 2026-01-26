@@ -300,18 +300,21 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
               </div>
             </div>
 
-            <div className="relative">
-              <input
-                type="text"
-                value={destination}
-                onChange={(e) => setDestination(e.target.value)}
-                placeholder="Ville, région ou pays..."
-                className="w-full px-4 py-4 pl-12 bg-gray-50 border-2 border-gray-100 rounded-2xl text-base placeholder-gray-400 focus:outline-none focus:border-gray-900 focus:bg-white transition-all"
-              />
-              <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
+            <LocationAutocomplete
+              value={destination}
+              onChange={setDestination}
+              onSelect={(place) => {
+                setDestination(place.mainText);
+                setSelectedCity(place.mainText);
+                setSelectedCountry(place.secondaryText.includes("Canada") ? "Canada" : "France");
+              }}
+              placeholder="Ville, région ou pays..."
+              popularCities={POPULAR_DESTINATIONS.map(d => ({
+                main: d.city,
+                secondary: d.country,
+                icon: d.image,
+              }))}
+            />
 
             {/* Destinations populaires avec images */}
             <div className="mt-6">
