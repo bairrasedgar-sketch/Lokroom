@@ -25,14 +25,14 @@ const POPULAR_DESTINATIONS: PopularDestination[] = [
   { city: "Paris", country: "France", image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&h=400&fit=crop&q=80" },
   // Montréal - Vieux-Port et skyline
   { city: "Montréal", country: "Canada", image: "https://images.unsplash.com/photo-1519178614-68673b201f36?w=400&h=400&fit=crop&q=80" },
-  // Lyon - Fourvière
-  { city: "Lyon", country: "France", image: "https://images.unsplash.com/photo-1564352969906-8b7f46ba4b8b?w=400&h=400&fit=crop&q=80" },
-  // Marseille - Vieux-Port
-  { city: "Marseille", country: "France", image: "https://images.unsplash.com/photo-1531572753322-ad063cecc140?w=400&h=400&fit=crop&q=80" },
+  // Lyon - Basilique Notre-Dame de Fourvière (Wikimedia Commons)
+  { city: "Lyon", country: "France", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Basilique_de_Fourvi%C3%A8re_from_Saone_%28Lyon%29.jpg/400px-Basilique_de_Fourvi%C3%A8re_from_Saone_%28Lyon%29.jpg" },
+  // Marseille - Notre-Dame de la Garde
+  { city: "Marseille", country: "France", image: "https://images.unsplash.com/photo-1602777924012-f8664ffeed27?w=400&h=400&fit=crop&q=80" },
   // Toronto - Skyline avec CN Tower
   { city: "Toronto", country: "Canada", image: "https://images.unsplash.com/photo-1507992781348-310259076fe0?w=400&h=400&fit=crop&q=80" },
-  // Bordeaux - Place de la Bourse
-  { city: "Bordeaux", country: "France", image: "https://images.unsplash.com/photo-1583422409516-2895a77efded?w=400&h=400&fit=crop&q=80" },
+  // Bordeaux - Place de la Bourse (Wikimedia Commons)
+  { city: "Bordeaux", country: "France", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Bordeaux_place_de_la_bourse_with_tram.JPG/400px-Bordeaux_place_de_la_bourse_with_tram.JPG" },
 ];
 
 type SearchModalProps = {
