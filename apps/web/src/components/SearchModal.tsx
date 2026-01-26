@@ -21,18 +21,18 @@ type PopularDestination = {
 };
 
 const POPULAR_DESTINATIONS: PopularDestination[] = [
-  // Paris - Tour Eiffel
-  { city: "Paris", country: "France", image: "https://images.unsplash.com/photo-1511739001486-6bfe10ce65f4?w=400&h=400&fit=crop&q=80" },
-  // Montréal - Vieux-Port et skyline
+  // Paris - Tour Eiffel de nuit
+  { city: "Paris", country: "France", image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&h=400&fit=crop&q=80" },
+  // Montréal - Vieux-Port et skyline (celle qui marche)
   { city: "Montréal", country: "Canada", image: "https://images.unsplash.com/photo-1519178614-68673b201f36?w=400&h=400&fit=crop&q=80" },
-  // Lyon - Basilique Notre-Dame de Fourvière
-  { city: "Lyon", country: "France", image: "https://images.unsplash.com/photo-1509023464722-18d996393ca8?w=400&h=400&fit=crop&q=80" },
-  // Marseille - Vieux-Port et Notre-Dame de la Garde
-  { city: "Marseille", country: "France", image: "https://images.unsplash.com/photo-1589519160732-57fc498494f8?w=400&h=400&fit=crop&q=80" },
-  // Toronto - CN Tower
-  { city: "Toronto", country: "Canada", image: "https://images.unsplash.com/photo-1517090504531-3bac891708fd?w=400&h=400&fit=crop&q=80" },
-  // Bordeaux - Place de la Bourse et Miroir d'eau
-  { city: "Bordeaux", country: "France", image: "https://images.unsplash.com/photo-1589117306514-3c9a0f6c3c3d?w=400&h=400&fit=crop&q=80" },
+  // Lyon - Vue sur la ville et Fourvière
+  { city: "Lyon", country: "France", image: "https://images.unsplash.com/photo-1600267185393-e158a98703de?w=400&h=400&fit=crop&q=80" },
+  // Marseille - Vieux-Port
+  { city: "Marseille", country: "France", image: "https://images.unsplash.com/photo-1601921004897-b7d582836990?w=400&h=400&fit=crop&q=80" },
+  // Toronto - Skyline avec CN Tower
+  { city: "Toronto", country: "Canada", image: "https://images.unsplash.com/photo-1507992781348-310259076fe0?w=400&h=400&fit=crop&q=80" },
+  // Bordeaux - Place de la Bourse
+  { city: "Bordeaux", country: "France", image: "https://images.unsplash.com/photo-1560983073-c29bff7438ef?w=400&h=400&fit=crop&q=80" },
 ];
 
 type SearchModalProps = {
