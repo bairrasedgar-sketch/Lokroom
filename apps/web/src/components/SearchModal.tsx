@@ -31,8 +31,8 @@ const POPULAR_DESTINATIONS: PopularDestination[] = [
   { city: "Marseille", country: "France", image: "https://images.unsplash.com/photo-1602777924012-f8664ffeed27?w=400&h=400&fit=crop&q=80" },
   // Toronto - Skyline avec CN Tower
   { city: "Toronto", country: "Canada", image: "https://images.unsplash.com/photo-1507992781348-310259076fe0?w=400&h=400&fit=crop&q=80" },
-  // Bordeaux - Place de la Bourse (Wikimedia Commons)
-  { city: "Bordeaux", country: "France", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9a/Bordeaux_place_de_la_bourse_with_tram.JPG/400px-Bordeaux_place_de_la_bourse_with_tram.JPG" },
+  // Bordeaux - Place de la Bourse avec miroir d'eau (Pexels)
+  { city: "Bordeaux", country: "France", image: "https://images.pexels.com/photos/2549018/pexels-photo-2549018.jpeg?auto=compress&cs=tinysrgb&w=400&h=400&fit=crop" },
 ];
 
 type SearchModalProps = {
