@@ -829,13 +829,10 @@ export default function ListingsWithMap({
       // Skip si désactivé
       if (!isMapSearchEnabled) return;
 
-      // Premier chargement : on skip sauf si pas d'annonces initiales
+      // Premier chargement : toujours faire un fetch pour avoir les annonces de la zone visible
       if (isFirstLoad.current) {
         isFirstLoad.current = false;
-        // Si pas d'annonces initiales, on force un fetch
-        if (initialListings.length === 0) {
-          fetchListingsInBounds(bounds);
-        }
+        fetchListingsInBounds(bounds);
         return;
       }
 
@@ -849,7 +846,7 @@ export default function ListingsWithMap({
         fetchListingsInBounds(bounds);
       }, 600);
     },
-    [isMapSearchEnabled, fetchListingsInBounds, initialListings.length]
+    [isMapSearchEnabled, fetchListingsInBounds]
   );
 
   // Cleanup timeout on unmount
@@ -1072,9 +1069,9 @@ export default function ListingsWithMap({
       </div>
 
       {/* ========== MOBILE: Carte plein écran + Bottom Sheet style Airbnb ========== */}
-      <div className="lg:hidden">
+      <div className="lg:hidden fixed inset-0 overflow-hidden">
         {/* Carte en arrière-plan - plein écran */}
-        <div className="fixed inset-0 z-0">
+        <div className="absolute inset-0 z-0">
           <Map
             markers={markers}
             panOnHover={false}
