@@ -502,6 +502,7 @@ export default function ListingsWithMap({
   const [sheetHeight, setSheetHeight] = useState(45); // pourcentage de la hauteur
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [isFiltersModalOpen, setIsFiltersModalOpen] = useState(false);
+  const [selectedMobileMarker, setSelectedMobileMarker] = useState<ListingCardData | null>(null);
 
   const abortControllerRef = useRef<AbortController | null>(null);
   const isFirstLoad = useRef(true);
@@ -721,6 +722,7 @@ export default function ListingsWithMap({
     lastFetchedBounds.current = null;
     hasFetchedFromMapRef.current = false;
     setSkipFitBounds(false);
+    setSelectedMobileMarker(null); // Reset sélection mobile
   }, [initialListings, initialMarkers]);
 
   // Fetch listings based on map bounds
@@ -1073,10 +1075,91 @@ export default function ListingsWithMap({
             panOnHover={false}
             hoveredId={hoveredId}
             onMarkerHover={setHoveredId}
+            onMarkerClick={(id) => {
+              const listing = listings.find(l => l.id === id);
+              if (listing) {
+                setSelectedMobileMarker(listing);
+              }
+            }}
             onBoundsChange={handleBoundsChange}
             skipFitBounds={skipFitBounds}
           />
         </div>
+
+        {/* Preview de l'annonce sélectionnée - au-dessus du bottom sheet */}
+        {selectedMobileMarker && (
+          <div
+            className="fixed left-0 right-0 z-50 px-3 transition-all duration-300 ease-out"
+            style={{
+              bottom: `calc(${sheetHeight}vh + 8px)`,
+            }}
+          >
+            <div className="relative bg-white rounded-2xl shadow-xl overflow-hidden">
+              {/* Bouton fermer */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedMobileMarker(null);
+                }}
+                className="absolute top-2 right-2 z-10 h-7 w-7 rounded-full bg-white/90 shadow-md flex items-center justify-center"
+              >
+                <svg className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+
+              <Link
+                href={`/listings/${selectedMobileMarker.id}`}
+                className="flex"
+                onClick={() => setSelectedMobileMarker(null)}
+              >
+                {/* Image */}
+                <div className="relative w-28 h-28 flex-shrink-0">
+                  {selectedMobileMarker.images && selectedMobileMarker.images.length > 0 ? (
+                    <Image
+                      src={selectedMobileMarker.images[0].url}
+                      alt={selectedMobileMarker.title}
+                      fill
+                      className="object-cover"
+                      sizes="112px"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                      <span className="text-xs text-gray-400">{t.noImage}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Infos */}
+                <div className="flex-1 p-3 flex flex-col justify-between min-w-0">
+                  <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="text-[15px] font-semibold text-gray-900 line-clamp-1">
+                        {[selectedMobileMarker.city, selectedMobileMarker.country].filter(Boolean).join(", ") || selectedMobileMarker.title}
+                      </h3>
+                      {selectedMobileMarker.reviewSummary.count > 0 && selectedMobileMarker.reviewSummary.avgRating != null && (
+                        <div className="flex items-center gap-1 text-sm flex-shrink-0">
+                          <svg className="h-3 w-3 fill-current" viewBox="0 0 24 24">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                          </svg>
+                          <span className="font-medium">{selectedMobileMarker.reviewSummary.avgRating.toFixed(1)}</span>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-500 mt-0.5">
+                      {LISTING_TYPE_LABELS[selectedMobileMarker.type] || selectedMobileMarker.type}
+                    </p>
+                  </div>
+                  <p className="text-[15px]">
+                    <span className="font-semibold">{selectedMobileMarker.priceLabel}</span>
+                    <span className="text-gray-500"> {t.perNight}</span>
+                  </p>
+                </div>
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* Barre de recherche fixe - toujours visible */}
         <div
