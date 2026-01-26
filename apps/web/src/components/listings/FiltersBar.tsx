@@ -639,12 +639,6 @@ export default function FiltersBar(props: FiltersBarProps) {
           <MobileFiltersModal
             isOpen={isFilterOpen}
             onClose={() => setIsFilterOpen(false)}
-            minPrice={minPrice}
-            maxPrice={maxPrice}
-            minRating={minRating}
-            hasPhoto={hasPhoto}
-            onSubmit={() => setIsFilterOpen(false)}
-            labels={fb}
           />
         )}
         {isFilterOpen && !isMobile && (

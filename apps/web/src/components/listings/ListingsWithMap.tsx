@@ -1363,47 +1363,6 @@ export default function ListingsWithMap({
       <MobileFiltersModal
         isOpen={isFiltersModalOpen}
         onClose={() => setIsFiltersModalOpen(false)}
-        minPrice=""
-        maxPrice=""
-        minRating=""
-        hasPhoto={false}
-        onSubmit={() => setIsFiltersModalOpen(false)}
-        labels={{
-          filtersTitle: "Filtres",
-          priceScale2: "Fourchette de prix",
-          priceScaleDesc: "Prix par nuit en euros",
-          minimum: "Minimum",
-          maximum: "Maximum",
-          minPlaceholder: "0 €",
-          maxPlaceholder: "1000 €",
-          minRating: "Note minimum",
-          allRatings: "Toutes",
-          rating3Plus: "3+",
-          rating4Plus: "4+",
-          rating5Only: "5",
-          onlyWithPhotos: "Uniquement avec photos",
-          roomsAndBeds: "Chambres et lits",
-          bedrooms: "Chambres",
-          beds: "Lits",
-          bathrooms: "Salles de bain",
-          anyOption: "Peu importe",
-          amenities: "Équipements",
-          wifi: "WiFi",
-          freeParking: "Parking gratuit",
-          selfCheckIn: "Arrivée autonome",
-          airConditioning: "Climatisation",
-          heating: "Chauffage",
-          tv: "Télévision",
-          bookingOptions: "Options de réservation",
-          instantBooking: "Réservation instantanée",
-          propertyType: "Type de logement",
-          house: "Maison",
-          apartment: "Appartement",
-          office: "Bureau",
-          parking: "Parking",
-          clearAll: "Tout effacer",
-          showResults: "Afficher les résultats",
-        }}
       />
     </div>
   );
