@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from "react";
 import { getDictionaryForLocale, type SupportedLocale } from "@/lib/i18n.client";
 import { CalendarDaysIcon, ClockIcon, XMarkIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import LocationAutocomplete, { type LocationAutocompletePlace } from "@/components/LocationAutocomplete";
+import MobileFiltersModal from "./MobileFiltersModal";
 
 type FiltersBarProps = {
   q: string;
@@ -435,6 +436,15 @@ export default function FiltersBar(props: FiltersBarProps) {
   } = props;
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Détecter mobile
+  useEffect(() => {
+    setIsMobile(window.innerWidth < 640);
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // État pour la destination (autocomplétion)
   const [destination, setDestination] = useState(q);
@@ -625,7 +635,19 @@ export default function FiltersBar(props: FiltersBarProps) {
         </div>
 
         {/* ====== POP-UP DE FILTRES (GRAND MODAL TYPE AIRBNB) ====== */}
-        {isFilterOpen && (
+        {isFilterOpen && isMobile && (
+          <MobileFiltersModal
+            isOpen={isFilterOpen}
+            onClose={() => setIsFilterOpen(false)}
+            minPrice={minPrice}
+            maxPrice={maxPrice}
+            minRating={minRating}
+            hasPhoto={hasPhoto}
+            onSubmit={() => setIsFilterOpen(false)}
+            labels={fb}
+          />
+        )}
+        {isFilterOpen && !isMobile && (
           <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/30 p-0 sm:p-4">
             <div className="relative w-full max-w-3xl max-h-[90vh] sm:max-h-[85vh] rounded-t-3xl sm:rounded-3xl bg-white shadow-2xl flex flex-col">
               {/* Header */}
