@@ -9,9 +9,10 @@ const remotePatterns = [
   // Amazon S3 et compatibles
   { protocol: "https", hostname: "**.amazonaws.com" },
 
-  // Divers hébergeurs d’images courants (si jamais tu en utilises)
+  // Divers hébergeurs d'images courants (si jamais tu en utilises)
   { protocol: "https", hostname: "**.googleusercontent.com" },
   { protocol: "https", hostname: "images.unsplash.com" },
+  { protocol: "https", hostname: "images.pexels.com" },
 
   // En dev, si tu sers des images depuis un serveur local
   { protocol: "http", hostname: "localhost" },
