@@ -25,8 +25,8 @@ const POPULAR_DESTINATIONS: PopularDestination[] = [
   { city: "Paris", country: "France", image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&h=400&fit=crop&q=80" },
   // Montréal - Vieux-Port et skyline
   { city: "Montréal", country: "Canada", image: "https://images.unsplash.com/photo-1519178614-68673b201f36?w=400&h=400&fit=crop&q=80" },
-  // Lyon - Basilique Notre-Dame de Fourvière (Wikimedia Commons)
-  { city: "Lyon", country: "France", image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Basilique_de_Fourvi%C3%A8re_from_Saone_%28Lyon%29.jpg/400px-Basilique_de_Fourvi%C3%A8re_from_Saone_%28Lyon%29.jpg" },
+  // Lyon - Vieux Lyon et Saône
+  { city: "Lyon", country: "France", image: "https://images.unsplash.com/photo-1524484485831-a92ffc0de03f?w=400&h=400&fit=crop&q=80" },
   // Marseille - Notre-Dame de la Garde
   { city: "Marseille", country: "France", image: "https://images.unsplash.com/photo-1602777924012-f8664ffeed27?w=400&h=400&fit=crop&q=80" },
   // Toronto - Skyline avec CN Tower
