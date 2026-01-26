@@ -21,18 +21,12 @@ type PopularDestination = {
 };
 
 const POPULAR_DESTINATIONS: PopularDestination[] = [
-  // France
-  { city: "Paris", country: "France", image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=200&h=200&fit=crop" },
-  { city: "Lyon", country: "France", image: "https://images.unsplash.com/photo-1524484485831-a92ffc0de03f?w=200&h=200&fit=crop" },
-  { city: "Bordeaux", country: "France", image: "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=200&h=200&fit=crop" },
-  { city: "Nice", country: "France", image: "https://images.unsplash.com/photo-1491166617655-0723a0999cfc?w=200&h=200&fit=crop" },
-  { city: "Marseille", country: "France", image: "https://images.unsplash.com/photo-1589656966895-2f33e7653819?w=200&h=200&fit=crop" },
-  { city: "Toulouse", country: "France", image: "https://images.unsplash.com/photo-1582974131696-e8d8d4a10f2a?w=200&h=200&fit=crop" },
-  // Canada
-  { city: "Montréal", country: "Canada", image: "https://images.unsplash.com/photo-1519178614-68673b201f36?w=200&h=200&fit=crop" },
-  { city: "Toronto", country: "Canada", image: "https://images.unsplash.com/photo-1517090504531-3bac891708fd?w=200&h=200&fit=crop" },
-  { city: "Vancouver", country: "Canada", image: "https://images.unsplash.com/photo-1559511260-66a68e7e3b97?w=200&h=200&fit=crop" },
-  { city: "Québec", country: "Canada", image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200&h=200&fit=crop" },
+  { city: "Paris", country: "France", image: "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=400&h=400&fit=crop&q=80" },
+  { city: "Montréal", country: "Canada", image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&q=80" },
+  { city: "Lyon", country: "France", image: "https://images.unsplash.com/photo-1524484485831-a92ffc0de03f?w=400&h=400&fit=crop&q=80" },
+  { city: "Marseille", country: "France", image: "https://images.unsplash.com/photo-1589683601487-b4c5a0c8e7a8?w=400&h=400&fit=crop&q=80" },
+  { city: "Toronto", country: "Canada", image: "https://images.unsplash.com/photo-1517090504531-3bac891708fd?w=400&h=400&fit=crop&q=80" },
+  { city: "Bordeaux", country: "France", image: "https://images.unsplash.com/photo-1565791380713-1756b9a05343?w=400&h=400&fit=crop&q=80" },
 ];
 
 type SearchModalProps = {
