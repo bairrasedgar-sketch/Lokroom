@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import LocationAutocomplete, { type LocationAutocompletePlace } from "./LocationAutocomplete";
+import { CityIllustration } from "./CityIllustrations";
 
 type SearchHistory = {
   id: string;
@@ -17,16 +18,15 @@ type SearchHistory = {
 type PopularDestination = {
   city: string;
   country: string;
-  image: string;
 };
 
 const POPULAR_DESTINATIONS: PopularDestination[] = [
-  { city: "Paris", country: "France", image: "https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=400&h=400&fit=crop&q=80" },
-  { city: "Montréal", country: "Canada", image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=400&fit=crop&q=80" },
-  { city: "Lyon", country: "France", image: "https://images.unsplash.com/photo-1524484485831-a92ffc0de03f?w=400&h=400&fit=crop&q=80" },
-  { city: "Marseille", country: "France", image: "https://images.unsplash.com/photo-1589683601487-b4c5a0c8e7a8?w=400&h=400&fit=crop&q=80" },
-  { city: "Toronto", country: "Canada", image: "https://images.unsplash.com/photo-1517090504531-3bac891708fd?w=400&h=400&fit=crop&q=80" },
-  { city: "Bordeaux", country: "France", image: "https://images.unsplash.com/photo-1565791380713-1756b9a05343?w=400&h=400&fit=crop&q=80" },
+  { city: "Paris", country: "France" },
+  { city: "Montréal", country: "Canada" },
+  { city: "Lyon", country: "France" },
+  { city: "Marseille", country: "France" },
+  { city: "Toronto", country: "Canada" },
+  { city: "Bordeaux", country: "France" },
 ];
 
 type SearchModalProps = {
@@ -796,7 +796,7 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
                   popularCities={POPULAR_DESTINATIONS.map(d => ({
                     main: d.city,
                     secondary: d.country,
-                    icon: d.image,
+                    icon: "",
                   }))}
                 />
               </div>
