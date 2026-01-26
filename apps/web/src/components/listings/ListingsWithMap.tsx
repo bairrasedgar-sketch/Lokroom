@@ -861,9 +861,9 @@ export default function ListingsWithMap({
 
   return (
     <div className="relative">
-      {/* Indicateur de chargement */}
+      {/* Indicateur de chargement - Desktop */}
       {isLoadingMap && (
-        <div className="fixed left-1/2 top-24 z-50 -translate-x-1/2">
+        <div className="hidden lg:block fixed left-1/2 top-24 z-50 -translate-x-1/2">
           <div className="flex items-center gap-2 rounded-full bg-white px-4 py-2 shadow-lg border border-gray-200">
             <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-900" />
             <span className="text-sm font-medium text-gray-700">Recherche en cours...</span>
@@ -1089,7 +1089,7 @@ export default function ListingsWithMap({
         {/* Preview de l'annonce sélectionnée - au-dessus du bottom sheet */}
         {selectedMobileMarker && (
           <div
-            className="fixed left-0 right-0 z-50 px-3 transition-all duration-300 ease-out"
+            className="fixed left-0 right-0 z-[60] px-3 transition-all duration-300 ease-out"
             style={{
               bottom: `calc(${sheetHeight}vh + 8px)`,
             }}
@@ -1102,7 +1102,7 @@ export default function ListingsWithMap({
                   e.stopPropagation();
                   setSelectedMobileMarker(null);
                 }}
-                className="absolute top-2 right-2 z-10 h-7 w-7 rounded-full bg-white/90 shadow-md flex items-center justify-center"
+                className="absolute top-2 right-2 z-10 h-6 w-6 rounded-full bg-white/90 shadow-md flex items-center justify-center"
               >
                 <svg className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -1115,20 +1115,24 @@ export default function ListingsWithMap({
                 onClick={() => setSelectedMobileMarker(null)}
               >
                 {/* Image */}
-                <div className="relative w-28 h-28 flex-shrink-0">
+                <div className="relative w-32 h-36 flex-shrink-0">
                   {selectedMobileMarker.images && selectedMobileMarker.images.length > 0 ? (
                     <Image
                       src={selectedMobileMarker.images[0].url}
                       alt={selectedMobileMarker.title}
                       fill
                       className="object-cover"
-                      sizes="112px"
+                      sizes="128px"
                     />
                   ) : (
                     <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                       <span className="text-xs text-gray-400">{t.noImage}</span>
                     </div>
                   )}
+                  {/* Bouton favori sur l'image */}
+                  <div className="absolute top-2 left-2 z-10">
+                    <FavoriteButton listingId={selectedMobileMarker.id} size={20} variant="card" />
+                  </div>
                 </div>
 
                 {/* Infos */}
@@ -1194,6 +1198,16 @@ export default function ListingsWithMap({
               </svg>
             </button>
           </div>
+
+          {/* Indicateur de chargement mobile - sous la barre de recherche */}
+          {isLoadingMap && (
+            <div className="flex justify-center mt-3">
+              <div className="flex items-center gap-2 rounded-full bg-white px-4 py-2 shadow-lg border border-gray-200">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-900" />
+                <span className="text-sm font-medium text-gray-700">Recherche...</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Bottom Sheet draggable - Style Airbnb */}
