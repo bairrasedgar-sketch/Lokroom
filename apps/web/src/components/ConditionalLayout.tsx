@@ -17,14 +17,14 @@ export function ConditionalNavbar() {
 export function ConditionalFooter() {
   const pathname = usePathname();
   const isAdminPage = pathname?.startsWith("/admin");
-  const isListingsPage = pathname === "/listings";
+  const isHomePage = pathname === "/";
 
   if (isAdminPage) return null;
 
   return (
     <>
-      {/* Footer caché sur /listings en mobile (la map prend tout l'écran) */}
-      <div className={isListingsPage ? "hidden lg:block" : ""}>
+      {/* Footer visible uniquement sur la page d'accueil en mobile, visible partout sur desktop */}
+      <div className={isHomePage ? "" : "hidden lg:block"}>
         <Footer />
       </div>
       <MobileNavBar />
