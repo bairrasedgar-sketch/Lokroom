@@ -25,10 +25,10 @@ const POPULAR_DESTINATIONS: PopularDestination[] = [
   { city: "Paris", country: "France", image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&h=400&fit=crop&q=80" },
   // Montréal - Vieux-Port et skyline
   { city: "Montréal", country: "Canada", image: "https://images.unsplash.com/photo-1519178614-68673b201f36?w=400&h=400&fit=crop&q=80" },
-  // Lyon - Vieux Lyon et Saône
-  { city: "Lyon", country: "France", image: "https://images.unsplash.com/photo-1524484485831-a92ffc0de03f?w=400&h=400&fit=crop&q=80" },
-  // Marseille - Côte méditerranéenne
-  { city: "Marseille", country: "France", image: "https://images.unsplash.com/photo-1564760055775-d63b17a55c44?w=400&h=400&fit=crop&q=80" },
+  // Lyon - Basilique Notre-Dame de Fourvière
+  { city: "Lyon", country: "France", image: "/images/lyon.jpg" },
+  // Marseille - Vieux-Port et Notre-Dame de la Garde
+  { city: "Marseille", country: "France", image: "/images/marseille.jpg" },
   // Toronto - Skyline avec CN Tower
   { city: "Toronto", country: "Canada", image: "https://images.unsplash.com/photo-1507992781348-310259076fe0?w=400&h=400&fit=crop&q=80" },
   // Bordeaux - Place de la Bourse avec miroir d'eau
