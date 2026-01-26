@@ -826,11 +826,16 @@ export default function ListingsWithMap({
   // Callback quand les bounds de la carte changent (avec debounce intégré)
   const handleBoundsChange = useCallback(
     (bounds: { north: number; south: number; east: number; west: number }) => {
-      // Skip si désactivé ou premier chargement
+      // Skip si désactivé
       if (!isMapSearchEnabled) return;
 
+      // Premier chargement : on skip sauf si pas d'annonces initiales
       if (isFirstLoad.current) {
         isFirstLoad.current = false;
+        // Si pas d'annonces initiales, on force un fetch
+        if (initialListings.length === 0) {
+          fetchListingsInBounds(bounds);
+        }
         return;
       }
 
@@ -844,7 +849,7 @@ export default function ListingsWithMap({
         fetchListingsInBounds(bounds);
       }, 600);
     },
-    [isMapSearchEnabled, fetchListingsInBounds]
+    [isMapSearchEnabled, fetchListingsInBounds, initialListings.length]
   );
 
   // Cleanup timeout on unmount
