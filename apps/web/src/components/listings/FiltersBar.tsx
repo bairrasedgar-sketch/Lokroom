@@ -438,10 +438,10 @@ export default function FiltersBar(props: FiltersBarProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Détecter mobile
+  // Détecter mobile (< 768px)
   useEffect(() => {
-    setIsMobile(window.innerWidth < 640);
-    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    setIsMobile(window.innerWidth < 768);
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
