@@ -25,14 +25,14 @@ const POPULAR_DESTINATIONS: PopularDestination[] = [
   { city: "Paris", country: "France", image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&h=400&fit=crop&q=80" },
   // Montréal - Vieux-Port et skyline
   { city: "Montréal", country: "Canada", image: "https://images.unsplash.com/photo-1519178614-68673b201f36?w=400&h=400&fit=crop&q=80" },
-  // Lyon - Saône et colline de Fourvière
-  { city: "Lyon", country: "France", image: "https://images.unsplash.com/photo-1518684079-3c830dcef090?w=400&h=400&fit=crop&q=80" },
-  // Marseille - Vue mer méditerranée
-  { city: "Marseille", country: "France", image: "https://images.unsplash.com/photo-1533104816931-20fa691ff6ca?w=400&h=400&fit=crop&q=80" },
+  // Lyon - Basilique Notre-Dame de Fourvière (Pexels)
+  { city: "Lyon", country: "France", image: "https://images.pexels.com/photos/5765657/pexels-photo-5765657.jpeg?auto=compress&cs=tinysrgb&w=400&h=400&fit=crop" },
+  // Marseille - Notre-Dame de la Garde (Pexels)
+  { city: "Marseille", country: "France", image: "https://images.pexels.com/photos/4353813/pexels-photo-4353813.jpeg?auto=compress&cs=tinysrgb&w=400&h=400&fit=crop" },
   // Toronto - Skyline avec CN Tower
   { city: "Toronto", country: "Canada", image: "https://images.unsplash.com/photo-1507992781348-310259076fe0?w=400&h=400&fit=crop&q=80" },
-  // Bordeaux - Vignobles
-  { city: "Bordeaux", country: "France", image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=400&fit=crop&q=80" },
+  // Bordeaux - Place de la Bourse (Pexels)
+  { city: "Bordeaux", country: "France", image: "https://images.pexels.com/photos/2549573/pexels-photo-2549573.jpeg?auto=compress&cs=tinysrgb&w=400&h=400&fit=crop" },
 ];
 
 type SearchModalProps = {
