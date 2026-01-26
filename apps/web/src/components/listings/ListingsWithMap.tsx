@@ -1112,10 +1112,10 @@ export default function ListingsWithMap({
 
               {/* Bouton favori - en dehors du Link */}
               <div
-                className="absolute top-1.5 left-1.5 z-20"
+                className="absolute top-0.5 left-0.5 z-20"
                 onClick={(e) => e.stopPropagation()}
               >
-                <FavoriteButton listingId={selectedMobileMarker.id} size={24} variant="card" />
+                <FavoriteButton listingId={selectedMobileMarker.id} size={28} variant="card" />
               </div>
 
               <Link
