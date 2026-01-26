@@ -25,14 +25,14 @@ const POPULAR_DESTINATIONS: PopularDestination[] = [
   { city: "Paris", country: "France", image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&h=400&fit=crop&q=80" },
   // Montréal - Vieux-Port et skyline
   { city: "Montréal", country: "Canada", image: "https://images.unsplash.com/photo-1519178614-68673b201f36?w=400&h=400&fit=crop&q=80" },
-  // Lyon - Cathédrale Saint-Jean et colline Fourvière
-  { city: "Lyon", country: "France", image: "https://images.unsplash.com/photo-1562021536-7b0e5e2b6c5e?w=400&h=400&fit=crop&q=80" },
-  // Marseille - Calanques et mer
-  { city: "Marseille", country: "France", image: "https://images.unsplash.com/photo-1551632811-561732d1e306?w=400&h=400&fit=crop&q=80" },
+  // Lyon - Place Bellecour et Fourvière
+  { city: "Lyon", country: "France", image: "https://images.unsplash.com/photo-1565715101498-e59e0a227d29?w=400&h=400&fit=crop&q=80" },
+  // Marseille - Vieux-Port avec bateaux
+  { city: "Marseille", country: "France", image: "https://images.unsplash.com/photo-1596394723269-6cdfe3b8a8b4?w=400&h=400&fit=crop&q=80" },
   // Toronto - Skyline avec CN Tower
   { city: "Toronto", country: "Canada", image: "https://images.unsplash.com/photo-1507992781348-310259076fe0?w=400&h=400&fit=crop&q=80" },
-  // Bordeaux - Pont de pierre et ville
-  { city: "Bordeaux", country: "France", image: "https://images.unsplash.com/photo-1559128010-7c1ad6e1b6a5?w=400&h=400&fit=crop&q=80" },
+  // Bordeaux - Place de la Bourse reflet miroir d'eau
+  { city: "Bordeaux", country: "France", image: "https://images.unsplash.com/photo-1593194441778-69e4a0b5b4e6?w=400&h=400&fit=crop&q=80" },
 ];
 
 type SearchModalProps = {
