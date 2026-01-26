@@ -324,9 +324,16 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
                   <button
                     key={dest.city}
                     onClick={() => {
-                      setDestination(dest.city);
-                      setSelectedCity(dest.city);
-                      setSelectedCountry(dest.country);
+                      if (selectedCity === dest.city) {
+                        // Désélectionner si déjà sélectionné
+                        setDestination("");
+                        setSelectedCity("");
+                        setSelectedCountry("");
+                      } else {
+                        setDestination(dest.city);
+                        setSelectedCity(dest.city);
+                        setSelectedCountry(dest.country);
+                      }
                     }}
                     className={`relative overflow-hidden rounded-2xl aspect-[4/3] group ${
                       selectedCity === dest.city ? "ring-2 ring-gray-900" : ""
