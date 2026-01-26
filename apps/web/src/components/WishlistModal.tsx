@@ -130,30 +130,30 @@ export default function WishlistModal({
 
       {/* Modal */}
       <div
-        className="relative w-full min-w-[340px] sm:min-w-[450px] md:min-w-[500px] max-w-2xl rounded-3xl bg-white shadow-2xl animate-modal-appear"
+        className="relative w-full max-w-[calc(100vw-32px)] sm:max-w-md md:max-w-lg lg:max-w-2xl rounded-3xl bg-white shadow-2xl animate-modal-appear"
         style={{ zIndex: 100000 }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-200 px-8 py-5">
+        <div className="flex items-center justify-between border-b border-gray-200 px-4 sm:px-8 py-4 sm:py-5">
           <button
             onClick={onClose}
             className="rounded-full p-2 hover:bg-gray-100 transition-colors"
             aria-label="Fermer"
           >
-            <XMarkIcon className="h-6 w-6" />
+            <XMarkIcon className="h-5 w-5 sm:h-6 sm:w-6" />
           </button>
-          <h2 id="wishlist-modal-title" className="text-xl font-semibold">Ajouter aux favoris</h2>
-          <div className="w-10" />
+          <h2 id="wishlist-modal-title" className="text-lg sm:text-xl font-semibold">Ajouter aux favoris</h2>
+          <div className="w-9 sm:w-10" />
         </div>
 
         {/* Content */}
-        <div className="max-h-[70vh] overflow-y-auto p-8">
+        <div className="max-h-[60vh] sm:max-h-[70vh] overflow-y-auto p-4 sm:p-8">
           {wishlistsLoading ? (
             <div className="flex items-center justify-center py-8">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-gray-900" />
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-5">
+            <div className="grid grid-cols-2 gap-3 sm:gap-5">
               {/* Listes existantes */}
               {wishlists.map((wishlist) => {
                 const previewImages = wishlist.favorites
@@ -203,9 +203,9 @@ export default function WishlistModal({
                     </div>
 
                     {/* Info */}
-                    <div className="p-4">
-                      <p className="font-semibold text-gray-900 text-base">{wishlist.name}</p>
-                      <p className="text-sm text-gray-500 mt-1">
+                    <div className="p-3 sm:p-4">
+                      <p className="font-semibold text-gray-900 text-sm sm:text-base truncate">{wishlist.name}</p>
+                      <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1">
                         {wishlist._count.favorites} annonce{wishlist._count.favorites !== 1 ? "s" : ""}
                       </p>
                     </div>
@@ -218,8 +218,8 @@ export default function WishlistModal({
                 onClick={() => setShowCreateInput(true)}
                 className="flex aspect-square flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 text-gray-500 transition-all hover:border-[#FF385C] hover:bg-[#FF385C]/5 hover:text-[#FF385C] hover:scale-[1.02]"
               >
-                <PlusIcon className="h-12 w-12" />
-                <span className="mt-3 text-base font-semibold">Créer une liste</span>
+                <PlusIcon className="h-8 w-8 sm:h-12 sm:w-12" />
+                <span className="mt-2 sm:mt-3 text-sm sm:text-base font-semibold">Créer une liste</span>
               </button>
             </div>
           )}
@@ -227,14 +227,14 @@ export default function WishlistModal({
 
         {/* Footer - Create new list input */}
         {showCreateInput && (
-          <div className="border-t border-gray-200 p-6">
-            <p className="text-sm font-medium text-gray-700 mb-3">Nom de la nouvelle liste</p>
-            <div className="flex gap-3">
+          <div className="border-t border-gray-200 p-4 sm:p-6">
+            <p className="text-sm font-medium text-gray-700 mb-2 sm:mb-3">Nom de la nouvelle liste</p>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <input
                 type="text"
                 value={newListName}
                 onChange={(e) => setNewListName(e.target.value)}
-                placeholder="Ex: Vacances d'été, Week-end..."
+                placeholder="Ex: Vacances d'été..."
                 className="flex-1 rounded-xl border-2 border-gray-200 px-4 py-3 text-base focus:border-gray-900 focus:outline-none transition-colors"
                 aria-label="Nom de la nouvelle liste de favoris"
                 autoFocus
@@ -243,22 +243,24 @@ export default function WishlistModal({
                   if (e.key === "Escape") setShowCreateInput(false);
                 }}
               />
-              <button
-                onClick={handleCreate}
-                disabled={creating || !newListName.trim()}
-                className="rounded-xl bg-[#FF385C] px-6 py-3 text-base font-semibold text-white hover:bg-[#E31C5F] disabled:opacity-50 transition-colors"
-              >
-                {creating ? "..." : "Créer"}
-              </button>
-              <button
-                onClick={() => {
-                  setShowCreateInput(false);
-                  setNewListName("");
-                }}
-                className="rounded-xl border-2 border-gray-200 px-4 py-3 text-base font-medium hover:bg-gray-50 transition-colors"
-              >
-                Annuler
-              </button>
+              <div className="flex gap-2 sm:gap-3">
+                <button
+                  onClick={handleCreate}
+                  disabled={creating || !newListName.trim()}
+                  className="flex-1 sm:flex-none rounded-xl bg-[#FF385C] px-5 sm:px-6 py-3 text-base font-semibold text-white hover:bg-[#E31C5F] disabled:opacity-50 transition-colors"
+                >
+                  {creating ? "..." : "Créer"}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowCreateInput(false);
+                    setNewListName("");
+                  }}
+                  className="flex-1 sm:flex-none rounded-xl border-2 border-gray-200 px-4 py-3 text-base font-medium hover:bg-gray-50 transition-colors"
+                >
+                  Annuler
+                </button>
+              </div>
             </div>
           </div>
         )}
