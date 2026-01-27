@@ -4,6 +4,23 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import LocationAutocomplete, { type LocationAutocompletePlace } from "./LocationAutocomplete";
+import CategoryIcon from "./CategoryIcon";
+
+// Catégories avec leurs labels
+const CATEGORIES = [
+  { key: "HOUSE", label: "Maison" },
+  { key: "APARTMENT", label: "Appartement" },
+  { key: "PARKING", label: "Parking" },
+  { key: "ROOM", label: "Chambre" },
+  { key: "GARAGE", label: "Garage" },
+  { key: "STORAGE", label: "Stockage" },
+  { key: "OFFICE", label: "Bureau" },
+  { key: "MEETING_ROOM", label: "Salle de réunion" },
+  { key: "COWORKING", label: "Coworking" },
+  { key: "EVENT_SPACE", label: "Événementiel" },
+  { key: "RECORDING_STUDIO", label: "Studios" },
+  { key: "OTHER", label: "Autre" },
+];
 
 type SearchHistory = {
   id: string;
@@ -64,6 +81,10 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
   const [children, setChildren] = useState(0);
   const [pets, setPets] = useState(0);
   const [searchHistory, setSearchHistory] = useState<SearchHistory[]>([]);
+
+  // Catégorie sélectionnée
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [animatingCategory, setAnimatingCategory] = useState<string | null>(null);
 
   // Total des voyageurs (hors animaux)
   const totalGuests = adults + children;
@@ -199,6 +220,7 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
     if (destination) params.set("q", destination);
     if (selectedCity) params.set("city", selectedCity);
     if (selectedCountry) params.set("country", selectedCountry);
+    if (selectedCategory) params.set("type", selectedCategory);
     if (startDate) params.set("startDate", startDate);
     if (bookingMode === "days" && endDate) params.set("endDate", endDate);
     if (bookingMode === "hours") {
@@ -285,8 +307,41 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
 
         {/* Contenu scrollable */}
         <div className="overflow-y-auto h-[calc(100vh-140px)] pb-4">
+          {/* Section Catégories - Scroll horizontal */}
+          <div className="px-4 pt-4 pb-2">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Que recherchez-vous ?</h3>
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat.key}
+                  onClick={() => {
+                    if (selectedCategory === cat.key) {
+                      setSelectedCategory(null);
+                    } else {
+                      setSelectedCategory(cat.key);
+                      setAnimatingCategory(cat.key);
+                      setTimeout(() => setAnimatingCategory(null), 600);
+                    }
+                  }}
+                  className={`flex flex-col items-center gap-1.5 px-3 py-2 rounded-xl transition-all flex-shrink-0 min-w-[70px] ${
+                    selectedCategory === cat.key
+                      ? "bg-gray-900 text-white"
+                      : "bg-gray-100 text-gray-700"
+                  }`}
+                >
+                  <CategoryIcon
+                    category={cat.key}
+                    isActive={selectedCategory === cat.key}
+                    isAnimating={animatingCategory === cat.key}
+                  />
+                  <span className="text-[10px] font-medium whitespace-nowrap">{cat.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Section Destination */}
-          <div className="px-4 py-5">
+          <div className="px-4 py-3">
             <div className="flex items-center gap-3 mb-4">
               <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-rose-100 to-rose-50 rounded-2xl">
                 <svg className="w-6 h-6 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
