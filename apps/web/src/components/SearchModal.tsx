@@ -317,8 +317,8 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
             />
 
             {/* Destinations populaires avec images */}
-            <div className="mt-6">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Destinations populaires</h3>
+            <div className="mt-3">
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">Destinations populaires</h3>
               <div className="grid grid-cols-3 gap-2">
                 {POPULAR_DESTINATIONS.slice(0, 6).map((dest) => (
                   <button
