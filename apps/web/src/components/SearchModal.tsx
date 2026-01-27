@@ -319,7 +319,7 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
             {/* Destinations populaires avec images */}
             <div className="mt-6">
               <h3 className="text-sm font-semibold text-gray-700 mb-3">Destinations populaires</h3>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-2">
                 {POPULAR_DESTINATIONS.slice(0, 6).map((dest) => (
                   <button
                     key={dest.city}
@@ -335,7 +335,7 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
                         setSelectedCountry(dest.country);
                       }
                     }}
-                    className={`relative overflow-hidden rounded-2xl aspect-[4/3] group ${
+                    className={`relative overflow-hidden rounded-xl aspect-square group ${
                       selectedCity === dest.city ? "ring-2 ring-gray-900" : ""
                     }`}
                   >
@@ -345,13 +345,13 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
                       className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-3">
-                      <p className="text-white font-semibold text-sm">{dest.city}</p>
-                      <p className="text-white/80 text-xs">{dest.country}</p>
+                    <div className="absolute bottom-0 left-0 right-0 p-2">
+                      <p className="text-white font-semibold text-xs">{dest.city}</p>
+                      <p className="text-white/80 text-[10px]">{dest.country}</p>
                     </div>
                     {selectedCity === dest.city && (
-                      <div className="absolute top-2 right-2 w-6 h-6 bg-gray-900 rounded-full flex items-center justify-center">
-                        <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                      <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-gray-900 rounded-full flex items-center justify-center">
+                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                       </div>
