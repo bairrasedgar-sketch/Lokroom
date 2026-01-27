@@ -325,7 +325,7 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
                   }}
                   className={`flex flex-col items-center gap-1.5 px-3 py-2 rounded-xl transition-all flex-shrink-0 min-w-[70px] ${
                     selectedCategory === cat.key
-                      ? "bg-gray-900 text-white"
+                      ? "bg-gray-200 text-gray-900 ring-2 ring-gray-900"
                       : "bg-gray-100 text-gray-700"
                   }`}
                 >
