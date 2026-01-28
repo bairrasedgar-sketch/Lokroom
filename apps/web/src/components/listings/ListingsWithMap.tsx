@@ -753,10 +753,11 @@ export default function ListingsWithMap({
         // Build query params including existing search params
         const params = new URLSearchParams();
 
-        // Add existing search params (sauf page, bounds, q et placeId)
-        // On exclut q et placeId car on veut TOUTES les annonces dans la zone visible,
-        // pas seulement celles qui correspondent à la recherche textuelle
-        const excludeKeys = ["page", "q", "placeId", "neLat", "neLng", "swLat", "swLng"];
+        // Add existing search params (sauf les filtres de localisation)
+        // On exclut q, placeId, city, country, province car on veut TOUTES les annonces
+        // dans la zone visible de la carte, peu importe la recherche initiale
+        // On garde les autres filtres (type, prix, dates, etc.)
+        const excludeKeys = ["page", "q", "placeId", "city", "country", "province", "neLat", "neLng", "swLat", "swLng"];
         for (const [key, value] of Object.entries(searchParams)) {
           if (value && !excludeKeys.includes(key) && !key.startsWith("ne") && !key.startsWith("sw")) {
             params.set(key, value);
