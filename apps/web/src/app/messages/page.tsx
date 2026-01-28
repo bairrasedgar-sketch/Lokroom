@@ -1196,8 +1196,8 @@ Posez-moi vos questions sur :
 
         {/* Chat Area */}
         <section
-          className={`flex flex-1 flex-col bg-gray-50 lg:overflow-hidden ${
-            showMobileChat ? "fixed inset-0 z-50 lg:relative lg:z-auto" : "hidden lg:flex"
+          className={`flex flex-1 flex-col bg-gray-50 ${
+            showMobileChat ? "flex" : "hidden lg:flex"
           }`}
         >
           {!selectedConvId ? (
@@ -1213,8 +1213,8 @@ Posez-moi vos questions sur :
               </p>
             </div>
           ) : (
-            <div className="flex flex-col h-full">
-              {/* Chat Header - FIXED on mobile */}
+            <>
+              {/* Chat Header */}
               <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-100 bg-white px-3 py-2 lg:px-6 lg:py-3">
                 <div className="flex items-center gap-2 lg:gap-3">
                   {/* Back button mobile */}
@@ -1591,8 +1591,8 @@ Posez-moi vos questions sur :
                 )}
               </div>
 
-              {/* Message Input - Fixed at bottom, above mobile navbar */}
-              <div className="flex-shrink-0 border-t border-gray-100 bg-white px-3 py-2 pb-20 lg:pb-4 lg:px-6 lg:py-4">
+              {/* Message Input */}
+              <div className="flex-shrink-0 border-t border-gray-100 bg-white px-3 py-2 lg:px-6 lg:py-4">
                 {/* Quick Replies for Host - Hidden on mobile */}
                 {selectedConv?.isHost && selectedConv?.booking?.status === "PENDING" && (
                   <div className="hidden lg:flex mb-3 flex-wrap gap-2">
@@ -1778,7 +1778,7 @@ Posez-moi vos questions sur :
                   </div>
                 )}
               </div>
-            </div>
+            </>
           )}
         </section>
 
