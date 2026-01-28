@@ -323,7 +323,7 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
                       setTimeout(() => setAnimatingCategory(null), 600);
                     }
                   }}
-                  className={`flex flex-col items-center gap-1 px-2.5 py-1.5 rounded-xl transition-all flex-shrink-0 min-w-[65px] ${
+                  className={`flex flex-col items-center gap-1.5 px-3 py-2 rounded-xl transition-all flex-shrink-0 min-w-[72px] ${
                     selectedCategory === cat.key
                       ? "bg-gray-200 text-gray-900 ring-2 ring-gray-900"
                       : "bg-gray-100 text-gray-700"
@@ -334,7 +334,7 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
                     isActive={selectedCategory === cat.key}
                     isAnimating={animatingCategory === cat.key}
                   />
-                  <span className="text-[9px] font-medium whitespace-nowrap">{cat.label}</span>
+                  <span className="text-[10px] font-medium whitespace-nowrap">{cat.label}</span>
                 </button>
               ))}
             </div>
