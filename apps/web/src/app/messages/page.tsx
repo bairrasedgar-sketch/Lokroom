@@ -883,55 +883,54 @@ Posez-moi vos questions sur :
             showMobileChat ? "hidden lg:flex" : "flex"
           }`}
         >
-          {/* Header */}
-          <div className="flex-shrink-0 px-6 pt-6 pb-4">
+          {/* Header - Mobile: Compact / Desktop: Full */}
+          <div className="flex-shrink-0 px-4 pt-4 pb-3 lg:px-6 lg:pt-6 lg:pb-4">
+            {/* Title row */}
             <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
+              <h1 className="text-xl lg:text-2xl font-bold text-gray-900">Messages</h1>
               {unreadCount > 0 && (
-                <span className="flex h-6 min-w-6 items-center justify-center rounded-full bg-gray-900 px-2 text-xs font-medium text-white">
+                <span className="flex h-5 lg:h-6 min-w-5 lg:min-w-6 items-center justify-center rounded-full bg-gray-900 px-1.5 lg:px-2 text-[10px] lg:text-xs font-medium text-white">
                   {unreadCount}
                 </span>
               )}
             </div>
 
-            {/* Role Tabs */}
-            <div className="mt-5 flex gap-1 rounded-xl bg-gray-100 p-1">
+            {/* Role Tabs - Mobile: Icons only / Desktop: Full labels */}
+            <div className="mt-3 lg:mt-5 flex gap-0.5 lg:gap-1 rounded-xl bg-gray-100 p-0.5 lg:p-1">
               {[
-                { id: "all" as ViewMode, label: "Tout", count: conversations.length },
-                { id: "host" as ViewMode, label: "En tant qu'hôte", count: hostCount },
-                { id: "guest" as ViewMode, label: "En tant que voyageur", count: guestCount },
-                { id: "support" as ViewMode, label: "Support", count: 1 },
+                { id: "all" as ViewMode, label: "Tout", mobileLabel: "Tout", icon: ChatBubbleLeftRightIcon, count: conversations.length },
+                { id: "host" as ViewMode, label: "En tant qu'hôte", mobileLabel: "Hôte", icon: HomeIcon, count: hostCount },
+                { id: "guest" as ViewMode, label: "En tant que voyageur", mobileLabel: "Voyageur", icon: UserCircleIcon, count: guestCount },
+                { id: "support" as ViewMode, label: "Support", mobileLabel: "Aide", icon: SparklesIcon, count: 1 },
               ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setViewMode(tab.id)}
-                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2.5 text-sm font-medium transition-all ${
+                  className={`flex flex-1 items-center justify-center gap-1 lg:gap-1.5 rounded-lg py-2 lg:py-2.5 text-xs lg:text-sm font-medium transition-all ${
                     viewMode === tab.id
                       ? "bg-white text-gray-900 shadow-sm"
                       : "text-gray-500 hover:text-gray-700"
                   }`}
                 >
-                  {tab.label}
-                  {tab.count > 0 && (
-                    <span
-                      className={`text-xs ${viewMode === tab.id ? "text-gray-400" : "text-gray-400"}`}
-                    >
-                      ({tab.count})
-                    </span>
-                  )}
+                  {/* Mobile: icon + short label */}
+                  <tab.icon className="h-4 w-4 lg:hidden" />
+                  <span className="lg:hidden">{tab.mobileLabel}</span>
+                  {/* Desktop: full label */}
+                  <span className="hidden lg:inline">{tab.label}</span>
+                  <span className="hidden lg:inline text-xs text-gray-400">({tab.count})</span>
                 </button>
               ))}
             </div>
 
-            {/* Search */}
-            <div className="relative mt-4">
-              <MagnifyingGlassIcon className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+            {/* Search - More compact on mobile */}
+            <div className="relative mt-3 lg:mt-4">
+              <MagnifyingGlassIcon className="absolute left-3 lg:left-4 top-1/2 h-4 lg:h-5 w-4 lg:w-5 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Rechercher..."
-                className="w-full rounded-xl border-0 bg-gray-100 py-3 pl-12 pr-4 text-sm placeholder-gray-500 transition-colors focus:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
+                className="w-full rounded-xl border-0 bg-gray-100 py-2.5 lg:py-3 pl-10 lg:pl-12 pr-4 text-sm placeholder-gray-500 transition-colors focus:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900/10"
               />
             </div>
           </div>
@@ -1053,31 +1052,31 @@ Posez-moi vos questions sur :
                 </p>
               </div>
             ) : (
-              <div className="space-y-1 pb-4">
+              <div className="space-y-0.5 lg:space-y-1 pb-4">
                 {/* Support Bot - Always on top */}
                 <button
                   onClick={() => {
                     setSelectedConvId(SUPPORT_BOT_ID);
                     setShowMobileChat(true);
                   }}
-                  className={`group flex w-full items-start gap-3 rounded-2xl p-3 text-left transition-all ${
+                  className={`group flex w-full items-center gap-3 rounded-xl lg:rounded-2xl p-2.5 lg:p-3 text-left transition-all ${
                     selectedConvId === SUPPORT_BOT_ID
                       ? "bg-gradient-to-r from-violet-50 to-purple-50"
-                      : "hover:bg-gray-50"
+                      : "hover:bg-gray-50 active:bg-gray-100"
                   }`}
                 >
                   <div className="relative flex-shrink-0">
-                    <div className="flex h-13 w-13 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600">
-                      <SparklesIcon className="h-6 w-6 text-white" />
+                    <div className="flex h-11 w-11 lg:h-13 lg:w-13 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600">
+                      <SparklesIcon className="h-5 w-5 lg:h-6 lg:w-6 text-white" />
                     </div>
-                    <span className="absolute -bottom-0.5 -right-0.5 h-4 w-4 rounded-full border-2 border-white bg-emerald-500" />
+                    <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 lg:h-4 lg:w-4 rounded-full border-2 border-white bg-emerald-500" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-gray-900">Assistant Lok&apos;Room</h3>
-                      <span className="text-xs text-emerald-600">En ligne</span>
+                      <h3 className="text-sm lg:text-base font-semibold text-gray-900">Assistant Lok&apos;Room</h3>
+                      <span className="text-[10px] lg:text-xs text-emerald-600 font-medium">En ligne</span>
                     </div>
-                    <p className="mt-0.5 text-sm text-gray-500">
+                    <p className="text-xs lg:text-sm text-gray-500 truncate">
                       FAQ, aide et support 24/7
                     </p>
                   </div>
@@ -1085,10 +1084,10 @@ Posez-moi vos questions sur :
 
                 {/* Divider */}
                 {filteredConversations.length > 0 && (
-                  <div className="my-2 border-t border-gray-100" />
+                  <div className="my-1.5 lg:my-2 border-t border-gray-100" />
                 )}
 
-                {/* User conversations */}
+                {/* User conversations - Mobile: Compact / Desktop: Full */}
                 {filteredConversations.map((conv) => (
                   <button
                     key={conv.id}
@@ -1096,13 +1095,13 @@ Posez-moi vos questions sur :
                       setSelectedConvId(conv.id);
                       setShowMobileChat(true);
                     }}
-                    className={`group flex w-full items-start gap-3 rounded-2xl p-3 text-left transition-all ${
+                    className={`group flex w-full items-center gap-3 rounded-xl lg:rounded-2xl p-2.5 lg:p-3 text-left transition-all ${
                       selectedConvId === conv.id
                         ? "bg-gray-100"
-                        : "hover:bg-gray-50"
+                        : "hover:bg-gray-50 active:bg-gray-100"
                     }`}
                   >
-                    {/* Avatar */}
+                    {/* Avatar - Smaller on mobile */}
                     <div className="relative flex-shrink-0">
                       {conv.otherUser.avatarUrl ? (
                         <Image
@@ -1110,62 +1109,55 @@ Posez-moi vos questions sur :
                           alt={conv.otherUser.name}
                           width={52}
                           height={52}
-                          className="h-13 w-13 rounded-full object-cover"
+                          className="h-11 w-11 lg:h-13 lg:w-13 rounded-full object-cover"
                         />
                       ) : (
-                        <div className="flex h-13 w-13 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
-                          <span className="text-lg font-semibold text-gray-600">
+                        <div className="flex h-11 w-11 lg:h-13 lg:w-13 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
+                          <span className="text-base lg:text-lg font-semibold text-gray-600">
                             {conv.otherUser.name.charAt(0).toUpperCase()}
                           </span>
                         </div>
                       )}
-                      {/* Role badge */}
+                      {/* Role badge - Smaller on mobile */}
                       <div
-                        className={`absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full border-2 border-white ${
+                        className={`absolute -bottom-0.5 -right-0.5 lg:-bottom-1 lg:-right-1 flex h-4 w-4 lg:h-5 lg:w-5 items-center justify-center rounded-full border-2 border-white ${
                           conv.isHost ? "bg-emerald-500" : "bg-blue-500"
                         }`}
                       >
                         {conv.isHost ? (
-                          <HomeIcon className="h-2.5 w-2.5 text-white" />
+                          <HomeIcon className="h-2 w-2 lg:h-2.5 lg:w-2.5 text-white" />
                         ) : (
-                          <UserCircleIcon className="h-2.5 w-2.5 text-white" />
+                          <UserCircleIcon className="h-2 w-2 lg:h-2.5 lg:w-2.5 text-white" />
                         )}
                       </div>
                       {/* Unread indicator */}
                       {conv.isUnread && (
-                        <span className="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white bg-blue-500" />
+                        <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 lg:h-3 lg:w-3 rounded-full border-2 border-white bg-blue-500" />
                       )}
                     </div>
 
-                    {/* Content */}
+                    {/* Content - Simplified on mobile */}
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <h3
-                            className={`truncate font-semibold ${
-                              conv.isUnread ? "text-gray-900" : "text-gray-700"
-                            }`}
-                          >
-                            {conv.otherUser.name}
-                          </h3>
-                          {conv.listing && (
-                            <p className="truncate text-xs text-gray-500">
-                              {conv.listing.title}
-                            </p>
-                          )}
-                        </div>
-                        <span className="flex-shrink-0 text-xs text-gray-400">
+                      <div className="flex items-center justify-between gap-2">
+                        <h3
+                          className={`truncate text-sm lg:text-base ${
+                            conv.isUnread ? "font-semibold text-gray-900" : "font-medium text-gray-700"
+                          }`}
+                        >
+                          {conv.otherUser.name}
+                        </h3>
+                        <span className="flex-shrink-0 text-[10px] lg:text-xs text-gray-400">
                           {conv.lastMessage
                             ? formatRelativeTime(conv.lastMessage.createdAt)
                             : formatRelativeTime(conv.updatedAt)}
                         </span>
                       </div>
 
-                      {/* Last message */}
+                      {/* Last message - Single line on mobile */}
                       {conv.lastMessage && (
                         <p
-                          className={`mt-1 line-clamp-2 text-sm ${
-                            conv.isUnread ? "font-medium text-gray-900" : "text-gray-500"
+                          className={`mt-0.5 truncate lg:line-clamp-2 text-xs lg:text-sm ${
+                            conv.isUnread ? "text-gray-700" : "text-gray-500"
                           }`}
                         >
                           {conv.lastMessage.isFromMe && (
@@ -1175,9 +1167,9 @@ Posez-moi vos questions sur :
                         </p>
                       )}
 
-                      {/* Booking badge */}
+                      {/* Booking badge - Hidden on mobile, visible on desktop */}
                       {conv.booking && (
-                        <div className="mt-2 flex items-center gap-2">
+                        <div className="hidden lg:flex mt-2 items-center gap-2">
                           <span
                             className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium ${
                               getBookingStatus(conv.booking.status).bgColor
@@ -1221,16 +1213,16 @@ Posez-moi vos questions sur :
             </div>
           ) : (
             <>
-              {/* Chat Header */}
-              <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-100 bg-white px-4 py-3 lg:px-6">
-                <div className="flex items-center gap-3">
+              {/* Chat Header - Mobile: Compact / Desktop: Full */}
+              <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-100 bg-white px-3 py-2.5 lg:px-6 lg:py-3">
+                <div className="flex items-center gap-2 lg:gap-3">
                   {/* Back button mobile */}
                   <button
                     onClick={() => {
                       setShowMobileChat(false);
                       setSelectedConvId(null);
                     }}
-                    className="rounded-full p-2 hover:bg-gray-100 lg:hidden"
+                    className="rounded-full p-1.5 hover:bg-gray-100 lg:hidden -ml-1"
                   >
                     <ChevronLeftIcon className="h-5 w-5" />
                   </button>
@@ -1238,12 +1230,12 @@ Posez-moi vos questions sur :
                   {/* Bot Avatar */}
                   {selectedConvId === SUPPORT_BOT_ID ? (
                     <>
-                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600">
-                        <SparklesIcon className="h-5 w-5 text-white" />
+                      <div className="flex h-9 w-9 lg:h-11 lg:w-11 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600">
+                        <SparklesIcon className="h-4 w-4 lg:h-5 lg:w-5 text-white" />
                       </div>
                       <div>
-                        <h2 className="font-semibold text-gray-900">Assistant Lok&apos;Room</h2>
-                        <p className="flex items-center gap-1 text-xs text-emerald-600">
+                        <h2 className="text-sm lg:text-base font-semibold text-gray-900">Assistant Lok&apos;Room</h2>
+                        <p className="hidden lg:flex items-center gap-1 text-xs text-emerald-600">
                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                           En ligne - Réponse instantanée
                         </p>
@@ -1258,11 +1250,11 @@ Posez-moi vos questions sur :
                           alt={selectedConv.otherUser.name}
                           width={44}
                           height={44}
-                          className="h-11 w-11 rounded-full object-cover"
+                          className="h-9 w-9 lg:h-11 lg:w-11 rounded-full object-cover"
                         />
                       ) : (
-                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
-                          <span className="text-base font-semibold text-gray-600">
+                        <div className="flex h-9 w-9 lg:h-11 lg:w-11 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
+                          <span className="text-sm lg:text-base font-semibold text-gray-600">
                             {selectedConv?.otherUser.name.charAt(0).toUpperCase()}
                           </span>
                         </div>
@@ -1270,8 +1262,8 @@ Posez-moi vos questions sur :
 
                       {/* Info */}
                       <div>
-                        <h2 className="font-semibold text-gray-900">{selectedConv?.otherUser.name}</h2>
-                        <p className="text-xs text-gray-500">
+                        <h2 className="text-sm lg:text-base font-semibold text-gray-900">{selectedConv?.otherUser.name}</h2>
+                        <p className="hidden lg:flex text-xs text-gray-500">
                           {selectedConv?.isHost ? (
                             <span className="flex items-center gap-1">
                               <UserCircleIcon className="h-3 w-3" />
@@ -1382,18 +1374,18 @@ Posez-moi vos questions sur :
                 </div>
               )}
 
-              {/* Messages */}
-              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-6 lg:px-6">
+              {/* Messages - Mobile: More compact / Desktop: Full */}
+              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-3 py-4 lg:px-6 lg:py-6">
                 {/* Bot Messages */}
                 {selectedConvId === SUPPORT_BOT_ID ? (
-                  <div className="space-y-4">
+                  <div className="space-y-3 lg:space-y-4">
                     {botMessages.map((msg, index) => {
                       // Messages système au centre
                       if (msg.isSystem) {
                         return (
                           <div key={msg.id} className="text-center">
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5 text-xs text-gray-600">
-                              <ClockIcon className="h-3.5 w-3.5" />
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 lg:px-3 lg:py-1.5 text-[10px] lg:text-xs text-gray-600">
+                              <ClockIcon className="h-3 w-3 lg:h-3.5 lg:w-3.5" />
                               {msg.content}
                             </span>
                           </div>
@@ -1406,11 +1398,11 @@ Posez-moi vos questions sur :
                       return (
                         <div
                           key={msg.id}
-                          className={`flex items-end gap-2 ${isFromUser ? "justify-end" : "justify-start"}`}
+                          className={`flex items-end gap-1.5 lg:gap-2 ${isFromUser ? "justify-end" : "justify-start"}`}
                         >
-                          {/* Avatar à gauche pour bot/admin */}
+                          {/* Avatar à gauche pour bot/admin - Hidden on mobile for cleaner look */}
                           {!isFromUser && (
-                            <div className="w-8 flex-shrink-0">
+                            <div className="hidden lg:block w-8 flex-shrink-0">
                               {(index === 0 || botMessages[index - 1].isBot !== msg.isBot || botMessages[index - 1].isAdmin !== msg.isAdmin) && (
                                 msg.isAdmin ? (
                                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500">
@@ -1425,30 +1417,30 @@ Posez-moi vos questions sur :
                             </div>
                           )}
 
-                          {/* Message Bubble */}
-                          <div className={`max-w-[80%] ${isFromUser ? "items-end" : "items-start"}`}>
+                          {/* Message Bubble - More compact on mobile */}
+                          <div className={`max-w-[85%] lg:max-w-[80%] ${isFromUser ? "items-end" : "items-start"}`}>
                             <div
-                              className={`rounded-2xl px-4 py-3 ${
+                              className={`rounded-2xl px-3 py-2 lg:px-4 lg:py-3 ${
                                 isFromUser
-                                  ? "rounded-br-md bg-gray-700/90 text-white"
+                                  ? "rounded-br-md bg-gray-900 text-white"
                                   : msg.isAdmin
-                                    ? "rounded-bl-md bg-emerald-50 text-gray-900 shadow-sm border border-emerald-100"
-                                    : "rounded-bl-md bg-gray-200/70 text-gray-900 shadow-sm"
+                                    ? "rounded-bl-md bg-emerald-50 text-gray-900 border border-emerald-100"
+                                    : "rounded-bl-md bg-gray-100 text-gray-900"
                               }`}
                             >
-                              <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
+                              <p className="whitespace-pre-wrap text-[13px] lg:text-[15px] leading-relaxed">
                                 {!isFromUser ? parseMarkdownLinks(msg.content) : msg.content}
                               </p>
                             </div>
 
-                            {/* Follow-up suggestions */}
+                            {/* Follow-up suggestions - Smaller on mobile */}
                             {msg.isBot && !msg.isAdmin && msg.followUp && msg.followUp.length > 0 && (
-                              <div className="mt-2 flex flex-wrap gap-2">
+                              <div className="mt-1.5 lg:mt-2 flex flex-wrap gap-1.5 lg:gap-2">
                                 {msg.followUp.map((suggestion) => (
                                   <button
                                     key={suggestion}
                                     onClick={() => handleQuickReply(suggestion)}
-                                    className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 transition-colors hover:bg-violet-100"
+                                    className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 lg:px-3 lg:py-1.5 text-[10px] lg:text-xs font-medium text-violet-700 transition-colors hover:bg-violet-100 active:bg-violet-100"
                                   >
                                     {suggestion}
                                   </button>
@@ -1456,8 +1448,9 @@ Posez-moi vos questions sur :
                               </div>
                             )}
 
+                            {/* Time - Hidden on mobile for cleaner look */}
                             <p
-                              className={`mt-1 text-[11px] text-gray-400 ${
+                              className={`hidden lg:block mt-1 text-[11px] text-gray-400 ${
                                 isFromUser ? "text-right" : "text-left"
                               }`}
                             >
@@ -1470,22 +1463,22 @@ Posez-moi vos questions sur :
                           </div>
 
                           {/* Espace à droite pour les messages utilisateur */}
-                          {isFromUser && <div className="w-8 flex-shrink-0" />}
+                          {isFromUser && <div className="hidden lg:block w-8 flex-shrink-0" />}
                         </div>
                       );
                     })}
 
                     {/* Typing indicator */}
                     {botTyping && (
-                      <div className="flex items-end gap-2">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600">
+                      <div className="flex items-end gap-1.5 lg:gap-2">
+                        <div className="hidden lg:flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600">
                           <SparklesIcon className="h-4 w-4 text-white" />
                         </div>
-                        <div className="rounded-2xl rounded-bl-md bg-white px-4 py-3 shadow-sm">
+                        <div className="rounded-2xl rounded-bl-md bg-gray-100 px-3 py-2 lg:px-4 lg:py-3">
                           <div className="flex gap-1">
-                            <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "0ms" }} />
-                            <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "150ms" }} />
-                            <span className="h-2 w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "300ms" }} />
+                            <span className="h-1.5 w-1.5 lg:h-2 lg:w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "0ms" }} />
+                            <span className="h-1.5 w-1.5 lg:h-2 lg:w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "150ms" }} />
+                            <span className="h-1.5 w-1.5 lg:h-2 lg:w-2 animate-bounce rounded-full bg-gray-400" style={{ animationDelay: "300ms" }} />
                           </div>
                         </div>
                       </div>
@@ -1495,22 +1488,22 @@ Posez-moi vos questions sur :
                   </div>
                 ) : loadingMessages ? (
                   <div className="flex h-full items-center justify-center">
-                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-gray-900" />
+                    <div className="h-6 w-6 lg:h-8 lg:w-8 animate-spin rounded-full border-2 border-gray-200 border-t-gray-900" />
                   </div>
                 ) : messages.length === 0 ? (
-                  <div className="flex h-full flex-col items-center justify-center text-center">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-sm">
-                      <ChatBubbleLeftRightIcon className="h-8 w-8 text-gray-400" />
+                  <div className="flex h-full flex-col items-center justify-center text-center px-4">
+                    <div className="flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-full bg-gray-100">
+                      <ChatBubbleLeftRightIcon className="h-6 w-6 lg:h-8 lg:w-8 text-gray-400" />
                     </div>
-                    <p className="mt-4 font-medium text-gray-900">Démarrez la conversation</p>
-                    <p className="mt-1 text-sm text-gray-500">
+                    <p className="mt-3 lg:mt-4 text-sm lg:text-base font-medium text-gray-900">Démarrez la conversation</p>
+                    <p className="mt-1 text-xs lg:text-sm text-gray-500">
                       {selectedConv?.isHost
-                        ? "Répondez au voyageur pour confirmer la disponibilité"
-                        : "Posez vos questions sur le logement"}
+                        ? "Répondez au voyageur"
+                        : "Posez vos questions"}
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-3 lg:space-y-4">
                     {messages.map((msg, index) => {
                       const isMine = msg.sender.id === currentUserId;
                       const showAvatar =
@@ -1523,11 +1516,11 @@ Posez-moi vos questions sur :
                       return (
                         <div
                           key={msg.id}
-                          className={`flex items-end gap-2 ${isMine ? "flex-row-reverse" : ""}`}
+                          className={`flex items-end gap-1.5 lg:gap-2 ${isMine ? "flex-row-reverse" : ""}`}
                         >
-                          {/* Avatar */}
+                          {/* Avatar - Hidden on mobile */}
                           {!isMine && (
-                            <div className="w-8 flex-shrink-0">
+                            <div className="hidden lg:block w-8 flex-shrink-0">
                               {showAvatar &&
                                 (msg.sender.profile?.avatarUrl ? (
                                   <Image
@@ -1547,22 +1540,23 @@ Posez-moi vos questions sur :
                             </div>
                           )}
 
-                          {/* Message Bubble */}
-                          <div className={`max-w-[75%] ${isMine ? "items-end" : "items-start"}`}>
+                          {/* Message Bubble - More compact on mobile */}
+                          <div className={`max-w-[85%] lg:max-w-[75%] ${isMine ? "items-end" : "items-start"}`}>
                             <div
-                              className={`rounded-2xl px-4 py-2.5 ${
+                              className={`rounded-2xl px-3 py-2 lg:px-4 lg:py-2.5 ${
                                 isMine
-                                  ? "rounded-br-md bg-gray-700/90 text-white"
-                                  : "rounded-bl-md bg-gray-200/70 text-gray-900 shadow-sm"
+                                  ? "rounded-br-md bg-gray-900 text-white"
+                                  : "rounded-bl-md bg-gray-100 text-gray-900"
                               }`}
                             >
-                              <p className="whitespace-pre-wrap text-[15px] leading-relaxed">
+                              <p className="whitespace-pre-wrap text-[13px] lg:text-[15px] leading-relaxed">
                                 {msg.content}
                               </p>
                             </div>
+                            {/* Time - Hidden on mobile */}
                             {showTime && (
                               <div
-                                className={`mt-1 flex items-center gap-1 text-[11px] text-gray-400 ${
+                                className={`hidden lg:flex mt-1 items-center gap-1 text-[11px] text-gray-400 ${
                                   isMine ? "justify-end" : "justify-start"
                                 }`}
                               >
@@ -1596,11 +1590,11 @@ Posez-moi vos questions sur :
                 )}
               </div>
 
-              {/* Message Input */}
-              <div className="flex-shrink-0 border-t border-gray-100 bg-white px-4 py-4 lg:px-6">
-                {/* Quick Replies for Host */}
+              {/* Message Input - More compact on mobile */}
+              <div className="flex-shrink-0 border-t border-gray-100 bg-white px-3 py-3 lg:px-6 lg:py-4">
+                {/* Quick Replies for Host - Hidden on mobile */}
                 {selectedConv?.isHost && selectedConv?.booking?.status === "PENDING" && (
-                  <div className="mb-3 flex flex-wrap gap-2">
+                  <div className="hidden lg:flex mb-3 flex-wrap gap-2">
                     {[
                       "Le logement est disponible !",
                       "Je confirme votre réservation",
@@ -1617,9 +1611,9 @@ Posez-moi vos questions sur :
                   </div>
                 )}
 
-                {/* Quick Replies for Guest */}
+                {/* Quick Replies for Guest - Hidden on mobile */}
                 {!selectedConv?.isHost && !messages.length && (
-                  <div className="mb-3 flex flex-wrap gap-2">
+                  <div className="hidden lg:flex mb-3 flex-wrap gap-2">
                     {[
                       "Bonjour, le logement est-il disponible ?",
                       "Quels sont les équipements inclus ?",
@@ -1644,15 +1638,12 @@ Posez-moi vos questions sur :
                   />
                 )}
 
-                {/* Bouton Parler à un agent (uniquement si mots-clés critiques détectés et pas encore demandé) */}
+                {/* Bouton Parler à un agent - More compact on mobile */}
                 {selectedConvId === SUPPORT_BOT_ID && botMessages.length > 1 && hasCriticalKeywords() && !agentRequested && (
-                  <div className="mb-3">
+                  <div className="mb-2 lg:mb-3">
                     <button
                       onClick={async () => {
-                        // Désactiver le bouton immédiatement
                         setAgentRequested(true);
-
-                        // Envoyer une demande pour parler à un agent
                         const userMessage: BotMessage = {
                           id: `user-${Date.now()}`,
                           content: "Je souhaite parler à un agent",
@@ -1681,34 +1672,34 @@ Posez-moi vos questions sur :
                           setBotMessages((prev) => [...prev, botReply]);
                         } catch (error) {
                           console.error("Error requesting agent:", error);
-                          // En cas d'erreur, réactiver le bouton
                           setAgentRequested(false);
                         } finally {
                           setBotTyping(false);
                         }
                       }}
-                      className="w-full flex items-center justify-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-4 py-2.5 text-sm font-medium text-orange-700 transition-colors hover:bg-orange-100"
+                      className="w-full flex items-center justify-center gap-2 rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 lg:px-4 lg:py-2.5 text-xs lg:text-sm font-medium text-orange-700 transition-colors hover:bg-orange-100 active:bg-orange-100"
                     >
-                      <UserCircleIcon className="h-5 w-5" />
+                      <UserCircleIcon className="h-4 w-4 lg:h-5 lg:w-5" />
                       Parler à un agent
                     </button>
                   </div>
                 )}
 
-                {/* Message si agent déjà demandé */}
+                {/* Message si agent déjà demandé - More compact on mobile */}
                 {selectedConvId === SUPPORT_BOT_ID && agentRequested && !selectedHistoryId && (
-                  <div className="mb-3 flex items-center justify-center gap-2 rounded-xl bg-emerald-50 px-4 py-2.5 text-sm text-emerald-700">
-                    <CheckCircleIcon className="h-5 w-5" />
-                    Un agent va vous répondre sous peu
+                  <div className="mb-2 lg:mb-3 flex items-center justify-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 lg:px-4 lg:py-2.5 text-xs lg:text-sm text-emerald-700">
+                    <CheckCircleIcon className="h-4 w-4 lg:h-5 lg:w-5" />
+                    Un agent va vous répondre
                   </div>
                 )}
 
-                {/* Message si consultation historique (lecture seule) */}
+                {/* Message si consultation historique - More compact on mobile */}
                 {selectedConvId === SUPPORT_BOT_ID && selectedHistoryId && (
-                  <div className="mb-3 flex items-center justify-between rounded-xl bg-gray-100 px-4 py-2.5 text-sm text-gray-600">
-                    <div className="flex items-center gap-2">
-                      <ClockIcon className="h-5 w-5" />
-                      Conversation archivée (lecture seule)
+                  <div className="mb-2 lg:mb-3 flex items-center justify-between rounded-xl bg-gray-100 px-3 py-2 lg:px-4 lg:py-2.5 text-xs lg:text-sm text-gray-600">
+                    <div className="flex items-center gap-1.5 lg:gap-2">
+                      <ClockIcon className="h-4 w-4 lg:h-5 lg:w-5" />
+                      <span className="hidden lg:inline">Conversation archivée (lecture seule)</span>
+                      <span className="lg:hidden">Archivée</span>
                     </div>
                     <button
                       onClick={() => {
@@ -1725,16 +1716,15 @@ Posez-moi vos questions sur :
                   </div>
                 )}
 
-                {/* Input - Masqué si historique */}
+                {/* Input - Masqué si historique - More compact on mobile */}
                 {!selectedHistoryId && (
-                <div className="flex items-end gap-3">
+                <div className="flex items-end gap-2 lg:gap-3">
                   <div className="flex-1 relative">
                     <textarea
                       ref={textareaRef}
                       value={newMessage}
                       onChange={(e) => {
                         setNewMessage(e.target.value);
-                        // Envoyer l'événement "en train d'écrire"
                         if (selectedConvId !== SUPPORT_BOT_ID) {
                           handleTyping();
                         }
@@ -1745,15 +1735,15 @@ Posez-moi vos questions sur :
                           stopTyping();
                         }
                       }}
-                      placeholder="Écrivez votre message..."
+                      placeholder="Message..."
                       rows={1}
-                      className="w-full resize-none rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 pr-12 text-[15px] placeholder-gray-400 transition-all focus:border-gray-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/5"
-                      style={{ maxHeight: "120px" }}
+                      className="w-full resize-none rounded-full lg:rounded-2xl border border-gray-200 bg-gray-50 px-4 py-2.5 lg:py-3 pr-10 lg:pr-12 text-[14px] lg:text-[15px] placeholder-gray-400 transition-all focus:border-gray-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/5"
+                      style={{ maxHeight: "100px" }}
                     />
-                    {/* Bouton pièce jointe */}
+                    {/* Bouton pièce jointe - Hidden on mobile */}
                     <button
                       type="button"
-                      className="absolute right-3 bottom-3 text-gray-400 hover:text-gray-600 transition"
+                      className="hidden lg:block absolute right-3 bottom-3 text-gray-400 hover:text-gray-600 transition"
                       title="Joindre un fichier"
                     >
                       <PaperClipIcon className="h-5 w-5" />
@@ -1762,24 +1752,24 @@ Posez-moi vos questions sur :
                   <button
                     onClick={handleSend}
                     disabled={!newMessage.trim() || sending}
-                    className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full transition-all ${
+                    className={`flex h-10 w-10 lg:h-12 lg:w-12 flex-shrink-0 items-center justify-center rounded-full transition-all ${
                       newMessage.trim()
-                        ? "bg-gray-900 text-white hover:bg-black hover:shadow-lg"
+                        ? "bg-gray-900 text-white active:scale-95"
                         : "bg-gray-100 text-gray-400"
                     } disabled:cursor-not-allowed`}
                   >
                     {sending ? (
-                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                      <div className="h-4 w-4 lg:h-5 lg:w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                     ) : (
-                      <PaperAirplaneIcon className="h-5 w-5" />
+                      <PaperAirplaneIcon className="h-4 w-4 lg:h-5 lg:w-5" />
                     )}
                   </button>
                 </div>
                 )}
 
-                {/* Connexion temps réel status */}
+                {/* Connexion temps réel status - Hidden on mobile */}
                 {selectedConvId !== SUPPORT_BOT_ID && (
-                  <div className="flex items-center justify-center mt-1">
+                  <div className="hidden lg:flex items-center justify-center mt-1">
                     <span className={`inline-flex items-center gap-1 text-[10px] ${isConnected ? "text-green-500" : "text-gray-400"}`}>
                       <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? "bg-green-500" : "bg-gray-400"}`} />
                       {isConnected ? "Connecté en temps réel" : "Connexion..."}
