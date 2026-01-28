@@ -557,6 +557,16 @@ Posez-moi vos questions sur :
     }
   }, [messages, botMessages, scrollToBottom]);
 
+  // Auto-scroll to bottom when opening a conversation (mobile)
+  useEffect(() => {
+    if (showMobileChat && selectedConvId) {
+      // Small delay to let the DOM render
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
+    }
+  }, [showMobileChat, selectedConvId, scrollToBottom]);
+
   // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
@@ -1590,8 +1600,8 @@ Posez-moi vos questions sur :
                 )}
               </div>
 
-              {/* Message Input - More compact on mobile */}
-              <div className="flex-shrink-0 border-t border-gray-100 bg-white px-3 py-3 lg:px-6 lg:py-4">
+              {/* Message Input - More compact on mobile, with shadow to stand out */}
+              <div className="flex-shrink-0 border-t border-gray-100 bg-white px-3 py-3 lg:px-6 lg:py-4 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] lg:shadow-none">
                 {/* Quick Replies for Host - Hidden on mobile */}
                 {selectedConv?.isHost && selectedConv?.booking?.status === "PENDING" && (
                   <div className="hidden lg:flex mb-3 flex-wrap gap-2">
