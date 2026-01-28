@@ -1223,8 +1223,8 @@ Posez-moi vos questions sur :
             </div>
           ) : (
             <>
-              {/* Chat Header - Mobile: Compact / Desktop: Full */}
-              <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-100 bg-white px-3 py-2.5 lg:px-6 lg:py-3">
+              {/* Chat Header - Mobile: Ultra compact / Desktop: Full */}
+              <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-100 bg-white px-3 py-2 lg:px-6 lg:py-3">
                 <div className="flex items-center gap-2 lg:gap-3">
                   {/* Back button mobile */}
                   <button
@@ -1232,7 +1232,7 @@ Posez-moi vos questions sur :
                       setShowMobileChat(false);
                       setSelectedConvId(null);
                     }}
-                    className="rounded-full p-1.5 hover:bg-gray-100 lg:hidden -ml-1"
+                    className="rounded-full p-1 hover:bg-gray-100 lg:hidden -ml-1"
                   >
                     <ChevronLeftIcon className="h-5 w-5" />
                   </button>
@@ -1240,11 +1240,11 @@ Posez-moi vos questions sur :
                   {/* Bot Avatar */}
                   {selectedConvId === SUPPORT_BOT_ID ? (
                     <>
-                      <div className="flex h-9 w-9 lg:h-11 lg:w-11 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600">
+                      <div className="flex h-8 w-8 lg:h-11 lg:w-11 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-purple-600">
                         <SparklesIcon className="h-4 w-4 lg:h-5 lg:w-5 text-white" />
                       </div>
                       <div>
-                        <h2 className="text-sm lg:text-base font-semibold text-gray-900">Assistant Lok&apos;Room</h2>
+                        <h2 className="text-[13px] lg:text-base font-semibold text-gray-900">Assistant Lok&apos;Room</h2>
                         <p className="hidden lg:flex items-center gap-1 text-xs text-emerald-600">
                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                           En ligne - Réponse instantanée
@@ -1260,10 +1260,10 @@ Posez-moi vos questions sur :
                           alt={selectedConv.otherUser.name}
                           width={44}
                           height={44}
-                          className="h-9 w-9 lg:h-11 lg:w-11 rounded-full object-cover"
+                          className="h-8 w-8 lg:h-11 lg:w-11 rounded-full object-cover"
                         />
                       ) : (
-                        <div className="flex h-9 w-9 lg:h-11 lg:w-11 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
+                        <div className="flex h-8 w-8 lg:h-11 lg:w-11 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200">
                           <span className="text-sm lg:text-base font-semibold text-gray-600">
                             {selectedConv?.otherUser.name.charAt(0).toUpperCase()}
                           </span>
@@ -1272,7 +1272,7 @@ Posez-moi vos questions sur :
 
                       {/* Info */}
                       <div>
-                        <h2 className="text-sm lg:text-base font-semibold text-gray-900">{selectedConv?.otherUser.name}</h2>
+                        <h2 className="text-[13px] lg:text-base font-semibold text-gray-900">{selectedConv?.otherUser.name}</h2>
                         <p className="hidden lg:flex text-xs text-gray-500">
                           {selectedConv?.isHost ? (
                             <span className="flex items-center gap-1">
@@ -1384,11 +1384,11 @@ Posez-moi vos questions sur :
                 </div>
               )}
 
-              {/* Messages - Mobile: More compact / Desktop: Full */}
-              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-3 py-4 lg:px-6 lg:py-6">
+              {/* Messages - Mobile: Ultra compact / Desktop: Full */}
+              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-3 py-2 lg:px-6 lg:py-6">
                 {/* Bot Messages */}
                 {selectedConvId === SUPPORT_BOT_ID ? (
-                  <div className="space-y-3 lg:space-y-4">
+                  <div className="space-y-2 lg:space-y-4">
                     {botMessages.map((msg, index) => {
                       // Messages système au centre
                       if (msg.isSystem) {
@@ -1427,10 +1427,10 @@ Posez-moi vos questions sur :
                             </div>
                           )}
 
-                          {/* Message Bubble - More compact on mobile */}
-                          <div className={`max-w-[85%] lg:max-w-[80%] ${isFromUser ? "items-end" : "items-start"}`}>
+                          {/* Message Bubble - Ultra compact on mobile */}
+                          <div className={`max-w-[88%] lg:max-w-[80%] ${isFromUser ? "items-end" : "items-start"}`}>
                             <div
-                              className={`rounded-2xl px-3 py-2 lg:px-4 lg:py-3 ${
+                              className={`rounded-2xl px-2.5 py-1.5 lg:px-4 lg:py-3 ${
                                 isFromUser
                                   ? "rounded-br-md bg-gray-900 text-white"
                                   : msg.isAdmin
@@ -1438,19 +1438,19 @@ Posez-moi vos questions sur :
                                     : "rounded-bl-md bg-gray-100 text-gray-900"
                               }`}
                             >
-                              <p className="whitespace-pre-wrap text-[13px] lg:text-[15px] leading-relaxed">
+                              <p className="whitespace-pre-wrap text-[12px] lg:text-[15px] leading-snug lg:leading-relaxed">
                                 {!isFromUser ? parseMarkdownLinks(msg.content) : msg.content}
                               </p>
                             </div>
 
                             {/* Follow-up suggestions - Smaller on mobile */}
                             {msg.isBot && !msg.isAdmin && msg.followUp && msg.followUp.length > 0 && (
-                              <div className="mt-1.5 lg:mt-2 flex flex-wrap gap-1.5 lg:gap-2">
+                              <div className="mt-1 lg:mt-2 flex flex-wrap gap-1 lg:gap-2">
                                 {msg.followUp.map((suggestion) => (
                                   <button
                                     key={suggestion}
                                     onClick={() => handleQuickReply(suggestion)}
-                                    className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 lg:px-3 lg:py-1.5 text-[10px] lg:text-xs font-medium text-violet-700 transition-colors hover:bg-violet-100 active:bg-violet-100"
+                                    className="rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 lg:px-3 lg:py-1.5 text-[10px] lg:text-xs font-medium text-violet-700 transition-colors hover:bg-violet-100 active:bg-violet-100"
                                   >
                                     {suggestion}
                                   </button>
@@ -1550,16 +1550,16 @@ Posez-moi vos questions sur :
                             </div>
                           )}
 
-                          {/* Message Bubble - More compact on mobile */}
-                          <div className={`max-w-[85%] lg:max-w-[75%] ${isMine ? "items-end" : "items-start"}`}>
+                          {/* Message Bubble - Ultra compact on mobile */}
+                          <div className={`max-w-[88%] lg:max-w-[75%] ${isMine ? "items-end" : "items-start"}`}>
                             <div
-                              className={`rounded-2xl px-3 py-2 lg:px-4 lg:py-2.5 ${
+                              className={`rounded-2xl px-2.5 py-1.5 lg:px-4 lg:py-2.5 ${
                                 isMine
                                   ? "rounded-br-md bg-gray-900 text-white"
                                   : "rounded-bl-md bg-gray-100 text-gray-900"
                               }`}
                             >
-                              <p className="whitespace-pre-wrap text-[13px] lg:text-[15px] leading-relaxed">
+                              <p className="whitespace-pre-wrap text-[12px] lg:text-[15px] leading-snug lg:leading-relaxed">
                                 {msg.content}
                               </p>
                             </div>
@@ -1600,8 +1600,8 @@ Posez-moi vos questions sur :
                 )}
               </div>
 
-              {/* Message Input - More compact on mobile, with shadow to stand out */}
-              <div className="flex-shrink-0 border-t border-gray-100 bg-white px-3 py-3 lg:px-6 lg:py-4 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] lg:shadow-none">
+              {/* Message Input - Ultra compact on mobile, with shadow to stand out */}
+              <div className="flex-shrink-0 border-t border-gray-100 bg-white px-3 py-2 lg:px-6 lg:py-4 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] lg:shadow-none">
                 {/* Quick Replies for Host - Hidden on mobile */}
                 {selectedConv?.isHost && selectedConv?.booking?.status === "PENDING" && (
                   <div className="hidden lg:flex mb-3 flex-wrap gap-2">
@@ -1726,7 +1726,7 @@ Posez-moi vos questions sur :
                   </div>
                 )}
 
-                {/* Input - Masqué si historique - More compact on mobile */}
+                {/* Input - Masqué si historique - Ultra compact on mobile */}
                 {!selectedHistoryId && (
                 <div className="flex items-end gap-2 lg:gap-3">
                   <div className="flex-1 relative">
@@ -1747,8 +1747,8 @@ Posez-moi vos questions sur :
                       }}
                       placeholder="Message..."
                       rows={1}
-                      className="w-full resize-none rounded-full lg:rounded-2xl border border-gray-200 bg-gray-50 px-4 py-2.5 lg:py-3 pr-10 lg:pr-12 text-[14px] lg:text-[15px] placeholder-gray-400 transition-all focus:border-gray-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/5"
-                      style={{ maxHeight: "100px" }}
+                      className="w-full resize-none rounded-full lg:rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 lg:px-4 lg:py-3 pr-10 lg:pr-12 text-[13px] lg:text-[15px] placeholder-gray-400 transition-all focus:border-gray-300 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gray-900/5"
+                      style={{ maxHeight: "80px" }}
                     />
                     {/* Bouton pièce jointe - Hidden on mobile */}
                     <button
