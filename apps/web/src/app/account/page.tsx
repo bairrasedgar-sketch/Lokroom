@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
 import PaymentsPage from "./payments/page";
 import useTranslation from "@/hooks/useTranslation";
 import { SUPPORTED_LANGS, type SupportedLang } from "@/locales";
@@ -33,6 +35,7 @@ import {
   QuestionMarkCircleIcon,
   ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
+import { CheckBadgeIcon } from "@heroicons/react/24/solid";
 
 const ONE_YEAR = 60 * 60 * 24 * 365;
 
@@ -2429,7 +2432,174 @@ function TranslationTabContent() {
   );
 }
 
-// ---------- Mobile Account View - Style Airbnb ----------
+// ---------- Mobile Profile Card - Style Lokroom ----------
+type MobileProfileData = {
+  name: string;
+  firstName: string;
+  lastName: string;
+  avatar: string;
+  city: string;
+  country: string;
+  createdAt: string | null;
+  identityStatus: IdentityStatus;
+  tripsCount: number;
+  reviewsCount: number;
+};
+
+function MobileProfileCard({
+  data,
+  loading,
+}: {
+  data: MobileProfileData;
+  loading: boolean;
+}) {
+  // Calculer les annees sur Lokroom
+  const yearsOnLokroom = useMemo(() => {
+    if (!data.createdAt) return 0;
+    const created = new Date(data.createdAt);
+    const now = new Date();
+    const diffYears = Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24 * 365));
+    return Math.max(diffYears, 0);
+  }, [data.createdAt]);
+
+  // Formater la localisation
+  const location = useMemo(() => {
+    if (data.city && data.country) return `${data.city}, ${data.country}`;
+    if (data.city) return data.city;
+    if (data.country) return data.country;
+    return null;
+  }, [data.city, data.country]);
+
+  // Nom complet
+  const fullName = useMemo(() => {
+    if (data.firstName && data.lastName) return `${data.firstName} ${data.lastName}`;
+    if (data.name) return data.name;
+    return "Utilisateur";
+  }, [data.firstName, data.lastName, data.name]);
+
+  const isVerified = data.identityStatus === "VERIFIED";
+
+  if (loading) {
+    return (
+      <div className="mx-4 mt-5 mb-4">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-gray-50 to-gray-100 p-6 shadow-sm">
+          {/* Skeleton Avatar */}
+          <div className="flex flex-col items-center">
+            <div className="relative mb-4">
+              <div className="h-24 w-24 rounded-full bg-gray-200 animate-pulse" />
+            </div>
+            {/* Skeleton Name */}
+            <div className="h-6 w-36 bg-gray-200 rounded-lg animate-pulse mb-2" />
+            {/* Skeleton Location */}
+            <div className="h-4 w-28 bg-gray-200 rounded animate-pulse mb-5" />
+            {/* Skeleton Stats */}
+            <div className="flex w-full justify-center gap-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex flex-col items-center">
+                  <div className="h-6 w-8 bg-gray-200 rounded animate-pulse mb-1" />
+                  <div className="h-3 w-14 bg-gray-200 rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-4 mt-5 mb-4">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-50 via-white to-gray-50 p-6 shadow-[0_2px_20px_-4px_rgba(0,0,0,0.1)] border border-gray-100/80">
+        {/* Decorative background elements */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-gray-100/50 to-transparent rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-gray-100/30 to-transparent rounded-full translate-y-1/2 -translate-x-1/2" />
+
+        <div className="relative flex flex-col items-center">
+          {/* Avatar avec badge verifie */}
+          <div className="relative mb-4">
+            {data.avatar ? (
+              <div className="relative h-24 w-24 rounded-full overflow-hidden ring-4 ring-white shadow-lg">
+                <Image
+                  src={data.avatar}
+                  alt={fullName}
+                  fill
+                  className="object-cover"
+                  sizes="96px"
+                />
+              </div>
+            ) : (
+              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-gray-800 to-gray-900 text-white text-3xl font-semibold ring-4 ring-white shadow-lg">
+                {fullName.charAt(0).toUpperCase()}
+              </div>
+            )}
+
+            {/* Badge verifie */}
+            {isVerified && (
+              <div className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500 text-white shadow-md ring-2 ring-white">
+                <CheckBadgeIcon className="h-5 w-5" />
+              </div>
+            )}
+          </div>
+
+          {/* Nom */}
+          <h2 className="text-xl font-bold text-gray-900 text-center">
+            {fullName}
+          </h2>
+
+          {/* Localisation */}
+          {location && (
+            <div className="flex items-center gap-1.5 mt-1.5 text-sm text-gray-500">
+              <MapPinIcon className="h-4 w-4" />
+              <span>{location}</span>
+            </div>
+          )}
+
+          {/* Stats */}
+          <div className="flex w-full justify-center mt-5 pt-5 border-t border-gray-100">
+            <div className="grid grid-cols-3 gap-8 w-full max-w-xs">
+              {/* Voyages */}
+              <div className="flex flex-col items-center">
+                <span className="text-xl font-bold text-gray-900">{data.tripsCount}</span>
+                <span className="text-xs text-gray-500 mt-0.5">
+                  {data.tripsCount === 1 ? "Voyage" : "Voyages"}
+                </span>
+              </div>
+
+              {/* Separateur */}
+              <div className="flex flex-col items-center relative">
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 h-8 w-px bg-gray-200" />
+                <span className="text-xl font-bold text-gray-900">{data.reviewsCount}</span>
+                <span className="text-xs text-gray-500 mt-0.5">
+                  {data.reviewsCount === 1 ? "Avis" : "Avis"}
+                </span>
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 h-8 w-px bg-gray-200" />
+              </div>
+
+              {/* Annees */}
+              <div className="flex flex-col items-center">
+                <span className="text-xl font-bold text-gray-900">{yearsOnLokroom}</span>
+                <span className="text-xs text-gray-500 mt-0.5">
+                  {yearsOnLokroom <= 1 ? "An" : "Ans"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Bouton voir profil */}
+          <Link
+            href="/profile"
+            className="mt-5 flex items-center justify-center gap-2 w-full py-3 px-4 rounded-xl border border-gray-200 bg-white text-sm font-medium text-gray-900 hover:bg-gray-50 hover:border-gray-300 active:bg-gray-100 transition-all shadow-sm"
+          >
+            <span>Voir mon profil public</span>
+            <ChevronRightIcon className="h-4 w-4" />
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------- Mobile Account View - Style Lokroom ----------
 type MobileMenuSection = {
   title: string;
   items: {
@@ -2461,28 +2631,53 @@ function MobileAccountView({
   t: AccountTranslations;
   tabLabels: Record<TabId, string>;
 }) {
-  const [userData, setUserData] = useState({
+  const [profileData, setProfileData] = useState<MobileProfileData>({
     name: "",
-    email: "",
+    firstName: "",
+    lastName: "",
     avatar: "",
-    identityVerified: false,
+    city: "",
+    country: "",
+    createdAt: null,
+    identityStatus: "UNVERIFIED",
+    tripsCount: 0,
+    reviewsCount: 0,
   });
   const [loading, setLoading] = useState(true);
 
-  // Charger les donnees utilisateur
+  // Charger les donnees utilisateur et stats
   useEffect(() => {
     const controller = new AbortController();
-    const fetchUser = async () => {
+    const fetchUserData = async () => {
       try {
-        const res = await fetch("/api/profile", { cache: "no-store", signal: controller.signal });
-        if (res.ok) {
-          const data = await res.json();
+        // Charger profil et voyages en parallele
+        const [profileRes, tripsRes] = await Promise.all([
+          fetch("/api/profile", { cache: "no-store", signal: controller.signal }),
+          fetch("/api/account/trips", { cache: "no-store", signal: controller.signal }),
+        ]);
+
+        let tripsCount = 0;
+        if (tripsRes.ok) {
+          const tripsData = await tripsRes.json();
+          tripsCount = tripsData.trips?.length ?? 0;
+        }
+
+        if (profileRes.ok) {
+          const data = await profileRes.json();
           const user = data.user;
-          setUserData({
-            name: user?.name || user?.profile?.firstName || "Utilisateur",
-            email: user?.email || "",
-            avatar: user?.image || "",
-            identityVerified: user?.identityStatus === "VERIFIED",
+          const profile = user?.profile || {};
+
+          setProfileData({
+            name: user?.name || "",
+            firstName: profile.firstName || "",
+            lastName: profile.lastName || "",
+            avatar: profile.avatarUrl || user?.image || "",
+            city: profile.city || "",
+            country: profile.country || user?.country || "",
+            createdAt: user?.createdAt || null,
+            identityStatus: user?.identityStatus || "UNVERIFIED",
+            tripsCount: tripsCount,
+            reviewsCount: profile.ratingCount || 0,
           });
         }
       } catch (e) {
@@ -2493,7 +2688,7 @@ function MobileAccountView({
         setLoading(false);
       }
     };
-    void fetchUser();
+    void fetchUserData();
     return () => controller.abort();
   }, []);
 
@@ -2621,68 +2816,11 @@ function MobileAccountView({
       {isMainView ? (
         /* Vue principale mobile - Profil + Liste des parametres */
         <div className="pb-8">
-          {/* Header Profil style Airbnb */}
-          <div className="bg-white px-4 pt-5 pb-5 shadow-sm">
-            <div className="flex items-center gap-4">
-              {/* Avatar */}
-              <div className="relative">
-                {loading ? (
-                  <div className="h-16 w-16 rounded-full bg-gray-200 animate-pulse" />
-                ) : userData.avatar ? (
-                  <img
-                    src={userData.avatar}
-                    alt={userData.name}
-                    className="h-16 w-16 rounded-full object-cover border-2 border-white shadow-md"
-                  />
-                ) : (
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-gray-700 to-gray-900 text-white text-xl font-semibold shadow-md">
-                    {userData.name.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                {userData.identityVerified && (
-                  <div className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm">
-                    <CheckCircleIcon className="h-4 w-4" />
-                  </div>
-                )}
-              </div>
-
-              {/* Infos utilisateur */}
-              <div className="flex-1 min-w-0">
-                {loading ? (
-                  <>
-                    <div className="h-5 w-32 bg-gray-200 rounded animate-pulse mb-2" />
-                    <div className="h-4 w-40 bg-gray-200 rounded animate-pulse" />
-                  </>
-                ) : (
-                  <>
-                    <h1 className="text-lg font-bold text-gray-900 truncate">
-                      {userData.name}
-                    </h1>
-                    <p className="text-sm text-gray-500 truncate">{userData.email}</p>
-                    {userData.identityVerified && (
-                      <span className="inline-flex items-center gap-1 mt-1 text-xs text-emerald-600 font-medium">
-                        <CheckCircleIcon className="h-3.5 w-3.5" />
-                        Identite verifiee
-                      </span>
-                    )}
-                  </>
-                )}
-              </div>
-
-              {/* Bouton voir profil */}
-              <button
-                type="button"
-                onClick={() => handleChangeTab("personal")}
-                className="flex-shrink-0 p-2 rounded-full hover:bg-gray-100 active:bg-gray-200 transition"
-                aria-label="Voir le profil"
-              >
-                <ChevronRightIcon className="h-5 w-5 text-gray-400" />
-              </button>
-            </div>
-          </div>
+          {/* Carte Profil Lokroom */}
+          <MobileProfileCard data={profileData} loading={loading} />
 
           {/* Sections de menu */}
-          <div className="px-4 pt-5 space-y-5">
+          <div className="px-4 space-y-5">
             {menuSections.map((section) => (
               <div key={section.title}>
                 {/* Titre de section */}
