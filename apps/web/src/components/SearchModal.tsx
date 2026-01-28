@@ -308,9 +308,9 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
         {/* Contenu scrollable */}
         <div className="overflow-y-auto h-[calc(100vh-140px)] pb-4">
           {/* Section Catégories - Scroll horizontal */}
-          <div className="px-4 pt-2 pb-1">
+          <div className="px-4 pt-2 pb-2">
             <h3 className="text-sm font-semibold text-gray-700 mb-2">Que recherchez-vous ?</h3>
-            <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-hide">
+            <div className="flex gap-2 overflow-x-auto py-1 -mx-4 px-4 scrollbar-hide">
               {CATEGORIES.map((cat) => (
                 <button
                   key={cat.key}
