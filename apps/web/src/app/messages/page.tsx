@@ -1196,13 +1196,13 @@ Posez-moi vos questions sur :
 
         {/* Chat Area */}
         <section
-          className={`flex-1 bg-gray-50 relative overflow-hidden ${
+          className={`flex-1 bg-gray-50 relative overflow-hidden h-full ${
             showMobileChat ? "flex flex-col" : "hidden lg:flex lg:flex-col"
           }`}
         >
           {!selectedConvId ? (
             // Empty state
-            <div className="flex flex-1 flex-col items-center justify-center px-8">
+            <div className="flex flex-1 flex-col items-center justify-center px-8 overflow-hidden">
               <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gray-100">
                 <ChatBubbleLeftRightIcon className="h-12 w-12 text-gray-300" />
               </div>
@@ -1213,9 +1213,9 @@ Posez-moi vos questions sur :
               </p>
             </div>
           ) : (
-            <>
-              {/* Chat Header - Fixed at top, below main navbar */}
-              <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-100 bg-white px-3 py-2 lg:px-6 lg:py-3">
+            <div className="flex flex-col h-full overflow-hidden">
+              {/* Chat Header - NO SCROLL */}
+              <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-100 bg-white px-3 py-2 lg:px-6 lg:py-3 touch-none">
                 <div className="flex items-center gap-2 lg:gap-3">
                   {/* Back button mobile */}
                   <button
@@ -1591,8 +1591,8 @@ Posez-moi vos questions sur :
                 )}
               </div>
 
-              {/* Message Input - Fixed at bottom */}
-              <div className="flex-shrink-0 border-t border-gray-100 bg-white px-3 py-2 lg:px-6 lg:py-4">
+              {/* Message Input - NO SCROLL */}
+              <div className="flex-shrink-0 border-t border-gray-100 bg-white px-3 py-2 lg:px-6 lg:py-4 touch-none">
                 {/* Quick Replies for Host - Hidden on mobile */}
                 {selectedConv?.isHost && selectedConv?.booking?.status === "PENDING" && (
                   <div className="hidden lg:flex mb-3 flex-wrap gap-2">
@@ -1778,7 +1778,7 @@ Posez-moi vos questions sur :
                   </div>
                 )}
               </div>
-            </>
+            </div>
           )}
         </section>
 
