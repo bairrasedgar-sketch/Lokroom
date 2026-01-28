@@ -753,9 +753,12 @@ export default function ListingsWithMap({
         // Build query params including existing search params
         const params = new URLSearchParams();
 
-        // Add existing search params (sauf page et bounds existants)
+        // Add existing search params (sauf page, bounds, q et placeId)
+        // On exclut q et placeId car on veut TOUTES les annonces dans la zone visible,
+        // pas seulement celles qui correspondent à la recherche textuelle
+        const excludeKeys = ["page", "q", "placeId", "neLat", "neLng", "swLat", "swLng"];
         for (const [key, value] of Object.entries(searchParams)) {
-          if (value && key !== "page" && !key.startsWith("ne") && !key.startsWith("sw")) {
+          if (value && !excludeKeys.includes(key) && !key.startsWith("ne") && !key.startsWith("sw")) {
             params.set(key, value);
           }
         }
