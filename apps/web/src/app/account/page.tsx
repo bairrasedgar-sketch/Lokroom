@@ -2604,22 +2604,62 @@ export default function AccountSettingsPage() {
         </nav>
       </aside>
 
-      {/* Mobile dropdown */}
-      <div className="md:hidden w-full">
-        <h2 className="mb-3 text-lg font-semibold">{t.settingsTitle}</h2>
-        <select
-          value={activeTab}
-          onChange={(e) => handleChangeTab(e.target.value as TabId)}
-          className="mb-6 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm"
-        >
-          {tabs.map((tab) => (
-            <option key={tab.id} value={tab.id}>
-              {tab.label}
-            </option>
-          ))}
-        </select>
+      {/* Mobile - Liste style Airbnb */}
+      <div className="md:hidden w-full bg-gray-50 min-h-screen -mx-4 -my-6 px-4 py-6">
+        {activeTab === "personal" && !searchParams.get("tab") ? (
+          /* Vue principale mobile - Liste des paramètres */
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="pt-2">
+              <h1 className="text-2xl font-bold text-gray-900">{t.settingsTitle}</h1>
+            </div>
 
-        <TabContent active={activeTab} t={t} tabLabels={tabLabels} router={router} />
+            {/* Liste des options */}
+            <div className="space-y-2">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => handleChangeTab(tab.id)}
+                  className="flex w-full items-center justify-between rounded-2xl bg-white p-4 shadow-sm active:bg-gray-50"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 ${iconColorByTab[tab.id]}`}>
+                      {tab.icon}
+                    </div>
+                    <span className="text-base font-medium text-gray-900">{tab.label}</span>
+                  </div>
+                  <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          /* Vue détail mobile - Contenu de l'onglet sélectionné */
+          <div className="space-y-4">
+            {/* Header avec bouton retour */}
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("personal");
+                router.push("/account", { scroll: false });
+              }}
+              className="flex items-center gap-2 text-gray-600 -ml-1"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+              <span className="text-sm font-medium">Retour</span>
+            </button>
+
+            {/* Contenu */}
+            <div className="bg-white rounded-2xl p-4 shadow-sm">
+              <TabContent active={activeTab} t={t} tabLabels={tabLabels} router={router} />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Content desktop */}
