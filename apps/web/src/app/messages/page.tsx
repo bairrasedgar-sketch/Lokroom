@@ -1223,8 +1223,8 @@ Posez-moi vos questions sur :
             </div>
           ) : (
             <>
-              {/* Chat Header - Mobile: Ultra compact / Desktop: Full */}
-              <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-100 bg-white px-3 py-2 lg:px-6 lg:py-3">
+              {/* Chat Header - FIXED at top on mobile */}
+              <div className="sticky top-0 z-10 flex flex-shrink-0 items-center justify-between border-b border-gray-100 bg-white px-3 py-2 lg:px-6 lg:py-3">
                 <div className="flex items-center gap-2 lg:gap-3">
                   {/* Back button mobile */}
                   <button
@@ -1384,8 +1384,8 @@ Posez-moi vos questions sur :
                 </div>
               )}
 
-              {/* Messages - Mobile: No flex-1 to avoid empty space / Desktop: Full */}
-              <div ref={messagesContainerRef} className="overflow-y-auto px-3 py-2 lg:flex-1 lg:px-6 lg:py-6">
+              {/* Messages - Scrollable area between fixed header and input */}
+              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-3 py-2 lg:px-6 lg:py-6">
                 {/* Bot Messages */}
                 {selectedConvId === SUPPORT_BOT_ID ? (
                   <div className="space-y-2 lg:space-y-4">
@@ -1600,8 +1600,8 @@ Posez-moi vos questions sur :
                 )}
               </div>
 
-              {/* Message Input - Ultra compact on mobile, with shadow to stand out */}
-              <div className="flex-shrink-0 border-t border-gray-100 bg-white px-3 py-2 lg:px-6 lg:py-4 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] lg:shadow-none">
+              {/* Message Input - FIXED at bottom on mobile, above footer */}
+              <div className="sticky bottom-0 z-10 flex-shrink-0 border-t border-gray-100 bg-white px-3 py-2 lg:px-6 lg:py-4 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] lg:shadow-none">
                 {/* Quick Replies for Host - Hidden on mobile */}
                 {selectedConv?.isHost && selectedConv?.booking?.status === "PENDING" && (
                   <div className="hidden lg:flex mb-3 flex-wrap gap-2">
