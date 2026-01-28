@@ -26,6 +26,7 @@ type GoogleAutocompleteService = {
 type GooglePrediction = {
   place_id: string;
   description: string;
+  types?: string[];
   structured_formatting?: {
     main_text?: string;
     secondary_text?: string;
@@ -41,6 +42,8 @@ export type LocationAutocompletePlace = {
   description: string;
   mainText: string;
   secondaryText: string;
+  placeId?: string;
+  types?: string[];
 };
 
 type PopularCity = {
@@ -135,7 +138,7 @@ export default function LocationAutocomplete({
     service.getPlacePredictions(
       {
         input: query,
-        types: ["(cities)"],
+        types: ["geocode", "establishment"],
         componentRestrictions: { country: ["fr", "ca"] }, // France et Canada
       },
       (predictions, status) => {
@@ -175,6 +178,8 @@ export default function LocationAutocomplete({
       description: prediction.description,
       mainText,
       secondaryText,
+      placeId: prediction.place_id,
+      types: prediction.types,
     });
     setSuggestions([]);
     setIsOpen(false);

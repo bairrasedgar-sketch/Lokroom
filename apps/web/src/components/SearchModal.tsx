@@ -74,6 +74,7 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
   const [destination, setDestination] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
   const [selectedCountry, setSelectedCountry] = useState("");
+  const [selectedPlaceId, setSelectedPlaceId] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   // Voyageurs par type
@@ -242,6 +243,7 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
     if (destination) params.set("q", destination);
     if (selectedCity) params.set("city", selectedCity);
     if (selectedCountry) params.set("country", selectedCountry);
+    if (selectedPlaceId) params.set("placeId", selectedPlaceId);
     if (selectedCategory) params.set("type", selectedCategory);
     if (startDate) params.set("startDate", startDate);
     if (bookingMode === "days" && endDate) params.set("endDate", endDate);
@@ -275,6 +277,7 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
   // Handler pour la sélection d'une ville via autocomplete
   const handleLocationSelect = (place: LocationAutocompletePlace) => {
     setSelectedCity(place.mainText);
+    if (place.placeId) setSelectedPlaceId(place.placeId);
     // Déterminer le pays à partir de la description
     const desc = place.description.toLowerCase();
     if (desc.includes("canada")) {
@@ -398,10 +401,11 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
                     setDestination(place.mainText);
                     setSelectedCity(place.mainText);
                     setSelectedCountry(place.secondaryText.includes("Canada") ? "Canada" : "France");
+                    if (place.placeId) setSelectedPlaceId(place.placeId);
                     // Auto-avancer vers les dates
                     setTimeout(() => handleOpenSection("dates"), 300);
                   }}
-                  placeholder="Ville, région ou pays..."
+                  placeholder="Adresse, ville, région..."
                   popularCities={POPULAR_DESTINATIONS.map(d => ({
                     main: d.city,
                     secondary: d.country,
