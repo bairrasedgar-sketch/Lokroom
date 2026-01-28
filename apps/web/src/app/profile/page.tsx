@@ -424,11 +424,11 @@ export default function ProfilePage() {
   }
 
   return (
-    <main className="mx-auto max-w-6xl 2xl:max-w-7xl px-4 sm:px-6 lg:px-8 pb-8 sm:pb-12 pt-6 sm:pt-10">
+    <main className="mx-auto max-w-6xl 2xl:max-w-7xl bg-gray-50 lg:bg-transparent min-h-screen lg:min-h-0 px-0 lg:px-8 pb-8 sm:pb-12 pt-0 lg:pt-10">
       {/* Layout principal */}
-      <div className="flex flex-col lg:flex-row gap-6 lg:gap-10">
-        {/* Colonne gauche – menu comme Airbnb */}
-        <aside className="w-full lg:w-64 shrink-0">
+      <div className="flex flex-col lg:flex-row gap-0 lg:gap-10">
+        {/* Colonne gauche – menu comme Airbnb (desktop only) */}
+        <aside className="hidden lg:block w-full lg:w-64 shrink-0">
           <h1 className="mb-6 text-2xl font-semibold">{t.title}</h1>
 
           <nav className="space-y-2 text-sm">
@@ -478,8 +478,106 @@ export default function ProfilePage() {
           </nav>
         </aside>
 
+        {/* Mobile Header - Profile Card Style Airbnb */}
+        <div className="lg:hidden">
+          {/* Header profil mobile centré */}
+          <div className="bg-white px-4 pt-6 pb-4">
+            {/* Avatar centré */}
+            <div className="flex flex-col items-center">
+              <div className="relative h-24 w-24 overflow-hidden rounded-full bg-gray-200 border-2 border-gray-100 shadow-sm">
+                {avatarPreview ? (
+                  <Image
+                    src={avatarPreview}
+                    alt={fullName}
+                    fill
+                    className="object-cover"
+                    sizes="96px"
+                  />
+                ) : (
+                  <span className="flex h-full w-full items-center justify-center text-3xl font-semibold text-gray-600">
+                    {fullName.charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
+
+              {/* Nom centré */}
+              <h1 className="mt-3 text-xl font-bold text-gray-900">{fullName}</h1>
+
+              {/* Localisation */}
+              <p className="mt-1 text-sm text-gray-500">{cityLine}</p>
+
+              {/* Badge vérifié si applicable */}
+              {user?.profile && (
+                <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-600">
+                  <svg className="h-4 w-4 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  <span>{t.lokroomMember}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Stats en ligne horizontale */}
+            <div className="mt-6 flex items-center justify-center">
+              <div className="flex items-center divide-x divide-gray-200">
+                <div className="px-6 text-center">
+                  <div className="text-xl font-bold text-gray-900">{trips.length}</div>
+                  <div className="text-xs text-gray-500">{t.tripsCount}</div>
+                </div>
+                <div className="px-6 text-center">
+                  <div className="text-xl font-bold text-gray-900">{user?.profile?.ratingCount ?? 0}</div>
+                  <div className="text-xs text-gray-500">{t.reviewsCount}</div>
+                </div>
+                <div className="px-6 text-center">
+                  <div className="text-xl font-bold text-gray-900">
+                    {typeof user?.profile?.ratingAvg === "number" ? user.profile.ratingAvg.toFixed(1) : "–"}
+                  </div>
+                  <div className="text-xs text-gray-500">{t.averageRating}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Bouton Modifier le profil - pleine largeur */}
+            <button
+              type="button"
+              onClick={() => setProfileEditRequested(true)}
+              className="mt-6 w-full rounded-xl border-2 border-gray-900 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-900 hover:text-white transition-colors"
+            >
+              {t.editProfile}
+            </button>
+          </div>
+
+          {/* Navigation onglets mobile */}
+          <div className="sticky top-0 z-10 bg-white border-b border-gray-200">
+            <div className="flex">
+              <button
+                type="button"
+                onClick={() => setTab("about")}
+                className={`flex-1 py-3 text-sm font-medium text-center border-b-2 transition-colors ${
+                  tab === "about"
+                    ? "border-gray-900 text-gray-900"
+                    : "border-transparent text-gray-500"
+                }`}
+              >
+                {t.aboutMe}
+              </button>
+              <button
+                type="button"
+                onClick={() => setTab("trips")}
+                className={`flex-1 py-3 text-sm font-medium text-center border-b-2 transition-colors ${
+                  tab === "trips"
+                    ? "border-gray-900 text-gray-900"
+                    : "border-transparent text-gray-500"
+                }`}
+              >
+                {t.previousTrips}
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* Colonne droite – contenu principal */}
-        <section className="flex-1 space-y-8">
+        <section className="flex-1 space-y-4 lg:space-y-8 px-4 lg:px-0 py-4 lg:py-0">
           {tab === "about" ? (
             <AboutSection
               t={t}
@@ -734,13 +832,13 @@ function AboutSection(props: AboutProps) {
 
   return (
     <>
-      {/* Titre seul */}
-      <div className="mb-4">
+      {/* Titre seul - desktop only */}
+      <div className="hidden lg:block mb-4">
         <h2 className="text-2xl font-semibold">{t.aboutMe}</h2>
       </div>
 
-      {/* Carte principale profil + stats + bouton Modifier le profil */}
-      <section className="flex flex-col gap-8 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm md:flex-row md:items-start md:justify-between">
+      {/* Carte principale profil + stats + bouton Modifier le profil - desktop only */}
+      <section className="hidden lg:flex flex-col gap-8 rounded-3xl border border-gray-200 bg-white p-6 shadow-sm md:flex-row md:items-start md:justify-between">
         <div className="flex items-center gap-6">
           <div className="relative h-20 w-20 overflow-hidden rounded-full bg-gray-200">
             {avatarPreview ? (
@@ -798,14 +896,18 @@ function AboutSection(props: AboutProps) {
       </section>
 
       {/* Colonne d'infos "sur moi" avec icônes propres */}
-      <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
-        <div className="grid gap-4 text-sm md:grid-cols-2">
+      <section className="rounded-2xl lg:rounded-3xl border-0 lg:border border-gray-200 bg-white p-4 lg:p-6 shadow-sm">
+        {/* Titre section mobile */}
+        <h3 className="lg:hidden mb-4 text-base font-semibold text-gray-900">{t.aboutMeSection}</h3>
+
+        <div className="grid gap-4 text-sm lg:grid-cols-2">
+          {/* Cards empilées sur mobile */}
           <div className="space-y-3">
             {/* Travail */}
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full bg-gray-100">
+            <div className="flex items-center gap-3 p-3 lg:p-0 rounded-xl lg:rounded-none bg-gray-50 lg:bg-transparent">
+              <div className="flex h-10 w-10 lg:h-9 lg:w-9 items-center justify-center rounded-full bg-white lg:bg-gray-100 shadow-sm lg:shadow-none">
                 {/* Briefcase */}
-                <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+                <svg viewBox="0 0 24 24" className="h-5 w-5 text-gray-700" aria-hidden="true">
                   <rect
                     x="4"
                     y="8"
@@ -831,17 +933,21 @@ function AboutSection(props: AboutProps) {
                   />
                 </svg>
               </div>
-              <p>
-                <span className="font-medium">{t.myJob} :</span>{" "}
-                <span className="text-gray-700">{jobTitle}</span>
-              </p>
+              <div className="flex-1">
+                <p className="text-xs text-gray-500 lg:hidden">{t.myJob}</p>
+                <p className="lg:hidden font-medium text-gray-900">{jobTitle}</p>
+                <p className="hidden lg:block">
+                  <span className="font-medium">{t.myJob} :</span>{" "}
+                  <span className="text-gray-700">{jobTitle}</span>
+                </p>
+              </div>
             </div>
 
             {/* Destination de rêve */}
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full bg-gray-100">
+            <div className="flex items-center gap-3 p-3 lg:p-0 rounded-xl lg:rounded-none bg-gray-50 lg:bg-transparent">
+              <div className="flex h-10 w-10 lg:h-9 lg:w-9 items-center justify-center rounded-full bg-white lg:bg-gray-100 shadow-sm lg:shadow-none">
                 {/* Globe / avion */}
-                <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+                <svg viewBox="0 0 24 24" className="h-5 w-5 text-gray-700" aria-hidden="true">
                   <circle
                     cx="12"
                     cy="12"
@@ -860,17 +966,21 @@ function AboutSection(props: AboutProps) {
                   />
                 </svg>
               </div>
-              <p>
-                <span className="font-medium">{t.dreamDestination} :</span>{" "}
-                <span className="text-gray-700">{dreamDestination}</span>
-              </p>
+              <div className="flex-1">
+                <p className="text-xs text-gray-500 lg:hidden">{t.dreamDestination}</p>
+                <p className="lg:hidden font-medium text-gray-900">{dreamDestination}</p>
+                <p className="hidden lg:block">
+                  <span className="font-medium">{t.dreamDestination} :</span>{" "}
+                  <span className="text-gray-700">{dreamDestination}</span>
+                </p>
+              </div>
             </div>
 
             {/* Langues */}
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full bg-gray-100">
+            <div className="flex items-center gap-3 p-3 lg:p-0 rounded-xl lg:rounded-none bg-gray-50 lg:bg-transparent">
+              <div className="flex h-10 w-10 lg:h-9 lg:w-9 items-center justify-center rounded-full bg-white lg:bg-gray-100 shadow-sm lg:shadow-none">
                 {/* Bulle de discussion */}
-                <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+                <svg viewBox="0 0 24 24" className="h-5 w-5 text-gray-700" aria-hidden="true">
                   <path
                     d="M5 6h14a2 2 0 0 1 2 2v5.5a2 2 0 0 1-2 2H11l-3.5 3-0.5-3H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"
                     fill="none"
@@ -894,17 +1004,21 @@ function AboutSection(props: AboutProps) {
                   />
                 </svg>
               </div>
-              <p>
-                <span className="font-medium">{t.languagesSpoken} :</span>{" "}
-                <span className="text-gray-700">{languages}</span>
-              </p>
+              <div className="flex-1">
+                <p className="text-xs text-gray-500 lg:hidden">{t.languagesSpoken}</p>
+                <p className="lg:hidden font-medium text-gray-900">{languages}</p>
+                <p className="hidden lg:block">
+                  <span className="font-medium">{t.languagesSpoken} :</span>{" "}
+                  <span className="text-gray-700">{languages}</span>
+                </p>
+              </div>
             </div>
 
             {/* Identité vérifiée */}
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-full bg-gray-100">
+            <div className="flex items-center gap-3 p-3 lg:p-0 rounded-xl lg:rounded-none bg-gray-50 lg:bg-transparent">
+              <div className="flex h-10 w-10 lg:h-9 lg:w-9 items-center justify-center rounded-full bg-white lg:bg-gray-100 shadow-sm lg:shadow-none">
                 {/* Bouclier */}
-                <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+                <svg viewBox="0 0 24 24" className="h-5 w-5 text-gray-700" aria-hidden="true">
                   <path
                     d="M12 4 6 6v6c0 3.5 2.3 5.7 6 8 3.7-2.3 6-4.5 6-8V6l-6-2Z"
                     fill="none"
@@ -922,33 +1036,40 @@ function AboutSection(props: AboutProps) {
                   />
                 </svg>
               </div>
-              <p>
-                <span className="font-medium">{t.identityVerification} :</span>{" "}
-                <span className="text-gray-700">
+              <div className="flex-1">
+                <p className="text-xs text-gray-500 lg:hidden">{t.identityVerification}</p>
+                <p className="lg:hidden font-medium text-gray-900">
                   {profile ? t.verificationSoon : t.notProvided}
-                </span>
-              </p>
+                </p>
+                <p className="hidden lg:block">
+                  <span className="font-medium">{t.identityVerification} :</span>{" "}
+                  <span className="text-gray-700">
+                    {profile ? t.verificationSoon : t.notProvided}
+                  </span>
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="space-y-3">
-            <div>
-              <p className="mb-1 text-sm font-medium">{t.aboutMeSection}</p>
-              <p className="text-gray-700">{aboutMe}</p>
+          {/* Section description et interets */}
+          <div className="space-y-4 lg:space-y-3 mt-2 lg:mt-0">
+            <div className="p-3 lg:p-0 rounded-xl lg:rounded-none bg-gray-50 lg:bg-transparent">
+              <p className="mb-1 text-xs lg:text-sm font-medium text-gray-500 lg:text-gray-900">{t.aboutMeSection}</p>
+              <p className="text-gray-900 lg:text-gray-700">{aboutMe}</p>
             </div>
-            <div>
-              <p className="mb-1 text-sm font-medium">{t.interests}</p>
-              <p className="text-gray-700">{interests}</p>
+            <div className="p-3 lg:p-0 rounded-xl lg:rounded-none bg-gray-50 lg:bg-transparent">
+              <p className="mb-1 text-xs lg:text-sm font-medium text-gray-500 lg:text-gray-900">{t.interests}</p>
+              <p className="text-gray-900 lg:text-gray-700">{interests}</p>
             </div>
           </div>
         </div>
 
         {/* Bulle 2 : Modifier mes infos publiques en bas à droite */}
-        <div className="mt-4 flex justify-end">
+        <div className="mt-4 flex justify-center lg:justify-end">
           <button
             type="button"
             onClick={() => setIsEditingPublic(true)}
-            className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium hover:border-black hover:text-black"
+            className="w-full lg:w-auto rounded-xl lg:rounded-full border border-gray-300 px-4 py-3 lg:py-2 text-sm font-medium hover:border-black hover:text-black"
           >
             {t.editPublicInfo}
           </button>
@@ -956,8 +1077,8 @@ function AboutSection(props: AboutProps) {
       </section>
 
       {/* Bloc "Commentaires sur moi" */}
-      <section className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h3 className="mb-2 text-base font-semibold">{t.commentsAboutMe}</h3>
+      <section className="rounded-2xl lg:rounded-3xl border-0 lg:border border-gray-200 bg-white p-4 lg:p-6 shadow-sm">
+        <h3 className="mb-3 lg:mb-2 text-base font-semibold">{t.commentsAboutMe}</h3>
         <p className="text-sm text-gray-600">
           {t.commentsDesc}
         </p>
@@ -965,16 +1086,16 @@ function AboutSection(props: AboutProps) {
 
       {/* 🔥 MODAL PROFIL (avatar + info compte avec petites bulles Modifier) */}
       {isEditingProfile && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center p-4 pb-8 pt-12">
+        <div className="fixed inset-0 z-40 flex items-end lg:items-center justify-center p-0 lg:p-4 lg:pb-8 lg:pt-12">
           {/* Backdrop flouté */}
           <div
             className="fixed inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setIsEditingProfile(false)}
           />
 
-          {/* Bulle d'édition */}
+          {/* Bulle d'édition - plein écran mobile, centré desktop */}
           <section
-            className="relative z-50 flex max-h-[80vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-xl"
+            className="relative z-50 flex h-full lg:h-auto lg:max-h-[80vh] w-full lg:max-w-2xl flex-col overflow-hidden rounded-t-3xl lg:rounded-3xl bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header fixe */}
@@ -985,9 +1106,12 @@ function AboutSection(props: AboutProps) {
               <button
                 type="button"
                 onClick={() => setIsEditingProfile(false)}
-                className="text-sm text-gray-500 hover:text-black"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 lg:bg-transparent lg:h-auto lg:w-auto text-gray-500 hover:text-black"
               >
-                {t.close}
+                <svg className="h-5 w-5 lg:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                <span className="hidden lg:inline text-sm">{t.close}</span>
               </button>
             </div>
 
@@ -1421,13 +1545,13 @@ function AboutSection(props: AboutProps) {
 
       {/* 🔥 MODAL INFOS PUBLIQUES (travail, langues, description, centres d'intérêt) */}
       {isEditingPublic && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center p-4 pb-8 pt-12">
+        <div className="fixed inset-0 z-40 flex items-end lg:items-center justify-center p-0 lg:p-4 lg:pb-8 lg:pt-12">
           <div
             className="fixed inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setIsEditingPublic(false)}
           />
           <section
-            className="relative z-50 flex max-h-[80vh] w-full max-w-xl flex-col overflow-hidden rounded-3xl bg-white shadow-xl"
+            className="relative z-50 flex h-full lg:h-auto lg:max-h-[80vh] w-full lg:max-w-xl flex-col overflow-hidden rounded-t-3xl lg:rounded-3xl bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header fixe */}
@@ -1438,9 +1562,12 @@ function AboutSection(props: AboutProps) {
               <button
                 type="button"
                 onClick={() => setIsEditingPublic(false)}
-                className="text-sm text-gray-500 hover:text-black"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 lg:bg-transparent lg:h-auto lg:w-auto text-gray-500 hover:text-black"
               >
-                {t.close}
+                <svg className="h-5 w-5 lg:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                <span className="hidden lg:inline text-sm">{t.close}</span>
               </button>
             </div>
 
@@ -1539,34 +1666,41 @@ function TripsSection({
 }) {
   if (loading) {
     return (
-      <section className="rounded-3xl border border-gray-200 bg-white p-6 text-sm text-gray-600 shadow-sm">
-        {t.loadingTrips}
+      <section className="rounded-2xl lg:rounded-3xl border-0 lg:border border-gray-200 bg-white p-4 lg:p-6 text-sm text-gray-600 shadow-sm">
+        <div className="flex items-center justify-center py-8">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-gray-900" />
+        </div>
       </section>
     );
   }
 
   if (!trips.length) {
     return (
-      <section className="rounded-3xl border border-gray-200 bg-white p-6 text-sm text-gray-600 shadow-sm">
-        <h3 className="mb-2 text-base font-semibold">{t.previousTrips}</h3>
-        <p>
-          {t.noTripsYet}
-        </p>
+      <section className="rounded-2xl lg:rounded-3xl border-0 lg:border border-gray-200 bg-white p-4 lg:p-6 text-sm text-gray-600 shadow-sm">
+        <h3 className="hidden lg:block mb-2 text-base font-semibold">{t.previousTrips}</h3>
+        <div className="flex flex-col items-center py-8 lg:py-4 text-center">
+          <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+            <svg className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 21v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21m0 0h4.5V3.545M12.75 21h7.5V10.75M2.25 21h1.5m18 0h-18M2.25 9l4.5-1.636M18.75 3l-1.5.545m0 6.205l3 1m1.5.5l-1.5-.5M6.75 7.364V3h-3v18m3-13.636l10.5-3.819" />
+            </svg>
+          </div>
+          <p className="text-gray-500">{t.noTripsYet}</p>
+        </div>
       </section>
     );
   }
 
   return (
     <section className="space-y-4">
-      <h3 className="text-base font-semibold">{t.previousTrips}</h3>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <h3 className="hidden lg:block text-base font-semibold">{t.previousTrips}</h3>
+      <div className="grid gap-3 lg:gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
         {trips.map((booking) => (
           <article
             key={booking.id}
-            className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
+            className="overflow-hidden rounded-2xl border-0 lg:border border-gray-200 bg-white shadow-sm"
           >
             {booking.listing.coverImageUrl && (
-              <div className="relative h-40 w-full">
+              <div className="relative h-36 lg:h-40 w-full">
                 <Image
                   src={booking.listing.coverImageUrl}
                   alt={booking.listing.title}
@@ -1575,13 +1709,13 @@ function TripsSection({
                 />
               </div>
             )}
-            <div className="space-y-1 p-4 text-sm">
-              <div className="font-medium">{booking.listing.title}</div>
-              <div className="text-gray-500">
+            <div className="space-y-1 p-3 lg:p-4 text-sm">
+              <div className="font-medium text-gray-900">{booking.listing.title}</div>
+              <div className="text-gray-500 text-xs lg:text-sm">
                 {new Date(booking.startDate).toLocaleDateString()} –{" "}
                 {new Date(booking.endDate).toLocaleDateString()}
               </div>
-              <div className="text-gray-500">
+              <div className="text-gray-500 text-xs lg:text-sm">
                 {booking.listing.city}
                 {booking.listing.city && booking.listing.country ? ", " : ""}{" "}
                 {booking.listing.country}
