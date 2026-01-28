@@ -1396,8 +1396,8 @@ Posez-moi vos questions sur :
                 </div>
               )}
 
-              {/* Messages - Scrollable area - with padding for fixed header/input on mobile */}
-              <div ref={messagesContainerRef} className="absolute top-28 bottom-24 left-0 right-0 overflow-y-auto overscroll-none px-3 py-2 lg:static lg:flex-1 lg:px-6 lg:py-6 lg:top-auto lg:bottom-auto lg:overscroll-auto" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
+              {/* Messages - Scrollable area */}
+              <div ref={messagesContainerRef} className="absolute top-28 bottom-24 left-0 right-0 overflow-y-scroll overscroll-contain px-3 py-2 lg:static lg:flex-1 lg:px-6 lg:py-6 lg:top-auto lg:bottom-auto lg:overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
                 {/* Bot Messages */}
                 {selectedConvId === SUPPORT_BOT_ID ? (
                   <div className="space-y-2 lg:space-y-4">
