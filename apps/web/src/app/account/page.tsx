@@ -2812,7 +2812,7 @@ function MobileAccountView({
   const isMainView = !searchParams.get("tab");
 
   return (
-    <div className="md:hidden w-full bg-gray-50 min-h-screen -mx-4 -my-6">
+    <div className="md:hidden w-full bg-gray-50 min-h-screen">
       {isMainView ? (
         /* Vue principale mobile - Profil + Liste des parametres */
         <div className="pb-8">
@@ -3061,7 +3061,7 @@ export default function AccountSettingsPage() {
   };
 
   return (
-    <main className="mx-auto flex max-w-6xl 2xl:max-w-7xl 3xl:max-w-[1600px] flex-col md:flex-row gap-6 md:gap-8 px-4 sm:px-6 lg:px-8 xl:px-10 py-6 sm:py-10">
+    <main className="mx-auto flex max-w-6xl 2xl:max-w-7xl 3xl:max-w-[1600px] flex-col md:flex-row gap-6 md:gap-8 px-0 md:px-4 sm:md:px-6 lg:px-8 xl:px-10 py-0 md:py-6 sm:md:py-10">
       {/* Sidebar desktop */}
       <aside className="hidden w-full md:w-64 lg:w-72 xl:w-80 flex-shrink-0 md:border-r border-gray-200 md:pr-6 md:block">
         <h2 className="mb-4 sm:mb-6 text-base sm:text-lg font-semibold">{t.settingsTitle}</h2>
