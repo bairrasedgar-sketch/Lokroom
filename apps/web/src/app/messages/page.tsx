@@ -1196,7 +1196,7 @@ Posez-moi vos questions sur :
 
         {/* Chat Area */}
         <section
-          className={`flex-1 bg-gray-50 relative ${
+          className={`flex-1 bg-gray-50 relative overflow-hidden ${
             showMobileChat ? "flex flex-col" : "hidden lg:flex lg:flex-col"
           }`}
         >
@@ -1214,8 +1214,8 @@ Posez-moi vos questions sur :
             </div>
           ) : (
             <>
-              {/* Chat Header - FIXED on mobile */}
-              <div className="fixed top-0 left-0 right-0 z-20 lg:relative lg:top-auto lg:left-auto lg:right-auto lg:z-auto flex-shrink-0 flex items-center justify-between border-b border-gray-100 bg-white px-3 py-2 lg:px-6 lg:py-3">
+              {/* Chat Header - FIXED on mobile, below navbar */}
+              <div className="fixed top-16 left-0 right-0 z-30 lg:relative lg:top-auto lg:left-auto lg:right-auto lg:z-auto flex-shrink-0 flex items-center justify-between border-b border-gray-100 bg-white px-3 py-2 lg:px-6 lg:py-3">
                 <div className="flex items-center gap-2 lg:gap-3">
                   {/* Back button mobile */}
                   <button
@@ -1376,7 +1376,7 @@ Posez-moi vos questions sur :
               )}
 
               {/* Messages - Scrollable with padding for fixed header/input on mobile */}
-              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto overscroll-contain px-3 pt-14 pb-20 lg:pt-2 lg:pb-2 lg:px-6 lg:py-6">
+              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto overscroll-contain px-3 pt-20 pb-24 lg:pt-2 lg:pb-2 lg:px-6 lg:py-6">
                 {/* Bot Messages */}
                 {selectedConvId === SUPPORT_BOT_ID ? (
                   <div className="space-y-2 lg:space-y-4">
@@ -1591,8 +1591,8 @@ Posez-moi vos questions sur :
                 )}
               </div>
 
-              {/* Message Input - FIXED on mobile */}
-              <div className="fixed bottom-16 left-0 right-0 z-20 lg:relative lg:bottom-auto lg:left-auto lg:right-auto lg:z-auto flex-shrink-0 border-t border-gray-100 bg-white px-3 py-2 lg:px-6 lg:py-4">
+              {/* Message Input - FIXED on mobile, above navbar */}
+              <div className="fixed bottom-16 left-0 right-0 w-full z-30 lg:relative lg:bottom-auto lg:left-auto lg:right-auto lg:w-auto lg:z-auto flex-shrink-0 border-t border-gray-100 bg-white px-3 py-2 lg:px-6 lg:py-4">
                 {/* Quick Replies for Host - Hidden on mobile */}
                 {selectedConv?.isHost && selectedConv?.booking?.status === "PENDING" && (
                   <div className="hidden lg:flex mb-3 flex-wrap gap-2">
