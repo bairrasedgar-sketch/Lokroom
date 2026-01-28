@@ -1214,8 +1214,8 @@ Posez-moi vos questions sur :
             </div>
           ) : (
             <>
-              {/* Chat Header - Sticky at top */}
-              <div className="sticky top-0 z-30 flex-shrink-0 flex items-center justify-between border-b border-gray-100 bg-white px-3 py-2 lg:px-6 lg:py-3">
+              {/* Chat Header - Fixed at top, below main navbar */}
+              <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-100 bg-white px-3 py-2 lg:px-6 lg:py-3">
                 <div className="flex items-center gap-2 lg:gap-3">
                   {/* Back button mobile */}
                   <button
@@ -1591,8 +1591,8 @@ Posez-moi vos questions sur :
                 )}
               </div>
 
-              {/* Message Input - Sticky at bottom */}
-              <div className="sticky bottom-0 z-30 flex-shrink-0 border-t border-gray-100 bg-white px-3 py-2 lg:px-6 lg:py-4">
+              {/* Message Input - Fixed at bottom */}
+              <div className="flex-shrink-0 border-t border-gray-100 bg-white px-3 py-2 lg:px-6 lg:py-4">
                 {/* Quick Replies for Host - Hidden on mobile */}
                 {selectedConv?.isHost && selectedConv?.booking?.status === "PENDING" && (
                   <div className="hidden lg:flex mb-3 flex-wrap gap-2">
