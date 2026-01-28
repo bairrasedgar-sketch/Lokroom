@@ -28,6 +28,10 @@ import {
   MapPinIcon,
   UserGroupIcon,
   LanguageIcon,
+  ChevronRightIcon,
+  ArrowRightOnRectangleIcon,
+  QuestionMarkCircleIcon,
+  ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
 
 const ONE_YEAR = 60 * 60 * 24 * 365;
@@ -387,24 +391,25 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
   };
 
   return (
-    <section className="space-y-6">
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-gray-900">{secT.title}</h2>
+    <section className="space-y-4 lg:space-y-6">
+      {/* Header section */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 lg:p-6 shadow-sm">
+        <h2 className="text-base lg:text-lg font-semibold text-gray-900">{secT.title}</h2>
         <p className="mt-1 text-sm text-gray-500">{secT.subtitle}</p>
       </div>
 
       {/* Numéro de téléphone */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
-              <PhoneIcon className="h-5 w-5 text-gray-600" />
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 lg:p-6 shadow-sm">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3 lg:gap-4 flex-1 min-w-0">
+            <div className="flex h-10 w-10 lg:h-10 lg:w-10 items-center justify-center rounded-full bg-blue-50 flex-shrink-0">
+              <PhoneIcon className="h-5 w-5 text-blue-600" />
             </div>
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900">{extT.phoneTitle || "Numéro de téléphone"}</h3>
-              <p className="mt-0.5 text-xs text-gray-500">{extT.phoneDesc || "Utilisé pour sécuriser votre compte."}</p>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-sm lg:text-sm font-semibold text-gray-900">{extT.phoneTitle || "Numéro de téléphone"}</h3>
+              <p className="mt-0.5 text-xs text-gray-500 hidden lg:block">{extT.phoneDesc || "Utilisé pour sécuriser votre compte."}</p>
               {phone ? (
-                <div className="mt-2 flex items-center gap-2">
+                <div className="mt-1.5 lg:mt-2 flex flex-wrap items-center gap-2">
                   <span className="text-sm text-gray-700">{maskPhone(phone)}</span>
                   {phoneVerified ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
@@ -419,14 +424,14 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
                   )}
                 </div>
               ) : (
-                <p className="mt-2 text-sm text-gray-400">{extT.phoneNotSet || "Non configuré"}</p>
+                <p className="mt-1.5 lg:mt-2 text-sm text-gray-400">{extT.phoneNotSet || "Non configuré"}</p>
               )}
             </div>
           </div>
           <button
             type="button"
             onClick={() => setShowPhoneModal(true)}
-            className="text-sm font-medium text-gray-900 underline hover:text-gray-700"
+            className="text-sm font-medium text-gray-900 underline hover:text-gray-700 flex-shrink-0"
           >
             {phone ? (extT.changePhone || "Modifier") : (extT.addPhone || "Ajouter")}
           </button>
@@ -434,22 +439,22 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
       </div>
 
       {/* Mot de passe */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
-              <KeyIcon className="h-5 w-5 text-gray-600" />
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 lg:p-6 shadow-sm">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3 lg:gap-4 flex-1 min-w-0">
+            <div className="flex h-10 w-10 lg:h-10 lg:w-10 items-center justify-center rounded-full bg-purple-50 flex-shrink-0">
+              <KeyIcon className="h-5 w-5 text-purple-600" />
             </div>
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900">{extT.passwordTitle || "Mot de passe"}</h3>
-              <p className="mt-0.5 text-xs text-gray-500">{extT.passwordDesc || "Modifiez votre mot de passe."}</p>
-              <p className="mt-2 text-sm text-gray-700">••••••••</p>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-sm lg:text-sm font-semibold text-gray-900">{extT.passwordTitle || "Mot de passe"}</h3>
+              <p className="mt-0.5 text-xs text-gray-500 hidden lg:block">{extT.passwordDesc || "Modifiez votre mot de passe."}</p>
+              <p className="mt-1.5 lg:mt-2 text-sm text-gray-700">••••••••</p>
             </div>
           </div>
           <button
             type="button"
             onClick={() => setShowPasswordModal(true)}
-            className="text-sm font-medium text-gray-900 underline hover:text-gray-700"
+            className="text-sm font-medium text-gray-900 underline hover:text-gray-700 flex-shrink-0"
           >
             {extT.changePassword || "Modifier"}
           </button>
@@ -457,15 +462,15 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
       </div>
 
       {/* Vérification d'identité */}
-      <div className={`rounded-2xl border bg-white p-6 shadow-sm ${
+      <div className={`rounded-2xl border bg-white p-4 lg:p-6 shadow-sm ${
         status === "VERIFIED" ? "border-emerald-200" :
         status === "REJECTED" ? "border-rose-200" :
         status === "PENDING" ? "border-amber-200" :
         "border-gray-200"
       }`}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="flex items-start gap-4">
-            <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
+        <div className="flex flex-col gap-4">
+          <div className="flex items-start gap-3 lg:gap-4">
+            <div className={`flex h-10 w-10 items-center justify-center rounded-full flex-shrink-0 ${
               status === "VERIFIED" ? "bg-emerald-100" :
               status === "REJECTED" ? "bg-rose-100" :
               status === "PENDING" ? "bg-amber-100" :
@@ -473,14 +478,14 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
             }`}>
               {getStatusIcon()}
             </div>
-            <div className="space-y-2">
-              <div className="flex items-center gap-3">
+            <div className="space-y-1.5 lg:space-y-2 flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 lg:gap-3">
                 <h2 className="text-sm font-semibold text-gray-900">
                   {secT.identityTitle}
                 </h2>
 
                 <span
-                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${identityStatusClasses(
+                  className={`inline-flex items-center rounded-full px-2 lg:px-2.5 py-0.5 text-xs font-medium ${identityStatusClasses(
                     status
                   )}`}
                 >
@@ -488,11 +493,11 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
                 </span>
               </div>
 
-              <p className="text-xs text-gray-600">{getStatusDescription()}</p>
+              <p className="text-xs text-gray-600 leading-relaxed">{getStatusDescription()}</p>
 
               {status === "VERIFIED" && (
                 <div className="flex items-center gap-2 text-emerald-600">
-                  <CheckCircleIcon className="h-4 w-4" />
+                  <CheckCircleIcon className="h-4 w-4 flex-shrink-0" />
                   <span className="text-xs font-medium">{secT.allDocumentsValid || "Tous tes documents sont en règle"}</span>
                 </div>
               )}
@@ -510,13 +515,14 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
             </div>
           </div>
 
-          <div className="flex shrink-0 flex-col items-end gap-2">
+          {/* Boutons - pleine largeur sur mobile */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2">
             <button
               type="button"
               onClick={handleStartIdentity}
               disabled={buttonDisabled}
               className={[
-                "inline-flex items-center justify-center rounded-full px-4 py-2 text-sm font-medium transition shadow-sm",
+                "inline-flex items-center justify-center rounded-xl lg:rounded-full px-4 py-3 lg:py-2 text-sm font-medium transition shadow-sm w-full sm:w-auto",
                 buttonDisabled && status === "VERIFIED"
                   ? "bg-emerald-50 text-emerald-700 border border-emerald-200 cursor-default"
                   : buttonDisabled
@@ -554,7 +560,7 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
                     setSyncing(false);
                   }
                 }}
-                className="text-xs text-gray-500 underline hover:text-gray-700"
+                className="text-xs text-gray-500 underline hover:text-gray-700 py-2"
               >
                 {secT.refreshStatus || "Actualiser le statut"}
               </button>
@@ -565,8 +571,8 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
 
       {/* Modal Téléphone */}
       {showPhoneModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" role="dialog" aria-modal="true" aria-labelledby="phone-modal-title">
-          <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center bg-black/40" role="dialog" aria-modal="true" aria-labelledby="phone-modal-title">
+          <div className="relative w-full lg:max-w-md rounded-t-3xl lg:rounded-2xl bg-white p-5 lg:p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             <button
               type="button"
               onClick={() => {
@@ -574,7 +580,7 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
                 setPhoneStep("input");
                 setVerificationCode("");
               }}
-              className="absolute right-4 top-4 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              className="absolute right-4 top-4 rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
               aria-label="Fermer la modale"
             >
               <XMarkIcon className="h-5 w-5" />
@@ -582,7 +588,7 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
 
             {phoneStep === "input" ? (
               <>
-                <h3 id="phone-modal-title" className="text-lg font-semibold text-gray-900">{extT.phoneModalTitle || "Ajouter votre numéro"}</h3>
+                <h3 id="phone-modal-title" className="text-lg font-semibold text-gray-900 pr-10">{extT.phoneModalTitle || "Ajouter votre numéro"}</h3>
                 <p className="mt-1 text-sm text-gray-500">{extT.phoneModalDesc || "Vous recevrez un code de vérification par SMS."}</p>
 
                 <div className="mt-6 space-y-4">
@@ -612,7 +618,7 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
                       }}
                       placeholder={extT.phonePlaceholder || "+33 6 12 34 56 78"}
                       aria-label="Numéro de téléphone"
-                      className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                      className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 lg:py-2.5 text-base lg:text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     />
                   </div>
 
@@ -620,7 +626,7 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
                     type="button"
                     onClick={handleSendPhoneCode}
                     disabled={!phoneInput || sendingCode}
-                    className="w-full rounded-full bg-gray-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-black disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    className="w-full rounded-xl lg:rounded-full bg-gray-900 px-4 py-3.5 lg:py-2.5 text-base lg:text-sm font-medium text-white hover:bg-black disabled:bg-gray-300 disabled:cursor-not-allowed"
                   >
                     {sendingCode ? (extT.sending || "Envoi...") : (extT.sendCode || "Envoyer le code")}
                   </button>
@@ -628,7 +634,7 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
               </>
             ) : (
               <>
-                <h3 id="phone-modal-title" className="text-lg font-semibold text-gray-900">{extT.verifyModalTitle || "Vérifier votre numéro"}</h3>
+                <h3 id="phone-modal-title" className="text-lg font-semibold text-gray-900 pr-10">{extT.verifyModalTitle || "Vérifier votre numéro"}</h3>
                 <p className="mt-1 text-sm text-gray-500">{extT.verifyModalDesc || "Entrez le code envoyé au"} {phoneInput}</p>
 
                 <div className="mt-6 space-y-4">
@@ -642,7 +648,7 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
                       placeholder={extT.codePlaceholder || "123456"}
                       maxLength={6}
                       aria-label="Code de vérification"
-                      className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2.5 text-center text-lg tracking-widest focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                      className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 lg:py-2.5 text-center text-xl lg:text-lg tracking-widest focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     />
                   </div>
 
@@ -650,7 +656,7 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
                     type="button"
                     onClick={handleVerifyPhone}
                     disabled={verificationCode.length !== 6 || sendingCode}
-                    className="w-full rounded-full bg-gray-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-black disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    className="w-full rounded-xl lg:rounded-full bg-gray-900 px-4 py-3.5 lg:py-2.5 text-base lg:text-sm font-medium text-white hover:bg-black disabled:bg-gray-300 disabled:cursor-not-allowed"
                   >
                     {sendingCode ? (extT.verifying || "Vérification...") : (extT.verify || "Vérifier")}
                   </button>
@@ -658,7 +664,7 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
                   <button
                     type="button"
                     onClick={() => setPhoneStep("input")}
-                    className="w-full text-sm text-gray-600 hover:text-gray-900"
+                    className="w-full text-sm text-gray-600 hover:text-gray-900 py-2"
                   >
                     {extT.resendCode || "Renvoyer le code"}
                   </button>
@@ -671,8 +677,8 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
 
       {/* Modal Mot de passe */}
       {showPasswordModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" role="dialog" aria-modal="true" aria-labelledby="password-modal-title">
-          <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center bg-black/40" role="dialog" aria-modal="true" aria-labelledby="password-modal-title">
+          <div className="relative w-full lg:max-w-md rounded-t-3xl lg:rounded-2xl bg-white p-5 lg:p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
             <button
               type="button"
               onClick={() => {
@@ -682,16 +688,16 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
                 setNewPassword("");
                 setConfirmPassword("");
               }}
-              className="absolute right-4 top-4 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              className="absolute right-4 top-4 rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
               aria-label="Fermer la modale"
             >
               <XMarkIcon className="h-5 w-5" />
             </button>
 
-            <h3 id="password-modal-title" className="text-lg font-semibold text-gray-900">{extT.passwordModalTitle || "Modifier votre mot de passe"}</h3>
+            <h3 id="password-modal-title" className="text-lg font-semibold text-gray-900 pr-10">{extT.passwordModalTitle || "Modifier votre mot de passe"}</h3>
 
             {passwordError && (
-              <div className="mt-2 rounded-lg bg-red-50 p-3 text-sm text-red-600">
+              <div className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-600">
                 {passwordError}
               </div>
             )}
@@ -704,7 +710,7 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
                     type="button"
                     onClick={handleSendEmailCode}
                     disabled={updatingPassword}
-                    className="w-full rounded-full bg-gray-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-black disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    className="w-full rounded-xl lg:rounded-full bg-gray-900 px-4 py-3.5 lg:py-2.5 text-base lg:text-sm font-medium text-white hover:bg-black disabled:bg-gray-300 disabled:cursor-not-allowed"
                   >
                     {updatingPassword ? (extT.sending || "Envoi...") : (extT.sendEmailCode || "Envoyer le code par e-mail")}
                   </button>
@@ -726,14 +732,14 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
                       placeholder="123456"
                       maxLength={6}
                       aria-label="Code de vérification par e-mail"
-                      className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-2.5 text-center text-lg tracking-widest focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                      className="mt-1 w-full rounded-xl border border-gray-300 px-4 py-3 lg:py-2.5 text-center text-xl lg:text-lg tracking-widest focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     />
                   </div>
                   <button
                     type="button"
                     onClick={handleVerifyEmailCode}
                     disabled={emailCode.length !== 6}
-                    className="w-full rounded-full bg-gray-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-black disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    className="w-full rounded-xl lg:rounded-full bg-gray-900 px-4 py-3.5 lg:py-2.5 text-base lg:text-sm font-medium text-white hover:bg-black disabled:bg-gray-300 disabled:cursor-not-allowed"
                   >
                     {extT.verify || "Vérifier"}
                   </button>
@@ -760,7 +766,7 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
                     type="button"
                     onClick={handleUpdatePassword}
                     disabled={!newPassword || !confirmPassword || newPassword !== confirmPassword || !validatePassword(newPassword).isValid || updatingPassword}
-                    className="w-full rounded-full bg-gray-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-black disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    className="w-full rounded-xl lg:rounded-full bg-gray-900 px-4 py-3.5 lg:py-2.5 text-base lg:text-sm font-medium text-white hover:bg-black disabled:bg-gray-300 disabled:cursor-not-allowed"
                   >
                     {updatingPassword ? (extT.updating || "Mise à jour...") : (extT.updatePassword || "Mettre à jour")}
                   </button>
@@ -1025,10 +1031,10 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
 
   if (loading) {
     return (
-      <section className="space-y-6">
-        <header>
-          <h1 className="text-2xl font-semibold">{pT.title}</h1>
-          <p className="text-sm text-gray-500">{pT.subtitle}</p>
+      <section className="space-y-4 lg:space-y-6">
+        <header className="px-1">
+          <h1 className="text-xl lg:text-2xl font-semibold text-gray-900">{pT.title}</h1>
+          <p className="text-sm text-gray-500 mt-1">{pT.subtitle}</p>
         </header>
         <div className="flex items-center justify-center py-12">
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-200 border-t-gray-900" />
@@ -1038,23 +1044,23 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
   }
 
   return (
-    <section className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold">{pT.title}</h1>
-        <p className="text-sm text-gray-500">{pT.subtitle}</p>
+    <section className="space-y-4 lg:space-y-6">
+      <header className="px-1 hidden lg:block">
+        <h1 className="text-xl lg:text-2xl font-semibold text-gray-900">{pT.title}</h1>
+        <p className="text-sm text-gray-500 mt-1">{pT.subtitle}</p>
       </header>
 
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 lg:p-6 shadow-sm">
         {/* Nom légal */}
-        <div className="border-b border-gray-100 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100">
-                <UserIcon className="h-4 w-4 text-gray-500" />
+        <div className="border-b border-gray-100 py-3 lg:py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 lg:gap-4 flex-1 min-w-0">
+              <div className="flex h-10 w-10 lg:h-9 lg:w-9 items-center justify-center rounded-full bg-blue-50 flex-shrink-0">
+                <UserIcon className="h-5 w-5 lg:h-4 lg:w-4 text-blue-600 lg:text-gray-500" />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-900">{extT.legalName || "Nom légal"}</p>
-                <p className="mt-0.5 text-sm text-gray-600">
+                <p className="mt-0.5 text-sm text-gray-600 truncate">
                   {userData.legalName ? maskName(userData.legalName) : (extT.notProvided || "Non fourni")}
                 </p>
               </div>
@@ -1062,42 +1068,42 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
             <button
               type="button"
               onClick={() => startEditing("legalName", userData.legalName)}
-              className="text-sm font-medium text-gray-900 underline hover:text-gray-700"
+              className="text-sm font-medium text-gray-900 underline hover:text-gray-700 flex-shrink-0"
             >
               {userData.legalName ? (extT.modify || "Modifier") : (extT.add || "Ajouter")}
             </button>
           </div>
           {editingField === "legalName" && (
             <div className="mt-4 space-y-3">
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
                 <input
                   type="text"
                   value={(editValues.firstName as string) ?? userData.firstName}
                   onChange={(e) => setEditValues({ ...editValues, firstName: e.target.value, legalName: `${e.target.value} ${(editValues.lastName as string) ?? userData.lastName}`.trim() })}
                   placeholder={extT.firstNamePlaceholder || "Prénom"}
-                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 lg:py-2.5 text-base lg:text-sm focus:border-gray-900 focus:outline-none"
                 />
                 <input
                   type="text"
                   value={(editValues.lastName as string) ?? userData.lastName}
                   onChange={(e) => setEditValues({ ...editValues, lastName: e.target.value, legalName: `${(editValues.firstName as string) ?? userData.firstName} ${e.target.value}`.trim() })}
                   placeholder={extT.lastNamePlaceholder || "Nom"}
-                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 lg:py-2.5 text-base lg:text-sm focus:border-gray-900 focus:outline-none"
                 />
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   type="button"
                   onClick={() => saveField("legalName")}
                   disabled={saving}
-                  className="rounded-full bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
+                  className="w-full sm:w-auto rounded-xl lg:rounded-full bg-gray-900 px-4 py-3 lg:py-2 text-base lg:text-sm font-medium text-white hover:bg-black disabled:opacity-50"
                 >
                   {saving ? "..." : (extT.save || "Enregistrer")}
                 </button>
                 <button
                   type="button"
                   onClick={cancelEditing}
-                  className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
+                  className="w-full sm:w-auto rounded-xl lg:rounded-full border border-gray-300 px-4 py-3 lg:py-2 text-base lg:text-sm font-medium hover:bg-gray-50"
                 >
                   {extT.cancel || "Annuler"}
                 </button>
@@ -1107,15 +1113,15 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
         </div>
 
         {/* Nom choisi */}
-        <div className="border-b border-gray-100 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100">
-                <UserIcon className="h-4 w-4 text-gray-500" />
+        <div className="border-b border-gray-100 py-3 lg:py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 lg:gap-4 flex-1 min-w-0">
+              <div className="flex h-10 w-10 lg:h-9 lg:w-9 items-center justify-center rounded-full bg-purple-50 flex-shrink-0">
+                <UserIcon className="h-5 w-5 lg:h-4 lg:w-4 text-purple-600 lg:text-gray-500" />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-900">{extT.chosenName || "Nom choisi"}</p>
-                <p className="mt-0.5 text-sm text-gray-600">
+                <p className="mt-0.5 text-sm text-gray-600 truncate">
                   {userData.chosenName || (extT.notProvided || "Non fourni")}
                 </p>
               </div>
@@ -1123,7 +1129,7 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
             <button
               type="button"
               onClick={() => startEditing("chosenName", userData.chosenName)}
-              className="text-sm font-medium text-gray-900 underline hover:text-gray-700"
+              className="text-sm font-medium text-gray-900 underline hover:text-gray-700 flex-shrink-0"
             >
               {userData.chosenName ? (extT.modify || "Modifier") : (extT.add || "Ajouter")}
             </button>
@@ -1135,21 +1141,21 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
                 value={(editValues.chosenName as string) ?? userData.chosenName}
                 onChange={(e) => setEditValues({ ...editValues, chosenName: e.target.value })}
                 placeholder={extT.displayNamePlaceholder || "Nom d'affichage"}
-                className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                className="w-full rounded-xl border border-gray-300 px-4 py-3 lg:py-2.5 text-base lg:text-sm focus:border-gray-900 focus:outline-none"
               />
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   type="button"
                   onClick={() => saveField("chosenName")}
                   disabled={saving}
-                  className="rounded-full bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
+                  className="w-full sm:w-auto rounded-xl lg:rounded-full bg-gray-900 px-4 py-3 lg:py-2 text-base lg:text-sm font-medium text-white hover:bg-black disabled:opacity-50"
                 >
                   {saving ? "..." : (extT.save || "Enregistrer")}
                 </button>
                 <button
                   type="button"
                   onClick={cancelEditing}
-                  className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
+                  className="w-full sm:w-auto rounded-xl lg:rounded-full border border-gray-300 px-4 py-3 lg:py-2 text-base lg:text-sm font-medium hover:bg-gray-50"
                 >
                   {extT.cancel || "Annuler"}
                 </button>
@@ -1159,15 +1165,15 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
         </div>
 
         {/* Email (non modifiable directement) */}
-        <div className="border-b border-gray-100 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100">
-                <EnvelopeIcon className="h-4 w-4 text-gray-500" />
+        <div className="border-b border-gray-100 py-3 lg:py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 lg:gap-4 flex-1 min-w-0">
+              <div className="flex h-10 w-10 lg:h-9 lg:w-9 items-center justify-center rounded-full bg-emerald-50 flex-shrink-0">
+                <EnvelopeIcon className="h-5 w-5 lg:h-4 lg:w-4 text-emerald-600 lg:text-gray-500" />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-900">{extT.email || "Adresse courriel"}</p>
-                <p className="mt-0.5 text-sm text-gray-600">
+                <p className="mt-0.5 text-sm text-gray-600 truncate">
                   {userData.email ? maskEmail(userData.email) : (extT.notProvided || "Non fourni")}
                 </p>
               </div>
@@ -1177,7 +1183,7 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
               onClick={() => {
                 window.location.href = "/messages?support=true&autoMessage=changement%20d%27adresse%20mail";
               }}
-              className="text-xs font-medium text-gray-700 hover:text-gray-900 hover:underline"
+              className="text-xs font-medium text-gray-700 hover:text-gray-900 hover:underline flex-shrink-0"
             >
               {extT.contactSupport || "Contacter le support"}
             </button>
@@ -1185,15 +1191,15 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
         </div>
 
         {/* Téléphone */}
-        <div className="border-b border-gray-100 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100">
-                <PhoneIcon className="h-4 w-4 text-gray-500" />
+        <div className="border-b border-gray-100 py-3 lg:py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 lg:gap-4 flex-1 min-w-0">
+              <div className="flex h-10 w-10 lg:h-9 lg:w-9 items-center justify-center rounded-full bg-amber-50 flex-shrink-0">
+                <PhoneIcon className="h-5 w-5 lg:h-4 lg:w-4 text-amber-600 lg:text-gray-500" />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-900">{extT.phoneNumber || "Numéro de téléphone"}</p>
-                <div className="mt-0.5 flex items-center gap-2">
+                <div className="mt-0.5 flex flex-wrap items-center gap-2">
                   <p className="text-sm text-gray-600">
                     {userData.phone ? maskPhone(userData.phone) : (extT.notProvided || "Non fourni")}
                   </p>
@@ -1206,7 +1212,7 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
             <button
               type="button"
               onClick={() => startEditing("phone", userData.phone)}
-              className="text-sm font-medium text-gray-900 underline hover:text-gray-700"
+              className="text-sm font-medium text-gray-900 underline hover:text-gray-700 flex-shrink-0"
             >
               {userData.phone ? (extT.modify || "Modifier") : (extT.add || "Ajouter")}
             </button>
@@ -1222,21 +1228,21 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
                   setEditValues({ ...editValues, phone: sanitized });
                 }}
                 placeholder="+33 6 12 34 56 78"
-                className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                className="w-full rounded-xl border border-gray-300 px-4 py-3 lg:py-2.5 text-base lg:text-sm focus:border-gray-900 focus:outline-none"
               />
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   type="button"
                   onClick={() => saveField("phone")}
                   disabled={saving}
-                  className="rounded-full bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
+                  className="w-full sm:w-auto rounded-xl lg:rounded-full bg-gray-900 px-4 py-3 lg:py-2 text-base lg:text-sm font-medium text-white hover:bg-black disabled:opacity-50"
                 >
                   {saving ? "..." : (extT.save || "Enregistrer")}
                 </button>
                 <button
                   type="button"
                   onClick={cancelEditing}
-                  className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
+                  className="w-full sm:w-auto rounded-xl lg:rounded-full border border-gray-300 px-4 py-3 lg:py-2 text-base lg:text-sm font-medium hover:bg-gray-50"
                 >
                   {extT.cancel || "Annuler"}
                 </button>
@@ -1246,20 +1252,20 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
         </div>
 
         {/* Vérification d'identité */}
-        <div className="border-b border-gray-100 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100">
-                <ShieldCheckIcon className="h-4 w-4 text-gray-500" />
+        <div className="border-b border-gray-100 py-3 lg:py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 lg:gap-4 flex-1 min-w-0">
+              <div className="flex h-10 w-10 lg:h-9 lg:w-9 items-center justify-center rounded-full bg-emerald-50 flex-shrink-0">
+                <ShieldCheckIcon className="h-5 w-5 lg:h-4 lg:w-4 text-emerald-600 lg:text-gray-500" />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-900">{extT.identityVerification || "Vérification de l'identité"}</p>
                 <div className="mt-0.5">{getIdentityBadge()}</div>
               </div>
             </div>
             <a
               href="/account?tab=security"
-              className="text-sm font-medium text-gray-900 underline hover:text-gray-700"
+              className="text-sm font-medium text-gray-900 underline hover:text-gray-700 flex-shrink-0"
             >
               {extT.goToSecurity || "Gérer"}
             </a>
@@ -1267,15 +1273,15 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
         </div>
 
         {/* Adresse résidentielle */}
-        <div className="border-b border-gray-100 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100">
-                <HomeIcon className="h-4 w-4 text-gray-500" />
+        <div className="border-b border-gray-100 py-3 lg:py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 lg:gap-4 flex-1 min-w-0">
+              <div className="flex h-10 w-10 lg:h-9 lg:w-9 items-center justify-center rounded-full bg-sky-50 flex-shrink-0">
+                <HomeIcon className="h-5 w-5 lg:h-4 lg:w-4 text-sky-600 lg:text-gray-500" />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-900">{extT.residentialAddress || "Adresse résidentielle"}</p>
-                <p className="mt-0.5 text-sm text-gray-600">
+                <p className="mt-0.5 text-sm text-gray-600 truncate">
                   {residentialAddress ? (extT.provided || "Fournie") : (extT.notProvided || "Non fourni")}
                 </p>
               </div>
@@ -1293,7 +1299,7 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
                   province: userData.province,
                 });
               }}
-              className="text-sm font-medium text-gray-900 underline hover:text-gray-700"
+              className="text-sm font-medium text-gray-900 underline hover:text-gray-700 flex-shrink-0"
             >
               {residentialAddress ? (extT.modify || "Modifier") : (extT.add || "Ajouter")}
             </button>
@@ -1305,60 +1311,60 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
                 value={(editValues.addressLine1 as string) ?? ""}
                 onChange={(e) => setEditValues({ ...editValues, addressLine1: e.target.value })}
                 placeholder={extT.streetPlaceholder || "Numéro et rue"}
-                className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                className="w-full rounded-xl border border-gray-300 px-4 py-3 lg:py-2.5 text-base lg:text-sm focus:border-gray-900 focus:outline-none"
               />
               <input
                 type="text"
                 value={(editValues.addressLine2 as string) ?? ""}
                 onChange={(e) => setEditValues({ ...editValues, addressLine2: e.target.value })}
                 placeholder={extT.addressLine2Placeholder || "Complément (optionnel)"}
-                className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                className="w-full rounded-xl border border-gray-300 px-4 py-3 lg:py-2.5 text-base lg:text-sm focus:border-gray-900 focus:outline-none"
               />
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
                 <input
                   type="text"
                   value={(editValues.postalCode as string) ?? ""}
                   onChange={(e) => setEditValues({ ...editValues, postalCode: e.target.value })}
                   placeholder={extT.postalCodePlaceholder || "Code postal"}
-                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 lg:py-2.5 text-base lg:text-sm focus:border-gray-900 focus:outline-none"
                 />
                 <input
                   type="text"
                   value={(editValues.city as string) ?? ""}
                   onChange={(e) => setEditValues({ ...editValues, city: e.target.value })}
                   placeholder={extT.cityPlaceholder || "Ville"}
-                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 lg:py-2.5 text-base lg:text-sm focus:border-gray-900 focus:outline-none"
                 />
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
                 <input
                   type="text"
                   value={(editValues.country as string) ?? ""}
                   onChange={(e) => setEditValues({ ...editValues, country: e.target.value })}
                   placeholder={extT.countryPlaceholder || "Pays"}
-                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 lg:py-2.5 text-base lg:text-sm focus:border-gray-900 focus:outline-none"
                 />
                 <input
                   type="text"
                   value={(editValues.province as string) ?? ""}
                   onChange={(e) => setEditValues({ ...editValues, province: e.target.value })}
                   placeholder={extT.provincePlaceholder || "Province/Région"}
-                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 lg:py-2.5 text-base lg:text-sm focus:border-gray-900 focus:outline-none"
                 />
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   type="button"
                   onClick={() => saveField("address")}
                   disabled={saving}
-                  className="rounded-full bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
+                  className="w-full sm:w-auto rounded-xl lg:rounded-full bg-gray-900 px-4 py-3 lg:py-2 text-base lg:text-sm font-medium text-white hover:bg-black disabled:opacity-50"
                 >
                   {saving ? "..." : (extT.save || "Enregistrer")}
                 </button>
                 <button
                   type="button"
                   onClick={cancelEditing}
-                  className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
+                  className="w-full sm:w-auto rounded-xl lg:rounded-full border border-gray-300 px-4 py-3 lg:py-2 text-base lg:text-sm font-medium hover:bg-gray-50"
                 >
                   {extT.cancel || "Annuler"}
                 </button>
@@ -1368,15 +1374,15 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
         </div>
 
         {/* Adresse postale */}
-        <div className="border-b border-gray-100 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100">
-                <MapPinIcon className="h-4 w-4 text-gray-500" />
+        <div className="border-b border-gray-100 py-3 lg:py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 lg:gap-4 flex-1 min-w-0">
+              <div className="flex h-10 w-10 lg:h-9 lg:w-9 items-center justify-center rounded-full bg-indigo-50 flex-shrink-0">
+                <MapPinIcon className="h-5 w-5 lg:h-4 lg:w-4 text-indigo-600 lg:text-gray-500" />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-900">{extT.postalAddress || "Adresse postale"}</p>
-                <p className="mt-0.5 text-sm text-gray-600">
+                <p className="mt-0.5 text-sm text-gray-600 truncate">
                   {userData.postalAddressSameAsResidential
                     ? (extT.sameAsResidential || "Identique à l'adresse résidentielle")
                     : userData.postalAddressLine1
@@ -1399,7 +1405,7 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
                   postalAddressSameAsResidential: userData.postalAddressSameAsResidential,
                 });
               }}
-              className="text-sm font-medium text-gray-900 underline hover:text-gray-700"
+              className="text-sm font-medium text-gray-900 underline hover:text-gray-700 flex-shrink-0"
             >
               {userData.postalAddressLine1 || !userData.postalAddressSameAsResidential ? (extT.modify || "Modifier") : (extT.add || "Ajouter")}
             </button>
@@ -1411,7 +1417,7 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
                   type="checkbox"
                   checked={editValues.postalAddressSameAsResidential as boolean ?? userData.postalAddressSameAsResidential}
                   onChange={(e) => setEditValues({ ...editValues, postalAddressSameAsResidential: e.target.checked })}
-                  className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                  className="h-5 w-5 lg:h-4 lg:w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
                 />
                 <span className="text-sm text-gray-700">{extT.sameAsResidential || "Identique à l'adresse résidentielle"}</span>
               </label>
@@ -1422,62 +1428,62 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
                     value={(editValues.postalAddressLine1 as string) ?? ""}
                     onChange={(e) => setEditValues({ ...editValues, postalAddressLine1: e.target.value })}
                     placeholder={extT.streetPlaceholder || "Numéro et rue"}
-                    className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 lg:py-2.5 text-base lg:text-sm focus:border-gray-900 focus:outline-none"
                   />
                   <input
                     type="text"
                     value={(editValues.postalAddressLine2 as string) ?? ""}
                     onChange={(e) => setEditValues({ ...editValues, postalAddressLine2: e.target.value })}
                     placeholder={extT.addressLine2Placeholder || "Complément (optionnel)"}
-                    className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                    className="w-full rounded-xl border border-gray-300 px-4 py-3 lg:py-2.5 text-base lg:text-sm focus:border-gray-900 focus:outline-none"
                   />
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
                     <input
                       type="text"
                       value={(editValues.postalAddressPostalCode as string) ?? ""}
                       onChange={(e) => setEditValues({ ...editValues, postalAddressPostalCode: e.target.value })}
                       placeholder={extT.postalCodePlaceholder || "Code postal"}
-                      className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                      className="w-full rounded-xl border border-gray-300 px-4 py-3 lg:py-2.5 text-base lg:text-sm focus:border-gray-900 focus:outline-none"
                     />
                     <input
                       type="text"
                       value={(editValues.postalAddressCity as string) ?? ""}
                       onChange={(e) => setEditValues({ ...editValues, postalAddressCity: e.target.value })}
                       placeholder={extT.cityPlaceholder || "Ville"}
-                      className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                      className="w-full rounded-xl border border-gray-300 px-4 py-3 lg:py-2.5 text-base lg:text-sm focus:border-gray-900 focus:outline-none"
                     />
                   </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
                     <input
                       type="text"
                       value={(editValues.postalAddressCountry as string) ?? ""}
                       onChange={(e) => setEditValues({ ...editValues, postalAddressCountry: e.target.value })}
                       placeholder={extT.countryPlaceholder || "Pays"}
-                      className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                      className="w-full rounded-xl border border-gray-300 px-4 py-3 lg:py-2.5 text-base lg:text-sm focus:border-gray-900 focus:outline-none"
                     />
                     <input
                       type="text"
                       value={(editValues.postalAddressProvince as string) ?? ""}
                       onChange={(e) => setEditValues({ ...editValues, postalAddressProvince: e.target.value })}
                       placeholder={extT.provincePlaceholder || "Province/Région"}
-                      className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                      className="w-full rounded-xl border border-gray-300 px-4 py-3 lg:py-2.5 text-base lg:text-sm focus:border-gray-900 focus:outline-none"
                     />
                   </div>
                 </>
               )}
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   type="button"
                   onClick={() => saveField("postalAddress")}
                   disabled={saving}
-                  className="rounded-full bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
+                  className="w-full sm:w-auto rounded-xl lg:rounded-full bg-gray-900 px-4 py-3 lg:py-2 text-base lg:text-sm font-medium text-white hover:bg-black disabled:opacity-50"
                 >
                   {saving ? "..." : (extT.save || "Enregistrer")}
                 </button>
                 <button
                   type="button"
                   onClick={cancelEditing}
-                  className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
+                  className="w-full sm:w-auto rounded-xl lg:rounded-full border border-gray-300 px-4 py-3 lg:py-2 text-base lg:text-sm font-medium hover:bg-gray-50"
                 >
                   {extT.cancel || "Annuler"}
                 </button>
@@ -1487,15 +1493,15 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
         </div>
 
         {/* Contact d'urgence */}
-        <div className="py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100">
-                <UserGroupIcon className="h-4 w-4 text-gray-500" />
+        <div className="py-3 lg:py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 lg:gap-4 flex-1 min-w-0">
+              <div className="flex h-10 w-10 lg:h-9 lg:w-9 items-center justify-center rounded-full bg-rose-50 flex-shrink-0">
+                <UserGroupIcon className="h-5 w-5 lg:h-4 lg:w-4 text-rose-600 lg:text-gray-500" />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-gray-900">{extT.emergencyContact || "Contact en cas d'urgence"}</p>
-                <p className="mt-0.5 text-sm text-gray-600">
+                <p className="mt-0.5 text-sm text-gray-600 truncate">
                   {userData.emergencyContactName
                     ? `${maskName(userData.emergencyContactName)}${userData.emergencyContactRelation ? ` (${userData.emergencyContactRelation})` : ""}`
                     : (extT.notProvided || "Non fourni")}
@@ -1512,7 +1518,7 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
                   emergencyContactRelation: userData.emergencyContactRelation,
                 });
               }}
-              className="text-sm font-medium text-gray-900 underline hover:text-gray-700"
+              className="text-sm font-medium text-gray-900 underline hover:text-gray-700 flex-shrink-0"
             >
               {userData.emergencyContactName ? (extT.modify || "Modifier") : (extT.add || "Ajouter")}
             </button>
@@ -1524,9 +1530,9 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
                 value={(editValues.emergencyContactName as string) ?? ""}
                 onChange={(e) => setEditValues({ ...editValues, emergencyContactName: e.target.value })}
                 placeholder="Nom complet"
-                className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                className="w-full rounded-xl border border-gray-300 px-4 py-3 lg:py-2.5 text-base lg:text-sm focus:border-gray-900 focus:outline-none"
               />
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
                 <input
                   type="tel"
                   value={(editValues.emergencyContactPhone as string) ?? ""}
@@ -1536,12 +1542,12 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
                     setEditValues({ ...editValues, emergencyContactPhone: sanitized });
                   }}
                   placeholder="+33 6 12 34 56 78"
-                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 lg:py-2.5 text-base lg:text-sm focus:border-gray-900 focus:outline-none"
                 />
                 <select
                   value={(editValues.emergencyContactRelation as string) ?? ""}
                   onChange={(e) => setEditValues({ ...editValues, emergencyContactRelation: e.target.value })}
-                  className="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm focus:border-gray-900 focus:outline-none"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 lg:py-2.5 text-base lg:text-sm focus:border-gray-900 focus:outline-none"
                 >
                   <option value="">Relation</option>
                   <option value="parent">Parent</option>
@@ -1552,19 +1558,19 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
                   <option value="other">Autre</option>
                 </select>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <button
                   type="button"
                   onClick={() => saveField("emergencyContact")}
                   disabled={saving}
-                  className="rounded-full bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-black disabled:opacity-50"
+                  className="w-full sm:w-auto rounded-xl lg:rounded-full bg-gray-900 px-4 py-3 lg:py-2 text-base lg:text-sm font-medium text-white hover:bg-black disabled:opacity-50"
                 >
                   {saving ? "..." : (extT.save || "Enregistrer")}
                 </button>
                 <button
                   type="button"
                   onClick={cancelEditing}
-                  className="rounded-full border border-gray-300 px-4 py-2 text-sm font-medium hover:bg-gray-50"
+                  className="w-full sm:w-auto rounded-xl lg:rounded-full border border-gray-300 px-4 py-3 lg:py-2 text-base lg:text-sm font-medium hover:bg-gray-50"
                 >
                   {extT.cancel || "Annuler"}
                 </button>
@@ -1617,22 +1623,22 @@ function PrivacyTabContent({ t }: { t: AccountTranslations }) {
     checked: boolean;
     onChange: () => void;
   }) => (
-    <div className="flex items-start justify-between py-4">
-      <div className="flex-1 pr-4">
+    <div className="flex items-start justify-between gap-3 py-3 lg:py-4">
+      <div className="flex-1 pr-2 lg:pr-4">
         <p className="text-sm font-medium text-gray-900">{title}</p>
-        <p className="mt-0.5 text-xs text-gray-500">{description}</p>
+        <p className="mt-0.5 text-xs text-gray-500 leading-relaxed">{description}</p>
       </div>
       <button
         type="button"
         role="switch"
         aria-checked={checked}
         onClick={onChange}
-        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 ${
+        className={`relative inline-flex h-7 w-12 lg:h-6 lg:w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 ${
           checked ? "bg-gray-900" : "bg-gray-200"
         }`}
       >
         <span
-          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+          className={`pointer-events-none inline-block h-6 w-6 lg:h-5 lg:w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
             checked ? "translate-x-5" : "translate-x-0"
           }`}
         />
@@ -1641,17 +1647,17 @@ function PrivacyTabContent({ t }: { t: AccountTranslations }) {
   );
 
   return (
-    <section className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold">{privT.title || "Confidentialité et partage"}</h1>
-        <p className="text-sm text-gray-500">{privT.subtitle || "Gérez vos paramètres de confidentialité et de partage de données"}</p>
+    <section className="space-y-4 lg:space-y-6">
+      <header className="px-1 hidden lg:block">
+        <h1 className="text-xl lg:text-2xl font-semibold text-gray-900">{privT.title || "Confidentialité et partage"}</h1>
+        <p className="text-sm text-gray-500 mt-1">{privT.subtitle || "Gérez vos paramètres de confidentialité et de partage de données"}</p>
       </header>
 
       {/* Visibilité du profil */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 lg:p-6 shadow-sm">
         <h3 className="text-base font-semibold text-gray-900">{privT.profileVisibilityTitle || "Visibilité du profil"}</h3>
         <p className="mt-1 text-sm text-gray-500">{privT.profileVisibilityDesc || "Contrôlez qui peut voir votre profil et vos informations"}</p>
-        <div className="mt-4 divide-y divide-gray-100">
+        <div className="mt-3 lg:mt-4 divide-y divide-gray-100">
           <PrivacyToggle
             id="showProfileToGuests"
             title={privT.showToGuests || "Afficher mon profil aux voyageurs"}
@@ -1684,10 +1690,10 @@ function PrivacyTabContent({ t }: { t: AccountTranslations }) {
       </div>
 
       {/* Partage de données */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 lg:p-6 shadow-sm">
         <h3 className="text-base font-semibold text-gray-900">{privT.dataSharingTitle || "Partage de données"}</h3>
         <p className="mt-1 text-sm text-gray-500">{privT.dataSharingDesc || "Contrôlez comment vos données sont partagées"}</p>
-        <div className="mt-4 divide-y divide-gray-100">
+        <div className="mt-3 lg:mt-4 divide-y divide-gray-100">
           <PrivacyToggle
             id="shareActivityWithPartners"
             title={privT.shareWithPartners || "Partager mon activité avec les partenaires"}
@@ -1713,10 +1719,10 @@ function PrivacyTabContent({ t }: { t: AccountTranslations }) {
       </div>
 
       {/* Publicité */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 lg:p-6 shadow-sm">
         <h3 className="text-base font-semibold text-gray-900">{privT.advertisingTitle || "Publicité"}</h3>
         <p className="mt-1 text-sm text-gray-500">{privT.advertisingDesc || "Gérez vos préférences publicitaires"}</p>
-        <div className="mt-4 divide-y divide-gray-100">
+        <div className="mt-3 lg:mt-4 divide-y divide-gray-100">
           <PrivacyToggle
             id="allowPersonalizedAds"
             title={privT.personalizedAds || "Publicités personnalisées"}
@@ -1728,34 +1734,34 @@ function PrivacyTabContent({ t }: { t: AccountTranslations }) {
       </div>
 
       {/* Télécharger / Supprimer données */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 lg:p-6 shadow-sm">
         <h3 className="text-base font-semibold text-gray-900">{privT.yourDataTitle || "Vos données"}</h3>
         <p className="mt-1 text-sm text-gray-500">{privT.yourDataDesc || "Gérez vos données personnelles"}</p>
-        <div className="mt-4 space-y-3">
+        <div className="mt-3 lg:mt-4 space-y-3">
           <button
             type="button"
-            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-left text-sm font-medium text-gray-900 hover:bg-gray-50 transition"
+            className="w-full rounded-xl border border-gray-300 px-4 py-3.5 lg:py-3 text-left text-sm font-medium text-gray-900 hover:bg-gray-50 transition active:bg-gray-100"
           >
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">{privT.downloadData || "Télécharger mes données"}</p>
                 <p className="mt-0.5 text-xs text-gray-500">{privT.downloadDataDesc || "Obtenez une copie de toutes vos données personnelles"}</p>
               </div>
-              <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="h-5 w-5 text-gray-400 flex-shrink-0 ml-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
               </svg>
             </div>
           </button>
           <button
             type="button"
-            className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-left text-sm font-medium text-red-700 hover:bg-red-100 transition"
+            className="w-full rounded-xl border border-red-200 bg-red-50 px-4 py-3.5 lg:py-3 text-left text-sm font-medium text-red-700 hover:bg-red-100 transition active:bg-red-150"
           >
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">{privT.deleteAccount || "Supprimer mon compte"}</p>
                 <p className="mt-0.5 text-xs text-red-600">{privT.deleteAccountDesc || "Cette action est irréversible"}</p>
               </div>
-              <svg className="h-5 w-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="h-5 w-5 text-red-400 flex-shrink-0 ml-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
             </div>
@@ -1764,16 +1770,16 @@ function PrivacyTabContent({ t }: { t: AccountTranslations }) {
       </div>
 
       {/* Bouton sauvegarder */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 lg:gap-4">
         <button
           type="button"
           onClick={handleSave}
-          className="inline-flex items-center rounded-full bg-gray-900 px-6 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-black transition"
+          className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl lg:rounded-full bg-gray-900 px-6 py-3.5 lg:py-2.5 text-base lg:text-sm font-medium text-white shadow-sm hover:bg-black transition"
         >
           {privT.savePreferences || "Enregistrer les préférences"}
         </button>
         {saved && (
-          <span className="flex items-center gap-1.5 text-sm text-emerald-600">
+          <span className="flex items-center justify-center gap-1.5 text-sm text-emerald-600">
             <CheckCircleIcon className="h-4 w-4" />
             {privT.preferencesSaved || "Préférences enregistrées !"}
           </span>
@@ -1813,9 +1819,9 @@ function NotificationsTabContent({ t }: { t: AccountTranslations }) {
   };
 
   const NotificationRow = ({ id, label }: { id: string; label: string }) => (
-    <div className="flex items-center justify-between py-3">
-      <span className="text-sm text-gray-700">{label}</span>
-      <div className="flex items-center gap-2">
+    <div className="flex items-center justify-between gap-3 py-3 lg:py-3">
+      <span className="text-sm text-gray-700 flex-1">{label}</span>
+      <div className="flex items-center gap-2 flex-shrink-0">
         <span className="text-xs text-gray-500">
           {prefs[id] === "email" ? (nT.selectedEmail || "Courriels") :
            prefs[id] === "sms" ? (nT.selectedSms || "SMS") :
@@ -1837,10 +1843,10 @@ function NotificationsTabContent({ t }: { t: AccountTranslations }) {
     description: string;
     items: { id: string; label: string }[];
   }) => (
-    <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div className="rounded-2xl border border-gray-200 bg-white p-4 lg:p-6 shadow-sm">
       <h3 className="text-base font-semibold text-gray-900">{title}</h3>
       <p className="mt-1 text-sm text-gray-500">{description}</p>
-      <div className="mt-4 divide-y divide-gray-100">
+      <div className="mt-3 lg:mt-4 divide-y divide-gray-100">
         {items.map(item => (
           <NotificationRow key={item.id} id={item.id} label={item.label} />
         ))}
@@ -1849,10 +1855,10 @@ function NotificationsTabContent({ t }: { t: AccountTranslations }) {
   );
 
   return (
-    <section className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold">{nT.title || "Notifications"}</h1>
-        <p className="text-sm text-gray-500">{nT.subtitle || "Gérez vos préférences de notification"}</p>
+    <section className="space-y-4 lg:space-y-6">
+      <header className="px-1 hidden lg:block">
+        <h1 className="text-xl lg:text-2xl font-semibold text-gray-900">{nT.title || "Notifications"}</h1>
+        <p className="text-sm text-gray-500 mt-1">{nT.subtitle || "Gérez vos préférences de notification"}</p>
       </header>
 
       <NotificationSection
@@ -1895,29 +1901,29 @@ function NotificationsTabContent({ t }: { t: AccountTranslations }) {
       />
 
       {/* Désabonner de tout */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 lg:p-6 shadow-sm">
         <label className="flex items-center gap-3 cursor-pointer">
           <input
             type="checkbox"
             checked={unsubscribeAll}
             onChange={(e) => setUnsubscribeAll(e.target.checked)}
-            className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+            className="h-5 w-5 lg:h-4 lg:w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
           />
           <span className="text-sm text-gray-700">{nT.unsubscribeAll || "Se désabonner de tous les courriels promotionnels"}</span>
         </label>
       </div>
 
       {/* Bouton sauvegarder */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 lg:gap-4">
         <button
           type="button"
           onClick={handleSave}
-          className="inline-flex items-center rounded-full bg-gray-900 px-6 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-black transition"
+          className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl lg:rounded-full bg-gray-900 px-6 py-3.5 lg:py-2.5 text-base lg:text-sm font-medium text-white shadow-sm hover:bg-black transition"
         >
           {nT.savePreferences || "Enregistrer les préférences"}
         </button>
         {saved && (
-          <span className="flex items-center gap-1.5 text-sm text-emerald-600">
+          <span className="flex items-center justify-center gap-1.5 text-sm text-emerald-600">
             <CheckCircleIcon className="h-4 w-4" />
             {nT.preferencesSaved || "Préférences enregistrées !"}
           </span>
@@ -1940,19 +1946,19 @@ function TaxesTabContent({ t }: { t: AccountTranslations }) {
 
   return (
     <>
-      <section className="space-y-6">
-        <header className="space-y-1">
-          <h1 className="text-2xl font-semibold">{taxT.title}</h1>
+      <section className="space-y-4 lg:space-y-6">
+        <header className="space-y-1 px-1 hidden lg:block">
+          <h1 className="text-xl lg:text-2xl font-semibold text-gray-900">{taxT.title}</h1>
           <p className="text-sm text-gray-500">{taxT.subtitle}</p>
         </header>
 
         <div className="border-b border-gray-200">
-          <nav className="flex gap-6 text-sm">
+          <nav className="flex gap-4 lg:gap-6 text-sm">
             <button
               type="button"
               onClick={() => setSubTab("contributors")}
               className={[
-                "pb-3",
+                "pb-3 px-1",
                 subTab === "contributors"
                   ? "border-b-2 border-gray-900 font-medium text-gray-900"
                   : "border-b-2 border-transparent text-gray-500 hover:text-gray-900",
@@ -1964,7 +1970,7 @@ function TaxesTabContent({ t }: { t: AccountTranslations }) {
               type="button"
               onClick={() => setSubTab("documents")}
               className={[
-                "pb-3",
+                "pb-3 px-1",
                 subTab === "documents"
                   ? "border-b-2 border-gray-900 font-medium text-gray-900"
                   : "border-b-2 border-transparent text-gray-500 hover:text-gray-900",
@@ -1977,26 +1983,26 @@ function TaxesTabContent({ t }: { t: AccountTranslations }) {
 
         {subTab === "contributors" ? (
           <>
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="rounded-2xl border border-gray-200 bg-white p-4 lg:p-6 shadow-sm">
               <h2 className="text-base font-semibold text-gray-900">
                 {taxT.taxInfoTitle}
               </h2>
               <p className="mt-1 text-sm text-gray-600">
                 {taxT.taxInfoDesc}{" "}
-                <span className="block text-xs text-gray-500">
+                <span className="block text-xs text-gray-500 mt-1">
                   {taxT.taxInfoNote}
                 </span>
               </p>
               <button
                 type="button"
                 onClick={() => setShowTaxInfoModal(true)}
-                className="mt-4 inline-flex items-center rounded-full bg-gray-900 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-black"
+                className="mt-4 w-full sm:w-auto inline-flex items-center justify-center rounded-xl lg:rounded-full bg-gray-900 px-4 py-3 lg:py-2 text-base lg:text-sm font-medium text-white shadow-sm hover:bg-black"
               >
                 {taxT.addTaxInfo}
               </button>
             </div>
 
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 text-sm text-gray-600 shadow-sm">
+            <div className="rounded-2xl border border-gray-200 bg-white p-4 lg:p-6 text-sm text-gray-600 shadow-sm">
               <h2 className="text-base font-semibold text-gray-900">
                 {taxT.needHelp}
               </h2>
@@ -2011,7 +2017,7 @@ function TaxesTabContent({ t }: { t: AccountTranslations }) {
           </>
         ) : (
           <div className="space-y-4">
-            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="rounded-2xl border border-gray-200 bg-white p-4 lg:p-6 shadow-sm">
               <h2 className="text-base font-semibold text-gray-900">
                 {taxT.documentsTitle}
               </h2>
@@ -2021,7 +2027,7 @@ function TaxesTabContent({ t }: { t: AccountTranslations }) {
                 {years.map((year) => (
                   <div
                     key={year}
-                    className="flex items-center justify-between px-4 py-3 text-sm"
+                    className="flex items-center justify-between px-4 py-3.5 lg:py-3 text-sm"
                   >
                     <span className="font-medium text-gray-900">{year}</span>
                     <span className="text-xs text-gray-500">
@@ -2036,19 +2042,19 @@ function TaxesTabContent({ t }: { t: AccountTranslations }) {
       </section>
 
       {showTaxInfoModal && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40" role="dialog" aria-modal="true" aria-labelledby="tax-modal-title">
-          <div className="relative w-full max-w-4xl rounded-3xl bg-white p-10 shadow-2xl">
+        <div className="fixed inset-0 z-40 flex items-end lg:items-center justify-center bg-black/40" role="dialog" aria-modal="true" aria-labelledby="tax-modal-title">
+          <div className="relative w-full lg:max-w-4xl rounded-t-3xl lg:rounded-3xl bg-white p-5 lg:p-10 shadow-2xl max-h-[90vh] overflow-y-auto">
             <button
               type="button"
               onClick={() => setShowTaxInfoModal(false)}
-              className="absolute left-6 top-6 text-2xl leading-none text-gray-400 hover:text-gray-600"
+              className="absolute left-4 lg:left-6 top-4 lg:top-6 text-2xl leading-none text-gray-400 hover:text-gray-600 p-2"
               aria-label={taxT.close}
             >
               ×
             </button>
 
-            <div className="mt-4 space-y-4">
-              <h2 id="tax-modal-title" className="text-2xl font-semibold text-gray-900">
+            <div className="mt-6 lg:mt-4 space-y-4">
+              <h2 id="tax-modal-title" className="text-xl lg:text-2xl font-semibold text-gray-900">
                 {taxT.modalTitle}
               </h2>
               <p className="text-sm text-gray-600">{taxT.modalDesc}</p>
@@ -2063,11 +2069,11 @@ function TaxesTabContent({ t }: { t: AccountTranslations }) {
               </p>
             </div>
 
-            <div className="mt-10 flex justify-end">
+            <div className="mt-8 lg:mt-10 flex justify-end">
               <button
                 type="button"
                 onClick={() => setShowTaxInfoModal(false)}
-                className="rounded-full bg-gray-900 px-6 py-2 text-sm font-medium text-white shadow-sm hover:bg-black"
+                className="w-full sm:w-auto rounded-xl lg:rounded-full bg-gray-900 px-6 py-3 lg:py-2 text-base lg:text-sm font-medium text-white shadow-sm hover:bg-black"
               >
                 {taxT.close}
               </button>
@@ -2111,16 +2117,16 @@ function LanguageTabContent({ t, router }: { t: AccountTranslations; router: Ret
   }
 
   return (
-    <section className="space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold">{t.languageSection?.title || "Langue et devise"}</h1>
+    <section className="space-y-4 lg:space-y-6">
+      <header className="space-y-1 px-1 hidden lg:block">
+        <h1 className="text-xl lg:text-2xl font-semibold text-gray-900">{t.languageSection?.title || "Langue et devise"}</h1>
         <p className="text-sm text-gray-500">{t.languageSection?.subtitle || "Choisissez votre langue et devise préférées"}</p>
       </header>
 
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:gap-6 lg:grid-cols-2">
         {/* Langues */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-base font-semibold text-gray-900">
+        <div className="rounded-2xl border border-gray-200 bg-white p-4 lg:p-6 shadow-sm">
+          <h2 className="mb-3 lg:mb-4 text-base font-semibold text-gray-900">
             {t.languageSection?.languagesTitle || "Langue"}
           </h2>
           <div className="space-y-2">
@@ -2132,7 +2138,7 @@ function LanguageTabContent({ t, router }: { t: AccountTranslations; router: Ret
                   key={code}
                   type="button"
                   onClick={() => setLang(code)}
-                  className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm transition ${
+                  className={`flex w-full items-center justify-between rounded-xl border px-4 py-3.5 lg:py-3 text-left text-sm transition active:scale-[0.98] ${
                     active
                       ? "border-gray-900 bg-gray-900 text-white"
                       : "border-gray-200 bg-white hover:border-gray-400"
@@ -2149,8 +2155,8 @@ function LanguageTabContent({ t, router }: { t: AccountTranslations; router: Ret
         </div>
 
         {/* Devises */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-base font-semibold text-gray-900">
+        <div className="rounded-2xl border border-gray-200 bg-white p-4 lg:p-6 shadow-sm">
+          <h2 className="mb-3 lg:mb-4 text-base font-semibold text-gray-900">
             {t.languageSection?.currenciesTitle || "Devise"}
           </h2>
           <div className="space-y-2">
@@ -2161,7 +2167,7 @@ function LanguageTabContent({ t, router }: { t: AccountTranslations; router: Ret
                   key={opt.value}
                   type="button"
                   onClick={() => setCurrency(opt.value)}
-                  className={`flex w-full items-center justify-between rounded-xl border px-4 py-3 text-left text-sm transition ${
+                  className={`flex w-full items-center justify-between rounded-xl border px-4 py-3.5 lg:py-3 text-left text-sm transition active:scale-[0.98] ${
                     active
                       ? "border-gray-900 bg-gray-900 text-white"
                       : "border-gray-200 bg-white hover:border-gray-400"
@@ -2181,16 +2187,16 @@ function LanguageTabContent({ t, router }: { t: AccountTranslations; router: Ret
       </div>
 
       {/* Bouton sauvegarder */}
-      <div className="flex items-center gap-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 lg:gap-4">
         <button
           type="button"
           onClick={handleSave}
-          className="inline-flex items-center rounded-full bg-gray-900 px-6 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-black transition"
+          className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl lg:rounded-full bg-gray-900 px-6 py-3.5 lg:py-2.5 text-base lg:text-sm font-medium text-white shadow-sm hover:bg-black transition"
         >
           {t.languageSection?.save || "Enregistrer les préférences"}
         </button>
         {saved && (
-          <span className="flex items-center gap-1.5 text-sm text-emerald-600">
+          <span className="flex items-center justify-center gap-1.5 text-sm text-emerald-600">
             <CheckCircleIcon className="h-4 w-4" />
             {t.languageSection?.saved || "Préférences enregistrées !"}
           </span>
@@ -2279,9 +2285,9 @@ function TranslationTabContent() {
 
   if (loading) {
     return (
-      <section className="space-y-6">
-        <header>
-          <h1 className="text-2xl font-semibold">Traduction des messages</h1>
+      <section className="space-y-4 lg:space-y-6">
+        <header className="px-1 hidden lg:block">
+          <h1 className="text-xl lg:text-2xl font-semibold text-gray-900">Traduction des messages</h1>
           <p className="text-sm text-gray-500">Chargement...</p>
         </header>
         <div className="flex items-center justify-center py-12">
@@ -2292,26 +2298,26 @@ function TranslationTabContent() {
   }
 
   return (
-    <section className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold">Traduction des messages</h1>
+    <section className="space-y-4 lg:space-y-6">
+      <header className="px-1 hidden lg:block">
+        <h1 className="text-xl lg:text-2xl font-semibold text-gray-900">Traduction des messages</h1>
         <p className="text-sm text-gray-500">
           Configurez la traduction automatique de vos messages
         </p>
       </header>
 
       {/* Toggle traduction automatique */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
-              <GlobeAltIcon className="h-5 w-5 text-gray-600" />
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 lg:p-6 shadow-sm">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3 lg:gap-4 flex-1 min-w-0">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 flex-shrink-0">
+              <GlobeAltIcon className="h-5 w-5 text-indigo-600" />
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <h3 className="text-sm font-semibold text-gray-900">
                 Traduction automatique
               </h3>
-              <p className="mt-0.5 text-xs text-gray-500">
+              <p className="mt-0.5 text-xs text-gray-500 leading-relaxed">
                 Traduire automatiquement les messages recus dans une langue differente
               </p>
               <p className="mt-2 text-sm text-gray-600">
@@ -2328,14 +2334,14 @@ function TranslationTabContent() {
             onClick={handleAutoTranslateToggle}
             disabled={saving}
             className={[
-              "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2",
+              "relative inline-flex h-7 w-12 lg:h-6 lg:w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2",
               autoTranslate ? "bg-gray-900" : "bg-gray-200",
               saving ? "opacity-50 cursor-wait" : "",
             ].join(" ")}
           >
             <span
               className={[
-                "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+                "pointer-events-none inline-block h-6 w-6 lg:h-5 lg:w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
                 autoTranslate ? "translate-x-5" : "translate-x-0",
               ].join(" ")}
             />
@@ -2344,7 +2350,7 @@ function TranslationTabContent() {
       </div>
 
       {/* Selecteur de langue preferee */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 lg:p-6 shadow-sm">
         <h3 className="text-base font-semibold text-gray-900 mb-2">
           Langue preferee
         </h3>
@@ -2362,7 +2368,7 @@ function TranslationTabContent() {
                 onClick={() => handleLanguageChange(lang.code)}
                 disabled={saving}
                 className={[
-                  "flex items-center justify-between rounded-xl border px-4 py-3 text-left text-sm transition",
+                  "flex items-center justify-between rounded-xl border px-4 py-3.5 lg:py-3 text-left text-sm transition active:scale-[0.98]",
                   isSelected
                     ? "border-gray-900 bg-gray-900 text-white"
                     : "border-gray-200 bg-white hover:border-gray-400",
@@ -2370,7 +2376,7 @@ function TranslationTabContent() {
                 ].join(" ")}
               >
                 <span className="font-medium">{lang.nativeName}</span>
-                {isSelected && <CheckCircleIcon className="h-5 w-5" />}
+                {isSelected && <CheckCircleIcon className="h-5 w-5 flex-shrink-0" />}
               </button>
             );
           })}
@@ -2378,33 +2384,33 @@ function TranslationTabContent() {
       </div>
 
       {/* Information sur le fonctionnement */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 lg:p-6 shadow-sm">
         <h3 className="text-base font-semibold text-gray-900 mb-4">
           Comment ca fonctionne
         </h3>
         <div className="space-y-4 text-sm text-gray-600">
           <div className="flex items-start gap-3">
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-600">
+            <div className="flex h-7 w-7 lg:h-6 lg:w-6 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-600 flex-shrink-0">
               1
             </div>
-            <p>
+            <p className="pt-0.5">
               Quand vous recevez un message, la langue est automatiquement detectee.
             </p>
           </div>
           <div className="flex items-start gap-3">
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-600">
+            <div className="flex h-7 w-7 lg:h-6 lg:w-6 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-600 flex-shrink-0">
               2
             </div>
-            <p>
+            <p className="pt-0.5">
               Si le message est dans une langue differente de votre langue preferee,
               il sera traduit {autoTranslate ? "automatiquement" : "sur demande"}.
             </p>
           </div>
           <div className="flex items-start gap-3">
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-600">
+            <div className="flex h-7 w-7 lg:h-6 lg:w-6 items-center justify-center rounded-full bg-gray-100 text-xs font-medium text-gray-600 flex-shrink-0">
               3
             </div>
-            <p>
+            <p className="pt-0.5">
               Vous pouvez toujours voir le message original en cliquant sur
               &quot;Voir l&apos;original&quot;.
             </p>
@@ -2414,12 +2420,363 @@ function TranslationTabContent() {
 
       {/* Indicateur de sauvegarde */}
       {saved && (
-        <div className="flex items-center gap-1.5 text-sm text-emerald-600">
+        <div className="flex items-center justify-center gap-1.5 text-sm text-emerald-600 py-2">
           <CheckCircleIcon className="h-4 w-4" />
           <span>Preferences enregistrees</span>
         </div>
       )}
     </section>
+  );
+}
+
+// ---------- Mobile Account View - Style Airbnb ----------
+type MobileMenuSection = {
+  title: string;
+  items: {
+    id: TabId | "logout" | "help" | "support";
+    label: string;
+    description: string;
+    icon: React.ReactNode;
+    iconBg: string;
+    action?: () => void;
+  }[];
+};
+
+function MobileAccountView({
+  tabs,
+  activeTab,
+  searchParams,
+  handleChangeTab,
+  setActiveTab,
+  router,
+  t,
+  tabLabels,
+}: {
+  tabs: { id: TabId; label: string; icon: React.ReactNode }[];
+  activeTab: TabId;
+  searchParams: ReturnType<typeof useSearchParams>;
+  handleChangeTab: (id: TabId) => void;
+  setActiveTab: (id: TabId) => void;
+  router: ReturnType<typeof useRouter>;
+  t: AccountTranslations;
+  tabLabels: Record<TabId, string>;
+}) {
+  const [userData, setUserData] = useState({
+    name: "",
+    email: "",
+    avatar: "",
+    identityVerified: false,
+  });
+  const [loading, setLoading] = useState(true);
+
+  // Charger les donnees utilisateur
+  useEffect(() => {
+    const controller = new AbortController();
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/profile", { cache: "no-store", signal: controller.signal });
+        if (res.ok) {
+          const data = await res.json();
+          const user = data.user;
+          setUserData({
+            name: user?.name || user?.profile?.firstName || "Utilisateur",
+            email: user?.email || "",
+            avatar: user?.image || "",
+            identityVerified: user?.identityStatus === "VERIFIED",
+          });
+        }
+      } catch (e) {
+        if ((e as Error).name !== "AbortError") {
+          console.error("Erreur chargement profil:", e);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    void fetchUser();
+    return () => controller.abort();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/signout", { method: "POST" });
+      router.push("/");
+    } catch (e) {
+      console.error("Erreur deconnexion:", e);
+    }
+  };
+
+  // Descriptions pour chaque section
+  const menuDescriptions: Record<TabId, string> = {
+    personal: "Nom, email, telephone, adresse",
+    security: "Mot de passe, verification d'identite",
+    privacy: "Visibilite du profil, partage de donnees",
+    notifications: "Emails, SMS, notifications push",
+    taxes: "Informations fiscales, documents",
+    payments: "Moyens de paiement, versements",
+    language: "Langue et devise preferees",
+    translation: "Traduction automatique des messages",
+  };
+
+  // Grouper les menus par section
+  const menuSections: MobileMenuSection[] = [
+    {
+      title: "Compte",
+      items: [
+        {
+          id: "personal",
+          label: t.tabs.personal,
+          description: menuDescriptions.personal,
+          icon: <UserIcon className="h-5 w-5" />,
+          iconBg: "bg-blue-50 text-blue-600",
+        },
+        {
+          id: "security",
+          label: t.tabs.security,
+          description: menuDescriptions.security,
+          icon: <ShieldCheckIcon className="h-5 w-5" />,
+          iconBg: "bg-emerald-50 text-emerald-600",
+        },
+        {
+          id: "privacy",
+          label: t.tabs.privacy,
+          description: menuDescriptions.privacy,
+          icon: <LockClosedIcon className="h-5 w-5" />,
+          iconBg: "bg-purple-50 text-purple-600",
+        },
+      ],
+    },
+    {
+      title: "Preferences",
+      items: [
+        {
+          id: "notifications",
+          label: t.tabs.notifications,
+          description: menuDescriptions.notifications,
+          icon: <BellIcon className="h-5 w-5" />,
+          iconBg: "bg-amber-50 text-amber-600",
+        },
+        {
+          id: "language",
+          label: t.tabs.language,
+          description: menuDescriptions.language,
+          icon: <GlobeAltIcon className="h-5 w-5" />,
+          iconBg: "bg-sky-50 text-sky-600",
+        },
+        {
+          id: "translation",
+          label: "Traduction",
+          description: menuDescriptions.translation,
+          icon: <LanguageIcon className="h-5 w-5" />,
+          iconBg: "bg-indigo-50 text-indigo-600",
+        },
+      ],
+    },
+    {
+      title: "Paiements et taxes",
+      items: [
+        {
+          id: "payments",
+          label: t.tabs.payments,
+          description: menuDescriptions.payments,
+          icon: <CreditCardIcon className="h-5 w-5" />,
+          iconBg: "bg-pink-50 text-pink-600",
+        },
+        {
+          id: "taxes",
+          label: t.tabs.taxes,
+          description: menuDescriptions.taxes,
+          icon: <DocumentTextIcon className="h-5 w-5" />,
+          iconBg: "bg-orange-50 text-orange-600",
+        },
+      ],
+    },
+    {
+      title: "Assistance",
+      items: [
+        {
+          id: "help",
+          label: "Centre d'aide",
+          description: "FAQ, guides et tutoriels",
+          icon: <QuestionMarkCircleIcon className="h-5 w-5" />,
+          iconBg: "bg-gray-100 text-gray-600",
+          action: () => window.open("/help", "_blank"),
+        },
+        {
+          id: "support",
+          label: "Contacter le support",
+          description: "Obtenir de l'aide personnalisee",
+          icon: <ChatBubbleLeftRightIcon className="h-5 w-5" />,
+          iconBg: "bg-gray-100 text-gray-600",
+          action: () => router.push("/messages?support=true"),
+        },
+      ],
+    },
+  ];
+
+  const isMainView = !searchParams.get("tab");
+
+  return (
+    <div className="md:hidden w-full bg-gray-50 min-h-screen -mx-4 -my-6">
+      {isMainView ? (
+        /* Vue principale mobile - Profil + Liste des parametres */
+        <div className="pb-8">
+          {/* Header Profil style Airbnb */}
+          <div className="bg-white px-4 pt-5 pb-5 shadow-sm">
+            <div className="flex items-center gap-4">
+              {/* Avatar */}
+              <div className="relative">
+                {loading ? (
+                  <div className="h-16 w-16 rounded-full bg-gray-200 animate-pulse" />
+                ) : userData.avatar ? (
+                  <img
+                    src={userData.avatar}
+                    alt={userData.name}
+                    className="h-16 w-16 rounded-full object-cover border-2 border-white shadow-md"
+                  />
+                ) : (
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-gray-700 to-gray-900 text-white text-xl font-semibold shadow-md">
+                    {userData.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                {userData.identityVerified && (
+                  <div className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white shadow-sm">
+                    <CheckCircleIcon className="h-4 w-4" />
+                  </div>
+                )}
+              </div>
+
+              {/* Infos utilisateur */}
+              <div className="flex-1 min-w-0">
+                {loading ? (
+                  <>
+                    <div className="h-5 w-32 bg-gray-200 rounded animate-pulse mb-2" />
+                    <div className="h-4 w-40 bg-gray-200 rounded animate-pulse" />
+                  </>
+                ) : (
+                  <>
+                    <h1 className="text-lg font-bold text-gray-900 truncate">
+                      {userData.name}
+                    </h1>
+                    <p className="text-sm text-gray-500 truncate">{userData.email}</p>
+                    {userData.identityVerified && (
+                      <span className="inline-flex items-center gap-1 mt-1 text-xs text-emerald-600 font-medium">
+                        <CheckCircleIcon className="h-3.5 w-3.5" />
+                        Identite verifiee
+                      </span>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* Bouton voir profil */}
+              <button
+                type="button"
+                onClick={() => handleChangeTab("personal")}
+                className="flex-shrink-0 p-2 rounded-full hover:bg-gray-100 active:bg-gray-200 transition"
+                aria-label="Voir le profil"
+              >
+                <ChevronRightIcon className="h-5 w-5 text-gray-400" />
+              </button>
+            </div>
+          </div>
+
+          {/* Sections de menu */}
+          <div className="px-4 pt-5 space-y-5">
+            {menuSections.map((section) => (
+              <div key={section.title}>
+                {/* Titre de section */}
+                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-1 mb-2.5">
+                  {section.title}
+                </h2>
+
+                {/* Cards de la section */}
+                <div className="bg-white rounded-2xl shadow-sm overflow-hidden divide-y divide-gray-100">
+                  {section.items.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        if (item.action) {
+                          item.action();
+                        } else if (item.id !== "help" && item.id !== "support" && item.id !== "logout") {
+                          handleChangeTab(item.id as TabId);
+                        }
+                      }}
+                      className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left active:bg-gray-50 transition"
+                    >
+                      {/* Icone avec fond colore */}
+                      <div className={`flex h-10 w-10 items-center justify-center rounded-full ${item.iconBg}`}>
+                        {item.icon}
+                      </div>
+
+                      {/* Texte */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[15px] font-medium text-gray-900">{item.label}</p>
+                        <p className="text-[13px] text-gray-500 truncate">{item.description}</p>
+                      </div>
+
+                      {/* Fleche */}
+                      <ChevronRightIcon className="h-5 w-5 text-gray-300 flex-shrink-0" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            {/* Bouton Deconnexion */}
+            <div className="pt-1">
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex w-full items-center gap-3.5 px-4 py-3.5 bg-white rounded-2xl shadow-sm text-left active:bg-gray-50 transition"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-red-600">
+                  <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-[15px] font-medium text-red-600">Deconnexion</p>
+                  <p className="text-[13px] text-gray-500">Se deconnecter de votre compte</p>
+                </div>
+              </button>
+            </div>
+
+            {/* Footer */}
+            <div className="pt-3 pb-4 text-center">
+              <p className="text-xs text-gray-400">Lok&apos;Room v1.0</p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* Vue detail mobile - Contenu de l'onglet selectionne */
+        <div className="min-h-screen bg-gray-50">
+          {/* Header avec bouton retour */}
+          <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("personal");
+                router.push("/account", { scroll: false });
+              }}
+              className="flex items-center justify-center h-10 w-10 rounded-full hover:bg-gray-100 active:bg-gray-200 transition -ml-2"
+              aria-label="Retour"
+            >
+              <svg className="h-5 w-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <h1 className="text-lg font-semibold text-gray-900">
+              {tabLabels[activeTab]}
+            </h1>
+          </div>
+
+          {/* Contenu */}
+          <div className="px-4 py-4">
+            <TabContent active={activeTab} t={t} tabLabels={tabLabels} router={router} />
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -2604,63 +2961,17 @@ export default function AccountSettingsPage() {
         </nav>
       </aside>
 
-      {/* Mobile - Liste style Airbnb */}
-      <div className="md:hidden w-full bg-gray-50 min-h-screen -mx-4 -my-6 px-4 py-6">
-        {activeTab === "personal" && !searchParams.get("tab") ? (
-          /* Vue principale mobile - Liste des paramètres */
-          <div className="space-y-6">
-            {/* Header */}
-            <div className="pt-2">
-              <h1 className="text-2xl font-bold text-gray-900">{t.settingsTitle}</h1>
-            </div>
-
-            {/* Liste des options */}
-            <div className="space-y-2">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => handleChangeTab(tab.id)}
-                  className="flex w-full items-center justify-between rounded-2xl bg-white p-4 shadow-sm active:bg-gray-50"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 ${iconColorByTab[tab.id]}`}>
-                      {tab.icon}
-                    </div>
-                    <span className="text-base font-medium text-gray-900">{tab.label}</span>
-                  </div>
-                  <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          /* Vue détail mobile - Contenu de l'onglet sélectionné */
-          <div className="space-y-4">
-            {/* Header avec bouton retour */}
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab("personal");
-                router.push("/account", { scroll: false });
-              }}
-              className="flex items-center gap-2 text-gray-600 -ml-1"
-            >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-              <span className="text-sm font-medium">Retour</span>
-            </button>
-
-            {/* Contenu */}
-            <div className="bg-white rounded-2xl p-4 shadow-sm">
-              <TabContent active={activeTab} t={t} tabLabels={tabLabels} router={router} />
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Mobile - Interface style Airbnb */}
+      <MobileAccountView
+        tabs={tabs}
+        activeTab={activeTab}
+        searchParams={searchParams}
+        handleChangeTab={handleChangeTab}
+        setActiveTab={setActiveTab}
+        router={router}
+        t={t}
+        tabLabels={tabLabels}
+      />
 
       {/* Content desktop */}
       <section className="hidden md:block flex-1">
