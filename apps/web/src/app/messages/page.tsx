@@ -1196,8 +1196,8 @@ Posez-moi vos questions sur :
 
         {/* Chat Area */}
         <section
-          className={`flex-1 bg-gray-50 relative overflow-hidden h-full ${
-            showMobileChat ? "flex flex-col" : "hidden lg:flex lg:flex-col"
+          className={`flex-1 bg-gray-50 relative lg:h-full ${
+            showMobileChat ? "fixed inset-0 z-40 h-[100dvh] lg:static lg:z-auto lg:flex lg:flex-col" : "hidden lg:flex lg:flex-col"
           }`}
         >
           {!selectedConvId ? (
@@ -1213,9 +1213,9 @@ Posez-moi vos questions sur :
               </p>
             </div>
           ) : (
-            <div className="flex flex-col h-full overflow-hidden">
-              {/* Chat Header - NO SCROLL */}
-              <div className="flex-shrink-0 flex items-center justify-between border-b border-gray-100 bg-white px-3 py-2 lg:px-6 lg:py-3 touch-none">
+            <div className="h-full flex flex-col lg:overflow-hidden">
+              {/* Chat Header - FIXED on mobile, static on desktop */}
+              <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between border-b border-gray-100 bg-white px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top))] lg:static lg:z-auto lg:flex-shrink-0 lg:px-6 lg:py-3 lg:pt-3">
                 <div className="flex items-center gap-2 lg:gap-3">
                   {/* Back button mobile */}
                   <button
@@ -1375,8 +1375,8 @@ Posez-moi vos questions sur :
                 </div>
               )}
 
-              {/* Messages - Scrollable area */}
-              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto overscroll-contain px-3 py-2 lg:px-6 lg:py-6">
+              {/* Messages - Scrollable area - with padding for fixed header/input on mobile */}
+              <div ref={messagesContainerRef} className="absolute inset-0 overflow-y-auto overscroll-contain px-3 py-2 pt-[calc(3.5rem+env(safe-area-inset-top))] pb-[calc(5rem+env(safe-area-inset-bottom))] lg:static lg:flex-1 lg:px-6 lg:py-6 lg:pt-2 lg:pb-6" style={{ WebkitOverflowScrolling: 'touch' }}>
                 {/* Bot Messages */}
                 {selectedConvId === SUPPORT_BOT_ID ? (
                   <div className="space-y-2 lg:space-y-4">
@@ -1591,8 +1591,8 @@ Posez-moi vos questions sur :
                 )}
               </div>
 
-              {/* Message Input - NO SCROLL */}
-              <div className="flex-shrink-0 border-t border-gray-100 bg-white px-3 py-2 lg:px-6 lg:py-4 touch-none">
+              {/* Message Input - FIXED on mobile, static on desktop */}
+              <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-100 bg-white px-3 py-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] lg:static lg:z-auto lg:flex-shrink-0 lg:px-6 lg:py-4 lg:pb-4">
                 {/* Quick Replies for Host - Hidden on mobile */}
                 {selectedConv?.isHost && selectedConv?.booking?.status === "PENDING" && (
                   <div className="hidden lg:flex mb-3 flex-wrap gap-2">
