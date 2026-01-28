@@ -119,7 +119,7 @@ export default function Footer() {
           </div>
 
           {/* Illustration à droite avec fondu - Desktop only (xl+) */}
-          <div className="hidden xl:flex items-start justify-center xl:w-[500px] 2xl:w-[700px]" style={{ marginTop: '-2.25rem' }}>
+          <div className="hidden xl:flex items-start justify-center xl:w-[500px] 2xl:w-[700px]" style={{ marginTop: '-1rem' }}>
             <div className="relative">
               <div
                 className="absolute inset-0 pointer-events-none z-10"
