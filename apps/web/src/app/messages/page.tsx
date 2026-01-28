@@ -558,6 +558,27 @@ Posez-moi vos questions sur :
     }
   }, [showMobileChat, selectedConvId, scrollToBottom]);
 
+  // Lock body scroll when mobile chat is open (prevents Safari UI from moving)
+  useEffect(() => {
+    if (showMobileChat) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.height = '100%';
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
+    };
+  }, [showMobileChat]);
+
   // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
@@ -1376,7 +1397,7 @@ Posez-moi vos questions sur :
               )}
 
               {/* Messages - Scrollable area - with padding for fixed header/input on mobile */}
-              <div ref={messagesContainerRef} className="absolute top-28 bottom-24 left-0 right-0 overflow-y-auto overscroll-contain px-3 py-2 lg:static lg:flex-1 lg:px-6 lg:py-6 lg:top-auto lg:bottom-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div ref={messagesContainerRef} className="absolute top-28 bottom-24 left-0 right-0 overflow-y-auto overscroll-none px-3 py-2 lg:static lg:flex-1 lg:px-6 lg:py-6 lg:top-auto lg:bottom-auto lg:overscroll-auto" style={{ WebkitOverflowScrolling: 'touch', touchAction: 'pan-y' }}>
                 {/* Bot Messages */}
                 {selectedConvId === SUPPORT_BOT_ID ? (
                   <div className="space-y-2 lg:space-y-4">
