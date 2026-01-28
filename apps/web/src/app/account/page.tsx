@@ -2517,13 +2517,13 @@ function MobileProfileCard({
         {/* Lien "Aperçu du profil" en haut à droite */}
         <Link
           href="/profile?preview=true"
-          className="absolute top-4 right-4 flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition z-10"
+          className="absolute top-4 right-4 flex items-center gap-1.5 text-xs text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg px-3 py-1.5 transition z-10"
         >
           <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
           </svg>
-          <span>Aperçu</span>
+          <span>Apercu</span>
         </Link>
 
         <div className="relative flex flex-col items-center">
@@ -2590,11 +2590,21 @@ function MobileProfileCard({
               {/* Annees */}
               <div className="flex flex-col items-center">
                 <span className="text-xl font-bold text-gray-900">{yearsOnLokroom}</span>
-                <span className="text-xs text-gray-500 mt-0.5">
-                  {yearsOnLokroom <= 1 ? "An" : "Ans"}
+                <span className="text-xs text-gray-500 mt-0.5 text-center leading-tight">
+                  {yearsOnLokroom <= 1 ? "Annee" : "Annees"}<br />sur Lok'Room
                 </span>
               </div>
             </div>
+          </div>
+
+          {/* Bouton Modifier le profil */}
+          <div className="w-full mt-5 pt-4 border-t border-gray-100">
+            <Link
+              href="/profile"
+              className="flex items-center justify-center w-full py-3 px-4 rounded-xl border-2 border-gray-900 text-sm font-semibold text-gray-900 hover:bg-gray-900 hover:text-white transition-colors"
+            >
+              Modifier le profil
+            </Link>
           </div>
         </div>
       </div>

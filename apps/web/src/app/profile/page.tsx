@@ -429,25 +429,25 @@ export default function ProfilePage() {
     );
   }
 
+  // ========== VUE PUBLIQUE (mode preview) ==========
+  if (isPreviewMode) {
+    return (
+      <PublicProfileView
+        user={user}
+        fullName={fullName}
+        cityLine={cityLine}
+        memberSinceYear={memberSinceYear}
+        avatarPreview={avatarPreview}
+        trips={trips}
+        tripsLoading={tripsLoading}
+        router={router}
+        t={t}
+      />
+    );
+  }
+
   return (
     <main className="mx-auto max-w-6xl 2xl:max-w-7xl bg-gray-50 lg:bg-transparent min-h-screen lg:min-h-0 px-0 lg:px-8 pb-8 sm:pb-12 pt-0 lg:pt-10">
-      {/* Bandeau mode aperçu sur mobile */}
-      {isPreviewMode && (
-        <div className="lg:hidden sticky top-0 z-20 bg-gray-900 text-white px-4 py-3 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => router.push("/account")}
-            className="flex items-center gap-2 text-sm font-medium"
-          >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-            Retour
-          </button>
-          <span className="text-sm text-gray-300">Aperçu de votre profil</span>
-          <div className="w-16" /> {/* Spacer pour centrer le texte */}
-        </div>
-      )}
 
       {/* Layout principal */}
       <div className="flex flex-col lg:flex-row gap-0 lg:gap-10">
@@ -1756,5 +1756,276 @@ function TripsSection({
         ))}
       </div>
     </section>
+  );
+}
+
+/* ===========================
+   Vue Profil PUBLIC (mode preview)
+   =========================== */
+
+type PublicProfileViewProps = {
+  user: UserDTO | null;
+  fullName: string;
+  cityLine: string;
+  memberSinceYear: number | null;
+  avatarPreview: string | null;
+  trips: BookingDTO[];
+  tripsLoading: boolean;
+  router: ReturnType<typeof useRouter>;
+  t: ProfileTranslations;
+};
+
+function PublicProfileView({
+  user,
+  fullName,
+  cityLine,
+  memberSinceYear,
+  avatarPreview,
+  trips,
+  tripsLoading,
+  router,
+  t,
+}: PublicProfileViewProps) {
+  const profile = user?.profile;
+  const reviewsCount = profile?.ratingCount ?? 0;
+  const rating = typeof profile?.ratingAvg === "number" ? profile.ratingAvg.toFixed(1) : null;
+
+  // Verifications simulees (a adapter selon les donnees reelles)
+  const hasIdentityVerified = true; // placeholder
+  const hasEmailVerified = !!user?.email;
+  const hasPhoneVerified = !!profile?.phone;
+
+  return (
+    <main className="min-h-screen bg-gray-50">
+      {/* Header avec bouton retour */}
+      <div className="sticky top-0 z-20 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between lg:hidden">
+        <button
+          type="button"
+          onClick={() => router.push("/account")}
+          className="flex items-center gap-2 text-sm font-medium text-gray-900"
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Retour
+        </button>
+        <span className="text-sm text-gray-500">Apercu du profil</span>
+        <div className="w-16" />
+      </div>
+
+      {/* Desktop header */}
+      <div className="hidden lg:block bg-white border-b border-gray-200">
+        <div className="max-w-4xl mx-auto px-6 py-4">
+          <button
+            type="button"
+            onClick={() => router.push("/account")}
+            className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Retour aux parametres
+          </button>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 lg:px-6 py-6 lg:py-10">
+        {/* Section principale du profil */}
+        <div className="bg-white rounded-2xl lg:rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+          {/* En-tete du profil */}
+          <div className="px-6 py-8 lg:py-10 text-center border-b border-gray-100">
+            {/* Avatar */}
+            <div className="flex justify-center mb-4">
+              <div className="relative h-28 w-28 lg:h-32 lg:w-32 overflow-hidden rounded-full bg-gray-200 ring-4 ring-white shadow-lg">
+                {avatarPreview ? (
+                  <Image
+                    src={avatarPreview}
+                    alt={fullName}
+                    fill
+                    className="object-cover"
+                    sizes="128px"
+                  />
+                ) : (
+                  <span className="flex h-full w-full items-center justify-center text-4xl font-semibold text-gray-600">
+                    {fullName.charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Nom */}
+            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">{fullName}</h1>
+
+            {/* Localisation */}
+            {cityLine && cityLine !== t.completeProfile && (
+              <p className="mt-2 text-sm lg:text-base text-gray-500">{cityLine}</p>
+            )}
+          </div>
+
+          {/* Section Verifications */}
+          <div className="px-6 py-5 border-b border-gray-100">
+            <h2 className="text-sm font-semibold text-gray-900 mb-3">Verifications</h2>
+            <div className="space-y-2">
+              {hasIdentityVerified && (
+                <div className="flex items-center gap-2 text-sm text-gray-700">
+                  <svg className="h-5 w-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Identite verifiee</span>
+                </div>
+              )}
+              {hasEmailVerified && (
+                <div className="flex items-center gap-2 text-sm text-gray-700">
+                  <svg className="h-5 w-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Email verifie</span>
+                </div>
+              )}
+              {hasPhoneVerified && (
+                <div className="flex items-center gap-2 text-sm text-gray-700">
+                  <svg className="h-5 w-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>Numero verifie</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Section A propos */}
+          <div className="px-6 py-5 border-b border-gray-100">
+            <h2 className="text-sm font-semibold text-gray-900 mb-4">A propos de {fullName.split(' ')[0]}</h2>
+
+            <div className="space-y-4">
+              {/* Description */}
+              {profile?.aboutMe && (
+                <div>
+                  <p className="text-sm text-gray-700 leading-relaxed">"{profile.aboutMe}"</p>
+                </div>
+              )}
+
+              {/* Langues */}
+              {profile?.languages && (
+                <div className="flex items-start gap-3">
+                  <svg className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 21l5.25-11.25L21 21m-9-3h7.5M3 5.621a48.474 48.474 0 016-.371m0 0c1.12 0 2.233.038 3.334.114M9 5.25V3m3.334 2.364C11.176 10.658 7.69 15.08 3 17.502m9.334-12.138c.896.061 1.785.147 2.666.257m-4.589 8.495a18.023 18.023 0 01-3.827-5.802" />
+                  </svg>
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">Parle</p>
+                    <p className="text-sm text-gray-900">{profile.languages}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Lieu de residence */}
+              {(profile?.city || profile?.country) && (
+                <div className="flex items-start gap-3">
+                  <svg className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                  </svg>
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">Habite a</p>
+                    <p className="text-sm text-gray-900">
+                      {profile.city}{profile.city && profile.country ? ", " : ""}{profile.country}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Travail */}
+              {profile?.jobTitle && (
+                <div className="flex items-start gap-3">
+                  <svg className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" />
+                  </svg>
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">Travaille</p>
+                    <p className="text-sm text-gray-900">{profile.jobTitle}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Membre depuis */}
+              {memberSinceYear && (
+                <div className="flex items-start gap-3">
+                  <svg className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                  </svg>
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">Membre depuis</p>
+                    <p className="text-sm text-gray-900">{memberSinceYear}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Message si aucune info */}
+              {!profile?.aboutMe && !profile?.languages && !profile?.city && !profile?.jobTitle && (
+                <p className="text-sm text-gray-400 italic">Aucune information renseignee pour le moment.</p>
+              )}
+            </div>
+          </div>
+
+          {/* Section Avis */}
+          <div className="px-6 py-5 border-b border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-semibold text-gray-900">Avis ({reviewsCount})</h2>
+              {rating && (
+                <div className="flex items-center gap-1">
+                  <svg className="h-4 w-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  <span className="text-sm font-medium text-gray-900">{rating}</span>
+                </div>
+              )}
+            </div>
+
+            {reviewsCount > 0 ? (
+              <div className="space-y-4">
+                {/* Placeholder pour les avis - a remplacer par les vrais avis */}
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <div className="flex items-center gap-1 mb-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <svg key={star} className="h-4 w-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    ))}
+                  </div>
+                  <p className="text-sm text-gray-700">"Super experience, je recommande !"</p>
+                  <p className="mt-2 text-xs text-gray-500">Utilisateur - Janvier 2024</p>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-gray-50 rounded-xl p-6 text-center">
+                <svg className="h-10 w-10 text-gray-300 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+                </svg>
+                <p className="text-sm text-gray-500">Aucun avis pour l'instant</p>
+              </div>
+            )}
+          </div>
+
+          {/* Section Voyages confirmes */}
+          <div className="px-6 py-5">
+            <h2 className="text-sm font-semibold text-gray-900 mb-3">Voyages confirmes</h2>
+            {tripsLoading ? (
+              <div className="flex items-center justify-center py-4">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-900" />
+              </div>
+            ) : (
+              <p className="text-sm text-gray-700">
+                {trips.length} {trips.length === 1 ? "voyage" : "voyages"}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Note en bas */}
+        <p className="mt-6 text-center text-xs text-gray-400">
+          Ceci est un apercu de votre profil public tel que les autres utilisateurs le voient.
+        </p>
+      </div>
+    </main>
   );
 }
