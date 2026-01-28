@@ -86,6 +86,9 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [animatingCategory, setAnimatingCategory] = useState<string | null>(null);
 
+  // Section ouverte (accordéon) - null = toutes fermées
+  const [openSection, setOpenSection] = useState<"dates" | "guests" | null>(null);
+
   // Total des voyageurs (hors animaux)
   const totalGuests = adults + children;
 
@@ -416,24 +419,40 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
             </div>
           </div>
 
-          {/* Séparateur */}
-          <div className="h-1 bg-gray-50" />
-
-          {/* Section Dates */}
-          <div className="px-4 py-3">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-blue-100 to-blue-50 rounded-xl">
-                <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
+          {/* Section Dates - Accordéon */}
+          <div className="px-4 py-2">
+            <button
+              onClick={() => setOpenSection(openSection === "dates" ? null : "dates")}
+              className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all ${
+                openSection === "dates" ? "bg-gray-100" : "bg-gray-50 hover:bg-gray-100"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-50 rounded-xl">
+                  <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div className="text-left">
+                  <h2 className="text-sm font-semibold text-gray-900">Quand ?</h2>
+                  <p className="text-xs text-gray-500">
+                    {startDate
+                      ? `${new Date(startDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}${endDate ? ` - ${new Date(endDate).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}` : ""}`
+                      : "Ajouter des dates"
+                    }
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-sm font-semibold text-gray-900">Quand ?</h2>
-              </div>
-            </div>
+              <svg className={`w-5 h-5 text-gray-400 transition-transform ${openSection === "dates" ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
 
-            {/* Toggle Jour/Heure */}
-            <div className="flex p-1 bg-gray-100 rounded-xl mb-3">
+            {/* Contenu dates - visible si ouvert */}
+            {openSection === "dates" && (
+              <div className="mt-3 space-y-3">
+                {/* Toggle Jour/Heure */}
+                <div className="flex p-1 bg-gray-100 rounded-xl">
               <button
                 onClick={() => setBookingMode("days")}
                 className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
@@ -586,25 +605,39 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
                 </div>
               </div>
             )}
+              </div>
+            )}
           </div>
 
-          {/* Séparateur */}
-          <div className="h-1 bg-gray-50" />
-
-          {/* Section Voyageurs */}
-          <div className="px-4 py-3">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-amber-100 to-amber-50 rounded-xl">
-                <svg className="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
+          {/* Section Voyageurs - Accordéon */}
+          <div className="px-4 py-2">
+            <button
+              onClick={() => setOpenSection(openSection === "guests" ? null : "guests")}
+              className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all ${
+                openSection === "guests" ? "bg-gray-100" : "bg-gray-50 hover:bg-gray-100"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-amber-100 to-amber-50 rounded-xl">
+                  <svg className="w-5 h-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <div className="text-left">
+                  <h2 className="text-sm font-semibold text-gray-900">Qui voyage ?</h2>
+                  <p className="text-xs text-gray-500">
+                    {totalGuests} {totalGuests > 1 ? "voyageurs" : "voyageur"}{pets > 0 ? `, ${pets} ${pets > 1 ? "animaux" : "animal"}` : ""}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-sm font-semibold text-gray-900">Qui voyage ?</h2>
-              </div>
-            </div>
+              <svg className={`w-5 h-5 text-gray-400 transition-transform ${openSection === "guests" ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
 
-            <div className="space-y-0">
+            {/* Contenu voyageurs - visible si ouvert */}
+            {openSection === "guests" && (
+              <div className="mt-3 space-y-0">
               {/* Adultes */}
               <div className="flex items-center justify-between py-3 border-b border-gray-100">
                 <div className="flex items-center gap-2">
@@ -713,6 +746,7 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
                 </div>
               </div>
             </div>
+            )}
           </div>
         </div>
 
