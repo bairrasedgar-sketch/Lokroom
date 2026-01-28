@@ -86,23 +86,24 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [animatingCategory, setAnimatingCategory] = useState<string | null>(null);
 
-  // Section ouverte (accordéon) - null = toutes fermées
-  const [openSection, setOpenSection] = useState<"dates" | "guests" | null>(null);
+  // Section ouverte (accordéon) - "destination" par défaut
+  const [openSection, setOpenSection] = useState<"destination" | "dates" | "guests" | null>("destination");
 
   // Refs pour le scroll automatique
+  const destinationRef = useRef<HTMLDivElement>(null);
   const datesRef = useRef<HTMLDivElement>(null);
   const guestsRef = useRef<HTMLDivElement>(null);
 
   // Fonction pour ouvrir une section avec scroll
-  const handleOpenSection = (section: "dates" | "guests") => {
+  const handleOpenSection = (section: "destination" | "dates" | "guests") => {
     if (openSection === section) {
       setOpenSection(null);
     } else {
       setOpenSection(section);
       // Scroll vers la section après un petit délai pour laisser l'animation commencer
       setTimeout(() => {
-        const ref = section === "dates" ? datesRef : guestsRef;
-        ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        const refs = { destination: destinationRef, dates: datesRef, guests: guestsRef };
+        refs[section].current?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 100);
     }
   };
@@ -161,6 +162,8 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
       // Sélection de la date de fin
       setEndDate(dateStr);
       setSelectingEnd(false);
+      // Auto-avancer vers les voyageurs
+      setTimeout(() => handleOpenSection("guests"), 300);
     } else if (dateStr === startDate) {
       // Clic sur la même date = reset
       setStartDate("");
@@ -361,78 +364,99 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
             </div>
           </div>
 
-          {/* Section Destination */}
-          <div className="px-4 py-2">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-rose-100 to-rose-50 rounded-xl">
-                <svg className="w-4 h-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
+          {/* Section Destination - Accordéon */}
+          <div ref={destinationRef} className="px-4 py-2">
+            <button
+              onClick={() => handleOpenSection("destination")}
+              className={`w-full flex items-center p-3 rounded-2xl transition-all ${
+                openSection === "destination" ? "bg-gray-100" : "bg-gray-50 hover:bg-gray-100"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-rose-100 to-rose-50 rounded-xl">
+                  <svg className="w-5 h-5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                </div>
+                <div className="text-left">
+                  <h2 className="text-sm font-semibold text-gray-900">Où allez-vous ?</h2>
+                  <p className="text-xs text-gray-500">
+                    {selectedCity ? selectedCity : "Choisir une destination"}
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-sm font-semibold text-gray-900">Où allez-vous ?</h2>
-              </div>
-            </div>
+            </button>
 
-            <LocationAutocomplete
-              value={destination}
-              onChange={setDestination}
-              onSelect={(place) => {
-                setDestination(place.mainText);
-                setSelectedCity(place.mainText);
-                setSelectedCountry(place.secondaryText.includes("Canada") ? "Canada" : "France");
-              }}
-              placeholder="Ville, région ou pays..."
-              popularCities={POPULAR_DESTINATIONS.map(d => ({
-                main: d.city,
-                secondary: d.country,
-                icon: d.image,
-              }))}
-            />
+            {/* Contenu destination - avec animation */}
+            <div className={`overflow-hidden transition-all duration-300 ease-out ${
+              openSection === "destination" ? "max-h-[500px] opacity-100 mt-3" : "max-h-0 opacity-0"
+            }`}>
+              <div className="space-y-3">
+                <LocationAutocomplete
+                  value={destination}
+                  onChange={setDestination}
+                  onSelect={(place) => {
+                    setDestination(place.mainText);
+                    setSelectedCity(place.mainText);
+                    setSelectedCountry(place.secondaryText.includes("Canada") ? "Canada" : "France");
+                    // Auto-avancer vers les dates
+                    setTimeout(() => handleOpenSection("dates"), 300);
+                  }}
+                  placeholder="Ville, région ou pays..."
+                  popularCities={POPULAR_DESTINATIONS.map(d => ({
+                    main: d.city,
+                    secondary: d.country,
+                    icon: d.image,
+                  }))}
+                />
 
-            {/* Destinations populaires avec images */}
-            <div className="mt-3">
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">Destinations populaires</h3>
-              <div className="grid grid-cols-3 gap-2">
-                {POPULAR_DESTINATIONS.slice(0, 6).map((dest) => (
-                  <button
-                    key={dest.city}
-                    onClick={() => {
-                      if (selectedCity === dest.city) {
-                        // Désélectionner si déjà sélectionné
-                        setDestination("");
-                        setSelectedCity("");
-                        setSelectedCountry("");
-                      } else {
-                        setDestination(dest.city);
-                        setSelectedCity(dest.city);
-                        setSelectedCountry(dest.country);
-                      }
-                    }}
-                    className={`relative overflow-hidden rounded-xl aspect-square group ${
-                      selectedCity === dest.city ? "ring-2 ring-gray-900" : ""
-                    }`}
-                  >
-                    <img
-                      src={dest.image}
-                      alt={dest.city}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-2">
-                      <p className="text-white font-semibold text-xs">{dest.city}</p>
-                      <p className="text-white/80 text-[10px]">{dest.country}</p>
-                    </div>
-                    {selectedCity === dest.city && (
-                      <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-gray-900 rounded-full flex items-center justify-center">
-                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                    )}
-                  </button>
-                ))}
+                {/* Destinations populaires avec images */}
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Destinations populaires</h3>
+                  <div className="grid grid-cols-3 gap-2">
+                    {POPULAR_DESTINATIONS.slice(0, 6).map((dest) => (
+                      <button
+                        key={dest.city}
+                        onClick={() => {
+                          if (selectedCity === dest.city) {
+                            // Désélectionner si déjà sélectionné
+                            setDestination("");
+                            setSelectedCity("");
+                            setSelectedCountry("");
+                          } else {
+                            setDestination(dest.city);
+                            setSelectedCity(dest.city);
+                            setSelectedCountry(dest.country);
+                            // Auto-avancer vers les dates
+                            setTimeout(() => handleOpenSection("dates"), 300);
+                          }
+                        }}
+                        className={`relative overflow-hidden rounded-xl aspect-square group ${
+                          selectedCity === dest.city ? "ring-2 ring-gray-900" : ""
+                        }`}
+                      >
+                        <img
+                          src={dest.image}
+                          alt={dest.city}
+                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                        <div className="absolute bottom-0 left-0 right-0 p-2">
+                          <p className="text-white font-semibold text-xs">{dest.city}</p>
+                          <p className="text-white/80 text-[10px]">{dest.country}</p>
+                        </div>
+                        {selectedCity === dest.city && (
+                          <div className="absolute top-1.5 right-1.5 w-5 h-5 bg-gray-900 rounded-full flex items-center justify-center">
+                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
