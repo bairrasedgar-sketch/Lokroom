@@ -475,32 +475,26 @@ export default async function ListingsPage({
             </div>
           )}
 
-          {/* Liste des annonces */}
-          {listingsWithPrice.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
-              {t.emptyState}
-            </div>
-          ) : (
-            <ListingsWithMap
-              listings={listingsWithPrice.map(({ listing, priceLabel }) => ({
-                ...listing,
-                priceLabel,
-              }))}
-              markers={markers}
-              translations={{
-                noImage: t.noImage,
-                perNight: t.perNight,
-                noLocation: t.noLocation,
-                hostLabel: t.hostLabel,
-                defaultHostName: t.defaultHostName,
-                publishedOnPrefix: t.publishedOnPrefix,
-              }}
-              searchParams={searchParams as Record<string, string>}
-              displayCurrency={displayCurrency}
-              currentPage={page}
-              totalPages={pageCount}
-            />
-          )}
+          {/* Liste des annonces - toujours afficher la carte même sans résultats */}
+          <ListingsWithMap
+            listings={listingsWithPrice.map(({ listing, priceLabel }) => ({
+              ...listing,
+              priceLabel,
+            }))}
+            markers={markers}
+            translations={{
+              noImage: t.noImage,
+              perNight: t.perNight,
+              noLocation: t.noLocation,
+              hostLabel: t.hostLabel,
+              defaultHostName: t.defaultHostName,
+              publishedOnPrefix: t.publishedOnPrefix,
+            }}
+            searchParams={searchParams as Record<string, string>}
+            displayCurrency={displayCurrency}
+            currentPage={page}
+            totalPages={pageCount}
+          />
         </div>
       </main>
     </>
