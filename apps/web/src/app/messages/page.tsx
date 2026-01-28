@@ -876,8 +876,8 @@ Posez-moi vos questions sur :
   }
 
   return (
-    <main className="h-[calc(100vh-64px)] sm:h-[calc(100vh-72px)] bg-white">
-      <div className="mx-auto flex h-full max-w-7xl 2xl:max-w-[1600px] 3xl:max-w-[1920px]">
+    <main className="h-[calc(100vh-64px)] sm:h-[calc(100vh-72px)] bg-white overflow-hidden">
+      <div className="mx-auto flex h-full max-w-7xl 2xl:max-w-[1600px] 3xl:max-w-[1920px] overflow-hidden">
         {/* Sidebar - Conversations List */}
         <aside
           className={`flex h-full w-full flex-col border-r border-gray-100 bg-white lg:w-[400px] xl:w-[420px] 2xl:w-[450px] ${
@@ -1196,7 +1196,7 @@ Posez-moi vos questions sur :
 
         {/* Chat Area */}
         <section
-          className={`flex flex-1 flex-col bg-gray-50 ${
+          className={`flex flex-1 flex-col bg-gray-50 overflow-hidden ${
             showMobileChat ? "flex" : "hidden lg:flex"
           }`}
         >
