@@ -62,6 +62,9 @@ type MapProps = {
 
   /** Si true, ne pas faire fitBounds quand les markers changent (utile après un fetch basé sur la carte) */
   skipFitBounds?: boolean;
+
+  /** PlaceId Google pour centrer la carte sur un lieu précis avec zoom adaptatif */
+  placeId?: string;
 };
 
 const DEFAULT_CENTER = { lat: 45.5019, lng: -73.5674 }; // Montréal
@@ -292,6 +295,7 @@ export default function Map({
   panOnHover = true,
   onBoundsChange,
   skipFitBounds = false,
+  placeId,
 }: MapProps) {
   const { isLoaded: scriptLoaded, loadError: scriptError } = useGoogleMaps();
 
@@ -546,6 +550,53 @@ export default function Map({
     // Ne pas recentrer si on a panOnHover=false (mode listings)
     // Le panOnHover est déjà vérifié en haut
   }, [hoveredId, markers, panOnHover]);
+
+  // === EFFET 4: Centrer sur un placeId avec zoom adaptatif ===
+  useEffect(() => {
+    if (!placeId || !mapRef.current) return;
+
+    const g = (window as WindowWithGoogle).google;
+    if (!g?.maps?.places?.PlacesService) return;
+
+    const map = mapRef.current;
+    const service = new g.maps.places.PlacesService(map);
+
+    service.getDetails(
+      { placeId, fields: ["geometry", "types"] },
+      (place, status) => {
+        if (status !== g.maps.places.PlacesServiceStatus.OK || !place?.geometry) return;
+
+        const location = place.geometry.location;
+        const viewport = place.geometry.viewport;
+        const types = place.types || [];
+
+        if (viewport) {
+          // Utiliser le viewport fourni par Google (zoom adaptatif automatique)
+          map.fitBounds(viewport);
+        } else if (location) {
+          // Fallback: centrer avec un zoom basé sur le type
+          let zoom = 14; // Par défaut (adresse précise)
+
+          if (types.includes("country")) {
+            zoom = 5;
+          } else if (types.includes("administrative_area_level_1")) {
+            zoom = 7; // Région/Province
+          } else if (types.includes("administrative_area_level_2")) {
+            zoom = 9; // Département
+          } else if (types.includes("locality") || types.includes("postal_town")) {
+            zoom = 12; // Ville
+          } else if (types.includes("sublocality") || types.includes("neighborhood")) {
+            zoom = 14; // Quartier
+          } else if (types.includes("route") || types.includes("street_address")) {
+            zoom = 16; // Rue/Adresse
+          }
+
+          map.setCenter(location);
+          map.setZoom(zoom);
+        }
+      }
+    );
+  }, [placeId]);
 
   if (scriptError) {
     return (

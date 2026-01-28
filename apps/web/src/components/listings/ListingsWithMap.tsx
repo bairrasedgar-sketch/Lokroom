@@ -1055,6 +1055,7 @@ export default function ListingsWithMap({
           onMarkerHover={setHoveredId}
           onBoundsChange={handleBoundsChange}
           skipFitBounds={skipFitBounds}
+          placeId={searchParams.placeId}
         />
 
         {/* Indicateur de mode recherche sur la carte */}
@@ -1085,6 +1086,7 @@ export default function ListingsWithMap({
             }}
             onBoundsChange={handleBoundsChange}
             skipFitBounds={skipFitBounds}
+            placeId={searchParams.placeId}
           />
         </div>
 
