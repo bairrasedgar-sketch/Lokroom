@@ -1384,8 +1384,8 @@ Posez-moi vos questions sur :
                 </div>
               )}
 
-              {/* Messages - Mobile: Ultra compact / Desktop: Full */}
-              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-3 py-2 lg:px-6 lg:py-6">
+              {/* Messages - Mobile: Ultra compact, messages at bottom / Desktop: Full */}
+              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-3 py-2 lg:px-6 lg:py-6 flex flex-col justify-end">
                 {/* Bot Messages */}
                 {selectedConvId === SUPPORT_BOT_ID ? (
                   <div className="space-y-2 lg:space-y-4">
