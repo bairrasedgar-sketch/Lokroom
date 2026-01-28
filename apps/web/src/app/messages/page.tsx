@@ -540,21 +540,12 @@ Posez-moi vos questions sur :
     }
   }, []);
 
-  // Scroll when messages change, but only if we're near the bottom already
+  // Scroll when messages change - ALWAYS scroll to bottom on new message
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const container = messagesContainerRef.current;
-    if (!container) {
-      scrollToBottom();
-      return;
-    }
-
-    // Only auto-scroll if user is near the bottom (within 150px)
-    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 150;
-    if (isNearBottom) {
-      scrollToBottom();
-    }
+    // Always scroll to bottom when messages change
+    scrollToBottom();
   }, [messages, botMessages, scrollToBottom]);
 
   // Auto-scroll to bottom when opening a conversation (mobile)
@@ -1384,8 +1375,8 @@ Posez-moi vos questions sur :
                 </div>
               )}
 
-              {/* Messages - Scrollable area between fixed header and input */}
-              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-3 py-2 lg:px-6 lg:py-6">
+              {/* Messages - ONLY this area scrolls */}
+              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto overscroll-contain px-3 py-2 lg:px-6 lg:py-6">
                 {/* Bot Messages */}
                 {selectedConvId === SUPPORT_BOT_ID ? (
                   <div className="space-y-2 lg:space-y-4">
