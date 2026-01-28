@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import Image from "next/image";
+import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import useTranslation from "@/hooks/useTranslation";
 
@@ -64,6 +65,11 @@ type ProfileTranslations = typeof import("@/locales/fr").default.profile;
 export default function ProfilePage() {
   const { dict, locale } = useTranslation();
   const t = dict.profile;
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Mode aperçu (lecture seule)
+  const isPreviewMode = searchParams.get("preview") === "true";
 
   const [user, setUser] = useState<UserDTO | null>(null);
   const [initial, setInitial] = useState<UserDTO | null>(null);
@@ -425,6 +431,24 @@ export default function ProfilePage() {
 
   return (
     <main className="mx-auto max-w-6xl 2xl:max-w-7xl bg-gray-50 lg:bg-transparent min-h-screen lg:min-h-0 px-0 lg:px-8 pb-8 sm:pb-12 pt-0 lg:pt-10">
+      {/* Bandeau mode aperçu sur mobile */}
+      {isPreviewMode && (
+        <div className="lg:hidden sticky top-0 z-20 bg-gray-900 text-white px-4 py-3 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => router.push("/account")}
+            className="flex items-center gap-2 text-sm font-medium"
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Retour
+          </button>
+          <span className="text-sm text-gray-300">Aperçu de votre profil</span>
+          <div className="w-16" /> {/* Spacer pour centrer le texte */}
+        </div>
+      )}
+
       {/* Layout principal */}
       <div className="flex flex-col lg:flex-row gap-0 lg:gap-10">
         {/* Colonne gauche – menu comme Airbnb (desktop only) */}
@@ -537,14 +561,16 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Bouton Modifier le profil - pleine largeur */}
-            <button
-              type="button"
-              onClick={() => setProfileEditRequested(true)}
-              className="mt-6 w-full rounded-xl border-2 border-gray-900 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-900 hover:text-white transition-colors"
-            >
-              {t.editProfile}
-            </button>
+            {/* Bouton Modifier le profil - pleine largeur (caché en mode aperçu) */}
+            {!isPreviewMode && (
+              <button
+                type="button"
+                onClick={() => setProfileEditRequested(true)}
+                className="mt-6 w-full rounded-xl border-2 border-gray-900 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-900 hover:text-white transition-colors"
+              >
+                {t.editProfile}
+              </button>
+            )}
           </div>
 
           {/* Navigation onglets mobile */}
@@ -620,6 +646,7 @@ export default function ProfilePage() {
               status={status}
               profileEditRequested={profileEditRequested}
               onConsumeProfileEdit={() => setProfileEditRequested(false)}
+              isPreviewMode={isPreviewMode}
             />
           ) : (
             <TripsSection t={t} trips={trips} loading={tripsLoading} />
@@ -683,6 +710,7 @@ type AboutProps = {
   status: "idle" | "saved" | "error";
   profileEditRequested: boolean;
   onConsumeProfileEdit: () => void;
+  isPreviewMode?: boolean;
 };
 
 function AboutSection(props: AboutProps) {
@@ -726,6 +754,7 @@ function AboutSection(props: AboutProps) {
     status,
     profileEditRequested,
     onConsumeProfileEdit,
+    isPreviewMode = false,
   } = props;
 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -1064,16 +1093,18 @@ function AboutSection(props: AboutProps) {
           </div>
         </div>
 
-        {/* Bulle 2 : Modifier mes infos publiques en bas à droite */}
-        <div className="mt-4 flex justify-center lg:justify-end">
-          <button
-            type="button"
-            onClick={() => setIsEditingPublic(true)}
-            className="w-full lg:w-auto rounded-xl lg:rounded-full border border-gray-300 px-4 py-3 lg:py-2 text-sm font-medium hover:border-black hover:text-black"
-          >
-            {t.editPublicInfo}
-          </button>
-        </div>
+        {/* Bulle 2 : Modifier mes infos publiques en bas à droite (caché en mode aperçu) */}
+        {!isPreviewMode && (
+          <div className="mt-4 flex justify-center lg:justify-end">
+            <button
+              type="button"
+              onClick={() => setIsEditingPublic(true)}
+              className="w-full lg:w-auto rounded-xl lg:rounded-full border border-gray-300 px-4 py-3 lg:py-2 text-sm font-medium hover:border-black hover:text-black"
+            >
+              {t.editPublicInfo}
+            </button>
+          </div>
+        )}
       </section>
 
       {/* Bloc "Commentaires sur moi" */}
