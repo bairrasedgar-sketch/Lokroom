@@ -138,7 +138,7 @@ export default function LocationAutocomplete({
     service.getPlacePredictions(
       {
         input: query,
-        types: ["(cities)"],
+        types: ["geocode"],
         componentRestrictions: { country: ["fr", "ca"] }, // France et Canada
       },
       (predictions, status) => {

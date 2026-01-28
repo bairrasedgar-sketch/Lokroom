@@ -567,11 +567,10 @@ export default function Map({
         if (status !== g.maps.places.PlacesServiceStatus.OK || !place?.geometry) return;
 
         const location = place.geometry.location;
-        const viewport = place.geometry.viewport;
         const types = place.types || [];
 
-        // Zoom basé sur le type, mais jamais trop proche (max 14 = niveau quartier)
-        let zoom = 14;
+        // Zoom basé sur le type - toujours montrer une vue large pour trouver des annonces
+        let zoom = 12; // Par défaut niveau ville
 
         if (types.includes("country")) {
           zoom = 5;
@@ -581,22 +580,14 @@ export default function Map({
           zoom = 9; // Département
         } else if (types.includes("locality") || types.includes("postal_town")) {
           zoom = 12; // Ville
+        } else if (types.includes("sublocality") || types.includes("neighborhood")) {
+          zoom = 13; // Quartier - un peu plus large
         } else {
-          // Quartier, rue, adresse → toujours niveau quartier (14) pour la sécurité
-          zoom = 14;
+          // Rue, adresse → niveau ville pour avoir des résultats
+          zoom = 12;
         }
 
-        if (viewport && zoom >= 12) {
-          // Pour les grandes zones (pays, région), utiliser le viewport
-          map.fitBounds(viewport);
-          // Limiter le zoom max après fitBounds
-          g.maps.event.addListenerOnce(map, "idle", () => {
-            const currentZoom = map.getZoom();
-            if (currentZoom && currentZoom > 14) {
-              map.setZoom(14);
-            }
-          });
-        } else if (location) {
+        if (location) {
           map.setCenter(location);
           map.setZoom(zoom);
         }
