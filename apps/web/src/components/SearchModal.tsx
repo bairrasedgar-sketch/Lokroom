@@ -89,6 +89,24 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
   // Section ouverte (accordéon) - null = toutes fermées
   const [openSection, setOpenSection] = useState<"dates" | "guests" | null>(null);
 
+  // Refs pour le scroll automatique
+  const datesRef = useRef<HTMLDivElement>(null);
+  const guestsRef = useRef<HTMLDivElement>(null);
+
+  // Fonction pour ouvrir une section avec scroll
+  const handleOpenSection = (section: "dates" | "guests") => {
+    if (openSection === section) {
+      setOpenSection(null);
+    } else {
+      setOpenSection(section);
+      // Scroll vers la section après un petit délai pour laisser l'animation commencer
+      setTimeout(() => {
+        const ref = section === "dates" ? datesRef : guestsRef;
+        ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
+    }
+  };
+
   // Total des voyageurs (hors animaux)
   const totalGuests = adults + children;
 
@@ -420,9 +438,9 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
           </div>
 
           {/* Section Dates - Accordéon */}
-          <div className="px-4 py-2">
+          <div ref={datesRef} className="px-4 py-2">
             <button
-              onClick={() => setOpenSection(openSection === "dates" ? null : "dates")}
+              onClick={() => handleOpenSection("dates")}
               className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all ${
                 openSection === "dates" ? "bg-gray-100" : "bg-gray-50 hover:bg-gray-100"
               }`}
@@ -443,14 +461,16 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
                   </p>
                 </div>
               </div>
-              <svg className={`w-5 h-5 text-gray-400 transition-transform ${openSection === "dates" ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${openSection === "dates" ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </button>
 
-            {/* Contenu dates - visible si ouvert */}
-            {openSection === "dates" && (
-              <div className="mt-3 space-y-3">
+            {/* Contenu dates - avec animation */}
+            <div className={`overflow-hidden transition-all duration-300 ease-out ${
+              openSection === "dates" ? "max-h-[600px] opacity-100 mt-3" : "max-h-0 opacity-0"
+            }`}>
+              <div className="space-y-3">
                 {/* Toggle Jour/Heure */}
                 <div className="flex p-1 bg-gray-100 rounded-xl">
               <button
@@ -606,13 +626,13 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
               </div>
             )}
               </div>
-            )}
+            </div>
           </div>
 
           {/* Section Voyageurs - Accordéon */}
-          <div className="px-4 py-2">
+          <div ref={guestsRef} className="px-4 py-2">
             <button
-              onClick={() => setOpenSection(openSection === "guests" ? null : "guests")}
+              onClick={() => handleOpenSection("guests")}
               className={`w-full flex items-center justify-between p-3 rounded-2xl transition-all ${
                 openSection === "guests" ? "bg-gray-100" : "bg-gray-50 hover:bg-gray-100"
               }`}
@@ -630,14 +650,16 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
                   </p>
                 </div>
               </div>
-              <svg className={`w-5 h-5 text-gray-400 transition-transform ${openSection === "guests" ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${openSection === "guests" ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
               </svg>
             </button>
 
-            {/* Contenu voyageurs - visible si ouvert */}
-            {openSection === "guests" && (
-              <div className="mt-3 space-y-0">
+            {/* Contenu voyageurs - avec animation */}
+            <div className={`overflow-hidden transition-all duration-300 ease-out ${
+              openSection === "guests" ? "max-h-[400px] opacity-100 mt-3" : "max-h-0 opacity-0"
+            }`}>
+              <div className="space-y-0">
               {/* Adultes */}
               <div className="flex items-center justify-between py-3 border-b border-gray-100">
                 <div className="flex items-center gap-2">
@@ -746,7 +768,7 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
                 </div>
               </div>
             </div>
-            )}
+            </div>
           </div>
         </div>
 
