@@ -162,8 +162,6 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
       // Sélection de la date de fin
       setEndDate(dateStr);
       setSelectingEnd(false);
-      // Auto-avancer vers les voyageurs
-      setTimeout(() => handleOpenSection("guests"), 300);
     } else if (dateStr === startDate) {
       // Clic sur la même date = reset
       setStartDate("");
@@ -646,6 +644,14 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
                 </div>
               </div>
             )}
+
+                {/* Bouton Suivant */}
+                <button
+                  onClick={() => handleOpenSection("guests")}
+                  className="w-full mt-4 py-3 bg-gray-900 text-white rounded-xl text-sm font-semibold hover:bg-gray-800 transition-colors"
+                >
+                  Suivant
+                </button>
               </div>
             </div>
           </div>
