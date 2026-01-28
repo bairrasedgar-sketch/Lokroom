@@ -308,9 +308,9 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
         {/* Contenu scrollable */}
         <div className="overflow-y-auto h-[calc(100vh-140px)] pb-4">
           {/* Section Catégories - Scroll horizontal */}
-          <div className="px-4 pt-4 pb-2">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Que recherchez-vous ?</h3>
-            <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+          <div className="px-4 pt-3 pb-1">
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">Que recherchez-vous ?</h3>
+            <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-hide">
               {CATEGORIES.map((cat) => (
                 <button
                   key={cat.key}
@@ -323,7 +323,7 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
                       setTimeout(() => setAnimatingCategory(null), 600);
                     }
                   }}
-                  className={`flex flex-col items-center gap-1.5 px-3 py-2 rounded-xl transition-all flex-shrink-0 min-w-[70px] ${
+                  className={`flex flex-col items-center gap-1 px-2.5 py-1.5 rounded-xl transition-all flex-shrink-0 min-w-[65px] ${
                     selectedCategory === cat.key
                       ? "bg-gray-200 text-gray-900 ring-2 ring-gray-900"
                       : "bg-gray-100 text-gray-700"
@@ -334,24 +334,23 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
                     isActive={selectedCategory === cat.key}
                     isAnimating={animatingCategory === cat.key}
                   />
-                  <span className="text-[10px] font-medium whitespace-nowrap">{cat.label}</span>
+                  <span className="text-[9px] font-medium whitespace-nowrap">{cat.label}</span>
                 </button>
               ))}
             </div>
           </div>
 
           {/* Section Destination */}
-          <div className="px-4 py-3">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-rose-100 to-rose-50 rounded-2xl">
-                <svg className="w-6 h-6 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <div className="px-4 py-2">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-rose-100 to-rose-50 rounded-xl">
+                <svg className="w-4 h-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </div>
               <div>
-                <h2 className="text-base font-semibold text-gray-900">Où allez-vous ?</h2>
-                <p className="text-sm text-gray-500">Choisissez votre destination</p>
+                <h2 className="text-sm font-semibold text-gray-900">Où allez-vous ?</h2>
               </div>
             </div>
 
@@ -418,27 +417,26 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
           </div>
 
           {/* Séparateur */}
-          <div className="h-2 bg-gray-50" />
+          <div className="h-1 bg-gray-50" />
 
           {/* Section Dates */}
-          <div className="px-4 py-5">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-50 rounded-2xl">
-                <svg className="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <div className="px-4 py-3">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-blue-100 to-blue-50 rounded-xl">
+                <svg className="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
               <div>
-                <h2 className="text-base font-semibold text-gray-900">Quand ?</h2>
-                <p className="text-sm text-gray-500">Sélectionnez vos dates</p>
+                <h2 className="text-sm font-semibold text-gray-900">Quand ?</h2>
               </div>
             </div>
 
             {/* Toggle Jour/Heure */}
-            <div className="flex p-1 bg-gray-100 rounded-xl mb-4">
+            <div className="flex p-1 bg-gray-100 rounded-xl mb-3">
               <button
                 onClick={() => setBookingMode("days")}
-                className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
                   bookingMode === "days" ? "bg-white shadow-sm text-gray-900" : "text-gray-500"
                 }`}
               >
@@ -446,7 +444,7 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
               </button>
               <button
                 onClick={() => setBookingMode("hours")}
-                className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
                   bookingMode === "hours" ? "bg-white shadow-sm text-gray-900" : "text-gray-500"
                 }`}
               >
@@ -455,7 +453,7 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
             </div>
 
             {/* Sélection rapide de dates */}
-            <div className="flex gap-2 mb-4 overflow-x-auto pb-2 -mx-4 px-4">
+            <div className="flex gap-2 mb-3 overflow-x-auto pb-1 -mx-4 px-4">
               {[
                 { label: "Aujourd'hui", date: today },
                 { label: "Demain", date: new Date(Date.now() + 86400000).toISOString().split("T")[0] },
@@ -591,53 +589,52 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
           </div>
 
           {/* Séparateur */}
-          <div className="h-2 bg-gray-50" />
+          <div className="h-1 bg-gray-50" />
 
           {/* Section Voyageurs */}
-          <div className="px-4 py-5">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-amber-100 to-amber-50 rounded-2xl">
-                <svg className="w-6 h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <div className="px-4 py-3">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center justify-center w-8 h-8 bg-gradient-to-br from-amber-100 to-amber-50 rounded-xl">
+                <svg className="w-4 h-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
               <div>
-                <h2 className="text-base font-semibold text-gray-900">Qui voyage ?</h2>
-                <p className="text-sm text-gray-500">Nombre de voyageurs</p>
+                <h2 className="text-sm font-semibold text-gray-900">Qui voyage ?</h2>
               </div>
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-0">
               {/* Adultes */}
-              <div className="flex items-center justify-between py-4 border-b border-gray-100">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
-                    <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <svg className="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">Adultes</p>
-                    <p className="text-xs text-gray-500">13 ans et plus</p>
+                    <p className="text-sm font-medium text-gray-900">Adultes</p>
+                    <p className="text-[10px] text-gray-500">13 ans et plus</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <button
                     onClick={() => setAdults(Math.max(1, adults - 1))}
                     disabled={adults <= 1}
-                    className="w-10 h-10 rounded-xl border-2 border-gray-200 flex items-center justify-center text-gray-600 disabled:opacity-30 transition-colors hover:border-gray-400"
+                    className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-600 disabled:opacity-30 transition-colors"
                   >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
                     </svg>
                   </button>
-                  <span className="w-8 text-center text-lg font-semibold">{adults}</span>
+                  <span className="w-6 text-center text-sm font-semibold">{adults}</span>
                   <button
                     onClick={() => setAdults(Math.min(16, adults + 1))}
                     disabled={adults >= 16}
-                    className="w-10 h-10 rounded-xl border-2 border-gray-200 flex items-center justify-center text-gray-600 disabled:opacity-30 transition-colors hover:border-gray-400"
+                    className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-600 disabled:opacity-30 transition-colors"
                   >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                     </svg>
                   </button>
@@ -645,35 +642,35 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
               </div>
 
               {/* Enfants */}
-              <div className="flex items-center justify-between py-4 border-b border-gray-100">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
-                    <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <svg className="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">Enfants</p>
-                    <p className="text-xs text-gray-500">2 à 12 ans</p>
+                    <p className="text-sm font-medium text-gray-900">Enfants</p>
+                    <p className="text-[10px] text-gray-500">2 à 12 ans</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <button
                     onClick={() => setChildren(Math.max(0, children - 1))}
                     disabled={children <= 0}
-                    className="w-10 h-10 rounded-xl border-2 border-gray-200 flex items-center justify-center text-gray-600 disabled:opacity-30 transition-colors hover:border-gray-400"
+                    className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-600 disabled:opacity-30 transition-colors"
                   >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
                     </svg>
                   </button>
-                  <span className="w-8 text-center text-lg font-semibold">{children}</span>
+                  <span className="w-6 text-center text-sm font-semibold">{children}</span>
                   <button
                     onClick={() => setChildren(Math.min(10, children + 1))}
                     disabled={children >= 10}
-                    className="w-10 h-10 rounded-xl border-2 border-gray-200 flex items-center justify-center text-gray-600 disabled:opacity-30 transition-colors hover:border-gray-400"
+                    className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-600 disabled:opacity-30 transition-colors"
                   >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                     </svg>
                   </button>
@@ -681,35 +678,35 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
               </div>
 
               {/* Animaux */}
-              <div className="flex items-center justify-between py-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
-                    <svg className="w-5 h-5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+              <div className="flex items-center justify-between py-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <svg className="w-4 h-4 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3.744h-.753c-1.036 0-1.896.85-1.683 1.865A4.498 4.498 0 005.749 9.5c.566 0 1.105-.108 1.601-.306m-2.6-5.45c.396-.347.878-.586 1.403-.708M6.75 3.744V1.5m0 2.244a3.001 3.001 0 013 3V9.5m-3-5.756V1.5m0 2.244c-.525.122-1.007.361-1.403.708M17.25 3.744h.753c1.036 0 1.896.85 1.683 1.865a4.498 4.498 0 01-1.435 3.891 4.498 4.498 0 01-1.601-.306m2.6-5.45a3.001 3.001 0 00-1.403-.708m1.403.708V1.5m0 2.244a3.001 3.001 0 00-3 3V9.5m3-5.756V1.5m0 2.244c.525.122 1.007.361 1.403.708M12 12.75a3 3 0 110-6 3 3 0 010 6zm0 0v6.75m-3-3.75h6" />
                     </svg>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">Animaux</p>
-                    <p className="text-xs text-gray-500">Chiens, chats...</p>
+                    <p className="text-sm font-medium text-gray-900">Animaux</p>
+                    <p className="text-[10px] text-gray-500">Chiens, chats...</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <button
                     onClick={() => setPets(Math.max(0, pets - 1))}
                     disabled={pets <= 0}
-                    className="w-10 h-10 rounded-xl border-2 border-gray-200 flex items-center justify-center text-gray-600 disabled:opacity-30 transition-colors hover:border-gray-400"
+                    className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-600 disabled:opacity-30 transition-colors"
                   >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
                     </svg>
                   </button>
-                  <span className="w-8 text-center text-lg font-semibold">{pets}</span>
+                  <span className="w-6 text-center text-sm font-semibold">{pets}</span>
                   <button
                     onClick={() => setPets(Math.min(5, pets + 1))}
                     disabled={pets >= 5}
-                    className="w-10 h-10 rounded-xl border-2 border-gray-200 flex items-center justify-center text-gray-600 disabled:opacity-30 transition-colors hover:border-gray-400"
+                    className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-gray-600 disabled:opacity-30 transition-colors"
                   >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                     </svg>
                   </button>
