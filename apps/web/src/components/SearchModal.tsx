@@ -309,7 +309,10 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
         <div className="overflow-y-auto h-[calc(100vh-140px)] pb-4">
           {/* Section Catégories - Scroll horizontal */}
           <div className="px-4 pt-2 pb-2">
-            <h3 className="text-sm font-semibold text-gray-700 mb-2">Que recherchez-vous ?</h3>
+            <div className="flex items-baseline gap-2 mb-2">
+              <h3 className="text-sm font-semibold text-gray-700">Que recherchez-vous ?</h3>
+              <span className="text-xs text-gray-400">+12 catégories</span>
+            </div>
             <div className="flex gap-2 overflow-x-auto py-1 -mx-4 px-4 scrollbar-hide">
               {CATEGORIES.map((cat) => (
                 <button
