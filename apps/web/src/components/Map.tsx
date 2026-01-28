@@ -570,27 +570,33 @@ export default function Map({
         const viewport = place.geometry.viewport;
         const types = place.types || [];
 
-        if (viewport) {
-          // Utiliser le viewport fourni par Google (zoom adaptatif automatique)
+        // Zoom basé sur le type, mais jamais trop proche (max 14 = niveau quartier)
+        let zoom = 14;
+
+        if (types.includes("country")) {
+          zoom = 5;
+        } else if (types.includes("administrative_area_level_1")) {
+          zoom = 7; // Région/Province
+        } else if (types.includes("administrative_area_level_2")) {
+          zoom = 9; // Département
+        } else if (types.includes("locality") || types.includes("postal_town")) {
+          zoom = 12; // Ville
+        } else {
+          // Quartier, rue, adresse → toujours niveau quartier (14) pour la sécurité
+          zoom = 14;
+        }
+
+        if (viewport && zoom >= 12) {
+          // Pour les grandes zones (pays, région), utiliser le viewport
           map.fitBounds(viewport);
+          // Limiter le zoom max après fitBounds
+          g.maps.event.addListenerOnce(map, "idle", () => {
+            const currentZoom = map.getZoom();
+            if (currentZoom && currentZoom > 14) {
+              map.setZoom(14);
+            }
+          });
         } else if (location) {
-          // Fallback: centrer avec un zoom basé sur le type
-          let zoom = 14; // Par défaut (adresse précise)
-
-          if (types.includes("country")) {
-            zoom = 5;
-          } else if (types.includes("administrative_area_level_1")) {
-            zoom = 7; // Région/Province
-          } else if (types.includes("administrative_area_level_2")) {
-            zoom = 9; // Département
-          } else if (types.includes("locality") || types.includes("postal_town")) {
-            zoom = 12; // Ville
-          } else if (types.includes("sublocality") || types.includes("neighborhood")) {
-            zoom = 14; // Quartier
-          } else if (types.includes("route") || types.includes("street_address")) {
-            zoom = 16; // Rue/Adresse
-          }
-
           map.setCenter(location);
           map.setZoom(zoom);
         }
