@@ -279,7 +279,183 @@ export default async function ListingDetailPage({
         }}
       />
 
-      <main className="mx-auto flex max-w-6xl 2xl:max-w-7xl 3xl:max-w-[1600px] flex-col gap-4 sm:gap-6 px-3 sm:px-4 lg:px-6 xl:px-8 pb-8 sm:pb-12 pt-4 sm:pt-6">
+      {/* ========== VERSION MOBILE ========== */}
+      <div className="lg:hidden min-h-screen bg-white pb-24">
+        {/* Galerie avec header overlay */}
+        <div className="relative">
+          {/* Header sticky sur l'image */}
+          <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4 pt-4 pb-8 bg-gradient-to-b from-black/40 to-transparent">
+            <Link
+              href="/listings"
+              className="flex items-center justify-center h-9 w-9 rounded-full bg-white/90 backdrop-blur-sm shadow-sm"
+            >
+              <svg className="h-5 w-5 text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </Link>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="flex items-center justify-center h-9 w-9 rounded-full bg-white/90 backdrop-blur-sm shadow-sm"
+              >
+                <svg className="h-5 w-5 text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
+                </svg>
+              </button>
+              <FavoriteButton listingId={listing.id} />
+            </div>
+          </div>
+
+          {/* Galerie */}
+          <div className="aspect-[4/3] bg-gray-100">
+            <ListingGallery images={listing.images ?? []} aspect={4 / 3} />
+          </div>
+        </div>
+
+        {/* Contenu */}
+        <div className="px-4">
+          {/* Titre et localisation */}
+          <div className="py-4 border-b border-gray-100">
+            <div className="flex items-start justify-between gap-2">
+              <h1 className="text-xl font-semibold text-gray-900">{listing.title}</h1>
+              {listing.isInstantBook && (
+                <InstantBookBadge size="sm" showTooltip={false} />
+              )}
+            </div>
+            <p className="mt-1 text-sm text-gray-500">{locationLabel}</p>
+            {listing.reviewSummary && listing.reviewSummary.count > 0 && (
+              <div className="mt-2 flex items-center gap-1">
+                <svg className="h-4 w-4 text-gray-900" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+                <span className="text-sm font-medium text-gray-900">{listing.reviewSummary.avgRating?.toFixed(1)}</span>
+                <span className="text-sm text-gray-500">({listing.reviewSummary.count} {listing.reviewSummary.count === 1 ? 'avis' : 'avis'})</span>
+              </div>
+            )}
+          </div>
+
+          {/* Hôte */}
+          <div className="py-4 border-b border-gray-100">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gray-900 text-white text-lg font-semibold">
+                {(listing.owner.name?.[0] || "?").toUpperCase()}
+              </div>
+              <div>
+                <p className="text-base font-medium text-gray-900">
+                  {t.listingDetail.hostedBy} {listing.owner.name || t.listingDetail.hostLokroom}
+                </p>
+                <p className="text-sm text-gray-500">{t.listingDetail.respondsIn}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="py-4 border-b border-gray-100">
+            <h2 className="text-base font-semibold text-gray-900 mb-2">{t.listingDetail.aboutSpace}</h2>
+            <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
+              {listing.description || t.listingDetail.noDescription}
+            </p>
+          </div>
+
+          {/* Ce que propose ce logement */}
+          {listing.amenities && listing.amenities.length > 0 && (
+            <div className="py-4 border-b border-gray-100">
+              <h2 className="text-base font-semibold text-gray-900 mb-3">Équipements</h2>
+              <div className="grid grid-cols-2 gap-3">
+                {listing.amenities.slice(0, 6).map((amenity) => (
+                  <div key={amenity.key} className="flex items-center gap-2 text-sm text-gray-700">
+                    <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    <span>{amenity.label}</span>
+                  </div>
+                ))}
+              </div>
+              {listing.amenities.length > 6 && (
+                <button className="mt-3 text-sm font-medium text-gray-900 underline">
+                  Voir les {listing.amenities.length} équipements
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Localisation */}
+          {hasCoords && (
+            <div className="py-4 border-b border-gray-100">
+              <h2 className="text-base font-semibold text-gray-900 mb-2">{t.listingDetail.approximateLocation}</h2>
+              <p className="text-xs text-gray-500 mb-3">{t.listingDetail.exactLocationNote}</p>
+              <div className="h-48 w-full overflow-hidden rounded-2xl border border-gray-200 bg-gray-100">
+                <Map
+                  useLogoIcon
+                  markers={[
+                    {
+                      id: listing.id,
+                      lat: lat as number,
+                      lng: lng as number,
+                      label: priceFormatted,
+                    },
+                  ]}
+                />
+              </div>
+              <p className="mt-2 text-sm text-gray-600">{locationLabel}</p>
+            </div>
+          )}
+
+          {/* Avis */}
+          <div className="py-4 border-b border-gray-100">
+            <ListingReviews listingId={listing.id} />
+          </div>
+
+          {/* Politique d'annulation */}
+          <div className="py-4 border-b border-gray-100">
+            <h2 className="text-base font-semibold text-gray-900 mb-2">{t.listingDetail.cancellationPolicy}</h2>
+            <p className="text-sm text-gray-600">{t.listingDetail.cancellationPolicyDesc}</p>
+          </div>
+
+          {/* Règles */}
+          <div className="py-4">
+            <h2 className="text-base font-semibold text-gray-900 mb-2">{t.listingDetail.spaceRules}</h2>
+            <p className="text-sm text-gray-600">{t.listingDetail.spaceRulesDesc}</p>
+          </div>
+
+          {/* Actions propriétaire mobile */}
+          {isOwner && (
+            <div className="py-4 flex gap-3">
+              <Link
+                href={`/listings/${listing.id}/edit`}
+                className="flex-1 py-3 text-center rounded-xl bg-gray-900 text-white text-sm font-medium"
+              >
+                {t.listingDetail.editListing}
+              </Link>
+              <DeleteListingButton id={listing.id} />
+            </div>
+          )}
+        </div>
+
+        {/* Footer sticky mobile avec prix et bouton réserver */}
+        {!isOwner && (
+          <div className="fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-gray-200 px-4 py-3 pb-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-lg font-semibold text-gray-900">
+                  {priceFormatted}
+                  <span className="text-sm font-normal text-gray-500"> / nuit</span>
+                </p>
+                <p className="text-xs text-gray-500">{t.listingDetail.taxesNote}</p>
+              </div>
+              <Link
+                href={`/listings/${listing.id}#booking`}
+                className="px-6 py-3 bg-gradient-to-r from-rose-500 to-pink-600 text-white text-sm font-semibold rounded-xl shadow-lg"
+              >
+                Réserver
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ========== VERSION DESKTOP (inchangée) ========== */}
+      <main className="hidden lg:flex mx-auto max-w-6xl 2xl:max-w-7xl 3xl:max-w-[1600px] flex-col gap-4 sm:gap-6 px-3 sm:px-4 lg:px-6 xl:px-8 pb-8 sm:pb-12 pt-4 sm:pt-6">
       {/* Ligne retour + date */}
       <div className="flex items-center justify-between text-xs text-gray-600">
         <Link href="/listings" className="hover:underline">
