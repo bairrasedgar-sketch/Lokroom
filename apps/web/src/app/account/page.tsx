@@ -1637,13 +1637,13 @@ function PrivacyTabContent({ t }: { t: AccountTranslations }) {
         role="switch"
         aria-checked={checked}
         onClick={onChange}
-        className={`relative inline-flex h-[28px] w-[52px] items-center flex-shrink-0 cursor-pointer rounded-[9999px] transition-colors duration-200 ease-out ${
+        className={`relative inline-flex h-[31px] w-[51px] items-center flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-out ${
           checked ? "bg-[#34C759]" : "bg-[#E5E5EA]"
         }`}
       >
         <span
-          className={`pointer-events-none inline-block h-[24px] w-[24px] rounded-[9999px] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-transform duration-200 ease-out ${
-            checked ? "translate-x-[26px]" : "translate-x-[2px]"
+          className={`pointer-events-none inline-block h-[27px] w-[27px] rounded-full bg-white shadow-[0_2px_4px_rgba(0,0,0,0.2)] transition-transform duration-200 ease-out ${
+            checked ? "translate-x-[22px]" : "translate-x-[2px]"
           }`}
         />
       </button>
@@ -1797,44 +1797,79 @@ function PrivacyTabContent({ t }: { t: AccountTranslations }) {
 function NotificationsTabContent({ t }: { t: AccountTranslations }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const nT = t.notificationsSection || {} as any;
-  const [unsubscribeAll, setUnsubscribeAll] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  type NotificationPref = "email" | "sms" | "push" | "none";
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [prefs, setPrefs] = useState<Record<string, NotificationPref>>({
-    rewardsAchievements: "email",
-    tipsAndTricks: "email",
-    priceTrends: "email",
-    hostBenefits: "email",
-    newsAndUpdates: "email",
-    localLaws: "email",
-    inspirationOffers: "email",
-    tripPlanning: "email",
-    newsAndPrograms: "email",
-    remarks: "email",
-    travelRegulations: "email",
+  const [notifSettings, setNotifSettings] = useState({
+    rewardsAchievements: true,
+    tipsAndTricks: true,
+    priceTrends: false,
+    hostBenefits: true,
+    newsAndUpdates: true,
+    localLaws: true,
+    inspirationOffers: false,
+    tripPlanning: true,
+    newsAndPrograms: true,
+    remarks: false,
+    travelRegulations: true,
+    unsubscribeAll: false,
   });
+
+  const handleToggle = (key: keyof typeof notifSettings) => {
+    if (key === "unsubscribeAll") {
+      const newValue = !notifSettings.unsubscribeAll;
+      setNotifSettings({
+        rewardsAchievements: !newValue,
+        tipsAndTricks: !newValue,
+        priceTrends: !newValue,
+        hostBenefits: !newValue,
+        newsAndUpdates: !newValue,
+        localLaws: !newValue,
+        inspirationOffers: !newValue,
+        tripPlanning: !newValue,
+        newsAndPrograms: !newValue,
+        remarks: !newValue,
+        travelRegulations: !newValue,
+        unsubscribeAll: newValue,
+      });
+    } else {
+      setNotifSettings(prev => ({
+        ...prev,
+        [key]: !prev[key],
+        unsubscribeAll: false,
+      }));
+    }
+  };
 
   const handleSave = () => {
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const NotificationRow = ({ id, label }: { id: string; label: string }) => (
-    <div className="flex items-center justify-between gap-3 py-3 lg:py-3">
+  const IOSToggle = ({ checked, onChange }: { checked: boolean; onChange: () => void }) => (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={onChange}
+      className={`relative inline-flex h-[31px] w-[51px] items-center flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-out ${
+        checked ? "bg-[#34C759]" : "bg-[#E5E5EA]"
+      }`}
+    >
+      <span
+        className={`pointer-events-none inline-block h-[27px] w-[27px] rounded-full bg-white shadow-[0_2px_4px_rgba(0,0,0,0.2)] transition-transform duration-200 ease-out ${
+          checked ? "translate-x-[22px]" : "translate-x-[2px]"
+        }`}
+      />
+    </button>
+  );
+
+  const NotificationRow = ({ id, label }: { id: keyof typeof notifSettings; label: string }) => (
+    <div className="flex items-center justify-between gap-3 py-3">
       <span className="text-sm text-gray-700 flex-1">{label}</span>
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <span className="text-xs text-gray-500">
-          {prefs[id] === "email" ? (nT.selectedEmail || "Courriels") :
-           prefs[id] === "sms" ? (nT.selectedSms || "SMS") :
-           prefs[id] === "push" ? (nT.selectedPush || "Push") : "Désactivé"}
-        </span>
-        <button className="text-xs font-medium text-gray-900 underline hover:text-gray-700">
-          {nT.modify || "Modifier"}
-        </button>
-      </div>
+      <IOSToggle
+        checked={notifSettings[id]}
+        onChange={() => handleToggle(id)}
+      />
     </div>
   );
 
@@ -1845,7 +1880,7 @@ function NotificationsTabContent({ t }: { t: AccountTranslations }) {
   }: {
     title: string;
     description: string;
-    items: { id: string; label: string }[];
+    items: { id: keyof typeof notifSettings; label: string }[];
   }) => (
     <div className="rounded-2xl border border-gray-200 bg-white p-4 lg:p-6 shadow-sm">
       <h3 className="text-base font-semibold text-gray-900">{title}</h3>
@@ -1906,15 +1941,13 @@ function NotificationsTabContent({ t }: { t: AccountTranslations }) {
 
       {/* Désabonner de tout */}
       <div className="rounded-2xl border border-gray-200 bg-white p-4 lg:p-6 shadow-sm">
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={unsubscribeAll}
-            onChange={(e) => setUnsubscribeAll(e.target.checked)}
-            className="h-5 w-5 lg:h-4 lg:w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-sm text-gray-700">{nT.unsubscribeAll || "Se désabonner de toutes les notifications"}</span>
+          <IOSToggle
+            checked={notifSettings.unsubscribeAll}
+            onChange={() => handleToggle("unsubscribeAll")}
           />
-          <span className="text-sm text-gray-700">{nT.unsubscribeAll || "Se désabonner de tous les courriels promotionnels"}</span>
-        </label>
+        </div>
       </div>
 
       {/* Bouton sauvegarder */}
@@ -2337,13 +2370,13 @@ function TranslationTabContent() {
             aria-checked={autoTranslate}
             onClick={handleAutoTranslateToggle}
             disabled={saving}
-            className={`relative inline-flex h-[28px] w-[52px] items-center flex-shrink-0 cursor-pointer rounded-[9999px] transition-colors duration-200 ease-out ${
+            className={`relative inline-flex h-[31px] w-[51px] items-center flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-out ${
               autoTranslate ? "bg-[#34C759]" : "bg-[#E5E5EA]"
             } ${saving ? "opacity-50 cursor-wait" : ""}`}
           >
             <span
-              className={`pointer-events-none inline-block h-[24px] w-[24px] rounded-[9999px] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-transform duration-200 ease-out ${
-                autoTranslate ? "translate-x-[26px]" : "translate-x-[2px]"
+              className={`pointer-events-none inline-block h-[27px] w-[27px] rounded-full bg-white shadow-[0_2px_4px_rgba(0,0,0,0.2)] transition-transform duration-200 ease-out ${
+                autoTranslate ? "translate-x-[22px]" : "translate-x-[2px]"
               }`}
             />
           </button>
