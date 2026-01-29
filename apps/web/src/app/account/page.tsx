@@ -1641,8 +1641,8 @@ function PrivacyTabContent({ t }: { t: AccountTranslations }) {
         }`}
       >
         <span
-          className={`pointer-events-none inline-block h-6 w-6 lg:h-5 lg:w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-            checked ? "translate-x-5" : "translate-x-0"
+          className={`pointer-events-none inline-block h-6 w-4 lg:h-5 lg:w-4 transform rounded-md bg-white shadow ring-0 transition duration-200 ease-in-out ${
+            checked ? "translate-x-6 lg:translate-x-5" : "translate-x-0.5"
           }`}
         />
       </button>
@@ -2344,8 +2344,8 @@ function TranslationTabContent() {
           >
             <span
               className={[
-                "pointer-events-none inline-block h-6 w-6 lg:h-5 lg:w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
-                autoTranslate ? "translate-x-5" : "translate-x-0",
+                "pointer-events-none inline-block h-6 w-4 lg:h-5 lg:w-4 transform rounded-md bg-white shadow ring-0 transition duration-200 ease-in-out",
+                autoTranslate ? "translate-x-6 lg:translate-x-5" : "translate-x-0.5",
               ].join(" ")}
             />
           </button>
@@ -3070,7 +3070,9 @@ export default function AccountSettingsPage() {
     setActiveTab(id);
     const params = new URLSearchParams(window.location.search);
     params.set("tab", id);
-    router.push(`/account?${params.toString()}`, { scroll: false });
+    router.push(`/account?${params.toString()}`, { scroll: true });
+    // Scroll en haut de la page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (

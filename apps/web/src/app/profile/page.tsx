@@ -1809,7 +1809,7 @@ function PublicProfileView({
           </svg>
           Retour
         </button>
-        <span className="text-sm text-gray-500">Apercu du profil</span>
+        <span className="text-sm text-gray-500">Aperçu du profil</span>
         <div className="w-16" />
       </div>
 
@@ -1824,7 +1824,7 @@ function PublicProfileView({
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
-            Retour aux parametres
+            Retour aux paramètres
           </button>
         </div>
       </div>
@@ -1864,14 +1864,14 @@ function PublicProfileView({
 
           {/* Section Verifications */}
           <div className="px-6 py-5 border-b border-gray-100">
-            <h2 className="text-sm font-semibold text-gray-900 mb-3">Verifications</h2>
+            <h2 className="text-sm font-semibold text-gray-900 mb-3">Vérifications</h2>
             <div className="space-y-2">
               {hasIdentityVerified && (
                 <div className="flex items-center gap-2 text-sm text-gray-700">
                   <svg className="h-5 w-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span>Identite verifiee</span>
+                  <span>Identité vérifiée</span>
                 </div>
               )}
               {hasEmailVerified && (
@@ -1879,7 +1879,7 @@ function PublicProfileView({
                   <svg className="h-5 w-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span>Email verifie</span>
+                  <span>Email vérifié</span>
                 </div>
               )}
               {hasPhoneVerified && (
@@ -1887,7 +1887,7 @@ function PublicProfileView({
                   <svg className="h-5 w-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span>Numero verifie</span>
+                  <span>Numéro vérifié</span>
                 </div>
               )}
             </div>
@@ -1895,7 +1895,7 @@ function PublicProfileView({
 
           {/* Section A propos */}
           <div className="px-6 py-5 border-b border-gray-100">
-            <h2 className="text-sm font-semibold text-gray-900 mb-4">A propos de {fullName.split(' ')[0]}</h2>
+            <h2 className="text-sm font-semibold text-gray-900 mb-4">À propos de {fullName.split(' ')[0]}</h2>
 
             <div className="space-y-4">
               {/* Description */}
@@ -1926,7 +1926,7 @@ function PublicProfileView({
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
                   </svg>
                   <div>
-                    <p className="text-xs text-gray-500 uppercase tracking-wide">Habite a</p>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">Habite à</p>
                     <p className="text-sm text-gray-900">
                       {profile.city}{profile.city && profile.country ? ", " : ""}{profile.country}
                     </p>
@@ -1961,8 +1961,21 @@ function PublicProfileView({
               )}
 
               {/* Message si aucune info */}
-              {!profile?.aboutMe && !profile?.languages && !profile?.city && !profile?.jobTitle && (
-                <p className="text-sm text-gray-400 italic">Aucune information renseignee pour le moment.</p>
+              {!profile?.aboutMe && !profile?.languages && !profile?.city && !profile?.jobTitle && !profile?.interests && (
+                <p className="text-sm text-gray-400 italic">Aucune information renseignée pour le moment.</p>
+              )}
+
+              {/* Centres d'intérêt */}
+              {profile?.interests && (
+                <div className="flex items-start gap-3">
+                  <svg className="h-5 w-5 text-gray-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                  </svg>
+                  <div>
+                    <p className="text-xs text-gray-500 uppercase tracking-wide">Centres d'intérêt</p>
+                    <p className="text-sm text-gray-900">{profile.interests}</p>
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -1992,7 +2005,7 @@ function PublicProfileView({
                       </svg>
                     ))}
                   </div>
-                  <p className="text-sm text-gray-700">"Super experience, je recommande !"</p>
+                  <p className="text-sm text-gray-700">"Super expérience, je recommande !"</p>
                   <p className="mt-2 text-xs text-gray-500">Utilisateur - Janvier 2024</p>
                 </div>
               </div>
@@ -2006,9 +2019,9 @@ function PublicProfileView({
             )}
           </div>
 
-          {/* Section Voyages confirmes */}
+          {/* Section Voyages confirmés */}
           <div className="px-6 py-5">
-            <h2 className="text-sm font-semibold text-gray-900 mb-3">Voyages confirmes</h2>
+            <h2 className="text-sm font-semibold text-gray-900 mb-3">Voyages confirmés</h2>
             {tripsLoading ? (
               <div className="flex items-center justify-center py-4">
                 <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-gray-900" />
@@ -2023,7 +2036,7 @@ function PublicProfileView({
 
         {/* Note en bas */}
         <p className="mt-6 text-center text-xs text-gray-400">
-          Ceci est un apercu de votre profil public tel que les autres utilisateurs le voient.
+          Ceci est un aperçu de votre profil public tel que les autres utilisateurs le voient.
         </p>
       </div>
     </main>
