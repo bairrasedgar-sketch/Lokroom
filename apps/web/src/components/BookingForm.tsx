@@ -5,16 +5,18 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signIn } from "next-auth/react";
 import { toast } from "sonner";
-import { BoltIcon } from "@heroicons/react/24/solid";
+import { BoltIcon, StarIcon, XMarkIcon, ChevronDownIcon, MinusIcon, PlusIcon } from "@heroicons/react/24/solid";
 import type { Currency } from "@/lib/currency";
 import { useTranslation } from "@/hooks/useTranslation";
 import { InstantBookIndicator } from "@/components/InstantBookBadge";
 
 type BookingFormProps = {
   listingId: string;
-  price: number; // prix par nuit
+  price: number;
   currency: Currency;
   isInstantBook?: boolean;
+  rating?: number | null;
+  reviewCount?: number;
 };
 
 type PreviewLine = {
@@ -50,7 +52,7 @@ function formatMoney(amountCents: number, currency: Currency) {
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
-    maximumFractionDigits: 2,
+    maximumFractionDigits: 0,
   }).format(value);
 }
 
@@ -59,6 +61,8 @@ export default function BookingForm({
   price,
   currency,
   isInstantBook = false,
+  rating,
+  reviewCount = 0,
 }: BookingFormProps) {
   const router = useRouter();
   const { status } = useSession();
@@ -69,20 +73,22 @@ export default function BookingForm({
   const [endDate, setEndDate] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [showGuestPicker, setShowGuestPicker] = useState(false);
+
+  const [guests, setGuests] = useState({ adults: 1, children: 0, infants: 0 });
 
   const [previewLoading, setPreviewLoading] = useState(false);
   const [preview, setPreview] = useState<PreviewBreakdown | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
 
-  // Instant Book eligibility
   const [instantBookEligible, setInstantBookEligible] = useState<boolean | null>(null);
   const [instantBookReasons, setInstantBookReasons] = useState<string[]>([]);
   const [checkingEligibility, setCheckingEligibility] = useState(false);
 
-  // Code promo
   const [promoCode, setPromoCode] = useState("");
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoError, setPromoError] = useState<string | null>(null);
+  const [showPromoInput, setShowPromoInput] = useState(false);
   const [validPromo, setValidPromo] = useState<{
     id: string;
     code: string;
@@ -92,14 +98,9 @@ export default function BookingForm({
     discountLabel: string;
   } | null>(null);
 
-  // 💰 Label "tarif de base" par nuit — utilise price & currency
-  const pricePerNightCents = Math.round(price * 100);
-  const basePerNightLabel = formatMoney(pricePerNightCents, currency);
-
-  // Min pour les dates = aujourd'hui (évite les résas dans le passé)
   const todayStr = new Date().toISOString().slice(0, 10);
+  const totalGuests = guests.adults + guests.children;
 
-  // Quand les dates changent -> on appelle /api/bookings/preview
   useEffect(() => {
     if (!startDate || !endDate) {
       setPreview(null);
@@ -107,12 +108,9 @@ export default function BookingForm({
       return;
     }
 
-    // check rapide côté client : départ après arrivée
     if (endDate <= startDate) {
       setPreview(null);
-      setPreviewError(
-        "La date de départ doit être postérieure à la date d'arrivée.",
-      );
+      setPreviewError("La date de départ doit être postérieure à la date d'arrivée.");
       return;
     }
 
@@ -126,20 +124,14 @@ export default function BookingForm({
         const res = await fetch("/api/bookings/preview", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            listingId,
-            startDate,
-            endDate,
-          }),
+          body: JSON.stringify({ listingId, startDate, endDate }),
           signal: controller.signal,
         });
 
         if (!res.ok) {
           const data = await res.json().catch(() => null);
-          const msg =
-            data?.error ?? "Impossible de calculer le détail du prix.";
           setPreview(null);
-          setPreviewError(msg);
+          setPreviewError(data?.error ?? "Impossible de calculer le prix.");
           return;
         }
 
@@ -147,8 +139,7 @@ export default function BookingForm({
         setPreview(json.breakdown);
         setPreviewError(null);
       } catch (err) {
-        if (err instanceof Error && err.name === 'AbortError') return;
-        console.error(err);
+        if (err instanceof Error && err.name === "AbortError") return;
         setPreview(null);
         setPreviewError("Erreur lors du calcul du prix.");
       } finally {
@@ -157,11 +148,9 @@ export default function BookingForm({
     }
 
     void loadPreview();
-
     return () => controller.abort();
   }, [startDate, endDate, listingId]);
 
-  // Vérifier l'éligibilité instant book quand les dates changent
   useEffect(() => {
     if (!isInstantBook || !startDate || !endDate || !isLoggedIn) {
       setInstantBookEligible(isInstantBook ? null : false);
@@ -175,11 +164,7 @@ export default function BookingForm({
       setCheckingEligibility(true);
 
       try {
-        const params = new URLSearchParams({
-          startDate,
-          endDate,
-        });
-
+        const params = new URLSearchParams({ startDate, endDate });
         const res = await fetch(
           `/api/listings/${listingId}/instant-book/eligibility?${params}`,
           { signal: controller.signal }
@@ -196,7 +181,6 @@ export default function BookingForm({
         setInstantBookReasons(data.reasons || []);
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") return;
-        console.error(err);
         setInstantBookEligible(false);
         setInstantBookReasons(["Erreur lors de la vérification"]);
       } finally {
@@ -205,11 +189,9 @@ export default function BookingForm({
     }
 
     void checkEligibility();
-
     return () => controller.abort();
   }, [isInstantBook, startDate, endDate, listingId, isLoggedIn]);
 
-  // Validation du code promo
   async function validatePromoCode() {
     if (!promoCode.trim()) {
       setPromoError("Veuillez entrer un code promo");
@@ -247,9 +229,8 @@ export default function BookingForm({
 
       setValidPromo(data.promoCode);
       setPromoError(null);
-      toast.success(`Code promo "${data.promoCode.code}" appliqué !`);
-    } catch (error) {
-      console.error("Error validating promo code:", error);
+      toast.success(`Code "${data.promoCode.code}" appliqué`);
+    } catch {
       setPromoError("Erreur lors de la validation");
     } finally {
       setPromoLoading(false);
@@ -264,27 +245,21 @@ export default function BookingForm({
 
   function mapServerErrorToMessage(code: string | undefined): string {
     const bf = t.components.bookingForm;
-    if (!code) {
-      return bf.bookingCreationError;
-    }
+    if (!code) return bf.bookingCreationError;
 
     switch (code) {
       case "UNAUTHENTICATED":
       case "unauthorized":
         return bf.loginRequired;
       case "LISTING_NOT_FOUND":
-      case "Listing not found":
         return bf.listingNotFound;
       case "CANNOT_BOOK_OWN_LISTING":
-      case "You cannot book your own listing.":
         return bf.cannotBookOwn;
       case "PROVINCE_REQUIRED":
         return bf.provinceRequired;
       case "DATES_NOT_AVAILABLE":
-      case "Dates not available for this listing.":
         return bf.datesUnavailable;
       case "INVALID_DATES":
-      case "Invalid date range":
       case "INVALID_NIGHTS":
         return bf.invalidDates;
       default:
@@ -298,7 +273,6 @@ export default function BookingForm({
 
     const bf = t.components.bookingForm;
 
-    // Si non connecté, afficher la modale de connexion
     if (!isLoggedIn) {
       setShowLoginPrompt(true);
       return;
@@ -317,7 +291,6 @@ export default function BookingForm({
     setSubmitting(true);
 
     try {
-      // Utiliser l'API instant book si éligible
       const useInstantBook = isInstantBook && instantBookEligible === true;
       const endpoint = useInstantBook ? "/api/bookings/instant" : "/api/bookings/create";
 
@@ -332,275 +305,340 @@ export default function BookingForm({
         }),
       });
 
-      const data = await res.json().catch(() => null) as {
+      const data = (await res.json().catch(() => null)) as {
         booking?: { id?: string; status?: string };
         error?: string;
-        success?: boolean;
       } | null;
 
       if (!res.ok) {
-        const msg = mapServerErrorToMessage(data?.error);
-        toast.error(msg);
+        toast.error(mapServerErrorToMessage(data?.error));
         setSubmitting(false);
         return;
       }
 
-      // data = { booking, fees, hostUserId, nights }
-      const bookingId: string | undefined = data?.booking?.id;
+      const bookingId = data?.booking?.id;
       const isConfirmed = data?.booking?.status === "CONFIRMED";
 
       if (useInstantBook && isConfirmed) {
-        toast.success("Réservation confirmée instantanément !");
+        toast.success("Réservation confirmée instantanément");
       } else {
         toast.success(bf.bookingCreated);
       }
 
-      // Redirige vers la page de paiement de cette réservation
-      if (bookingId) {
-        router.push(`/bookings/${bookingId}`);
-      } else {
-        router.push("/bookings");
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error(bf.bookingCreationError);
+      router.push(bookingId ? `/bookings/${bookingId}` : "/bookings");
+    } catch {
+      toast.error(t.components.bookingForm.bookingCreationError);
+    } finally {
       setSubmitting(false);
-      return;
     }
-
-    setSubmitting(false);
   }
 
   const bf = t.components.bookingForm;
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="space-y-4 text-sm">
-        {/* Dates */}
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-gray-700">
-              {bf.arrivalLabel}
-            </label>
-            <input
-              type="date"
-              value={startDate}
-              min={todayStr}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="h-11 rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-black focus:ring-1 focus:ring-black"
-            />
+      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-lg">
+        {/* Header: Prix + Rating */}
+        <div className="flex items-baseline justify-between mb-6">
+          <div>
+            <span className="text-2xl font-semibold text-gray-900">
+              {Math.round(price)} {currency === "CAD" ? "CAD" : "€"}
+            </span>
+            <span className="text-base text-gray-600 ml-1">/ nuit</span>
           </div>
-
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-gray-700">
-              {bf.departureLabel}
-            </label>
-            <input
-              type="date"
-              value={endDate}
-              min={startDate || todayStr}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="h-11 rounded-lg border border-gray-300 px-3 text-sm outline-none focus:border-black focus:ring-1 focus:ring-black"
-            />
-          </div>
-        </div>
-
-        {/* Résumé du prix façon Airbnb */}
-        <div className="space-y-2 rounded-xl bg-gray-50 p-3 text-xs text-gray-700">
-          <p className="font-medium text-gray-900">{bf.priceDetail}</p>
-
-          {/* Tarif de base par nuit (utilise les props) */}
-          <p className="text-[11px] text-gray-500">
-            {bf.baseRate}{" "}
-            <span className="font-medium text-gray-900">
-              {basePerNightLabel}
-            </span>{" "}
-            {bf.perNightExcludingFees}
-          </p>
-
-          {previewLoading && (
-            <p className="text-[11px] text-gray-500">
-              {bf.calculatingTotal}
-            </p>
-          )}
-
-          {previewError && (
-            <p className="text-[11px] text-red-600">{previewError}</p>
-          )}
-
-          {!previewLoading && !preview && !previewError && (
-            <p className="text-[11px] text-gray-500">
-              {bf.selectDatesForPrice}
-            </p>
-          )}
-
-          {preview && (
-            <div className="space-y-1">
-              {preview.lines.map((line) => (
-                <div
-                  key={line.code}
-                  className={`flex items-center justify-between ${
-                    line.emphasize ? "border-t border-gray-200 pt-1 mt-1" : ""
-                  }`}
-                >
-                  <span
-                    className={
-                      line.emphasize
-                        ? "font-semibold text-gray-900"
-                        : "text-gray-700"
-                    }
-                  >
-                    {line.label}
-                  </span>
-                  <span
-                    className={
-                      line.emphasize
-                        ? "font-semibold text-gray-900"
-                        : "text-gray-800"
-                    }
-                  >
-                    {formatMoney(line.amountCents, preview.currency)}
-                  </span>
-                </div>
-              ))}
-
-              {/* Afficher la réduction du code promo */}
-              {validPromo && validPromo.discountAmountCents > 0 && (
-                <div className="flex items-center justify-between text-green-600">
-                  <span>Réduction ({validPromo.code})</span>
-                  <span>-{formatMoney(validPromo.discountAmountCents, preview.currency)}</span>
-                </div>
-              )}
+          {rating && reviewCount > 0 && (
+            <div className="flex items-center gap-1 text-sm">
+              <StarIcon className="h-4 w-4 text-gray-900" />
+              <span className="font-medium text-gray-900">{rating.toFixed(2)}</span>
+              <span className="text-gray-500">({reviewCount})</span>
             </div>
           )}
         </div>
 
-        {/* Champ code promo */}
-        <div className="space-y-2">
-          <button
-            type="button"
-            onClick={() => document.getElementById("promo-input")?.focus()}
-            className="text-xs font-medium text-gray-600 hover:text-gray-900 underline"
-          >
-            Vous avez un code promo ?
-          </button>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Date Picker - Airbnb style */}
+          <div className="rounded-xl border border-gray-300 overflow-hidden">
+            <div className="grid grid-cols-2 divide-x divide-gray-300">
+              <div className="p-3">
+                <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-1">
+                  Arrivée
+                </label>
+                <input
+                  type="date"
+                  value={startDate}
+                  min={todayStr}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full text-sm text-gray-900 bg-transparent border-none p-0 focus:outline-none focus:ring-0"
+                />
+              </div>
+              <div className="p-3">
+                <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-1">
+                  Départ
+                </label>
+                <input
+                  type="date"
+                  value={endDate}
+                  min={startDate || todayStr}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full text-sm text-gray-900 bg-transparent border-none p-0 focus:outline-none focus:ring-0"
+                />
+              </div>
+            </div>
 
-          {!validPromo ? (
+            {/* Guest Selector */}
+            <div className="border-t border-gray-300">
+              <button
+                type="button"
+                onClick={() => setShowGuestPicker(!showGuestPicker)}
+                className="w-full p-3 flex items-center justify-between text-left"
+              >
+                <div>
+                  <span className="block text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-1">
+                    Voyageurs
+                  </span>
+                  <span className="text-sm text-gray-900">
+                    {totalGuests} voyageur{totalGuests > 1 ? "s" : ""}
+                    {guests.infants > 0 && `, ${guests.infants} bébé${guests.infants > 1 ? "s" : ""}`}
+                  </span>
+                </div>
+                <ChevronDownIcon className={`h-5 w-5 text-gray-600 transition-transform ${showGuestPicker ? "rotate-180" : ""}`} />
+              </button>
+
+              {showGuestPicker && (
+                <div className="border-t border-gray-200 p-4 space-y-4">
+                  {/* Adults */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Adultes</p>
+                      <p className="text-xs text-gray-500">13 ans et plus</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setGuests((g) => ({ ...g, adults: Math.max(1, g.adults - 1) }))}
+                        disabled={guests.adults <= 1}
+                        className="flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 text-gray-600 hover:border-gray-900 disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        <MinusIcon className="h-4 w-4" />
+                      </button>
+                      <span className="w-6 text-center text-sm font-medium">{guests.adults}</span>
+                      <button
+                        type="button"
+                        onClick={() => setGuests((g) => ({ ...g, adults: g.adults + 1 }))}
+                        className="flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 text-gray-600 hover:border-gray-900"
+                      >
+                        <PlusIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Children */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Enfants</p>
+                      <p className="text-xs text-gray-500">2 à 12 ans</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setGuests((g) => ({ ...g, children: Math.max(0, g.children - 1) }))}
+                        disabled={guests.children <= 0}
+                        className="flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 text-gray-600 hover:border-gray-900 disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        <MinusIcon className="h-4 w-4" />
+                      </button>
+                      <span className="w-6 text-center text-sm font-medium">{guests.children}</span>
+                      <button
+                        type="button"
+                        onClick={() => setGuests((g) => ({ ...g, children: g.children + 1 }))}
+                        className="flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 text-gray-600 hover:border-gray-900"
+                      >
+                        <PlusIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Infants */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Bébés</p>
+                      <p className="text-xs text-gray-500">Moins de 2 ans</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setGuests((g) => ({ ...g, infants: Math.max(0, g.infants - 1) }))}
+                        disabled={guests.infants <= 0}
+                        className="flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 text-gray-600 hover:border-gray-900 disabled:opacity-30 disabled:cursor-not-allowed"
+                      >
+                        <MinusIcon className="h-4 w-4" />
+                      </button>
+                      <span className="w-6 text-center text-sm font-medium">{guests.infants}</span>
+                      <button
+                        type="button"
+                        onClick={() => setGuests((g) => ({ ...g, infants: g.infants + 1 }))}
+                        className="flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 text-gray-600 hover:border-gray-900"
+                      >
+                        <PlusIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Instant Book Indicator */}
+          {isInstantBook && startDate && endDate && (
+            <div>
+              {checkingEligibility ? (
+                <div className="flex items-center gap-2 rounded-xl bg-gray-50 p-3 text-sm">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-amber-500" />
+                  <span className="text-gray-600">Vérification...</span>
+                </div>
+              ) : (
+                <InstantBookIndicator eligible={instantBookEligible} reasons={instantBookReasons} />
+              )}
+            </div>
+          )}
+
+          {/* Submit Button */}
+          {isInstantBook && instantBookEligible === true ? (
+            <button
+              type="submit"
+              disabled={submitting || !startDate || !endDate}
+              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold text-base flex items-center justify-center gap-2 hover:from-amber-600 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              <BoltIcon className="h-5 w-5" />
+              {submitting ? "Réservation..." : "Réserver instantanément"}
+            </button>
+          ) : (
+            <button
+              type="submit"
+              disabled={submitting || !startDate || !endDate}
+              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 text-white font-semibold text-base hover:from-rose-600 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              {submitting ? "Réservation..." : "Réserver"}
+            </button>
+          )}
+
+          <p className="text-center text-xs text-gray-500">
+            Aucun montant ne sera débité pour le moment
+          </p>
+
+          {/* Price Breakdown */}
+          {preview && (
+            <div className="pt-4 space-y-3">
+              {preview.lines
+                .filter((line) => !line.emphasize)
+                .map((line) => (
+                  <div key={line.code} className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600 underline decoration-dotted underline-offset-4 cursor-help">
+                      {line.label}
+                    </span>
+                    <span className="text-gray-900">{formatMoney(line.amountCents, preview.currency)}</span>
+                  </div>
+                ))}
+
+              {validPromo && validPromo.discountAmountCents > 0 && (
+                <div className="flex items-center justify-between text-sm text-green-600">
+                  <span>Réduction ({validPromo.code})</span>
+                  <span>-{formatMoney(validPromo.discountAmountCents, preview.currency)}</span>
+                </div>
+              )}
+
+              {preview.lines
+                .filter((line) => line.emphasize)
+                .map((line) => (
+                  <div key={line.code} className="flex items-center justify-between pt-3 border-t border-gray-200">
+                    <span className="font-semibold text-gray-900">{line.label}</span>
+                    <span className="font-semibold text-gray-900">{formatMoney(line.amountCents, preview.currency)}</span>
+                  </div>
+                ))}
+            </div>
+          )}
+
+          {previewLoading && (
+            <div className="text-center text-sm text-gray-500">Calcul du prix...</div>
+          )}
+
+          {previewError && (
+            <div className="text-center text-sm text-red-600">{previewError}</div>
+          )}
+
+          {/* Promo Code */}
+          {!showPromoInput && !validPromo && (
+            <button
+              type="button"
+              onClick={() => setShowPromoInput(true)}
+              className="w-full text-center text-sm font-medium text-gray-900 underline hover:text-gray-600"
+            >
+              Ajouter un code promo
+            </button>
+          )}
+
+          {showPromoInput && !validPromo && (
             <div className="flex gap-2">
               <input
-                id="promo-input"
                 type="text"
                 value={promoCode}
                 onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                placeholder="Entrez votre code"
-                className="flex-1 h-11 rounded-lg border border-gray-300 px-3 text-sm uppercase outline-none focus:border-black focus:ring-1 focus:ring-black"
+                placeholder="Code promo"
+                className="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 text-sm uppercase focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 disabled={promoLoading}
               />
               <button
                 type="button"
                 onClick={validatePromoCode}
                 disabled={promoLoading || !promoCode.trim()}
-                className="px-4 h-11 rounded-lg bg-gray-100 text-sm font-medium text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 disabled:opacity-50"
               >
-                {promoLoading ? "..." : "Appliquer"}
+                {promoLoading ? "..." : "OK"}
               </button>
             </div>
-          ) : (
-            <div className="flex items-center justify-between rounded-lg bg-green-50 border border-green-200 px-3 py-2">
-              <div className="flex items-center gap-2">
-                <span className="text-green-600">✓</span>
-                <span className="text-sm font-medium text-green-700">
-                  {validPromo.code} - {validPromo.discountLabel}
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={removePromoCode}
-                className="text-xs text-gray-500 hover:text-gray-700"
-              >
+          )}
+
+          {validPromo && (
+            <div className="flex items-center justify-between rounded-xl bg-green-50 border border-green-200 px-4 py-3">
+              <span className="text-sm font-medium text-green-700">
+                {validPromo.code} - {validPromo.discountLabel}
+              </span>
+              <button type="button" onClick={removePromoCode} className="text-sm text-gray-500 hover:text-gray-700">
                 Retirer
               </button>
             </div>
           )}
 
-          {promoError && (
-            <p className="text-xs text-red-600">{promoError}</p>
-          )}
-        </div>
+          {promoError && <p className="text-center text-xs text-red-600">{promoError}</p>}
+        </form>
+      </div>
 
-        {/* Indicateur Instant Book */}
-        {isInstantBook && startDate && endDate && (
-          <div className="mt-2">
-            {checkingEligibility ? (
-              <div className="flex items-center gap-2 rounded-xl bg-gray-50 p-3 text-sm">
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-amber-500" />
-                <span className="text-gray-600">Vérification de l&apos;éligibilité...</span>
-              </div>
-            ) : (
-              <InstantBookIndicator
-                eligible={instantBookEligible}
-                reasons={instantBookReasons}
-              />
-            )}
-          </div>
-        )}
-
-        {/* Bouton submit */}
-        {isInstantBook && instantBookEligible === true ? (
-          <button
-            type="submit"
-            disabled={submitting || !startDate || !endDate}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-amber-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
-          >
-            <BoltIcon className="h-4 w-4" />
-            {submitting ? "Réservation en cours..." : "Réserver instantanément"}
-          </button>
-        ) : (
-          <button
-            type="submit"
-            disabled={submitting || !startDate || !endDate}
-            className="inline-flex w-full items-center justify-center rounded-full bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {submitting ? bf.creating : bf.continueButton}
-          </button>
-        )}
-
-        <p className="text-[11px] text-gray-500">
-          {isInstantBook && instantBookEligible === true
-            ? "Votre réservation sera confirmée immédiatement après le paiement."
-            : bf.securePaymentNote}
-        </p>
-      </form>
-
-      {/* Modale de connexion requise */}
+      {/* Login Modal */}
       {showLoginPrompt && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-0 sm:p-4">
-          <div className="w-full max-w-md rounded-t-2xl sm:rounded-2xl bg-white p-4 sm:p-6 shadow-xl">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">
-                {t.errors.loginRequired}
-              </h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-900">Connexion requise</h2>
               <button
                 type="button"
                 onClick={() => setShowLoginPrompt(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100"
-                aria-label="Close"
+                className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100"
               >
-                ✕
+                <XMarkIcon className="h-5 w-5 text-gray-600" />
               </button>
             </div>
 
             <p className="mb-6 text-sm text-gray-600">
-              {t.errors.loginRequiredDesc}
+              Connectez-vous pour réserver ce logement.
             </p>
 
-            <div className="flex flex-col gap-3">
+            <div className="space-y-3">
               <button
                 type="button"
                 onClick={() => signIn("google", { callbackUrl: window.location.href })}
-                className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 px-4 py-2.5 text-sm font-medium hover:bg-gray-50"
+                className="w-full py-3 rounded-xl border border-gray-300 text-sm font-medium text-gray-900 hover:bg-gray-50 transition"
               >
-                {t.auth.continueGoogle}
+                Continuer avec Google
               </button>
 
               <button
@@ -608,9 +646,9 @@ export default function BookingForm({
                 onClick={() => {
                   window.location.href = `/login?callbackUrl=${encodeURIComponent(window.location.href)}`;
                 }}
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-black px-4 py-2.5 text-sm font-medium text-white hover:bg-gray-900"
+                className="w-full py-3 rounded-xl bg-gray-900 text-sm font-medium text-white hover:bg-gray-800 transition"
               >
-                {t.errors.loginRequiredAction}
+                Se connecter
               </button>
             </div>
           </div>
