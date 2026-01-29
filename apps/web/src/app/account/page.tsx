@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { toast } from "sonner";
 import PaymentsPage from "./payments/page";
 import useTranslation from "@/hooks/useTranslation";
 import { SUPPORTED_LANGS, type SupportedLang } from "@/locales";
@@ -2705,12 +2706,22 @@ function MobileAccountView({
     return () => controller.abort();
   }, []);
 
+  const [loggingOut, setLoggingOut] = useState(false);
+
   const handleLogout = async () => {
+    setLoggingOut(true);
     try {
-      await fetch("/api/auth/signout", { method: "POST" });
-      router.push("/");
+      const res = await fetch("/api/auth/signout", { method: "POST" });
+      if (res.ok) {
+        window.location.href = "/";
+      } else {
+        toast.error("Erreur lors de la déconnexion");
+        setLoggingOut(false);
+      }
     } catch (e) {
       console.error("Erreur deconnexion:", e);
+      toast.error("Erreur lors de la déconnexion");
+      setLoggingOut(false);
     }
   };
 
@@ -2851,9 +2862,9 @@ function MobileAccountView({
                         if (item.action) {
                           item.action();
                         } else if (item.id !== "help" && item.id !== "support" && item.id !== "logout") {
+                          // Scroll en haut AVANT changement d'onglet
+                          window.scrollTo({ top: 0, behavior: 'instant' });
                           handleChangeTab(item.id as TabId);
-                          // Scroll en haut après changement d'onglet
-                          setTimeout(() => window.scrollTo({ top: 0, behavior: 'instant' }), 50);
                         }
                       }}
                       className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left active:bg-gray-50 transition"
@@ -2882,14 +2893,19 @@ function MobileAccountView({
               <button
                 type="button"
                 onClick={handleLogout}
-                className="flex w-full items-center gap-3.5 px-4 py-3.5 bg-white rounded-2xl shadow-sm text-left active:bg-gray-50 transition"
+                disabled={loggingOut}
+                className="flex w-full items-center gap-3.5 px-4 py-3.5 bg-white rounded-2xl shadow-sm text-left active:bg-gray-50 transition disabled:opacity-50"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-red-600">
-                  <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                  {loggingOut ? (
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-red-200 border-t-red-600" />
+                  ) : (
+                    <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                  )}
                 </div>
                 <div className="flex-1">
-                  <p className="text-[15px] font-medium text-red-600">Deconnexion</p>
-                  <p className="text-[13px] text-gray-500">Se deconnecter de votre compte</p>
+                  <p className="text-[15px] font-medium text-red-600">{loggingOut ? "Déconnexion..." : "Déconnexion"}</p>
+                  <p className="text-[13px] text-gray-500">Se déconnecter de votre compte</p>
                 </div>
               </button>
             </div>
@@ -2924,7 +2940,7 @@ function MobileAccountView({
           </div>
 
           {/* Contenu */}
-          <div className="px-4 py-4">
+          <div className="px-4 py-4 pb-32">
             <TabContent active={activeTab} t={t} tabLabels={tabLabels} router={router} />
           </div>
         </div>

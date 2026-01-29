@@ -849,6 +849,7 @@ function AboutSection(props: AboutProps) {
     isPreviewMode = false,
   } = props;
 
+  const router = useRouter();
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingPublic, setIsEditingPublic] = useState(false);
 
@@ -1287,7 +1288,7 @@ function AboutSection(props: AboutProps) {
             className="hidden lg:block fixed inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => {
               setIsEditingProfile(false);
-              window.history.pushState({}, '', '/account');
+              router.push('/account');
             }}
           />
 
@@ -1300,7 +1301,7 @@ function AboutSection(props: AboutProps) {
                   type="button"
                   onClick={() => {
                     setIsEditingProfile(false);
-                    window.history.pushState({}, '', '/account');
+                    router.push('/account');
                   }}
                   className="flex items-center justify-center w-10 h-10 -ml-2 rounded-full active:bg-gray-100"
                 >
@@ -1311,7 +1312,11 @@ function AboutSection(props: AboutProps) {
                 <h1 className="text-[17px] font-semibold text-gray-900">Modifier le profil</h1>
                 <button
                   type="button"
-                  onClick={onSave}
+                  onClick={async () => {
+                    await onSave({} as React.FormEvent);
+                    setIsEditingProfile(false);
+                    router.push('/account');
+                  }}
                   disabled={saving}
                   className="text-[17px] font-semibold text-[#007AFF] disabled:opacity-50 active:opacity-70"
                 >
