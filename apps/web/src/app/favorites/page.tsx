@@ -239,7 +239,7 @@ export default function FavoritesPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3">
             {currentWishlist.favorites.map((fav) => {
               const listing = fav.listing;
               const imageUrl = listing.images[0]?.url;
@@ -250,44 +250,43 @@ export default function FavoritesPage() {
                   {/* Bouton supprimer */}
                   <button
                     onClick={() => handleRemoveFavorite(listing.id, currentWishlist.name)}
-                    className="absolute right-3 top-3 z-10 rounded-full bg-white/90 p-2 text-[#FF385C] shadow-sm backdrop-blur-sm transition hover:bg-white hover:scale-110 active:scale-95"
+                    className="absolute right-2 top-2 z-10 rounded-full bg-white/90 p-1.5 text-[#FF385C] shadow-sm backdrop-blur-sm transition hover:bg-white active:scale-95"
                     title="Retirer des favoris"
                   >
-                    <HeartSolid className="h-5 w-5" />
+                    <HeartSolid className="h-4 w-4" />
                   </button>
 
                   <Link href={`/listings/${listing.id}`} className="block">
-                    {/* Image */}
-                    <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-100">
+                    {/* Image carrée */}
+                    <div className="relative aspect-square overflow-hidden rounded-xl bg-gray-100">
                       {imageUrl ? (
                         <Image
                           src={imageUrl}
                           alt={listing.title}
                           fill
                           className="object-cover transition duration-300 group-hover:scale-105"
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                          sizes="50vw"
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center">
-                          <HeartIcon className="h-10 w-10 text-gray-300" />
+                          <HeartIcon className="h-8 w-8 text-gray-300" />
                         </div>
                       )}
                     </div>
 
                     {/* Infos */}
-                    <div className="mt-3">
-                      <h3 className="font-medium text-gray-900 line-clamp-1">
+                    <div className="mt-2">
+                      <h3 className="text-sm font-medium text-gray-900 line-clamp-1">
                         {listing.title}
                       </h3>
                       {location && (
-                        <p className="mt-0.5 flex items-center gap-1 text-sm text-gray-500">
-                          <MapPinIcon className="h-3.5 w-3.5" />
+                        <p className="mt-0.5 text-xs text-gray-500 line-clamp-1">
                           {location}
                         </p>
                       )}
-                      <p className="mt-1.5 text-gray-900">
+                      <p className="mt-1 text-sm text-gray-900">
                         <span className="font-semibold">{Math.round(listing.price)} {listing.currency === "CAD" ? "CAD" : "€"}</span>
-                        <span className="text-gray-500"> / nuit</span>
+                        <span className="text-gray-500 text-xs"> / nuit</span>
                       </p>
                     </div>
                   </Link>
@@ -391,7 +390,7 @@ export default function FavoritesPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3">
           {wishlists.map((wishlist) => {
             const previewImages = wishlist.favorites
               .slice(0, 4)
@@ -404,10 +403,9 @@ export default function FavoritesPage() {
                 className="group cursor-pointer"
                 onClick={() => setSelectedWishlist(wishlist.id)}
               >
-                {/* Grille d'images style Airbnb */}
-                <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-100">
+                {/* Image carrée avec grille */}
+                <div className="relative aspect-square overflow-hidden rounded-xl bg-gray-100">
                   {previewImages.length >= 4 ? (
-                    // 4 images en grille
                     <div className="grid h-full w-full grid-cols-2 grid-rows-2 gap-0.5">
                       {previewImages.slice(0, 4).map((url, idx) => (
                         <div key={idx} className="relative overflow-hidden">
@@ -416,90 +414,36 @@ export default function FavoritesPage() {
                             alt=""
                             fill
                             className="object-cover transition duration-300 group-hover:scale-105"
-                            sizes="(max-width: 640px) 50vw, 25vw"
+                            sizes="25vw"
                           />
                         </div>
                       ))}
                     </div>
-                  ) : previewImages.length >= 2 ? (
-                    // 2-3 images
-                    <div className="grid h-full w-full grid-cols-2 gap-0.5">
-                      <div className="relative overflow-hidden">
-                        <Image
-                          src={previewImages[0]}
-                          alt=""
-                          fill
-                          className="object-cover transition duration-300 group-hover:scale-105"
-                          sizes="(max-width: 640px) 50vw, 25vw"
-                        />
-                      </div>
-                      <div className="grid grid-rows-2 gap-0.5">
-                        {previewImages.slice(1, 3).map((url, idx) => (
-                          <div key={idx} className="relative overflow-hidden">
-                            <Image
-                              src={url}
-                              alt=""
-                              fill
-                              className="object-cover transition duration-300 group-hover:scale-105"
-                              sizes="(max-width: 640px) 25vw, 12vw"
-                            />
-                          </div>
-                        ))}
-                        {previewImages.length === 2 && (
-                          <div className="bg-gray-200" />
-                        )}
-                      </div>
-                    </div>
-                  ) : previewImages.length === 1 ? (
-                    // 1 seule image
+                  ) : previewImages.length >= 1 ? (
                     <Image
                       src={previewImages[0]}
                       alt=""
                       fill
                       className="object-cover transition duration-300 group-hover:scale-105"
-                      sizes="(max-width: 640px) 100vw, 50vw"
+                      sizes="50vw"
                     />
                   ) : (
-                    // Pas d'image
                     <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-                      <HeartIcon className="h-12 w-12 text-gray-300" />
+                      <HeartIcon className="h-10 w-10 text-gray-300" />
                     </div>
                   )}
 
                   {/* Overlay au hover */}
                   <div className="absolute inset-0 bg-black/0 transition duration-300 group-hover:bg-black/5" />
-
-                  {/* Actions */}
-                  <div className="absolute right-2 top-2 flex gap-1.5 opacity-0 transition group-hover:opacity-100">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEditingId(wishlist.id);
-                        setEditName(wishlist.name);
-                        setSelectedWishlist(wishlist.id);
-                      }}
-                      className="rounded-full bg-white/95 p-2 text-gray-700 shadow-sm backdrop-blur-sm transition hover:bg-white hover:scale-110"
-                      title="Renommer"
-                    >
-                      <PencilIcon className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={(e) => handleDeleteWishlist(wishlist.id, wishlist.name, e)}
-                      className="rounded-full bg-white/95 p-2 text-gray-700 shadow-sm backdrop-blur-sm transition hover:bg-white hover:text-red-600 hover:scale-110"
-                      title="Supprimer"
-                    >
-                      <TrashIcon className="h-4 w-4" />
-                    </button>
-                  </div>
                 </div>
 
                 {/* Infos */}
-                <div className="mt-3">
-                  <h2 className="font-semibold text-gray-900 group-hover:underline">
+                <div className="mt-2">
+                  <h2 className="text-sm font-semibold text-gray-900 line-clamp-1">
                     {wishlist.name}
                   </h2>
-                  <p className="mt-0.5 text-sm text-gray-500">
-                    {wishlist._count.favorites} annonce{wishlist._count.favorites !== 1 ? "s" : ""} enregistrée{wishlist._count.favorites !== 1 ? "s" : ""}
+                  <p className="text-xs text-gray-500">
+                    {wishlist._count.favorites} enregistrée{wishlist._count.favorites !== 1 ? "s" : ""}
                   </p>
                 </div>
               </div>
