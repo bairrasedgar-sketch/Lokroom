@@ -1,11 +1,27 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import Image from "next/image";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import useTranslation from "@/hooks/useTranslation";
+import { useGoogleMaps } from "@/components/GoogleMapsLoader";
+
+// Liste des pays (les plus courants en premier)
+const COUNTRIES_LIST = [
+  "France", "Canada", "Belgique", "Suisse", "Luxembourg",
+  "États-Unis", "Royaume-Uni", "Allemagne", "Espagne", "Italie",
+  "Portugal", "Pays-Bas", "Autriche", "Irlande", "Australie",
+  "Maroc", "Algérie", "Tunisie", "Sénégal", "Côte d'Ivoire",
+  "Cameroun", "République démocratique du Congo", "Madagascar",
+  "Brésil", "Mexique", "Argentine", "Chili", "Colombie",
+  "Japon", "Chine", "Corée du Sud", "Inde", "Vietnam",
+  "Thaïlande", "Indonésie", "Philippines", "Singapour",
+  "Émirats arabes unis", "Qatar", "Arabie saoudite",
+  "Pologne", "République tchèque", "Hongrie", "Roumanie",
+  "Grèce", "Turquie", "Russie", "Ukraine", "Norvège", "Suède", "Danemark", "Finlande"
+];
 
 
 type Role = "HOST" | "GUEST" | "BOTH";
@@ -101,6 +117,64 @@ export default function ProfilePage() {
   const [postalCode, setPostalCode] = useState("");
   const [profileCountry, setProfileCountry] = useState("");
   const [province, setProvince] = useState("");
+
+  // Autocomplétion ville/pays
+  const [citySearch, setCitySearch] = useState("");
+  const [countrySearch, setCountrySearch] = useState("");
+  const [showCitySuggestions, setShowCitySuggestions] = useState(false);
+  const [showCountrySuggestions, setShowCountrySuggestions] = useState(false);
+  const [citySuggestions, setCitySuggestions] = useState<Array<{
+    place_id: string;
+    description: string;
+    structured_formatting?: { main_text?: string; secondary_text?: string };
+  }>>([]);
+  const { isLoaded: googleMapsLoaded } = useGoogleMaps();
+  const cityDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Recherche de villes via Google Places
+  useEffect(() => {
+    if (!citySearch || citySearch.length < 2 || !googleMapsLoaded) {
+      setCitySuggestions([]);
+      return;
+    }
+
+    if (cityDebounceRef.current) {
+      clearTimeout(cityDebounceRef.current);
+    }
+
+    cityDebounceRef.current = setTimeout(() => {
+      const google = (window as Window & { google?: { maps: { places: { AutocompleteService: new () => { getPlacePredictions: (req: { input: string; types: string[] }, cb: (results: Array<{ place_id: string; description: string; structured_formatting?: { main_text?: string; secondary_text?: string } }> | null, status: string) => void) => void }; PlacesServiceStatus: { OK: string } } } } }).google;
+      if (!google?.maps?.places?.AutocompleteService) return;
+
+      const service = new google.maps.places.AutocompleteService();
+      service.getPlacePredictions(
+        { input: citySearch, types: ["(cities)"] },
+        (predictions, status) => {
+          if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
+            setCitySuggestions(predictions);
+          } else {
+            setCitySuggestions([]);
+          }
+        }
+      );
+    }, 200);
+
+    return () => {
+      if (cityDebounceRef.current) {
+        clearTimeout(cityDebounceRef.current);
+      }
+    };
+  }, [citySearch, googleMapsLoaded]);
+
+  // Fermer les suggestions quand on clique ailleurs
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowCitySuggestions(false);
+      setShowCountrySuggestions(false);
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
 
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<"idle" | "saved" | "error">("idle");
@@ -828,6 +902,64 @@ function AboutSection(props: AboutProps) {
   const [showAboutMe, setShowAboutMe] = useState(profile?.showAboutMe ?? true);
   const [showInterests, setShowInterests] = useState(profile?.showInterests ?? true);
 
+  // Autocomplétion ville/pays
+  const [citySearch, setCitySearch] = useState("");
+  const [countrySearch, setCountrySearch] = useState("");
+  const [showCitySuggestions, setShowCitySuggestions] = useState(false);
+  const [showCountrySuggestions, setShowCountrySuggestions] = useState(false);
+  const [citySuggestions, setCitySuggestions] = useState<Array<{
+    place_id: string;
+    description: string;
+    structured_formatting?: { main_text?: string; secondary_text?: string };
+  }>>([]);
+  const { isLoaded: googleMapsLoaded } = useGoogleMaps();
+  const cityDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Recherche de villes via Google Places
+  useEffect(() => {
+    if (!citySearch || citySearch.length < 2 || !googleMapsLoaded) {
+      setCitySuggestions([]);
+      return;
+    }
+
+    if (cityDebounceRef.current) {
+      clearTimeout(cityDebounceRef.current);
+    }
+
+    cityDebounceRef.current = setTimeout(() => {
+      const google = (window as Window & { google?: { maps: { places: { AutocompleteService: new () => { getPlacePredictions: (req: { input: string; types: string[] }, cb: (results: Array<{ place_id: string; description: string; structured_formatting?: { main_text?: string; secondary_text?: string } }> | null, status: string) => void) => void }; PlacesServiceStatus: { OK: string } } } } }).google;
+      if (!google?.maps?.places?.AutocompleteService) return;
+
+      const service = new google.maps.places.AutocompleteService();
+      service.getPlacePredictions(
+        { input: citySearch, types: ["(cities)"] },
+        (predictions, status) => {
+          if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
+            setCitySuggestions(predictions);
+          } else {
+            setCitySuggestions([]);
+          }
+        }
+      );
+    }, 200);
+
+    return () => {
+      if (cityDebounceRef.current) {
+        clearTimeout(cityDebounceRef.current);
+      }
+    };
+  }, [citySearch, googleMapsLoaded]);
+
+  // Fermer les suggestions quand on clique ailleurs
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setShowCitySuggestions(false);
+      setShowCountrySuggestions(false);
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
+
   useEffect(() => {
     setPublicJobTitle(profile?.jobTitle ?? "");
     setPublicDreamDestination(profile?.dreamDestination ?? "");
@@ -1259,43 +1391,112 @@ function AboutSection(props: AboutProps) {
               <div className="mt-6 mx-4">
                 <h2 className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide px-4 mb-2">Localisation</h2>
                 <div className="bg-white rounded-2xl overflow-hidden shadow-sm divide-y divide-gray-100">
-                  {/* Ville */}
-                  <div className="px-4 py-3.5 flex items-center">
-                    <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center mr-3">
-                      <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                      </svg>
+                  {/* Ville avec autocomplétion */}
+                  <div className="px-4 py-3.5">
+                    <div className="flex items-center">
+                      <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center mr-3">
+                        <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 relative">
+                        <label className="block text-[13px] font-medium text-gray-500">Ville</label>
+                        <input
+                          type="text"
+                          value={city}
+                          onChange={(e) => {
+                            setCity(e.target.value);
+                            setCitySearch(e.target.value);
+                            setShowCitySuggestions(true);
+                          }}
+                          onFocus={() => setShowCitySuggestions(true)}
+                          className="w-full text-[17px] text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0 placeholder:text-gray-300"
+                          placeholder="Rechercher une ville..."
+                        />
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <label className="block text-[13px] font-medium text-gray-500">Ville</label>
-                      <input
-                        type="text"
-                        value={city}
-                        onChange={(e) => setCity(e.target.value)}
-                        className="w-full text-[17px] text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0 placeholder:text-gray-300"
-                        placeholder="Votre ville"
-                      />
-                    </div>
+                    {/* Suggestions de villes */}
+                    {showCitySuggestions && citySuggestions.length > 0 && (
+                      <div className="mt-2 bg-gray-50 rounded-xl overflow-hidden">
+                        {citySuggestions.map((suggestion, index) => (
+                          <button
+                            key={suggestion.place_id || index}
+                            type="button"
+                            onClick={() => {
+                              const cityName = suggestion.structured_formatting?.main_text || suggestion.description.split(",")[0];
+                              setCity(cityName);
+                              setShowCitySuggestions(false);
+                              // Extraire le pays de la suggestion
+                              const parts = suggestion.description.split(", ");
+                              if (parts.length > 1) {
+                                setProfileCountry(parts[parts.length - 1]);
+                              }
+                            }}
+                            className="w-full px-3 py-2.5 text-left hover:bg-gray-100 flex items-center gap-2 transition-colors"
+                          >
+                            <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                            </svg>
+                            <div>
+                              <p className="text-[15px] text-gray-900">{suggestion.structured_formatting?.main_text || suggestion.description.split(",")[0]}</p>
+                              <p className="text-[13px] text-gray-500">{suggestion.structured_formatting?.secondary_text || ""}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
-                  {/* Pays */}
-                  <div className="px-4 py-3.5 flex items-center">
-                    <div className="w-9 h-9 rounded-full bg-green-50 flex items-center justify-center mr-3">
-                      <svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
-                      </svg>
+                  {/* Pays avec liste déroulante */}
+                  <div className="px-4 py-3.5">
+                    <div className="flex items-center">
+                      <div className="w-9 h-9 rounded-full bg-green-50 flex items-center justify-center mr-3">
+                        <svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+                        </svg>
+                      </div>
+                      <div className="flex-1 relative">
+                        <label className="block text-[13px] font-medium text-gray-500">Pays</label>
+                        <input
+                          type="text"
+                          value={profileCountry}
+                          onChange={(e) => {
+                            setProfileCountry(e.target.value);
+                            setCountrySearch(e.target.value);
+                            setShowCountrySuggestions(true);
+                          }}
+                          onFocus={() => setShowCountrySuggestions(true)}
+                          className="w-full text-[17px] text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0 placeholder:text-gray-300"
+                          placeholder="Sélectionner un pays..."
+                        />
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <label className="block text-[13px] font-medium text-gray-500">Pays</label>
-                      <input
-                        type="text"
-                        value={profileCountry}
-                        onChange={(e) => setProfileCountry(e.target.value)}
-                        className="w-full text-[17px] text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0 placeholder:text-gray-300"
-                        placeholder="Votre pays"
-                      />
-                    </div>
+                    {/* Suggestions de pays */}
+                    {showCountrySuggestions && (
+                      <div className="mt-2 bg-gray-50 rounded-xl overflow-hidden max-h-48 overflow-y-auto">
+                        {COUNTRIES_LIST
+                          .filter(c => c.toLowerCase().includes(countrySearch.toLowerCase()))
+                          .slice(0, 8)
+                          .map((country, index) => (
+                            <button
+                              key={index}
+                              type="button"
+                              onClick={() => {
+                                setProfileCountry(country);
+                                setShowCountrySuggestions(false);
+                              }}
+                              className="w-full px-3 py-2.5 text-left hover:bg-gray-100 flex items-center gap-2 transition-colors"
+                            >
+                              <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582" />
+                              </svg>
+                              <span className="text-[15px] text-gray-900">{country}</span>
+                            </button>
+                          ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
