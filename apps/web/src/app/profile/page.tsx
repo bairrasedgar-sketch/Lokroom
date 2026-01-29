@@ -1260,9 +1260,9 @@ function AboutSection(props: AboutProps) {
                         role="switch"
                         aria-checked={showAboutMe}
                         onClick={() => setShowAboutMe(!showAboutMe)}
-                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${showAboutMe ? "bg-gray-900" : "bg-gray-200"}`}
+                        className={`relative inline-flex h-7 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${showAboutMe ? "bg-gray-900" : "bg-gray-300"}`}
                       >
-                        <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${showAboutMe ? "translate-x-5" : "translate-x-0"}`} />
+                        <span className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${showAboutMe ? "translate-x-7" : "translate-x-0"}`} />
                       </button>
                     </div>
                     <textarea
@@ -1284,9 +1284,9 @@ function AboutSection(props: AboutProps) {
                         role="switch"
                         aria-checked={showCity}
                         onClick={() => setShowCity(!showCity)}
-                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${showCity ? "bg-gray-900" : "bg-gray-200"}`}
+                        className={`relative inline-flex h-7 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${showCity ? "bg-gray-900" : "bg-gray-300"}`}
                       >
-                        <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${showCity ? "translate-x-5" : "translate-x-0"}`} />
+                        <span className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${showCity ? "translate-x-7" : "translate-x-0"}`} />
                       </button>
                     </div>
                     <input
@@ -1308,9 +1308,9 @@ function AboutSection(props: AboutProps) {
                         role="switch"
                         aria-checked={showCountry}
                         onClick={() => setShowCountry(!showCountry)}
-                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${showCountry ? "bg-gray-900" : "bg-gray-200"}`}
+                        className={`relative inline-flex h-7 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${showCountry ? "bg-gray-900" : "bg-gray-300"}`}
                       >
-                        <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${showCountry ? "translate-x-5" : "translate-x-0"}`} />
+                        <span className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${showCountry ? "translate-x-7" : "translate-x-0"}`} />
                       </button>
                     </div>
                     <input
@@ -1332,9 +1332,9 @@ function AboutSection(props: AboutProps) {
                         role="switch"
                         aria-checked={showJobTitle}
                         onClick={() => setShowJobTitle(!showJobTitle)}
-                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${showJobTitle ? "bg-gray-900" : "bg-gray-200"}`}
+                        className={`relative inline-flex h-7 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${showJobTitle ? "bg-gray-900" : "bg-gray-300"}`}
                       >
-                        <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${showJobTitle ? "translate-x-5" : "translate-x-0"}`} />
+                        <span className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${showJobTitle ? "translate-x-7" : "translate-x-0"}`} />
                       </button>
                     </div>
                     <input
@@ -1356,9 +1356,9 @@ function AboutSection(props: AboutProps) {
                         role="switch"
                         aria-checked={showLanguages}
                         onClick={() => setShowLanguages(!showLanguages)}
-                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${showLanguages ? "bg-gray-900" : "bg-gray-200"}`}
+                        className={`relative inline-flex h-7 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${showLanguages ? "bg-gray-900" : "bg-gray-300"}`}
                       >
-                        <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${showLanguages ? "translate-x-5" : "translate-x-0"}`} />
+                        <span className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${showLanguages ? "translate-x-7" : "translate-x-0"}`} />
                       </button>
                     </div>
                     <input
@@ -1380,9 +1380,9 @@ function AboutSection(props: AboutProps) {
                         role="switch"
                         aria-checked={showInterests}
                         onClick={() => setShowInterests(!showInterests)}
-                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${showInterests ? "bg-gray-900" : "bg-gray-200"}`}
+                        className={`relative inline-flex h-7 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out ${showInterests ? "bg-gray-900" : "bg-gray-300"}`}
                       >
-                        <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${showInterests ? "translate-x-5" : "translate-x-0"}`} />
+                        <span className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow transition duration-200 ease-in-out ${showInterests ? "translate-x-7" : "translate-x-0"}`} />
                       </button>
                     </div>
                     <input
