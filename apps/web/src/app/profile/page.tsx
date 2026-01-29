@@ -1260,7 +1260,7 @@ function AboutSection(props: AboutProps) {
                         role="switch"
                         aria-checked={showAboutMe}
                         onClick={() => setShowAboutMe(!showAboutMe)}
-                        className={`relative inline-flex h-[24px] w-[60px] items-center flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-out ${showAboutMe ? "bg-green-500" : "bg-gray-300"}`}
+                        className={`relative inline-flex h-[10px] w-[60px] items-center flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-out ${showAboutMe ? "bg-green-500" : "bg-gray-300"}`}
                       >
                         <span className={`pointer-events-none inline-block h-[20px] w-[20px] rounded-full bg-white shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-transform duration-200 ease-out ${showAboutMe ? "translate-x-[38px]" : "translate-x-[2px]"}`} />
                       </button>
@@ -1284,7 +1284,7 @@ function AboutSection(props: AboutProps) {
                         role="switch"
                         aria-checked={showCity}
                         onClick={() => setShowCity(!showCity)}
-                        className={`relative inline-flex h-[24px] w-[60px] items-center flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-out ${showCity ? "bg-green-500" : "bg-gray-300"}`}
+                        className={`relative inline-flex h-[10px] w-[60px] items-center flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-out ${showCity ? "bg-green-500" : "bg-gray-300"}`}
                       >
                         <span className={`pointer-events-none inline-block h-[20px] w-[20px] rounded-full bg-white shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-transform duration-200 ease-out ${showCity ? "translate-x-[38px]" : "translate-x-[2px]"}`} />
                       </button>
@@ -1308,7 +1308,7 @@ function AboutSection(props: AboutProps) {
                         role="switch"
                         aria-checked={showCountry}
                         onClick={() => setShowCountry(!showCountry)}
-                        className={`relative inline-flex h-[24px] w-[60px] items-center flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-out ${showCountry ? "bg-green-500" : "bg-gray-300"}`}
+                        className={`relative inline-flex h-[10px] w-[60px] items-center flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-out ${showCountry ? "bg-green-500" : "bg-gray-300"}`}
                       >
                         <span className={`pointer-events-none inline-block h-[20px] w-[20px] rounded-full bg-white shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-transform duration-200 ease-out ${showCountry ? "translate-x-[38px]" : "translate-x-[2px]"}`} />
                       </button>
@@ -1332,7 +1332,7 @@ function AboutSection(props: AboutProps) {
                         role="switch"
                         aria-checked={showJobTitle}
                         onClick={() => setShowJobTitle(!showJobTitle)}
-                        className={`relative inline-flex h-[24px] w-[60px] items-center flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-out ${showJobTitle ? "bg-green-500" : "bg-gray-300"}`}
+                        className={`relative inline-flex h-[10px] w-[60px] items-center flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-out ${showJobTitle ? "bg-green-500" : "bg-gray-300"}`}
                       >
                         <span className={`pointer-events-none inline-block h-[20px] w-[20px] rounded-full bg-white shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-transform duration-200 ease-out ${showJobTitle ? "translate-x-[38px]" : "translate-x-[2px]"}`} />
                       </button>
@@ -1356,7 +1356,7 @@ function AboutSection(props: AboutProps) {
                         role="switch"
                         aria-checked={showLanguages}
                         onClick={() => setShowLanguages(!showLanguages)}
-                        className={`relative inline-flex h-[24px] w-[60px] items-center flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-out ${showLanguages ? "bg-green-500" : "bg-gray-300"}`}
+                        className={`relative inline-flex h-[10px] w-[60px] items-center flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-out ${showLanguages ? "bg-green-500" : "bg-gray-300"}`}
                       >
                         <span className={`pointer-events-none inline-block h-[20px] w-[20px] rounded-full bg-white shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-transform duration-200 ease-out ${showLanguages ? "translate-x-[38px]" : "translate-x-[2px]"}`} />
                       </button>
@@ -1380,7 +1380,7 @@ function AboutSection(props: AboutProps) {
                         role="switch"
                         aria-checked={showInterests}
                         onClick={() => setShowInterests(!showInterests)}
-                        className={`relative inline-flex h-[24px] w-[60px] items-center flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-out ${showInterests ? "bg-green-500" : "bg-gray-300"}`}
+                        className={`relative inline-flex h-[10px] w-[60px] items-center flex-shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-out ${showInterests ? "bg-green-500" : "bg-gray-300"}`}
                       >
                         <span className={`pointer-events-none inline-block h-[20px] w-[20px] rounded-full bg-white shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-transform duration-200 ease-out ${showInterests ? "translate-x-[38px]" : "translate-x-[2px]"}`} />
                       </button>
