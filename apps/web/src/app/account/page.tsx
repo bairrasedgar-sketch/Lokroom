@@ -2600,7 +2600,7 @@ function MobileProfileCard({
           {/* Bouton Modifier le profil */}
           <div className="w-full mt-5 pt-4 border-t border-gray-100">
             <Link
-              href="/profile"
+              href="/profile?edit=true"
               className="flex items-center justify-center w-full py-3 px-4 rounded-xl border-2 border-gray-900 text-sm font-semibold text-gray-900 hover:bg-gray-900 hover:text-white transition-colors"
             >
               Modifier le profil
@@ -2852,6 +2852,8 @@ function MobileAccountView({
                           item.action();
                         } else if (item.id !== "help" && item.id !== "support" && item.id !== "logout") {
                           handleChangeTab(item.id as TabId);
+                          // Scroll en haut après changement d'onglet
+                          setTimeout(() => window.scrollTo({ top: 0, behavior: 'instant' }), 50);
                         }
                       }}
                       className="flex w-full items-center gap-3.5 px-4 py-3.5 text-left active:bg-gray-50 transition"

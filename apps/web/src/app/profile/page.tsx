@@ -71,6 +71,9 @@ export default function ProfilePage() {
   // Mode aperçu (lecture seule)
   const isPreviewMode = searchParams.get("preview") === "true";
 
+  // Mode édition directe (depuis le bouton "Modifier le profil")
+  const isEditMode = searchParams.get("edit") === "true";
+
   const [user, setUser] = useState<UserDTO | null>(null);
   const [initial, setInitial] = useState<UserDTO | null>(null);
   const [role, setRole] = useState<Role>("GUEST");
@@ -108,6 +111,13 @@ export default function ProfilePage() {
 
   // ouverture depuis un bouton externe
   const [profileEditRequested, setProfileEditRequested] = useState(false);
+
+  // Si mode édition, ouvrir directement la modal
+  useEffect(() => {
+    if (isEditMode && !loading) {
+      setProfileEditRequested(true);
+    }
+  }, [isEditMode, loading]);
 
   // 1️⃣ Chargement du profil
   useEffect(() => {
