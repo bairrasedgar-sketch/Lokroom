@@ -253,7 +253,7 @@ export default function FavoritesPage() {
                     className="absolute right-2 top-2 z-10 flex items-center justify-center w-7 h-7 rounded-full bg-white/90 text-[#FF385C] shadow-sm backdrop-blur-sm transition hover:bg-white active:scale-95"
                     title="Retirer des favoris"
                   >
-                    <HeartSolid className="h-4 w-4" />
+                    <HeartSolid className="h-5 w-5" />
                   </button>
 
                   <Link href={`/listings/${listing.id}`} className="block">
