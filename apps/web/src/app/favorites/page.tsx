@@ -207,14 +207,14 @@ export default function FavoritesPage() {
                   setEditingId(currentWishlist.id);
                   setEditName(currentWishlist.name);
                 }}
-                className="rounded-full border border-gray-300 p-2.5 text-gray-700 hover:bg-gray-50 transition"
+                className="flex items-center justify-center w-10 h-10 rounded-full border border-gray-300 text-gray-700 hover:bg-gray-50 transition"
                 title="Renommer"
               >
                 <PencilIcon className="h-4 w-4" />
               </button>
               <button
                 onClick={(e) => handleDeleteWishlist(currentWishlist.id, currentWishlist.name, e)}
-                className="rounded-full border border-gray-300 p-2.5 text-gray-700 hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition"
+                className="flex items-center justify-center w-10 h-10 rounded-full border border-gray-300 text-gray-700 hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition"
                 title="Supprimer la liste"
               >
                 <TrashIcon className="h-4 w-4" />
@@ -250,7 +250,7 @@ export default function FavoritesPage() {
                   {/* Bouton supprimer */}
                   <button
                     onClick={() => handleRemoveFavorite(listing.id, currentWishlist.name)}
-                    className="absolute right-2 top-2 z-10 rounded-full bg-white/90 p-1.5 text-[#FF385C] shadow-sm backdrop-blur-sm transition hover:bg-white active:scale-95"
+                    className="absolute right-2 top-2 z-10 flex items-center justify-center w-7 h-7 rounded-full bg-white/90 text-[#FF385C] shadow-sm backdrop-blur-sm transition hover:bg-white active:scale-95"
                     title="Retirer des favoris"
                   >
                     <HeartSolid className="h-4 w-4" />
