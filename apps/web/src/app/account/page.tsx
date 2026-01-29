@@ -2918,9 +2918,9 @@ function MobileAccountView({
         </div>
       ) : (
         /* Vue detail mobile - Contenu de l'onglet selectionne */
-        <div className="min-h-screen bg-gray-50 pt-14">
-          {/* Header avec bouton retour - FIXE en haut sous la navbar */}
-          <div className="fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3">
+        <div className="min-h-screen bg-gray-50 pt-[104px]">
+          {/* Header avec bouton retour - FIXE en haut sous la navbar Lokroom */}
+          <div className="fixed top-[48px] left-0 right-0 z-40 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3">
             <button
               type="button"
               onClick={() => {
