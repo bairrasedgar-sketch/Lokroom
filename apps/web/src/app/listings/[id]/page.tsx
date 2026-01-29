@@ -308,7 +308,7 @@ export default async function ListingDetailPage({
 
           {/* Galerie */}
           <div className="aspect-[4/3] bg-gray-100">
-            <ListingGallery images={listing.images ?? []} aspect={4 / 3} />
+            <ListingGallery images={listing.images ?? []} title={listing.title} />
           </div>
         </div>
 
@@ -482,7 +482,7 @@ export default async function ListingDetailPage({
       {/* Galerie */}
       <section className="space-y-2 sm:space-y-3">
         <div className="overflow-hidden rounded-xl sm:rounded-2xl md:rounded-3xl border bg-gray-100">
-          <ListingGallery images={listing.images ?? []} aspect={4 / 3} />
+          <ListingGallery images={listing.images ?? []} title={listing.title} />
         </div>
 
         {/* Boutons sous les photos */}
