@@ -1258,9 +1258,9 @@ function AboutSection(props: AboutProps) {
                       <button
                         type="button"
                         onClick={() => setShowAboutMe(!showAboutMe)}
-                        className={`relative inline-flex h-6 w-11 rounded-full transition-colors ${showAboutMe ? "bg-gray-900" : "bg-gray-300"}`}
+                        className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${showAboutMe ? "bg-green-500" : "bg-gray-300"}`}
                       >
-                        <span className={`inline-block h-5 w-4 rounded-md bg-white shadow transform transition mt-0.5 ${showAboutMe ? "translate-x-6" : "translate-x-0.5"}`} />
+                        <span className={`inline-block h-5 w-5 rounded-full bg-white shadow-md transform transition-transform ${showAboutMe ? "translate-x-6" : "translate-x-1"}`} />
                       </button>
                     </div>
                     <textarea
@@ -1280,9 +1280,9 @@ function AboutSection(props: AboutProps) {
                       <button
                         type="button"
                         onClick={() => setShowCity(!showCity)}
-                        className={`relative inline-flex h-6 w-11 rounded-full transition-colors ${showCity ? "bg-gray-900" : "bg-gray-300"}`}
+                        className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${showCity ? "bg-green-500" : "bg-gray-300"}`}
                       >
-                        <span className={`inline-block h-5 w-4 rounded-md bg-white shadow transform transition mt-0.5 ${showCity ? "translate-x-6" : "translate-x-0.5"}`} />
+                        <span className={`inline-block h-5 w-5 rounded-full bg-white shadow-md transform transition-transform ${showCity ? "translate-x-6" : "translate-x-1"}`} />
                       </button>
                     </div>
                     <input
@@ -1302,9 +1302,9 @@ function AboutSection(props: AboutProps) {
                       <button
                         type="button"
                         onClick={() => setShowCountry(!showCountry)}
-                        className={`relative inline-flex h-6 w-11 rounded-full transition-colors ${showCountry ? "bg-gray-900" : "bg-gray-300"}`}
+                        className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${showCountry ? "bg-green-500" : "bg-gray-300"}`}
                       >
-                        <span className={`inline-block h-5 w-4 rounded-md bg-white shadow transform transition mt-0.5 ${showCountry ? "translate-x-6" : "translate-x-0.5"}`} />
+                        <span className={`inline-block h-5 w-5 rounded-full bg-white shadow-md transform transition-transform ${showCountry ? "translate-x-6" : "translate-x-1"}`} />
                       </button>
                     </div>
                     <input
@@ -1324,9 +1324,9 @@ function AboutSection(props: AboutProps) {
                       <button
                         type="button"
                         onClick={() => setShowJobTitle(!showJobTitle)}
-                        className={`relative inline-flex h-6 w-11 rounded-full transition-colors ${showJobTitle ? "bg-gray-900" : "bg-gray-300"}`}
+                        className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${showJobTitle ? "bg-green-500" : "bg-gray-300"}`}
                       >
-                        <span className={`inline-block h-5 w-4 rounded-md bg-white shadow transform transition mt-0.5 ${showJobTitle ? "translate-x-6" : "translate-x-0.5"}`} />
+                        <span className={`inline-block h-5 w-5 rounded-full bg-white shadow-md transform transition-transform ${showJobTitle ? "translate-x-6" : "translate-x-1"}`} />
                       </button>
                     </div>
                     <input
@@ -1346,9 +1346,9 @@ function AboutSection(props: AboutProps) {
                       <button
                         type="button"
                         onClick={() => setShowLanguages(!showLanguages)}
-                        className={`relative inline-flex h-6 w-11 rounded-full transition-colors ${showLanguages ? "bg-gray-900" : "bg-gray-300"}`}
+                        className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${showLanguages ? "bg-green-500" : "bg-gray-300"}`}
                       >
-                        <span className={`inline-block h-5 w-4 rounded-md bg-white shadow transform transition mt-0.5 ${showLanguages ? "translate-x-6" : "translate-x-0.5"}`} />
+                        <span className={`inline-block h-5 w-5 rounded-full bg-white shadow-md transform transition-transform ${showLanguages ? "translate-x-6" : "translate-x-1"}`} />
                       </button>
                     </div>
                     <input
@@ -1368,9 +1368,9 @@ function AboutSection(props: AboutProps) {
                       <button
                         type="button"
                         onClick={() => setShowInterests(!showInterests)}
-                        className={`relative inline-flex h-6 w-11 rounded-full transition-colors ${showInterests ? "bg-gray-900" : "bg-gray-300"}`}
+                        className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${showInterests ? "bg-green-500" : "bg-gray-300"}`}
                       >
-                        <span className={`inline-block h-5 w-4 rounded-md bg-white shadow transform transition mt-0.5 ${showInterests ? "translate-x-6" : "translate-x-0.5"}`} />
+                        <span className={`inline-block h-5 w-5 rounded-full bg-white shadow-md transform transition-transform ${showInterests ? "translate-x-6" : "translate-x-1"}`} />
                       </button>
                     </div>
                     <input
