@@ -1,173 +1,508 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
-import { HeartIcon } from "@heroicons/react/24/solid";
-import { getDictionaryForLocale, type SupportedLocale } from "@/lib/i18n.client";
-
-type FavoriteListing = {
-  id: string;
-  title?: string | null;
-  city?: string | null;
-  country?: string | null;
-  nightlyPrice?: number | null;
-  price?: number | null;
-  currency?: string | null;
-  images?: { id: string; url: string | null }[];
-};
-
-type FavoritesResponse = {
-  favorites: FavoriteListing[];
-  total?: number;
-};
+import {
+  PencilIcon,
+  TrashIcon,
+  HeartIcon,
+  XMarkIcon,
+  CheckIcon,
+  ChevronLeftIcon,
+  MapPinIcon,
+  PlusIcon,
+} from "@heroicons/react/24/outline";
+import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid";
+import { toast } from "sonner";
+import { useFavorites } from "@/contexts/FavoritesContext";
 
 function SkeletonCard() {
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm animate-pulse">
-      <div className="relative h-44 w-full bg-gray-200" />
-      <div className="flex flex-1 flex-col px-4 py-3 space-y-2">
-        <div className="flex items-center justify-between gap-2">
-          <div className="h-4 w-2/3 rounded bg-gray-200" />
-          <div className="h-4 w-16 rounded bg-gray-200" />
-        </div>
-        <div className="h-3 w-1/2 rounded bg-gray-200" />
-        <div className="h-6 w-24 rounded-full bg-gray-200 mt-2" />
-      </div>
+    <div className="animate-pulse">
+      <div className="aspect-[4/3] rounded-xl bg-gray-200" />
+      <div className="mt-3 h-5 w-2/3 rounded bg-gray-200" />
+      <div className="mt-2 h-4 w-1/3 rounded bg-gray-200" />
     </div>
   );
 }
 
 export default function FavoritesPage() {
-  const [favorites, setFavorites] = useState<FavoriteListing[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [dict, setDict] = useState(getDictionaryForLocale("fr"));
+  const { status } = useSession();
+  const {
+    wishlists,
+    wishlistsLoading,
+    deleteWishlist,
+    updateWishlistName,
+    removeFavoriteFromWishlist,
+    refreshWishlists,
+  } = useFavorites();
 
-  // Charger le dictionnaire selon la locale du cookie
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [selectedWishlist, setSelectedWishlist] = useState<string | null>(null);
+  const [creatingList, setCreatingList] = useState(false);
+  const [newListName, setNewListName] = useState("");
+
+  // Rafraîchir les wishlists au montage
   useEffect(() => {
-    if (typeof document === "undefined") return;
-    const m = document.cookie.match(/(?:^|;\s*)locale=([^;]+)/);
-    const locale = (m?.[1] || "fr") as SupportedLocale;
-    setDict(getDictionaryForLocale(locale));
-  }, []);
+    if (status === "authenticated") {
+      refreshWishlists();
+    }
+  }, [status, refreshWishlists]);
 
-  const t = dict.favorites;
+  // Créer une nouvelle liste
+  async function handleCreateList() {
+    if (!newListName.trim()) {
+      toast.error("Le nom ne peut pas être vide");
+      return;
+    }
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await fetch("/api/favorites");
-        if (!res.ok) {
-          setLoading(false);
-          return;
-        }
+    try {
+      const res = await fetch("/api/wishlists", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newListName.trim() }),
+      });
 
-        const data = (await res.json()) as FavoritesResponse;
-
-        setFavorites(Array.isArray(data.favorites) ? data.favorites : []);
-      } catch (e) {
-        console.error("Erreur chargement favoris:", e);
-      } finally {
-        setLoading(false);
+      if (res.ok) {
+        toast.success("Liste créée");
+        setCreatingList(false);
+        setNewListName("");
+        refreshWishlists();
+      } else {
+        toast.error("Impossible de créer la liste");
       }
-    };
+    } catch {
+      toast.error("Erreur lors de la création");
+    }
+  }
 
-    void load();
-  }, []);
+  // Supprimer une wishlist
+  async function handleDeleteWishlist(id: string, name: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!confirm(`Supprimer la liste "${name}" ? Tous les favoris de cette liste seront supprimés.`)) return;
 
-  const hasFavorites = favorites.length > 0;
+    const success = await deleteWishlist(id);
+    if (success) {
+      toast.success("Liste supprimée");
+      if (selectedWishlist === id) setSelectedWishlist(null);
+    } else {
+      toast.error("Impossible de supprimer la liste");
+    }
+  }
 
+  // Modifier le nom d'une wishlist
+  async function handleUpdateWishlistName(id: string) {
+    if (!editName.trim()) {
+      toast.error("Le nom ne peut pas être vide");
+      return;
+    }
+
+    const success = await updateWishlistName(id, editName.trim());
+    if (success) {
+      setEditingId(null);
+      setEditName("");
+      toast.success("Liste renommée");
+    } else {
+      toast.error("Impossible de renommer la liste");
+    }
+  }
+
+  // Supprimer une annonce d'une wishlist
+  async function handleRemoveFavorite(listingId: string, wishlistName: string) {
+    const success = await removeFavoriteFromWishlist(listingId);
+    if (success) {
+      toast.success(`Retiré de "${wishlistName}"`);
+    } else {
+      toast.error("Impossible de retirer l'annonce");
+    }
+  }
+
+  // Page non connecté
+  if (status === "unauthenticated") {
+    return (
+      <main className="min-h-[70vh] flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-rose-100 to-pink-100">
+            <HeartSolid className="h-10 w-10 text-[#FF385C]" />
+          </div>
+          <h1 className="text-2xl font-semibold text-gray-900">Tes favoris t&apos;attendent</h1>
+          <p className="mt-3 text-gray-500">
+            Connecte-toi pour retrouver tes annonces préférées et créer des listes personnalisées
+          </p>
+          <Link
+            href="/api/auth/signin"
+            className="mt-8 inline-flex items-center justify-center rounded-xl bg-[#FF385C] px-8 py-3 text-base font-semibold text-white transition hover:bg-[#E31C5F] active:scale-[0.98]"
+          >
+            Se connecter
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  // Vue détaillée d'une wishlist
+  const currentWishlist = wishlists.find(w => w.id === selectedWishlist);
+
+  if (selectedWishlist && currentWishlist) {
+    return (
+      <main className="mx-auto max-w-7xl 2xl:max-w-[1600px] 3xl:max-w-[1920px] px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header avec retour */}
+        <div className="mb-8">
+          <button
+            onClick={() => setSelectedWishlist(null)}
+            className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-gray-600 hover:text-gray-900 transition"
+          >
+            <ChevronLeftIcon className="h-4 w-4" />
+            Retour aux listes
+          </button>
+
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              {editingId === currentWishlist.id ? (
+                <div className="flex items-center gap-3">
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="text-2xl font-semibold border-b-2 border-gray-900 bg-transparent focus:outline-none"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleUpdateWishlistName(currentWishlist.id);
+                      if (e.key === "Escape") {
+                        setEditingId(null);
+                        setEditName("");
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={() => handleUpdateWishlistName(currentWishlist.id)}
+                    className="rounded-full bg-gray-900 p-2 text-white hover:bg-black transition"
+                  >
+                    <CheckIcon className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingId(null);
+                      setEditName("");
+                    }}
+                    className="rounded-full border border-gray-300 p-2 hover:bg-gray-50 transition"
+                  >
+                    <XMarkIcon className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <h1 className="text-2xl font-semibold text-gray-900">{currentWishlist.name}</h1>
+              )}
+              <p className="mt-1 text-gray-500">
+                {currentWishlist._count.favorites} annonce{currentWishlist._count.favorites !== 1 ? "s" : ""} enregistrée{currentWishlist._count.favorites !== 1 ? "s" : ""}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setEditingId(currentWishlist.id);
+                  setEditName(currentWishlist.name);
+                }}
+                className="rounded-full border border-gray-300 p-2.5 text-gray-700 hover:bg-gray-50 transition"
+                title="Renommer"
+              >
+                <PencilIcon className="h-4 w-4" />
+              </button>
+              <button
+                onClick={(e) => handleDeleteWishlist(currentWishlist.id, currentWishlist.name, e)}
+                className="rounded-full border border-gray-300 p-2.5 text-gray-700 hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition"
+                title="Supprimer la liste"
+              >
+                <TrashIcon className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Grille des annonces */}
+        {currentWishlist.favorites.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/50 px-6 py-20 text-center">
+            <HeartIcon className="mb-4 h-12 w-12 text-gray-300" />
+            <h2 className="text-lg font-medium text-gray-900">Cette liste est vide</h2>
+            <p className="mt-2 text-sm text-gray-500">
+              Ajoute des annonces à cette liste en cliquant sur le coeur
+            </p>
+            <Link
+              href="/"
+              className="mt-6 inline-flex rounded-xl bg-gray-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-black transition"
+            >
+              Explorer les annonces
+            </Link>
+          </div>
+        ) : (
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {currentWishlist.favorites.map((fav) => {
+              const listing = fav.listing;
+              const imageUrl = listing.images[0]?.url;
+              const location = [listing.city, listing.country].filter(Boolean).join(", ");
+
+              return (
+                <div key={fav.id} className="group relative">
+                  {/* Bouton supprimer */}
+                  <button
+                    onClick={() => handleRemoveFavorite(listing.id, currentWishlist.name)}
+                    className="absolute right-3 top-3 z-10 rounded-full bg-white/90 p-2 text-[#FF385C] shadow-sm backdrop-blur-sm transition hover:bg-white hover:scale-110 active:scale-95"
+                    title="Retirer des favoris"
+                  >
+                    <HeartSolid className="h-5 w-5" />
+                  </button>
+
+                  <Link href={`/listings/${listing.id}`} className="block">
+                    {/* Image */}
+                    <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-100">
+                      {imageUrl ? (
+                        <Image
+                          src={imageUrl}
+                          alt={listing.title}
+                          fill
+                          className="object-cover transition duration-300 group-hover:scale-105"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                          <HeartIcon className="h-10 w-10 text-gray-300" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Infos */}
+                    <div className="mt-3">
+                      <h3 className="font-medium text-gray-900 line-clamp-1">
+                        {listing.title}
+                      </h3>
+                      {location && (
+                        <p className="mt-0.5 flex items-center gap-1 text-sm text-gray-500">
+                          <MapPinIcon className="h-3.5 w-3.5" />
+                          {location}
+                        </p>
+                      )}
+                      <p className="mt-1.5 text-gray-900">
+                        <span className="font-semibold">{Math.round(listing.price)} {listing.currency === "CAD" ? "CAD" : "€"}</span>
+                        <span className="text-gray-500"> / nuit</span>
+                      </p>
+                    </div>
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </main>
+    );
+  }
+
+  // Compter le total des favoris
+  const totalFavorites = wishlists.reduce((acc, w) => acc + w._count.favorites, 0);
+
+  // Vue principale - Liste des wishlists (catégories)
   return (
-    <main className="mx-auto max-w-6xl 2xl:max-w-7xl 3xl:max-w-[1800px] px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
-      <header className="mb-4 sm:mb-6">
-        <h1 className="text-xl sm:text-2xl font-semibold">{t.title}</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          {t.subtitle}
-        </p>
+    <main className="mx-auto max-w-7xl 2xl:max-w-[1600px] 3xl:max-w-[1920px] px-4 sm:px-6 lg:px-8 py-8">
+      <header className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900">Favoris</h1>
+          {totalFavorites > 0 && (
+            <p className="mt-1 text-sm text-gray-500">
+              {totalFavorites} annonce{totalFavorites !== 1 ? "s" : ""} dans {wishlists.length} liste{wishlists.length !== 1 ? "s" : ""}
+            </p>
+          )}
+        </div>
+
+        {wishlists.length > 0 && (
+          <button
+            onClick={() => setCreatingList(true)}
+            className="inline-flex items-center gap-2 rounded-xl border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+          >
+            <PlusIcon className="h-4 w-4" />
+            <span className="hidden sm:inline">Nouvelle liste</span>
+          </button>
+        )}
       </header>
 
-      {loading ? (
-        <div className="grid gap-4 sm:gap-5 grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6">
-          {[0, 1, 2, 3, 4, 5].map((i) => (
+      {/* Modal création de liste */}
+      {creatingList && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">Créer une nouvelle liste</h2>
+            <input
+              type="text"
+              value={newListName}
+              onChange={(e) => setNewListName(e.target.value)}
+              placeholder="Nom de la liste..."
+              className="w-full rounded-xl border border-gray-300 px-4 py-3 text-base focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleCreateList();
+                if (e.key === "Escape") {
+                  setCreatingList(false);
+                  setNewListName("");
+                }
+              }}
+            />
+            <div className="mt-4 flex gap-3">
+              <button
+                onClick={() => {
+                  setCreatingList(false);
+                  setNewListName("");
+                }}
+                className="flex-1 rounded-xl border border-gray-300 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleCreateList}
+                className="flex-1 rounded-xl bg-gray-900 py-3 text-sm font-medium text-white hover:bg-black transition"
+              >
+                Créer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {wishlistsLoading ? (
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6">
+          {[1, 2, 3, 4].map((i) => (
             <SkeletonCard key={i} />
           ))}
         </div>
-      ) : !hasFavorites ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-gray-50 px-6 py-16 text-center">
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-rose-100">
-            <HeartIcon className="h-8 w-8 text-rose-500" />
+      ) : wishlists.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/50 px-6 py-20 text-center">
+          <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-rose-100 to-pink-100">
+            <HeartSolid className="h-10 w-10 text-[#FF385C]" />
           </div>
-          <p className="text-lg font-semibold text-gray-900">{t.noFavoritesYet}</p>
-          <p className="mt-2 max-w-sm text-sm text-gray-500">
-            {t.noFavoritesDesc}
+          <h2 className="text-xl font-semibold text-gray-900">Crée ta première liste</h2>
+          <p className="mt-2 max-w-sm text-gray-500">
+            Clique sur le coeur d&apos;une annonce pour l&apos;ajouter à tes favoris et créer des listes
           </p>
           <Link
-            href="/listings"
-            className="mt-6 inline-flex rounded-full bg-gray-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-black transition"
+            href="/"
+            className="mt-8 inline-flex items-center justify-center rounded-xl bg-[#FF385C] px-8 py-3 text-base font-semibold text-white transition hover:bg-[#E31C5F] active:scale-[0.98]"
           >
-            {t.discoverListings}
+            Découvrir les annonces
           </Link>
         </div>
       ) : (
-        <div className="grid gap-4 sm:gap-5 grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6">
-          {favorites.map((listing) => {
-            const imageUrl = listing.images?.[0]?.url ?? null;
-            const price =
-              listing.nightlyPrice ?? listing.price ?? null;
-            const location = [listing.city, listing.country]
-              .filter(Boolean)
-              .join(", ");
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6">
+          {wishlists.map((wishlist) => {
+            const previewImages = wishlist.favorites
+              .slice(0, 4)
+              .map((f) => f.listing.images[0]?.url)
+              .filter(Boolean);
 
             return (
-              <Link
-                key={listing.id}
-                href={`/listings/${listing.id}`}
-                className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              <div
+                key={wishlist.id}
+                className="group cursor-pointer"
+                onClick={() => setSelectedWishlist(wishlist.id)}
               >
-                {/* Image */}
-                <div className="relative h-44 w-full overflow-hidden bg-gray-100">
-                  {imageUrl ? (
+                {/* Grille d'images style Airbnb */}
+                <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-100">
+                  {previewImages.length >= 4 ? (
+                    // 4 images en grille
+                    <div className="grid h-full w-full grid-cols-2 grid-rows-2 gap-0.5">
+                      {previewImages.slice(0, 4).map((url, idx) => (
+                        <div key={idx} className="relative overflow-hidden">
+                          <Image
+                            src={url}
+                            alt=""
+                            fill
+                            className="object-cover transition duration-300 group-hover:scale-105"
+                            sizes="(max-width: 640px) 50vw, 25vw"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  ) : previewImages.length >= 2 ? (
+                    // 2-3 images
+                    <div className="grid h-full w-full grid-cols-2 gap-0.5">
+                      <div className="relative overflow-hidden">
+                        <Image
+                          src={previewImages[0]}
+                          alt=""
+                          fill
+                          className="object-cover transition duration-300 group-hover:scale-105"
+                          sizes="(max-width: 640px) 50vw, 25vw"
+                        />
+                      </div>
+                      <div className="grid grid-rows-2 gap-0.5">
+                        {previewImages.slice(1, 3).map((url, idx) => (
+                          <div key={idx} className="relative overflow-hidden">
+                            <Image
+                              src={url}
+                              alt=""
+                              fill
+                              className="object-cover transition duration-300 group-hover:scale-105"
+                              sizes="(max-width: 640px) 25vw, 12vw"
+                            />
+                          </div>
+                        ))}
+                        {previewImages.length === 2 && (
+                          <div className="bg-gray-200" />
+                        )}
+                      </div>
+                    </div>
+                  ) : previewImages.length === 1 ? (
+                    // 1 seule image
                     <Image
-                      src={imageUrl}
-                      alt={listing.title ?? "Lok'Room"}
+                      src={previewImages[0]}
+                      alt=""
                       fill
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      className="object-cover transition group-hover:scale-105"
+                      className="object-cover transition duration-300 group-hover:scale-105"
+                      sizes="(max-width: 640px) 100vw, 50vw"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">
-                      {t.noImage}
+                    // Pas d'image
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                      <HeartIcon className="h-12 w-12 text-gray-300" />
                     </div>
                   )}
-                  {/* Badge favori */}
-                  <div className="absolute top-2 right-2">
-                    <HeartIcon className="h-6 w-6 text-rose-500 drop-shadow-sm" />
+
+                  {/* Overlay au hover */}
+                  <div className="absolute inset-0 bg-black/0 transition duration-300 group-hover:bg-black/5" />
+
+                  {/* Actions */}
+                  <div className="absolute right-2 top-2 flex gap-1.5 opacity-0 transition group-hover:opacity-100">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingId(wishlist.id);
+                        setEditName(wishlist.name);
+                        setSelectedWishlist(wishlist.id);
+                      }}
+                      className="rounded-full bg-white/95 p-2 text-gray-700 shadow-sm backdrop-blur-sm transition hover:bg-white hover:scale-110"
+                      title="Renommer"
+                    >
+                      <PencilIcon className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={(e) => handleDeleteWishlist(wishlist.id, wishlist.name, e)}
+                      className="rounded-full bg-white/95 p-2 text-gray-700 shadow-sm backdrop-blur-sm transition hover:bg-white hover:text-red-600 hover:scale-110"
+                      title="Supprimer"
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
 
-                {/* Contenu */}
-                <div className="flex flex-1 flex-col px-4 py-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <h2 className="line-clamp-1 text-sm font-semibold text-gray-900">
-                      {listing.title ?? "Lok'Room"}
-                    </h2>
-                    {price != null && (
-                      <span className="shrink-0 text-sm font-semibold text-gray-900">
-                        {Math.round(price)}{" "}
-                        {listing.currency === "CAD" ? "CAD" : "€"} {dict.common.perNight}
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="mt-1 line-clamp-1 text-xs text-gray-500">
-                    {location || t.locationToCome}
+                {/* Infos */}
+                <div className="mt-3">
+                  <h2 className="font-semibold text-gray-900 group-hover:underline">
+                    {wishlist.name}
+                  </h2>
+                  <p className="mt-0.5 text-sm text-gray-500">
+                    {wishlist._count.favorites} annonce{wishlist._count.favorites !== 1 ? "s" : ""} enregistrée{wishlist._count.favorites !== 1 ? "s" : ""}
                   </p>
-
-                  <span className="mt-3 inline-flex w-fit items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 group-hover:bg-gray-200 transition">
-                    {t.viewListing}
-                  </span>
                 </div>
-              </Link>
+              </div>
             );
           })}
         </div>
