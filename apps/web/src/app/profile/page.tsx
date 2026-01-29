@@ -1159,279 +1159,152 @@ function AboutSection(props: AboutProps) {
             }}
           />
 
-          {/* MOBILE: Plein écran moderne */}
+          {/* MOBILE: Plein écran simple et propre */}
           <div className="lg:hidden fixed inset-0 bg-white flex flex-col">
-            {/* Header sticky mobile */}
-            <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 flex items-center">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
               <button
                 type="button"
                 onClick={() => {
                   setIsEditingProfile(false);
                   window.history.pushState({}, '', '/account');
                 }}
-                className="flex items-center justify-center h-10 w-10 -ml-2 rounded-full hover:bg-gray-100"
+                className="text-base text-gray-600"
               >
-                <svg className="h-5 w-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-                </svg>
+                Annuler
               </button>
-              <h1 className="flex-1 text-center text-lg font-semibold text-gray-900 -ml-10">
-                Modifier le profil
-              </h1>
-            </div>
-
-            {/* Contenu scrollable mobile */}
-            <div className="flex-1 overflow-y-auto bg-gray-50">
-              <div className="p-4 space-y-4">
-                {/* Section Photo */}
-                <div className="bg-white rounded-2xl p-4 shadow-sm">
-                  <div className="flex items-center gap-4">
-                    <div className="relative h-20 w-20 overflow-hidden rounded-full bg-gray-200 ring-2 ring-gray-100">
-                      {avatarPreview ? (
-                        <Image src={avatarPreview} alt="avatar" fill className="object-cover" sizes="80px" />
-                      ) : (
-                        <span className="flex h-full w-full items-center justify-center text-2xl font-semibold text-gray-600">
-                          {fullName.charAt(0).toUpperCase()}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <label className="block">
-                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-xl cursor-pointer hover:bg-black transition">
-                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
-                          Changer
-                        </span>
-                        <input type="file" accept="image/*" onChange={onPickAvatar} className="hidden" />
-                      </label>
-                      {avatarPreview && (
-                        <button
-                          type="button"
-                          onClick={onDeleteAvatar}
-                          className="text-sm text-red-600 font-medium hover:underline"
-                        >
-                          Supprimer la photo
-                        </button>
-                      )}
-                      {avatarFile && (
-                        <button
-                          type="button"
-                          onClick={onUploadAvatar}
-                          disabled={avatarStatus === "uploading" || avatarStatus === "saving"}
-                          className="text-sm text-gray-900 font-medium hover:underline disabled:opacity-50"
-                        >
-                          {avatarStatus === "uploading" ? "Envoi..." : avatarStatus === "saving" ? "Sauvegarde..." : "Enregistrer la photo"}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Section Informations publiques */}
-                <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
-                  <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
-                    <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.64 0 8.577 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.64 0-8.577-3.007-9.963-7.178z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    <h2 className="text-sm font-semibold text-gray-900">Informations publiques</h2>
-                  </div>
-
-                  {/* Prénom */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Prénom</label>
-                    <input
-                      type="text"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-gray-900 focus:ring-0 focus:outline-none"
-                      placeholder="Votre prénom"
-                    />
-                  </div>
-
-                  {/* À propos de moi */}
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-sm font-medium text-gray-700">À propos de moi</label>
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={showAboutMe}
-                        onClick={() => setShowAboutMe(!showAboutMe)}
-                        className={`relative inline-flex h-[28px] w-[52px] items-center flex-shrink-0 cursor-pointer rounded-[9999px] transition-colors duration-200 ease-out ${showAboutMe ? "bg-[#34C759]" : "bg-[#E5E5EA]"}`}
-                      >
-                        <span className={`pointer-events-none inline-block h-[24px] w-[24px] rounded-[9999px] bg-[#FFFFFF] shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-transform duration-200 ease-out ${showAboutMe ? "translate-x-[26px]" : "translate-x-[2px]"}`} />
-                      </button>
-                    </div>
-                    <textarea
-                      value={publicAboutMe}
-                      onChange={(e) => setPublicAboutMe(e.target.value)}
-                      rows={3}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-gray-900 focus:ring-0 focus:outline-none resize-none"
-                      placeholder="Parlez de vous..."
-                    />
-                    <p className="mt-1 text-xs text-gray-500">{showAboutMe ? "✓ Visible sur votre profil" : "✗ Masqué sur votre profil"}</p>
-                  </div>
-
-                  {/* Ville */}
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-sm font-medium text-gray-700">Ville</label>
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={showCity}
-                        onClick={() => setShowCity(!showCity)}
-                        className={`relative inline-flex h-[28px] w-[52px] items-center flex-shrink-0 cursor-pointer rounded-[9999px] transition-colors duration-200 ease-out ${showCity ? "bg-[#34C759]" : "bg-[#E5E5EA]"}`}
-                      >
-                        <span className={`pointer-events-none inline-block h-[24px] w-[24px] rounded-[9999px] bg-[#FFFFFF] shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-transform duration-200 ease-out ${showCity ? "translate-x-[26px]" : "translate-x-[2px]"}`} />
-                      </button>
-                    </div>
-                    <input
-                      type="text"
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-gray-900 focus:ring-0 focus:outline-none"
-                      placeholder="Votre ville"
-                    />
-                    <p className="mt-1 text-xs text-gray-500">{showCity ? "✓ Visible sur votre profil" : "✗ Masqué sur votre profil"}</p>
-                  </div>
-
-                  {/* Pays */}
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-sm font-medium text-gray-700">Pays</label>
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={showCountry}
-                        onClick={() => setShowCountry(!showCountry)}
-                        className={`relative inline-flex h-[28px] w-[52px] items-center flex-shrink-0 cursor-pointer rounded-[9999px] transition-colors duration-200 ease-out ${showCountry ? "bg-[#34C759]" : "bg-[#E5E5EA]"}`}
-                      >
-                        <span className={`pointer-events-none inline-block h-[24px] w-[24px] rounded-[9999px] bg-[#FFFFFF] shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-transform duration-200 ease-out ${showCountry ? "translate-x-[26px]" : "translate-x-[2px]"}`} />
-                      </button>
-                    </div>
-                    <input
-                      type="text"
-                      value={profileCountry}
-                      onChange={(e) => setProfileCountry(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-gray-900 focus:ring-0 focus:outline-none"
-                      placeholder="Votre pays"
-                    />
-                    <p className="mt-1 text-xs text-gray-500">{showCountry ? "✓ Visible sur votre profil" : "✗ Masqué sur votre profil"}</p>
-                  </div>
-
-                  {/* Travail */}
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-sm font-medium text-gray-700">Travail</label>
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={showJobTitle}
-                        onClick={() => setShowJobTitle(!showJobTitle)}
-                        className={`relative inline-flex h-[28px] w-[52px] items-center flex-shrink-0 cursor-pointer rounded-[9999px] transition-colors duration-200 ease-out ${showJobTitle ? "bg-[#34C759]" : "bg-[#E5E5EA]"}`}
-                      >
-                        <span className={`pointer-events-none inline-block h-[24px] w-[24px] rounded-[9999px] bg-[#FFFFFF] shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-transform duration-200 ease-out ${showJobTitle ? "translate-x-[26px]" : "translate-x-[2px]"}`} />
-                      </button>
-                    </div>
-                    <input
-                      type="text"
-                      value={publicJobTitle}
-                      onChange={(e) => setPublicJobTitle(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-gray-900 focus:ring-0 focus:outline-none"
-                      placeholder="Votre métier"
-                    />
-                    <p className="mt-1 text-xs text-gray-500">{showJobTitle ? "✓ Visible sur votre profil" : "✗ Masqué sur votre profil"}</p>
-                  </div>
-
-                  {/* Langues */}
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-sm font-medium text-gray-700">Langues parlées</label>
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={showLanguages}
-                        onClick={() => setShowLanguages(!showLanguages)}
-                        className={`relative inline-flex h-[28px] w-[52px] items-center flex-shrink-0 cursor-pointer rounded-[9999px] transition-colors duration-200 ease-out ${showLanguages ? "bg-[#34C759]" : "bg-[#E5E5EA]"}`}
-                      >
-                        <span className={`pointer-events-none inline-block h-[24px] w-[24px] rounded-[9999px] bg-[#FFFFFF] shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-transform duration-200 ease-out ${showLanguages ? "translate-x-[26px]" : "translate-x-[2px]"}`} />
-                      </button>
-                    </div>
-                    <input
-                      type="text"
-                      value={publicLanguages}
-                      onChange={(e) => setPublicLanguages(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-gray-900 focus:ring-0 focus:outline-none"
-                      placeholder="Français, Anglais..."
-                    />
-                    <p className="mt-1 text-xs text-gray-500">{showLanguages ? "✓ Visible sur votre profil" : "✗ Masqué sur votre profil"}</p>
-                  </div>
-
-                  {/* Centres d'intérêt */}
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-sm font-medium text-gray-700">Centres d'intérêt</label>
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={showInterests}
-                        onClick={() => setShowInterests(!showInterests)}
-                        className={`relative inline-flex h-[28px] w-[52px] items-center flex-shrink-0 cursor-pointer rounded-[9999px] transition-colors duration-200 ease-out ${showInterests ? "bg-[#34C759]" : "bg-[#E5E5EA]"}`}
-                      >
-                        <span className={`pointer-events-none inline-block h-[24px] w-[24px] rounded-[9999px] bg-[#FFFFFF] shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-transform duration-200 ease-out ${showInterests ? "translate-x-[26px]" : "translate-x-[2px]"}`} />
-                      </button>
-                    </div>
-                    <input
-                      type="text"
-                      value={publicInterests}
-                      onChange={(e) => setPublicInterests(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-gray-900 focus:ring-0 focus:outline-none"
-                      placeholder="Voyage, Musique, Sport..."
-                    />
-                    <p className="mt-1 text-xs text-gray-500">{showInterests ? "✓ Visible sur votre profil" : "✗ Masqué sur votre profil"}</p>
-                  </div>
-                </div>
-
-                {/* Section Informations privées */}
-                <div className="bg-gray-100 rounded-2xl p-4 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <svg className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                    </svg>
-                    <h2 className="text-sm font-semibold text-gray-700">Informations privées</h2>
-                  </div>
-                  <p className="text-xs text-gray-500">Ces informations ne sont jamais partagées publiquement.</p>
-
-                  <div className="space-y-2 pt-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Email</span>
-                      <span className="text-gray-700 font-medium">{email?.replace(/(.{2})(.*)(@.*)/, '$1***$3')}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-500">Téléphone</span>
-                      <span className="text-gray-700 font-medium">{phone ? phone.replace(/(.{4})(.*)(.{2})/, '$1****$3') : 'Non renseigné'}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Footer sticky mobile */}
-            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 pb-6">
+              <h1 className="text-base font-semibold text-gray-900">Modifier le profil</h1>
               <button
                 type="button"
                 onClick={onSave}
                 disabled={saving}
-                className="w-full py-3.5 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-black disabled:opacity-50 transition"
+                className="text-base font-semibold text-[#34C759] disabled:opacity-50"
               >
-                {saving ? "Enregistrement..." : "Enregistrer les modifications"}
+                {saving ? "..." : "OK"}
               </button>
+            </div>
+
+            {/* Contenu */}
+            <div className="flex-1 overflow-y-auto">
+              {/* Photo de profil */}
+              <div className="flex flex-col items-center py-6 border-b border-gray-200">
+                <div className="relative h-24 w-24 overflow-hidden rounded-full bg-gray-200">
+                  {avatarPreview ? (
+                    <Image src={avatarPreview} alt="avatar" fill className="object-cover" sizes="96px" />
+                  ) : (
+                    <span className="flex h-full w-full items-center justify-center text-3xl font-semibold text-gray-500">
+                      {fullName.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <label className="mt-3">
+                  <span className="text-sm font-medium text-[#34C759]">Modifier la photo</span>
+                  <input type="file" accept="image/*" onChange={onPickAvatar} className="hidden" />
+                </label>
+                {avatarFile && (
+                  <button
+                    type="button"
+                    onClick={onUploadAvatar}
+                    disabled={avatarStatus === "uploading" || avatarStatus === "saving"}
+                    className="mt-1 text-sm text-gray-500 disabled:opacity-50"
+                  >
+                    {avatarStatus === "uploading" ? "Envoi..." : avatarStatus === "saving" ? "Sauvegarde..." : "Enregistrer"}
+                  </button>
+                )}
+              </div>
+
+              {/* Champs du profil */}
+              <div className="divide-y divide-gray-200">
+                {/* Prénom */}
+                <div className="flex items-center px-4 py-3">
+                  <span className="w-28 text-sm text-gray-500">Prénom</span>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className="flex-1 text-sm text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0"
+                    placeholder="Votre prénom"
+                  />
+                </div>
+
+                {/* À propos */}
+                <div className="flex items-start px-4 py-3">
+                  <span className="w-28 text-sm text-gray-500 pt-0.5">À propos</span>
+                  <textarea
+                    value={publicAboutMe}
+                    onChange={(e) => setPublicAboutMe(e.target.value)}
+                    rows={2}
+                    className="flex-1 text-sm text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0 resize-none"
+                    placeholder="Parlez de vous..."
+                  />
+                </div>
+
+                {/* Ville */}
+                <div className="flex items-center px-4 py-3">
+                  <span className="w-28 text-sm text-gray-500">Ville</span>
+                  <input
+                    type="text"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className="flex-1 text-sm text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0"
+                    placeholder="Votre ville"
+                  />
+                </div>
+
+                {/* Pays */}
+                <div className="flex items-center px-4 py-3">
+                  <span className="w-28 text-sm text-gray-500">Pays</span>
+                  <input
+                    type="text"
+                    value={profileCountry}
+                    onChange={(e) => setProfileCountry(e.target.value)}
+                    className="flex-1 text-sm text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0"
+                    placeholder="Votre pays"
+                  />
+                </div>
+
+                {/* Travail */}
+                <div className="flex items-center px-4 py-3">
+                  <span className="w-28 text-sm text-gray-500">Travail</span>
+                  <input
+                    type="text"
+                    value={publicJobTitle}
+                    onChange={(e) => setPublicJobTitle(e.target.value)}
+                    className="flex-1 text-sm text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0"
+                    placeholder="Votre métier"
+                  />
+                </div>
+
+                {/* Langues */}
+                <div className="flex items-center px-4 py-3">
+                  <span className="w-28 text-sm text-gray-500">Langues</span>
+                  <input
+                    type="text"
+                    value={publicLanguages}
+                    onChange={(e) => setPublicLanguages(e.target.value)}
+                    className="flex-1 text-sm text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0"
+                    placeholder="Français, Anglais..."
+                  />
+                </div>
+
+                {/* Centres d'intérêt */}
+                <div className="flex items-center px-4 py-3">
+                  <span className="w-28 text-sm text-gray-500">Intérêts</span>
+                  <input
+                    type="text"
+                    value={publicInterests}
+                    onChange={(e) => setPublicInterests(e.target.value)}
+                    className="flex-1 text-sm text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0"
+                    placeholder="Voyage, Musique..."
+                  />
+                </div>
+              </div>
+
+              {/* Message de succès */}
               {status === "saved" && (
-                <p className="mt-2 text-center text-sm text-green-600">Modifications enregistrées !</p>
+                <div className="px-4 py-3">
+                  <p className="text-sm text-center text-[#34C759]">Modifications enregistrées</p>
+                </div>
               )}
             </div>
           </div>
