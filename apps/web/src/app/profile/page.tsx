@@ -1159,153 +1159,229 @@ function AboutSection(props: AboutProps) {
             }}
           />
 
-          {/* MOBILE: Plein écran simple et propre */}
-          <div className="lg:hidden fixed inset-0 bg-white flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsEditingProfile(false);
-                  window.history.pushState({}, '', '/account');
-                }}
-                className="text-base text-gray-600"
-              >
-                Annuler
-              </button>
-              <h1 className="text-base font-semibold text-gray-900">Modifier le profil</h1>
-              <button
-                type="button"
-                onClick={onSave}
-                disabled={saving}
-                className="text-base font-semibold text-[#34C759] disabled:opacity-50"
-              >
-                {saving ? "..." : "OK"}
-              </button>
+          {/* MOBILE: Plein écran moderne et complet */}
+          <div className="lg:hidden fixed inset-0 bg-[#F5F5F5] flex flex-col">
+            {/* Header avec effet glass */}
+            <div className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl border-b border-gray-200/50">
+              <div className="flex items-center justify-between px-4 h-14">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditingProfile(false);
+                    window.history.pushState({}, '', '/account');
+                  }}
+                  className="flex items-center justify-center w-10 h-10 -ml-2 rounded-full active:bg-gray-100"
+                >
+                  <svg className="w-6 h-6 text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                <h1 className="text-[17px] font-semibold text-gray-900">Modifier le profil</h1>
+                <button
+                  type="button"
+                  onClick={onSave}
+                  disabled={saving}
+                  className="text-[17px] font-semibold text-[#007AFF] disabled:opacity-50 active:opacity-70"
+                >
+                  {saving ? "..." : "Enregistrer"}
+                </button>
+              </div>
             </div>
 
-            {/* Contenu */}
-            <div className="flex-1 overflow-y-auto">
-              {/* Photo de profil */}
-              <div className="flex flex-col items-center py-6 border-b border-gray-200">
-                <div className="relative h-24 w-24 overflow-hidden rounded-full bg-gray-200">
-                  {avatarPreview ? (
-                    <Image src={avatarPreview} alt="avatar" fill className="object-cover" sizes="96px" />
-                  ) : (
-                    <span className="flex h-full w-full items-center justify-center text-3xl font-semibold text-gray-500">
-                      {fullName.charAt(0).toUpperCase()}
-                    </span>
+            {/* Contenu scrollable */}
+            <div className="flex-1 overflow-y-auto pb-8">
+              {/* Section Photo */}
+              <div className="bg-white mt-4 mx-4 rounded-2xl overflow-hidden shadow-sm">
+                <div className="p-6 flex flex-col items-center">
+                  <div className="relative">
+                    <div className="h-28 w-28 overflow-hidden rounded-full bg-gradient-to-br from-gray-100 to-gray-200 ring-4 ring-white shadow-lg">
+                      {avatarPreview ? (
+                        <Image src={avatarPreview} alt="avatar" fill className="object-cover" sizes="112px" />
+                      ) : (
+                        <span className="flex h-full w-full items-center justify-center text-4xl font-bold text-gray-400">
+                          {fullName.charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <label className="absolute bottom-0 right-0 w-9 h-9 bg-[#007AFF] rounded-full flex items-center justify-center shadow-lg cursor-pointer active:scale-95 transition-transform">
+                      <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                      <input type="file" accept="image/*" onChange={onPickAvatar} className="hidden" />
+                    </label>
+                  </div>
+                  <p className="mt-4 text-lg font-semibold text-gray-900">{fullName || "Votre nom"}</p>
+                  {avatarFile && (
+                    <button
+                      type="button"
+                      onClick={onUploadAvatar}
+                      disabled={avatarStatus === "uploading" || avatarStatus === "saving"}
+                      className="mt-2 text-sm font-medium text-[#007AFF] disabled:opacity-50"
+                    >
+                      {avatarStatus === "uploading" ? "Envoi en cours..." : avatarStatus === "saving" ? "Sauvegarde..." : "Confirmer la nouvelle photo"}
+                    </button>
                   )}
                 </div>
-                <label className="mt-3">
-                  <span className="text-sm font-medium text-[#34C759]">Modifier la photo</span>
-                  <input type="file" accept="image/*" onChange={onPickAvatar} className="hidden" />
-                </label>
-                {avatarFile && (
-                  <button
-                    type="button"
-                    onClick={onUploadAvatar}
-                    disabled={avatarStatus === "uploading" || avatarStatus === "saving"}
-                    className="mt-1 text-sm text-gray-500 disabled:opacity-50"
-                  >
-                    {avatarStatus === "uploading" ? "Envoi..." : avatarStatus === "saving" ? "Sauvegarde..." : "Enregistrer"}
-                  </button>
-                )}
               </div>
 
-              {/* Champs du profil */}
-              <div className="divide-y divide-gray-200">
-                {/* Prénom */}
-                <div className="flex items-center px-4 py-3">
-                  <span className="w-28 text-sm text-gray-500">Prénom</span>
-                  <input
-                    type="text"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    className="flex-1 text-sm text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0"
-                    placeholder="Votre prénom"
-                  />
-                </div>
+              {/* Section Informations de base */}
+              <div className="mt-6 mx-4">
+                <h2 className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide px-4 mb-2">Informations de base</h2>
+                <div className="bg-white rounded-2xl overflow-hidden shadow-sm divide-y divide-gray-100">
+                  {/* Prénom */}
+                  <div className="px-4 py-3.5">
+                    <label className="block text-[13px] font-medium text-gray-500 mb-1">Prénom</label>
+                    <input
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      className="w-full text-[17px] text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0 placeholder:text-gray-300"
+                      placeholder="Entrez votre prénom"
+                    />
+                  </div>
 
-                {/* À propos */}
-                <div className="flex items-start px-4 py-3">
-                  <span className="w-28 text-sm text-gray-500 pt-0.5">À propos</span>
-                  <textarea
-                    value={publicAboutMe}
-                    onChange={(e) => setPublicAboutMe(e.target.value)}
-                    rows={2}
-                    className="flex-1 text-sm text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0 resize-none"
-                    placeholder="Parlez de vous..."
-                  />
+                  {/* À propos */}
+                  <div className="px-4 py-3.5">
+                    <label className="block text-[13px] font-medium text-gray-500 mb-1">À propos de moi</label>
+                    <textarea
+                      value={publicAboutMe}
+                      onChange={(e) => setPublicAboutMe(e.target.value)}
+                      rows={3}
+                      className="w-full text-[17px] text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0 resize-none placeholder:text-gray-300"
+                      placeholder="Décrivez-vous en quelques mots..."
+                    />
+                  </div>
                 </div>
+              </div>
 
-                {/* Ville */}
-                <div className="flex items-center px-4 py-3">
-                  <span className="w-28 text-sm text-gray-500">Ville</span>
-                  <input
-                    type="text"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    className="flex-1 text-sm text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0"
-                    placeholder="Votre ville"
-                  />
+              {/* Section Localisation */}
+              <div className="mt-6 mx-4">
+                <h2 className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide px-4 mb-2">Localisation</h2>
+                <div className="bg-white rounded-2xl overflow-hidden shadow-sm divide-y divide-gray-100">
+                  {/* Ville */}
+                  <div className="px-4 py-3.5 flex items-center">
+                    <div className="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center mr-3">
+                      <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-[13px] font-medium text-gray-500">Ville</label>
+                      <input
+                        type="text"
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        className="w-full text-[17px] text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0 placeholder:text-gray-300"
+                        placeholder="Votre ville"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Pays */}
+                  <div className="px-4 py-3.5 flex items-center">
+                    <div className="w-9 h-9 rounded-full bg-green-50 flex items-center justify-center mr-3">
+                      <svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-[13px] font-medium text-gray-500">Pays</label>
+                      <input
+                        type="text"
+                        value={profileCountry}
+                        onChange={(e) => setProfileCountry(e.target.value)}
+                        className="w-full text-[17px] text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0 placeholder:text-gray-300"
+                        placeholder="Votre pays"
+                      />
+                    </div>
+                  </div>
                 </div>
+              </div>
 
-                {/* Pays */}
-                <div className="flex items-center px-4 py-3">
-                  <span className="w-28 text-sm text-gray-500">Pays</span>
-                  <input
-                    type="text"
-                    value={profileCountry}
-                    onChange={(e) => setProfileCountry(e.target.value)}
-                    className="flex-1 text-sm text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0"
-                    placeholder="Votre pays"
-                  />
+              {/* Section Professionnel */}
+              <div className="mt-6 mx-4">
+                <h2 className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide px-4 mb-2">Professionnel</h2>
+                <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
+                  <div className="px-4 py-3.5 flex items-center">
+                    <div className="w-9 h-9 rounded-full bg-purple-50 flex items-center justify-center mr-3">
+                      <svg className="w-5 h-5 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-[13px] font-medium text-gray-500">Profession</label>
+                      <input
+                        type="text"
+                        value={publicJobTitle}
+                        onChange={(e) => setPublicJobTitle(e.target.value)}
+                        className="w-full text-[17px] text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0 placeholder:text-gray-300"
+                        placeholder="Votre métier"
+                      />
+                    </div>
+                  </div>
                 </div>
+              </div>
 
-                {/* Travail */}
-                <div className="flex items-center px-4 py-3">
-                  <span className="w-28 text-sm text-gray-500">Travail</span>
-                  <input
-                    type="text"
-                    value={publicJobTitle}
-                    onChange={(e) => setPublicJobTitle(e.target.value)}
-                    className="flex-1 text-sm text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0"
-                    placeholder="Votre métier"
-                  />
-                </div>
+              {/* Section Langues & Intérêts */}
+              <div className="mt-6 mx-4">
+                <h2 className="text-[13px] font-semibold text-gray-500 uppercase tracking-wide px-4 mb-2">Langues & Intérêts</h2>
+                <div className="bg-white rounded-2xl overflow-hidden shadow-sm divide-y divide-gray-100">
+                  {/* Langues */}
+                  <div className="px-4 py-3.5 flex items-center">
+                    <div className="w-9 h-9 rounded-full bg-orange-50 flex items-center justify-center mr-3">
+                      <svg className="w-5 h-5 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 21l5.25-11.25L21 21m-9-3h7.5M3 5.621a48.474 48.474 0 016-.371m0 0c1.12 0 2.233.038 3.334.114M9 5.25V3m3.334 2.364C11.176 10.658 7.69 15.08 3 17.502m9.334-12.138c.896.061 1.785.147 2.666.257m-4.589 8.495a18.023 18.023 0 01-3.827-5.802" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-[13px] font-medium text-gray-500">Langues parlées</label>
+                      <input
+                        type="text"
+                        value={publicLanguages}
+                        onChange={(e) => setPublicLanguages(e.target.value)}
+                        className="w-full text-[17px] text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0 placeholder:text-gray-300"
+                        placeholder="Français, Anglais..."
+                      />
+                    </div>
+                  </div>
 
-                {/* Langues */}
-                <div className="flex items-center px-4 py-3">
-                  <span className="w-28 text-sm text-gray-500">Langues</span>
-                  <input
-                    type="text"
-                    value={publicLanguages}
-                    onChange={(e) => setPublicLanguages(e.target.value)}
-                    className="flex-1 text-sm text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0"
-                    placeholder="Français, Anglais..."
-                  />
-                </div>
-
-                {/* Centres d'intérêt */}
-                <div className="flex items-center px-4 py-3">
-                  <span className="w-28 text-sm text-gray-500">Intérêts</span>
-                  <input
-                    type="text"
-                    value={publicInterests}
-                    onChange={(e) => setPublicInterests(e.target.value)}
-                    className="flex-1 text-sm text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0"
-                    placeholder="Voyage, Musique..."
-                  />
+                  {/* Intérêts */}
+                  <div className="px-4 py-3.5 flex items-center">
+                    <div className="w-9 h-9 rounded-full bg-pink-50 flex items-center justify-center mr-3">
+                      <svg className="w-5 h-5 text-pink-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-[13px] font-medium text-gray-500">Centres d'intérêt</label>
+                      <input
+                        type="text"
+                        value={publicInterests}
+                        onChange={(e) => setPublicInterests(e.target.value)}
+                        className="w-full text-[17px] text-gray-900 bg-transparent border-none focus:outline-none focus:ring-0 p-0 placeholder:text-gray-300"
+                        placeholder="Voyage, Musique, Sport..."
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
               {/* Message de succès */}
               {status === "saved" && (
-                <div className="px-4 py-3">
-                  <p className="text-sm text-center text-[#34C759]">Modifications enregistrées</p>
+                <div className="mt-6 mx-4">
+                  <div className="bg-green-50 rounded-2xl p-4 flex items-center justify-center">
+                    <svg className="w-5 h-5 text-green-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="text-[15px] font-medium text-green-700">Modifications enregistrées avec succès</p>
+                  </div>
                 </div>
               )}
+
+              {/* Espace en bas */}
+              <div className="h-6"></div>
             </div>
           </div>
 
