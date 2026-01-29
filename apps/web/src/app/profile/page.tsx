@@ -31,6 +31,14 @@ type UserProfileDTO = {
   languages?: string | null;
   aboutMe?: string | null;
   interests?: string | null;
+
+  // Toggles de visibilité pour les infos publiques
+  showCity?: boolean;
+  showCountry?: boolean;
+  showJobTitle?: boolean;
+  showLanguages?: boolean;
+  showAboutMe?: boolean;
+  showInterests?: boolean;
 };
 
 type UserDTO = {
@@ -770,7 +778,7 @@ function AboutSection(props: AboutProps) {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingPublic, setIsEditingPublic] = useState(false);
 
-  // états d'édition pour chaque ligne "Modifier"
+  // etats d'edition pour chaque ligne "Modifier"
   const [editingLegalName, setEditingLegalName] = useState(false);
   const [editingChosenName, setEditingChosenName] = useState(false);
   const [editingPhone, setEditingPhone] = useState(false);
@@ -799,7 +807,7 @@ function AboutSection(props: AboutProps) {
       ? profile.ratingAvg.toFixed(1)
       : "–";
 
-  // états locaux pour les infos publiques
+  // etats locaux pour les infos publiques
   const [publicJobTitle, setPublicJobTitle] = useState(profile?.jobTitle ?? "");
   const [publicDreamDestination, setPublicDreamDestination] = useState(
     profile?.dreamDestination ?? ""
@@ -812,12 +820,26 @@ function AboutSection(props: AboutProps) {
     profile?.interests ?? ""
   );
 
+  // etats pour les toggles de visibilite
+  const [showCity, setShowCity] = useState(profile?.showCity ?? true);
+  const [showCountry, setShowCountry] = useState(profile?.showCountry ?? true);
+  const [showJobTitle, setShowJobTitle] = useState(profile?.showJobTitle ?? true);
+  const [showLanguages, setShowLanguages] = useState(profile?.showLanguages ?? true);
+  const [showAboutMe, setShowAboutMe] = useState(profile?.showAboutMe ?? true);
+  const [showInterests, setShowInterests] = useState(profile?.showInterests ?? true);
+
   useEffect(() => {
     setPublicJobTitle(profile?.jobTitle ?? "");
     setPublicDreamDestination(profile?.dreamDestination ?? "");
     setPublicLanguages(profile?.languages ?? "");
     setPublicAboutMe(profile?.aboutMe ?? "");
     setPublicInterests(profile?.interests ?? "");
+    setShowCity(profile?.showCity ?? true);
+    setShowCountry(profile?.showCountry ?? true);
+    setShowJobTitle(profile?.showJobTitle ?? true);
+    setShowLanguages(profile?.showLanguages ?? true);
+    setShowAboutMe(profile?.showAboutMe ?? true);
+    setShowInterests(profile?.showInterests ?? true);
   }, [profile]);
 
   const jobTitle = publicJobTitle || t.addJob;
@@ -1125,39 +1147,307 @@ function AboutSection(props: AboutProps) {
         </p>
       </section>
 
-      {/* 🔥 MODAL PROFIL (avatar + info compte avec petites bulles Modifier) */}
+      {/* 🔥 MODAL PROFIL - VERSION MOBILE MODERNE */}
       {isEditingProfile && (
-        <div className="fixed inset-0 z-40 flex items-end lg:items-center justify-center p-0 lg:p-4 lg:pb-8 lg:pt-12">
-          {/* Backdrop flouté */}
+        <div className="fixed inset-0 z-50 lg:z-40 lg:flex lg:items-center lg:justify-center lg:p-4">
+          {/* Backdrop - visible uniquement sur desktop */}
           <div
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => setIsEditingProfile(false)}
+            className="hidden lg:block fixed inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => {
+              setIsEditingProfile(false);
+              window.history.pushState({}, '', '/account');
+            }}
           />
 
-          {/* Bulle d'édition - plein écran mobile, centré desktop */}
+          {/* MOBILE: Plein écran moderne */}
+          <div className="lg:hidden fixed inset-0 bg-white flex flex-col">
+            {/* Header sticky mobile */}
+            <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3 flex items-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditingProfile(false);
+                  window.history.pushState({}, '', '/account');
+                }}
+                className="flex items-center justify-center h-10 w-10 -ml-2 rounded-full hover:bg-gray-100"
+              >
+                <svg className="h-5 w-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <h1 className="flex-1 text-center text-lg font-semibold text-gray-900 -ml-10">
+                Modifier le profil
+              </h1>
+            </div>
+
+            {/* Contenu scrollable mobile */}
+            <div className="flex-1 overflow-y-auto bg-gray-50">
+              <div className="p-4 space-y-4">
+                {/* Section Photo */}
+                <div className="bg-white rounded-2xl p-4 shadow-sm">
+                  <div className="flex items-center gap-4">
+                    <div className="relative h-20 w-20 overflow-hidden rounded-full bg-gray-200 ring-2 ring-gray-100">
+                      {avatarPreview ? (
+                        <Image src={avatarPreview} alt="avatar" fill className="object-cover" sizes="80px" />
+                      ) : (
+                        <span className="flex h-full w-full items-center justify-center text-2xl font-semibold text-gray-600">
+                          {fullName.charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <label className="block">
+                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-xl cursor-pointer hover:bg-black transition">
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          Changer
+                        </span>
+                        <input type="file" accept="image/*" onChange={onPickAvatar} className="hidden" />
+                      </label>
+                      {avatarPreview && (
+                        <button
+                          type="button"
+                          onClick={onDeleteAvatar}
+                          className="text-sm text-red-600 font-medium hover:underline"
+                        >
+                          Supprimer la photo
+                        </button>
+                      )}
+                      {avatarFile && (
+                        <button
+                          type="button"
+                          onClick={onUploadAvatar}
+                          disabled={avatarStatus === "uploading" || avatarStatus === "saving"}
+                          className="text-sm text-gray-900 font-medium hover:underline disabled:opacity-50"
+                        >
+                          {avatarStatus === "uploading" ? "Envoi..." : avatarStatus === "saving" ? "Sauvegarde..." : "Enregistrer la photo"}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section Informations publiques */}
+                <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
+                  <div className="flex items-center gap-2 pb-2 border-b border-gray-100">
+                    <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.64 0 8.577 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.64 0-8.577-3.007-9.963-7.178z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <h2 className="text-sm font-semibold text-gray-900">Informations publiques</h2>
+                  </div>
+
+                  {/* Prénom */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Prénom</label>
+                    <input
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-gray-900 focus:ring-0 focus:outline-none"
+                      placeholder="Votre prénom"
+                    />
+                  </div>
+
+                  {/* À propos de moi */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-sm font-medium text-gray-700">À propos de moi</label>
+                      <button
+                        type="button"
+                        onClick={() => setShowAboutMe(!showAboutMe)}
+                        className={`relative inline-flex h-6 w-11 rounded-full transition-colors ${showAboutMe ? "bg-gray-900" : "bg-gray-300"}`}
+                      >
+                        <span className={`inline-block h-5 w-4 rounded-md bg-white shadow transform transition mt-0.5 ${showAboutMe ? "translate-x-6" : "translate-x-0.5"}`} />
+                      </button>
+                    </div>
+                    <textarea
+                      value={publicAboutMe}
+                      onChange={(e) => setPublicAboutMe(e.target.value)}
+                      rows={3}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-gray-900 focus:ring-0 focus:outline-none resize-none"
+                      placeholder="Parlez de vous..."
+                    />
+                    <p className="mt-1 text-xs text-gray-500">{showAboutMe ? "✓ Visible sur votre profil" : "✗ Masqué sur votre profil"}</p>
+                  </div>
+
+                  {/* Ville */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-sm font-medium text-gray-700">Ville</label>
+                      <button
+                        type="button"
+                        onClick={() => setShowCity(!showCity)}
+                        className={`relative inline-flex h-6 w-11 rounded-full transition-colors ${showCity ? "bg-gray-900" : "bg-gray-300"}`}
+                      >
+                        <span className={`inline-block h-5 w-4 rounded-md bg-white shadow transform transition mt-0.5 ${showCity ? "translate-x-6" : "translate-x-0.5"}`} />
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-gray-900 focus:ring-0 focus:outline-none"
+                      placeholder="Votre ville"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">{showCity ? "✓ Visible sur votre profil" : "✗ Masqué sur votre profil"}</p>
+                  </div>
+
+                  {/* Pays */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-sm font-medium text-gray-700">Pays</label>
+                      <button
+                        type="button"
+                        onClick={() => setShowCountry(!showCountry)}
+                        className={`relative inline-flex h-6 w-11 rounded-full transition-colors ${showCountry ? "bg-gray-900" : "bg-gray-300"}`}
+                      >
+                        <span className={`inline-block h-5 w-4 rounded-md bg-white shadow transform transition mt-0.5 ${showCountry ? "translate-x-6" : "translate-x-0.5"}`} />
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      value={profileCountry}
+                      onChange={(e) => setProfileCountry(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-gray-900 focus:ring-0 focus:outline-none"
+                      placeholder="Votre pays"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">{showCountry ? "✓ Visible sur votre profil" : "✗ Masqué sur votre profil"}</p>
+                  </div>
+
+                  {/* Travail */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-sm font-medium text-gray-700">Travail</label>
+                      <button
+                        type="button"
+                        onClick={() => setShowJobTitle(!showJobTitle)}
+                        className={`relative inline-flex h-6 w-11 rounded-full transition-colors ${showJobTitle ? "bg-gray-900" : "bg-gray-300"}`}
+                      >
+                        <span className={`inline-block h-5 w-4 rounded-md bg-white shadow transform transition mt-0.5 ${showJobTitle ? "translate-x-6" : "translate-x-0.5"}`} />
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      value={publicJobTitle}
+                      onChange={(e) => setPublicJobTitle(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-gray-900 focus:ring-0 focus:outline-none"
+                      placeholder="Votre métier"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">{showJobTitle ? "✓ Visible sur votre profil" : "✗ Masqué sur votre profil"}</p>
+                  </div>
+
+                  {/* Langues */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-sm font-medium text-gray-700">Langues parlées</label>
+                      <button
+                        type="button"
+                        onClick={() => setShowLanguages(!showLanguages)}
+                        className={`relative inline-flex h-6 w-11 rounded-full transition-colors ${showLanguages ? "bg-gray-900" : "bg-gray-300"}`}
+                      >
+                        <span className={`inline-block h-5 w-4 rounded-md bg-white shadow transform transition mt-0.5 ${showLanguages ? "translate-x-6" : "translate-x-0.5"}`} />
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      value={publicLanguages}
+                      onChange={(e) => setPublicLanguages(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-gray-900 focus:ring-0 focus:outline-none"
+                      placeholder="Français, Anglais..."
+                    />
+                    <p className="mt-1 text-xs text-gray-500">{showLanguages ? "✓ Visible sur votre profil" : "✗ Masqué sur votre profil"}</p>
+                  </div>
+
+                  {/* Centres d'intérêt */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-sm font-medium text-gray-700">Centres d'intérêt</label>
+                      <button
+                        type="button"
+                        onClick={() => setShowInterests(!showInterests)}
+                        className={`relative inline-flex h-6 w-11 rounded-full transition-colors ${showInterests ? "bg-gray-900" : "bg-gray-300"}`}
+                      >
+                        <span className={`inline-block h-5 w-4 rounded-md bg-white shadow transform transition mt-0.5 ${showInterests ? "translate-x-6" : "translate-x-0.5"}`} />
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      value={publicInterests}
+                      onChange={(e) => setPublicInterests(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-gray-900 focus:ring-0 focus:outline-none"
+                      placeholder="Voyage, Musique, Sport..."
+                    />
+                    <p className="mt-1 text-xs text-gray-500">{showInterests ? "✓ Visible sur votre profil" : "✗ Masqué sur votre profil"}</p>
+                  </div>
+                </div>
+
+                {/* Section Informations privées */}
+                <div className="bg-gray-100 rounded-2xl p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <svg className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                    </svg>
+                    <h2 className="text-sm font-semibold text-gray-700">Informations privées</h2>
+                  </div>
+                  <p className="text-xs text-gray-500">Ces informations ne sont jamais partagées publiquement.</p>
+
+                  <div className="space-y-2 pt-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Email</span>
+                      <span className="text-gray-700 font-medium">{email?.replace(/(.{2})(.*)(@.*)/, '$1***$3')}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-500">Téléphone</span>
+                      <span className="text-gray-700 font-medium">{phone ? phone.replace(/(.{4})(.*)(.{2})/, '$1****$3') : 'Non renseigné'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer sticky mobile */}
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 pb-6">
+              <button
+                type="button"
+                onClick={onSave}
+                disabled={saving}
+                className="w-full py-3.5 bg-gray-900 text-white text-sm font-semibold rounded-xl hover:bg-black disabled:opacity-50 transition"
+              >
+                {saving ? "Enregistrement..." : "Enregistrer les modifications"}
+              </button>
+              {status === "saved" && (
+                <p className="mt-2 text-center text-sm text-green-600">Modifications enregistrées !</p>
+              )}
+            </div>
+          </div>
+
+          {/* DESKTOP: Modal centrée (garde l'ancien design) */}
           <section
-            className="relative z-50 flex h-full lg:h-auto lg:max-h-[80vh] w-full lg:max-w-2xl flex-col overflow-hidden rounded-t-3xl lg:rounded-3xl bg-white shadow-xl"
+            className="hidden lg:flex relative z-50 h-auto max-h-[80vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header fixe */}
-            <div className="flex items-center justify-between border-b border-gray-100 p-4 sm:p-6">
+            {/* Header fixe desktop */}
+            <div className="flex items-center justify-between border-b border-gray-100 p-6">
               <h3 className="text-base font-semibold">
                 {t.photoAndInfo}
               </h3>
               <button
                 type="button"
-                onClick={() => setIsEditingProfile(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 lg:bg-transparent lg:h-auto lg:w-auto text-gray-500 hover:text-black"
+                onClick={() => {
+                  setIsEditingProfile(false);
+                  window.history.pushState({}, '', '/account');
+                }}
+                className="text-sm text-gray-500 hover:text-black"
               >
-                <svg className="h-5 w-5 lg:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                <span className="hidden lg:inline text-sm">{t.close}</span>
+                {t.close}
               </button>
             </div>
 
-            {/* Contenu scrollable */}
-            <div className="flex-1 overflow-y-auto p-4 pb-6 sm:p-6 sm:pb-8 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar]:mr-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:my-6 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300 hover:[&::-webkit-scrollbar-thumb]:bg-gray-400">
+            {/* Contenu scrollable desktop */}
+            <div className="flex-1 overflow-y-auto p-6 pb-8 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-300">
 
             {/* Avatar + input fichier custom */}
             <div className="mb-4 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
