@@ -1637,13 +1637,13 @@ function PrivacyTabContent({ t }: { t: AccountTranslations }) {
         role="switch"
         aria-checked={checked}
         onClick={onChange}
-        className={`relative inline-flex h-7 w-12 lg:h-6 lg:w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 ${
-          checked ? "bg-gray-900" : "bg-gray-200"
+        className={`relative inline-flex h-[28px] w-[52px] items-center flex-shrink-0 cursor-pointer rounded-[9999px] transition-colors duration-200 ease-out ${
+          checked ? "bg-[#34C759]" : "bg-[#E5E5EA]"
         }`}
       >
         <span
-          className={`pointer-events-none inline-block h-6 w-4 lg:h-5 lg:w-4 transform rounded-md bg-white shadow ring-0 transition duration-200 ease-in-out ${
-            checked ? "translate-x-6 lg:translate-x-5" : "translate-x-0.5"
+          className={`pointer-events-none inline-block h-[24px] w-[24px] rounded-[9999px] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-transform duration-200 ease-out ${
+            checked ? "translate-x-[26px]" : "translate-x-[2px]"
           }`}
         />
       </button>
@@ -2337,17 +2337,14 @@ function TranslationTabContent() {
             aria-checked={autoTranslate}
             onClick={handleAutoTranslateToggle}
             disabled={saving}
-            className={[
-              "relative inline-flex h-7 w-12 lg:h-6 lg:w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2",
-              autoTranslate ? "bg-gray-900" : "bg-gray-200",
-              saving ? "opacity-50 cursor-wait" : "",
-            ].join(" ")}
+            className={`relative inline-flex h-[28px] w-[52px] items-center flex-shrink-0 cursor-pointer rounded-[9999px] transition-colors duration-200 ease-out ${
+              autoTranslate ? "bg-[#34C759]" : "bg-[#E5E5EA]"
+            } ${saving ? "opacity-50 cursor-wait" : ""}`}
           >
             <span
-              className={[
-                "pointer-events-none inline-block h-6 w-4 lg:h-5 lg:w-4 transform rounded-md bg-white shadow ring-0 transition duration-200 ease-in-out",
-                autoTranslate ? "translate-x-6 lg:translate-x-5" : "translate-x-0.5",
-              ].join(" ")}
+              className={`pointer-events-none inline-block h-[24px] w-[24px] rounded-[9999px] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.15)] transition-transform duration-200 ease-out ${
+                autoTranslate ? "translate-x-[26px]" : "translate-x-[2px]"
+              }`}
             />
           </button>
         </div>
