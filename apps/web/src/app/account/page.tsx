@@ -575,8 +575,8 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
 
       {/* Modal Téléphone */}
       {showPhoneModal && (
-        <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center bg-black/40" role="dialog" aria-modal="true" aria-labelledby="phone-modal-title">
-          <div className="relative w-full lg:max-w-md rounded-t-3xl lg:rounded-2xl bg-white p-5 lg:p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" role="dialog" aria-modal="true" aria-labelledby="phone-modal-title">
+          <div className="relative w-full max-w-md rounded-2xl bg-white p-5 lg:p-6 shadow-2xl max-h-[80vh] overflow-y-auto">
             <button
               type="button"
               onClick={() => {
@@ -681,8 +681,8 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
 
       {/* Modal Mot de passe */}
       {showPasswordModal && (
-        <div className="fixed inset-0 z-50 flex items-end lg:items-center justify-center bg-black/40" role="dialog" aria-modal="true" aria-labelledby="password-modal-title">
-          <div className="relative w-full lg:max-w-md rounded-t-3xl lg:rounded-2xl bg-white p-5 lg:p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" role="dialog" aria-modal="true" aria-labelledby="password-modal-title">
+          <div className="relative w-full max-w-md rounded-2xl bg-white p-5 lg:p-6 shadow-2xl max-h-[80vh] overflow-y-auto">
             <button
               type="button"
               onClick={() => {
@@ -2046,8 +2046,8 @@ function TaxesTabContent({ t }: { t: AccountTranslations }) {
       </section>
 
       {showTaxInfoModal && (
-        <div className="fixed inset-0 z-40 flex items-end lg:items-center justify-center bg-black/40" role="dialog" aria-modal="true" aria-labelledby="tax-modal-title">
-          <div className="relative w-full lg:max-w-4xl rounded-t-3xl lg:rounded-3xl bg-white p-5 lg:p-10 shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4" role="dialog" aria-modal="true" aria-labelledby="tax-modal-title">
+          <div className="relative w-full max-w-4xl rounded-2xl bg-white p-5 lg:p-10 shadow-2xl max-h-[80vh] overflow-y-auto">
             <button
               type="button"
               onClick={() => setShowTaxInfoModal(false)}
@@ -2918,9 +2918,9 @@ function MobileAccountView({
         </div>
       ) : (
         /* Vue detail mobile - Contenu de l'onglet selectionne */
-        <div className="min-h-screen bg-gray-50">
-          {/* Header avec bouton retour */}
-          <div className="sticky top-0 z-10 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3">
+        <div className="min-h-screen bg-gray-50 pt-14">
+          {/* Header avec bouton retour - FIXE en haut sous la navbar */}
+          <div className="fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3">
             <button
               type="button"
               onClick={() => {
