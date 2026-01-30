@@ -384,7 +384,7 @@ export default async function ListingDetailPage({
             <div className="py-4 border-b border-gray-100">
               <h2 className="text-base font-semibold text-gray-900 mb-2">{t.listingDetail.approximateLocation}</h2>
               <p className="text-xs text-gray-500 mb-3">{t.listingDetail.exactLocationNote}</p>
-              <div className="h-48 w-full overflow-hidden rounded-2xl border border-gray-200 bg-gray-100">
+              <div className="h-72 w-full overflow-hidden rounded-2xl border border-gray-200 bg-gray-100 relative">
                 <Map
                   useLogoIcon
                   markers={[
@@ -396,6 +396,13 @@ export default async function ListingDetailPage({
                     },
                   ]}
                 />
+                {/* Badge Lok'Room 2.0 */}
+                <div className="absolute bottom-3 left-3 bg-white/95 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-md flex items-center gap-2">
+                  <svg className="h-4 w-4 text-rose-500" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                  </svg>
+                  <span className="text-xs font-medium text-gray-900">Lok&apos;Room 2.0</span>
+                </div>
               </div>
               <p className="mt-2 text-sm text-gray-600">{locationLabel}</p>
             </div>
@@ -585,7 +592,7 @@ export default async function ListingDetailPage({
               <p className="text-xs text-gray-500">
                 {t.listingDetail.exactLocationNote}
               </p>
-              <div className="mt-2 h-64 w-full overflow-hidden rounded-2xl border bg-gray-100">
+              <div className="mt-2 h-80 w-full overflow-hidden rounded-2xl border bg-gray-100 relative">
                 <Map
                   useLogoIcon
                   markers={[
@@ -597,6 +604,13 @@ export default async function ListingDetailPage({
                     },
                   ]}
                 />
+                {/* Badge Lok'Room 2.0 */}
+                <div className="absolute bottom-3 left-3 bg-white/95 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-md flex items-center gap-2">
+                  <svg className="h-4 w-4 text-rose-500" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                  </svg>
+                  <span className="text-xs font-medium text-gray-900">Lok&apos;Room 2.0</span>
+                </div>
               </div>
             </section>
           )}
