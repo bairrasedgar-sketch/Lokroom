@@ -443,13 +443,22 @@ export default function Map({
         const marker = new g.maps.Marker({
           map,
           position,
-          icon: { url: "/map-marker-lokroom 2.0.png", scaledSize: new g.maps.Size(48, 48) },
+          icon: { url: "/map-marker-lokroom 2.0.png", scaledSize: new g.maps.Size(120, 120) },
         });
         markersInstancesRef.current.push(marker);
 
         // Zoom plus proche pour voir le quartier (pas tout le pays)
         map.setCenter(position);
         map.setZoom(14);
+
+        // Désactiver les interactions (carte statique)
+        map.setOptions({
+          draggable: false,
+          zoomControl: false,
+          scrollwheel: false,
+          disableDoubleClickZoom: true,
+          gestureHandling: "none",
+        });
         return;
       }
 
