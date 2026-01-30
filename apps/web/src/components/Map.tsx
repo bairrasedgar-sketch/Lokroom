@@ -450,15 +450,15 @@ export default function Map({
           keyboardShortcuts: false,
         });
 
-        // Centrer et zoomer sur la position
+        // Centrer et zoomer sur la position (niveau quartier/rue)
         map.setCenter(position);
-        map.setZoom(15);
+        map.setZoom(14);
 
-        // Ajouter le marqueur
+        // Ajouter le marqueur (très grand)
         const marker = new g.maps.Marker({
           map,
           position,
-          icon: { url: "/map-marker-lokroom 2.0.png", scaledSize: new g.maps.Size(100, 100) },
+          icon: { url: "/map-marker-lokroom 2.0.png", scaledSize: new g.maps.Size(160, 160) },
         });
         markersInstancesRef.current.push(marker);
         return;
