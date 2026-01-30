@@ -438,27 +438,29 @@ export default function Map({
       const position = new g.maps.LatLng(m.lat, m.lng);
       bounds.extend(position);
 
-      // Mode logo (page détail)
+      // Mode logo (page détail) - carte statique
       if (useLogoIcon) {
-        const marker = new g.maps.Marker({
-          map,
-          position,
-          icon: { url: "/map-marker-lokroom 2.0.png", scaledSize: new g.maps.Size(120, 120) },
-        });
-        markersInstancesRef.current.push(marker);
-
-        // Zoom plus proche pour voir le quartier (pas tout le pays)
-        map.setCenter(position);
-        map.setZoom(14);
-
-        // Désactiver les interactions (carte statique)
+        // D'abord désactiver toutes les interactions
         map.setOptions({
           draggable: false,
           zoomControl: false,
           scrollwheel: false,
           disableDoubleClickZoom: true,
           gestureHandling: "none",
+          keyboardShortcuts: false,
         });
+
+        // Centrer et zoomer sur la position
+        map.setCenter(position);
+        map.setZoom(15);
+
+        // Ajouter le marqueur
+        const marker = new g.maps.Marker({
+          map,
+          position,
+          icon: { url: "/map-marker-lokroom 2.0.png", scaledSize: new g.maps.Size(100, 100) },
+        });
+        markersInstancesRef.current.push(marker);
         return;
       }
 
