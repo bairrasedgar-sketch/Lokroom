@@ -11,7 +11,8 @@ import ListingGallery from "@/components/ListingGallery";
 import FavoriteButton from "@/components/FavoriteButton";
 import BookingForm from "@/components/BookingForm";
 import { getOrigin } from "@/lib/origin";
-import Map from "@/components/Map"; // mini-map localisation
+import Map from "@/components/Map";
+import MapExpandButton from "@/components/MapExpandButton";
 import ListingReviews from "@/components/ListingReviews";
 import { formatMoneyAsync, type Currency } from "@/lib/currency";
 import { getServerDictionary } from "@/lib/i18n.server";
@@ -396,63 +397,22 @@ export default async function ListingDetailPage({
                     },
                   ]}
                 />
-                {/* Bouton agrandir la carte */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    const modal = document.getElementById('map-modal-mobile');
-                    if (modal) modal.classList.remove('hidden');
+                <MapExpandButton
+                  marker={{
+                    id: listing.id,
+                    lat: lat as number,
+                    lng: lng as number,
+                    label: priceFormatted,
+                    title: listing.title,
+                    city: listing.city,
+                    country: listing.country,
+                    priceFormatted: priceFormatted,
+                    imageUrl: listing.images?.[0]?.url,
                   }}
-                  className="absolute bottom-3 right-3 flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-lg border border-gray-200 hover:bg-gray-50 transition"
-                >
-                  <svg className="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                  </svg>
-                </button>
+                  locationLabel={locationLabel}
+                />
               </div>
               <p className="mt-2 text-sm text-gray-600">{locationLabel}</p>
-            </div>
-          )}
-
-          {/* Modal carte agrandie mobile */}
-          {hasCoords && (
-            <div id="map-modal-mobile" className="hidden fixed inset-0 z-50 bg-white">
-              <div className="h-full flex flex-col">
-                {/* Header modal */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
-                  <h3 className="text-base font-semibold text-gray-900">Localisation de l&apos;annonce</h3>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const modal = document.getElementById('map-modal-mobile');
-                      if (modal) modal.classList.add('hidden');
-                    }}
-                    className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100"
-                  >
-                    <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-                {/* Carte plein écran */}
-                <div className="flex-1">
-                  <Map
-                    markers={[
-                      {
-                        id: listing.id,
-                        lat: lat as number,
-                        lng: lng as number,
-                        label: priceFormatted,
-                        title: listing.title,
-                        city: listing.city,
-                        country: listing.country,
-                        priceFormatted: priceFormatted,
-                        imageUrl: listing.images?.[0]?.url,
-                      },
-                    ]}
-                  />
-                </div>
-              </div>
             </div>
           )}
 
@@ -652,63 +612,22 @@ export default async function ListingDetailPage({
                     },
                   ]}
                 />
-                {/* Bouton agrandir la carte */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    const modal = document.getElementById('map-modal-desktop');
-                    if (modal) modal.classList.remove('hidden');
+                <MapExpandButton
+                  marker={{
+                    id: listing.id,
+                    lat: lat as number,
+                    lng: lng as number,
+                    label: priceFormatted,
+                    title: listing.title,
+                    city: listing.city,
+                    country: listing.country,
+                    priceFormatted: priceFormatted,
+                    imageUrl: listing.images?.[0]?.url,
                   }}
-                  className="absolute bottom-3 right-3 flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-lg border border-gray-200 hover:bg-gray-50 transition"
-                >
-                  <svg className="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                  </svg>
-                </button>
+                  locationLabel={locationLabel}
+                />
               </div>
             </section>
-          )}
-
-          {/* Modal carte agrandie desktop */}
-          {hasCoords && (
-            <div id="map-modal-desktop" className="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-8">
-              <div className="bg-white rounded-2xl w-full max-w-4xl h-[80vh] flex flex-col overflow-hidden">
-                {/* Header modal */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-                  <h3 className="text-lg font-semibold text-gray-900">Localisation de l&apos;annonce</h3>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const modal = document.getElementById('map-modal-desktop');
-                      if (modal) modal.classList.add('hidden');
-                    }}
-                    className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100"
-                  >
-                    <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-                {/* Carte */}
-                <div className="flex-1">
-                  <Map
-                    markers={[
-                      {
-                        id: listing.id,
-                        lat: lat as number,
-                        lng: lng as number,
-                        label: priceFormatted,
-                        title: listing.title,
-                        city: listing.city,
-                        country: listing.country,
-                        priceFormatted: priceFormatted,
-                        imageUrl: listing.images?.[0]?.url,
-                      },
-                    ]}
-                  />
-                </div>
-              </div>
-            </div>
           )}
 
           {/* Avis sur l'annonce */}
