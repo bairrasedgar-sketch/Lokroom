@@ -458,7 +458,7 @@ export default function Map({
         const marker = new g.maps.Marker({
           map,
           position,
-          icon: { url: "/map-marker-lokroom 2.0.png", scaledSize: new g.maps.Size(160, 160) },
+          icon: { url: "/map-marker-lokroom-2.png", scaledSize: new g.maps.Size(140, 140) },
         });
         markersInstancesRef.current.push(marker);
         return;
