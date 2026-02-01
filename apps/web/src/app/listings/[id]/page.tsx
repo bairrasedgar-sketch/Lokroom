@@ -605,19 +605,17 @@ export default async function ListingDetailPage({
                 {t.listingDetail.exactLocationNote}
               </p>
               <div className="relative mt-2 h-64 w-full overflow-hidden rounded-2xl border bg-gray-100">
-                <div className="absolute inset-0 pointer-events-none">
-                  <Map
-                    useLogoIcon
-                    markers={[
-                      {
-                        id: listing.id,
-                        lat: lat as number,
-                        lng: lng as number,
-                        label: priceFormatted,
-                      },
-                    ]}
-                  />
-                </div>
+                <Map
+                  useLogoIcon
+                  markers={[
+                    {
+                      id: listing.id,
+                      lat: lat as number,
+                      lng: lng as number,
+                      label: priceFormatted,
+                    },
+                  ]}
+                />
                 <div className="absolute bottom-3 right-3 z-10">
                   <MapExpandButton
                     marker={{
