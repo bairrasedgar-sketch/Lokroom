@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const { listingId, startDate, endDate } = validation.data;
+  const { listingId, startDate, endDate, pricingMode: requestedPricingMode, guests } = validation.data;
 
   const start = new Date(startDate);
   const end = new Date(endDate);
@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "INVALID_NIGHTS" }, { status: 400 });
   }
 
-  // On récupère l’annonce
+  // On récupère l'annonce
   const listing = await prisma.listing.findUnique({
     where: { id: listingId },
     select: {
@@ -107,6 +107,10 @@ export async function POST(req: NextRequest) {
       province: true,
       // 👇 IMPORTANT : on récupère aussi le pricingMode
       pricingMode: true,
+      // 👇 Contraintes de capacité et durée
+      maxGuests: true,
+      minNights: true,
+      maxNights: true,
     },
   });
 
@@ -118,6 +122,68 @@ export async function POST(req: NextRequest) {
   if (listing.ownerId === me.id) {
     return NextResponse.json(
       { error: "CANNOT_BOOK_OWN_LISTING" },
+      { status: 400 },
+    );
+  }
+
+  // Validation du nombre de voyageurs (si fourni et si le listing a une limite)
+  if (guests !== undefined && listing.maxGuests !== null && guests > listing.maxGuests) {
+    return NextResponse.json(
+      {
+        error: "GUESTS_EXCEED_CAPACITY",
+        message: `Le nombre de voyageurs (${guests}) dépasse la capacité maximale (${listing.maxGuests})`,
+        maxGuests: listing.maxGuests,
+        requestedGuests: guests,
+      },
+      { status: 400 },
+    );
+  }
+
+  // Validation du pricingMode (si fourni, doit correspondre au listing)
+  // Le listing peut être DAILY, HOURLY ou BOTH
+  // Si BOTH, on accepte DAILY ou HOURLY
+  // Sinon, on doit matcher exactement
+  if (requestedPricingMode) {
+    const listingMode = listing.pricingMode;
+    const isValidMode =
+      listingMode === "BOTH" ||
+      listingMode === requestedPricingMode;
+
+    if (!isValidMode) {
+      return NextResponse.json(
+        {
+          error: "INVALID_PRICING_MODE",
+          message: `Le mode de tarification demandé (${requestedPricingMode}) ne correspond pas au listing (${listingMode})`,
+          listingPricingMode: listingMode,
+          requestedPricingMode,
+        },
+        { status: 400 },
+      );
+    }
+  }
+
+  // Validation du séjour minimum
+  if (listing.minNights !== null && nights < listing.minNights) {
+    return NextResponse.json(
+      {
+        error: "MINIMUM_STAY_NOT_MET",
+        message: `Le séjour minimum est de ${listing.minNights} nuit(s), vous avez demandé ${nights} nuit(s)`,
+        minimumStay: listing.minNights,
+        requestedNights: nights,
+      },
+      { status: 400 },
+    );
+  }
+
+  // Validation du séjour maximum
+  if (listing.maxNights !== null && nights > listing.maxNights) {
+    return NextResponse.json(
+      {
+        error: "MAXIMUM_STAY_EXCEEDED",
+        message: `Le séjour maximum est de ${listing.maxNights} nuit(s), vous avez demandé ${nights} nuit(s)`,
+        maximumStay: listing.maxNights,
+        requestedNights: nights,
+      },
       { status: 400 },
     );
   }

@@ -19,6 +19,9 @@ import { formatMoneyAsync, type Currency } from "@/lib/currency";
 import { getServerDictionary } from "@/lib/i18n.server";
 import ListingJsonLd from "@/components/seo/ListingJsonLd";
 import InstantBookBadge from "@/components/InstantBookBadge";
+import ShareButton from "@/components/ShareButton";
+import AmenitiesModal from "@/components/AmenitiesModal";
+import KycWarning from "@/components/KycWarning";
 
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
@@ -296,14 +299,7 @@ export default async function ListingDetailPage({
               </svg>
             </Link>
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                className="flex items-center justify-center h-9 w-9 rounded-full bg-white/90 backdrop-blur-sm shadow-sm"
-              >
-                <svg className="h-5 w-5 text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
-                </svg>
-              </button>
+              <ShareButton variant="mobile" />
               <FavoriteButton listingId={listing.id} />
             </div>
           </div>
@@ -324,6 +320,15 @@ export default async function ListingDetailPage({
                 <InstantBookBadge size="sm" showTooltip={false} />
               )}
             </div>
+            {/* Informations du logement style Airbnb */}
+            <p className="mt-1 text-sm text-gray-600">
+              {[
+                typeLabels[listing.type || "OTHER"] || "Espace",
+                listing.beds ? `${listing.beds} lit${listing.beds > 1 ? "s" : ""}` : null,
+                listing.bathrooms ? `${listing.bathrooms} salle${listing.bathrooms > 1 ? "s" : ""} de bain` : null,
+                listing.maxGuests ? `${listing.maxGuests} voyageur${listing.maxGuests > 1 ? "s" : ""} max` : null,
+              ].filter(Boolean).join(" · ")}
+            </p>
             <p className="mt-1 text-sm text-gray-500">{locationLabel}</p>
             {listing.reviewSummary && listing.reviewSummary.count > 0 && (
               <div className="mt-2 flex items-center gap-1">
@@ -362,22 +367,8 @@ export default async function ListingDetailPage({
           {/* Ce que propose ce logement */}
           {listing.amenities && listing.amenities.length > 0 && (
             <div className="py-4 border-b border-gray-100">
-              <h2 className="text-base font-semibold text-gray-900 mb-3">Équipements</h2>
-              <div className="grid grid-cols-2 gap-3">
-                {listing.amenities.slice(0, 6).map((amenity) => (
-                  <div key={amenity.key} className="flex items-center gap-2 text-sm text-gray-700">
-                    <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                    </svg>
-                    <span>{amenity.label}</span>
-                  </div>
-                ))}
-              </div>
-              {listing.amenities.length > 6 && (
-                <button className="mt-3 text-sm font-medium text-gray-900 underline">
-                  Voir les {listing.amenities.length} équipements
-                </button>
-              )}
+              <h2 className="text-base font-semibold text-gray-900 mb-3">Equipements</h2>
+              <AmenitiesModal amenities={listing.amenities} previewCount={6} />
             </div>
           )}
 
@@ -438,6 +429,13 @@ export default async function ListingDetailPage({
             <p className="text-sm text-gray-600">{t.listingDetail.spaceRulesDesc}</p>
           </div>
 
+          {/* Avertissement KYC mobile */}
+          {!isOwner && (
+            <div className="py-4">
+              <KycWarning />
+            </div>
+          )}
+
           {/* Actions propriétaire mobile */}
           {isOwner && (
             <div className="py-4 flex gap-3">
@@ -486,7 +484,16 @@ export default async function ListingDetailPage({
             <InstantBookBadge size="md" showTooltip={true} />
           )}
         </div>
-        <p className="text-xs sm:text-sm text-gray-600">{locationLabel}</p>
+        {/* Informations du logement style Airbnb */}
+        <p className="text-sm text-gray-600">
+          {[
+            typeLabels[listing.type || "OTHER"] || "Espace",
+            listing.beds ? `${listing.beds} lit${listing.beds > 1 ? "s" : ""}` : null,
+            listing.bathrooms ? `${listing.bathrooms} salle${listing.bathrooms > 1 ? "s" : ""} de bain` : null,
+            listing.maxGuests ? `${listing.maxGuests} voyageur${listing.maxGuests > 1 ? "s" : ""} max` : null,
+          ].filter(Boolean).join(" · ")}
+        </p>
+        <p className="text-xs sm:text-sm text-gray-500">{locationLabel}</p>
       </section>
 
       {/* Galerie */}
@@ -502,12 +509,7 @@ export default async function ListingDetailPage({
           </span>
 
           <div className="flex gap-2">
-            <button
-              type="button"
-              className="inline-flex items-center gap-1 rounded-full border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-800 hover:border-black"
-            >
-              <span>{t.listingDetail.share}</span>
-            </button>
+            <ShareButton variant="desktop" />
 
             <FavoriteButton listingId={listing.id} />
           </div>
@@ -581,9 +583,6 @@ export default async function ListingDetailPage({
             <p className="font-medium">
               {listing.owner.name ?? t.listingDetail.lokroomUser}
             </p>
-            <p className="text-sm text-gray-600">
-              {listing.owner.email ?? ""}
-            </p>
           </aside>
 
           {/* Localisation approximative avec logo Lok'Room */}
@@ -649,12 +648,15 @@ export default async function ListingDetailPage({
           </div>
 
           {!isOwner ? (
-            <BookingForm
-              listingId={listing.id}
-              price={listing.price}
-              currency={listing.currency}
-              isInstantBook={listing.isInstantBook ?? false}
-            />
+            <>
+              <KycWarning className="mb-4" />
+              <BookingForm
+                listingId={listing.id}
+                price={listing.price}
+                currency={listing.currency}
+                isInstantBook={listing.isInstantBook ?? false}
+              />
+            </>
           ) : (
             <p className="text-xs text-gray-500">
               {t.listingDetail.ownerNotice}

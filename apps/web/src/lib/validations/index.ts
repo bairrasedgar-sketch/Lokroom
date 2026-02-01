@@ -253,6 +253,8 @@ export const createBookingSchema = z
       .optional(),
     timezone: z.string().max(50).optional(),
     guestMessage: z.string().max(1000).optional(),
+    // Nombre de voyageurs (optionnel pour compatibilité)
+    guests: z.number().int().min(1).max(100).optional(),
   })
   .refine((data) => new Date(data.endDate) > new Date(data.startDate), {
     message: "La date de fin doit être après la date de début",

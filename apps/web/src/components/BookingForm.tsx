@@ -110,7 +110,7 @@ export default function BookingForm({
 
     if (endDate <= startDate) {
       setPreview(null);
-      setPreviewError("La date de départ doit être postérieure à la date d'arrivée.");
+      setPreviewError(t.components.bookingForm.departureAfterArrival);
       return;
     }
 
@@ -131,7 +131,7 @@ export default function BookingForm({
         if (!res.ok) {
           const data = await res.json().catch(() => null);
           setPreview(null);
-          setPreviewError(data?.error ?? "Impossible de calculer le prix.");
+          setPreviewError(data?.error ?? t.components.bookingForm.priceCalculationError);
           return;
         }
 
@@ -141,7 +141,7 @@ export default function BookingForm({
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") return;
         setPreview(null);
-        setPreviewError("Erreur lors du calcul du prix.");
+        setPreviewError(t.components.bookingForm.priceCalculationFailed);
       } finally {
         setPreviewLoading(false);
       }
@@ -172,7 +172,7 @@ export default function BookingForm({
 
         if (!res.ok) {
           setInstantBookEligible(false);
-          setInstantBookReasons(["Impossible de vérifier l'éligibilité"]);
+          setInstantBookReasons([t.components.bookingForm.eligibilityCheckError || "Impossible de vérifier l'éligibilité"]);
           return;
         }
 
@@ -182,7 +182,7 @@ export default function BookingForm({
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") return;
         setInstantBookEligible(false);
-        setInstantBookReasons(["Erreur lors de la vérification"]);
+        setInstantBookReasons([t.components.bookingForm.verificationError || "Erreur lors de la vérification"]);
       } finally {
         setCheckingEligibility(false);
       }
@@ -190,16 +190,16 @@ export default function BookingForm({
 
     void checkEligibility();
     return () => controller.abort();
-  }, [isInstantBook, startDate, endDate, listingId, isLoggedIn]);
+  }, [isInstantBook, startDate, endDate, listingId, isLoggedIn, t.components.bookingForm]);
 
   async function validatePromoCode() {
     if (!promoCode.trim()) {
-      setPromoError("Veuillez entrer un code promo");
+      setPromoError(t.components.bookingForm.enterPromoCode || "Veuillez entrer un code promo");
       return;
     }
 
     if (!isLoggedIn) {
-      setPromoError("Connectez-vous pour utiliser un code promo");
+      setPromoError(t.components.bookingForm.loginForPromo || "Connectez-vous pour utiliser un code promo");
       return;
     }
 
@@ -222,16 +222,16 @@ export default function BookingForm({
       const data = await res.json();
 
       if (!res.ok || !data.valid) {
-        setPromoError(data.error || "Code promo invalide");
+        setPromoError(data.error || t.components.bookingForm.invalidPromoCode || "Code promo invalide");
         setValidPromo(null);
         return;
       }
 
       setValidPromo(data.promoCode);
       setPromoError(null);
-      toast.success(`Code "${data.promoCode.code}" appliqué`);
+      toast.success(t.components.bookingForm.promoApplied?.replace("{code}", data.promoCode.code) || `Code "${data.promoCode.code}" appliqué`);
     } catch {
-      setPromoError("Erreur lors de la validation");
+      setPromoError(t.components.bookingForm.promoValidationError || "Erreur lors de la validation");
     } finally {
       setPromoLoading(false);
     }
@@ -283,14 +283,14 @@ export default function BookingForm({
       return;
     }
 
-    // Vérifier que les dates ne sont pas dans le passé
+    // Vérifier que les dates ne sont pas dans le passé (UTC pour cohérence avec l'API)
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    today.setUTCHours(0, 0, 0, 0);
+    const start = new Date(startDate + "T00:00:00Z");
+    const end = new Date(endDate + "T00:00:00Z");
 
     if (start < today) {
-      toast.error("La date d'arrivée ne peut pas être dans le passé");
+      toast.error(bf.arrivalNotInPast || "La date d'arrivée ne peut pas être dans le passé");
       return;
     }
 
@@ -312,6 +312,7 @@ export default function BookingForm({
           listingId,
           startDate,
           endDate,
+          guests,
           promoCodeId: validPromo?.id,
         }),
       });
@@ -331,7 +332,7 @@ export default function BookingForm({
       const isConfirmed = data?.booking?.status === "CONFIRMED";
 
       if (useInstantBook && isConfirmed) {
-        toast.success("Réservation confirmée instantanément");
+        toast.success(bf.instantBookConfirmed || "Réservation confirmée instantanément");
       } else {
         toast.success(bf.bookingCreated);
       }
@@ -355,7 +356,7 @@ export default function BookingForm({
             <span className="text-2xl font-semibold text-gray-900">
               {Math.round(price)} {currency === "CAD" ? "CAD" : "€"}
             </span>
-            <span className="text-base text-gray-600 ml-1">/ nuit</span>
+            <span className="text-base text-gray-600 ml-1">{t.common.perNight}</span>
           </div>
           {rating && reviewCount > 0 && (
             <div className="flex items-center gap-1 text-sm">
@@ -372,7 +373,7 @@ export default function BookingForm({
             <div className="grid grid-cols-2 divide-x divide-gray-300">
               <div className="p-3">
                 <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-1">
-                  Arrivée
+                  {bf.arrivalLabel}
                 </label>
                 <input
                   type="date"
@@ -384,7 +385,7 @@ export default function BookingForm({
               </div>
               <div className="p-3">
                 <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-1">
-                  Départ
+                  {bf.departureLabel}
                 </label>
                 <input
                   type="date"
@@ -405,11 +406,11 @@ export default function BookingForm({
               >
                 <div>
                   <span className="block text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-1">
-                    Voyageurs
+                    {bf.travelersLabel || t.common.guests}
                   </span>
                   <span className="text-sm text-gray-900">
-                    {totalGuests} voyageur{totalGuests > 1 ? "s" : ""}
-                    {guests.infants > 0 && `, ${guests.infants} bébé${guests.infants > 1 ? "s" : ""}`}
+                    {totalGuests} {totalGuests > 1 ? t.common.guests : t.common.guest}
+                    {guests.infants > 0 && `, ${guests.infants} ${bf.infantsLabel || (guests.infants > 1 ? "bébés" : "bébé")}`}
                   </span>
                 </div>
                 <ChevronDownIcon className={`h-5 w-5 text-gray-600 transition-transform ${showGuestPicker ? "rotate-180" : ""}`} />
@@ -420,8 +421,8 @@ export default function BookingForm({
                   {/* Adults */}
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">Adultes</p>
-                      <p className="text-xs text-gray-500">13 ans et plus</p>
+                      <p className="text-sm font-medium text-gray-900">{bf.adultsLabel || "Adultes"}</p>
+                      <p className="text-xs text-gray-500">{bf.adultsDesc || "13 ans et plus"}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <button
@@ -446,8 +447,8 @@ export default function BookingForm({
                   {/* Children */}
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">Enfants</p>
-                      <p className="text-xs text-gray-500">2 à 12 ans</p>
+                      <p className="text-sm font-medium text-gray-900">{bf.childrenLabel || "Enfants"}</p>
+                      <p className="text-xs text-gray-500">{bf.childrenDesc || "2 à 12 ans"}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <button
@@ -472,8 +473,8 @@ export default function BookingForm({
                   {/* Infants */}
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">Bébés</p>
-                      <p className="text-xs text-gray-500">Moins de 2 ans</p>
+                      <p className="text-sm font-medium text-gray-900">{bf.infantsLabelPicker || "Bébés"}</p>
+                      <p className="text-xs text-gray-500">{bf.infantsDesc || "Moins de 2 ans"}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <button
@@ -505,7 +506,7 @@ export default function BookingForm({
               {checkingEligibility ? (
                 <div className="flex items-center gap-2 rounded-xl bg-gray-50 p-3 text-sm">
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-amber-500" />
-                  <span className="text-gray-600">Vérification...</span>
+                  <span className="text-gray-600">{bf.checking || "Vérification..."}</span>
                 </div>
               ) : (
                 <InstantBookIndicator eligible={instantBookEligible} reasons={instantBookReasons} />
@@ -521,7 +522,7 @@ export default function BookingForm({
               className="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-semibold text-base flex items-center justify-center gap-2 hover:from-amber-600 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
               <BoltIcon className="h-5 w-5" />
-              {submitting ? "Réservation..." : "Réserver instantanément"}
+              {submitting ? (bf.reserving || "Réservation...") : (bf.reserveInstantly || "Réserver instantanément")}
             </button>
           ) : (
             <button
@@ -529,12 +530,12 @@ export default function BookingForm({
               disabled={submitting || !startDate || !endDate}
               className="w-full py-3.5 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 text-white font-semibold text-base hover:from-rose-600 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             >
-              {submitting ? "Réservation..." : "Réserver"}
+              {submitting ? (bf.reserving || "Réservation...") : (bf.reserve || "Réserver")}
             </button>
           )}
 
           <p className="text-center text-xs text-gray-500">
-            Aucun montant ne sera débité pour le moment
+            {bf.noChargeYet || "Aucun montant ne sera débité pour le moment"}
           </p>
 
           {/* Price Breakdown */}
@@ -553,7 +554,7 @@ export default function BookingForm({
 
               {validPromo && validPromo.discountAmountCents > 0 && (
                 <div className="flex items-center justify-between text-sm text-green-600">
-                  <span>Réduction ({validPromo.code})</span>
+                  <span>{bf.discount || "Réduction"} ({validPromo.code})</span>
                   <span>-{formatMoney(validPromo.discountAmountCents, preview.currency)}</span>
                 </div>
               )}
@@ -570,7 +571,7 @@ export default function BookingForm({
           )}
 
           {previewLoading && (
-            <div className="text-center text-sm text-gray-500">Calcul du prix...</div>
+            <div className="text-center text-sm text-gray-500">{bf.calculatingPrice || "Calcul du prix..."}</div>
           )}
 
           {previewError && (
@@ -584,7 +585,7 @@ export default function BookingForm({
               onClick={() => setShowPromoInput(true)}
               className="w-full text-center text-sm font-medium text-gray-900 underline hover:text-gray-600"
             >
-              Ajouter un code promo
+              {bf.addPromoCode || "Ajouter un code promo"}
             </button>
           )}
 
@@ -594,7 +595,7 @@ export default function BookingForm({
                 type="text"
                 value={promoCode}
                 onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                placeholder="Code promo"
+                placeholder={bf.promoCodePlaceholder || "Code promo"}
                 className="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 text-sm uppercase focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                 disabled={promoLoading}
               />
@@ -615,7 +616,7 @@ export default function BookingForm({
                 {validPromo.code} - {validPromo.discountLabel}
               </span>
               <button type="button" onClick={removePromoCode} className="text-sm text-gray-500 hover:text-gray-700">
-                Retirer
+                {bf.removePromo || "Retirer"}
               </button>
             </div>
           )}
@@ -629,7 +630,7 @@ export default function BookingForm({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-900">Connexion requise</h2>
+              <h2 className="text-lg font-semibold text-gray-900">{bf.loginRequiredTitle || "Connexion requise"}</h2>
               <button
                 type="button"
                 onClick={() => setShowLoginPrompt(false)}
@@ -640,7 +641,7 @@ export default function BookingForm({
             </div>
 
             <p className="mb-6 text-sm text-gray-600">
-              Connectez-vous pour réserver ce logement.
+              {bf.loginRequiredDesc || "Connectez-vous pour réserver ce logement."}
             </p>
 
             <div className="space-y-3">
@@ -649,7 +650,7 @@ export default function BookingForm({
                 onClick={() => signIn("google", { callbackUrl: window.location.href })}
                 className="w-full py-3 rounded-xl border border-gray-300 text-sm font-medium text-gray-900 hover:bg-gray-50 transition"
               >
-                Continuer avec Google
+                {t.auth.continueGoogle}
               </button>
 
               <button
@@ -659,7 +660,7 @@ export default function BookingForm({
                 }}
                 className="w-full py-3 rounded-xl bg-gray-900 text-sm font-medium text-white hover:bg-gray-800 transition"
               >
-                Se connecter
+                {bf.loginButton || "Se connecter"}
               </button>
             </div>
           </div>

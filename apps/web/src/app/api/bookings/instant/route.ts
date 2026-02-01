@@ -83,6 +83,8 @@ export async function POST(req: NextRequest) {
     startDate?: string;
     endDate?: string;
     paymentMethodId?: string;
+    guests?: number;
+    pricingMode?: string;
   };
 
   try {
@@ -91,7 +93,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "INVALID_JSON" }, { status: 400 });
   }
 
-  const { listingId, startDate: startDateStr, endDate: endDateStr, paymentMethodId } = body;
+  const { listingId, startDate: startDateStr, endDate: endDateStr, paymentMethodId, guests, pricingMode: requestedPricingMode } = body;
 
   if (!listingId || !startDateStr || !endDateStr) {
     return NextResponse.json(
@@ -122,6 +124,10 @@ export async function POST(req: NextRequest) {
       pricingMode: true,
       isInstantBook: true,
       instantBookSettings: true,
+      // Contraintes de capacité et durée
+      maxGuests: true,
+      minNights: true,
+      maxNights: true,
     },
   });
 
@@ -141,6 +147,68 @@ export async function POST(req: NextRequest) {
   if (listing.ownerId === me.id) {
     return NextResponse.json(
       { error: "CANNOT_BOOK_OWN_LISTING" },
+      { status: 400 }
+    );
+  }
+
+  // Validation du nombre de voyageurs (si fourni et si le listing a une limite)
+  if (guests !== undefined && listing.maxGuests !== null && guests > listing.maxGuests) {
+    return NextResponse.json(
+      {
+        error: "GUESTS_EXCEED_CAPACITY",
+        message: `Le nombre de voyageurs (${guests}) dépasse la capacité maximale (${listing.maxGuests})`,
+        maxGuests: listing.maxGuests,
+        requestedGuests: guests,
+      },
+      { status: 400 }
+    );
+  }
+
+  // Validation du pricingMode (si fourni, doit correspondre au listing)
+  // Le listing peut être DAILY, HOURLY ou BOTH
+  // Si BOTH, on accepte DAILY ou HOURLY
+  // Sinon, on doit matcher exactement
+  if (requestedPricingMode) {
+    const listingMode = listing.pricingMode;
+    const isValidMode =
+      listingMode === "BOTH" ||
+      listingMode === requestedPricingMode;
+
+    if (!isValidMode) {
+      return NextResponse.json(
+        {
+          error: "INVALID_PRICING_MODE",
+          message: `Le mode de tarification demandé (${requestedPricingMode}) ne correspond pas au listing (${listingMode})`,
+          listingPricingMode: listingMode,
+          requestedPricingMode,
+        },
+        { status: 400 }
+      );
+    }
+  }
+
+  // Validation du séjour minimum
+  if (listing.minNights !== null && nights < listing.minNights) {
+    return NextResponse.json(
+      {
+        error: "MINIMUM_STAY_NOT_MET",
+        message: `Le séjour minimum est de ${listing.minNights} nuit(s), vous avez demandé ${nights} nuit(s)`,
+        minimumStay: listing.minNights,
+        requestedNights: nights,
+      },
+      { status: 400 }
+    );
+  }
+
+  // Validation du séjour maximum
+  if (listing.maxNights !== null && nights > listing.maxNights) {
+    return NextResponse.json(
+      {
+        error: "MAXIMUM_STAY_EXCEEDED",
+        message: `Le séjour maximum est de ${listing.maxNights} nuit(s), vous avez demandé ${nights} nuit(s)`,
+        maximumStay: listing.maxNights,
+        requestedNights: nights,
+      },
       { status: 400 }
     );
   }
