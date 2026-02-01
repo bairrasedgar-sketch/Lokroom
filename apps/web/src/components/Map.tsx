@@ -472,11 +472,15 @@ export default function Map({
         map.setCenter(position);
         map.setZoom(14);
 
-        // Ajouter le marqueur (très grand)
+        // Ajouter le marqueur (taille fixe qui ne change pas avec le zoom)
         const marker = new g.maps.Marker({
           map,
           position,
-          icon: { url: "/map-marker-lokroom-2.png", scaledSize: new g.maps.Size(140, 140) },
+          icon: {
+            url: "/map-marker-lokroom-2.png",
+            scaledSize: new g.maps.Size(50, 50),
+            anchor: new g.maps.Point(25, 25),
+          },
         });
         markersInstancesRef.current.push(marker);
         return;

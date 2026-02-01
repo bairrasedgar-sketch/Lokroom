@@ -13,6 +13,7 @@ import BookingForm from "@/components/BookingForm";
 import { getOrigin } from "@/lib/origin";
 import Map from "@/components/Map";
 import MapExpandButton from "@/components/MapExpandButton";
+import MobileBookingModal from "@/components/MobileBookingModal";
 import ListingReviews from "@/components/ListingReviews";
 import { formatMoneyAsync, type Currency } from "@/lib/currency";
 import { getServerDictionary } from "@/lib/i18n.server";
@@ -453,23 +454,13 @@ export default async function ListingDetailPage({
 
         {/* Footer sticky mobile avec prix et bouton réserver */}
         {!isOwner && (
-          <div className="fixed bottom-[60px] left-0 right-0 z-20 bg-white border-t border-gray-200 px-4 py-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-lg font-semibold text-gray-900">
-                  {priceFormatted}
-                  <span className="text-sm font-normal text-gray-500"> / nuit</span>
-                </p>
-                <p className="text-xs text-gray-500">{t.listingDetail.taxesNote}</p>
-              </div>
-              <Link
-                href={`/listings/${listing.id}#booking`}
-                className="px-6 py-3 bg-gradient-to-r from-rose-500 to-pink-600 text-white text-sm font-semibold rounded-xl shadow-lg"
-              >
-                Réserver
-              </Link>
-            </div>
-          </div>
+          <MobileBookingModal
+            listingId={listing.id}
+            price={listing.price}
+            currency={listing.currency}
+            priceFormatted={priceFormatted}
+            isInstantBook={listing.isInstantBook ?? false}
+          />
         )}
       </div>
 
