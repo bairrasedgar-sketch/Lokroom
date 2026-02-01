@@ -283,7 +283,18 @@ export default function BookingForm({
       return;
     }
 
-    if (endDate <= startDate) {
+    // Vérifier que les dates ne sont pas dans le passé
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (start < today) {
+      toast.error("La date d'arrivée ne peut pas être dans le passé");
+      return;
+    }
+
+    if (end <= start) {
       toast.error(bf.departureAfterArrival);
       return;
     }

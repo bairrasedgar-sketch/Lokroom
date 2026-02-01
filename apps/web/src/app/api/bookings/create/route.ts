@@ -80,6 +80,13 @@ export async function POST(req: NextRequest) {
   const start = new Date(startDate);
   const end = new Date(endDate);
 
+  // Vérifier que la date de début n'est pas dans le passé
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (start < today) {
+    return NextResponse.json({ error: "INVALID_DATES" }, { status: 400 });
+  }
+
   const nights = daysDiff(start, end);
   if (nights <= 0) {
     return NextResponse.json({ error: "INVALID_NIGHTS" }, { status: 400 });

@@ -438,16 +438,17 @@ export default function Map({
       const position = new g.maps.LatLng(m.lat, m.lng);
       bounds.extend(position);
 
-      // Mode logo (page détail) - carte statique
+      // Mode logo (page détail) - carte statique mais permet scroll de la page
       if (useLogoIcon) {
-        // D'abord désactiver toutes les interactions
+        // Désactiver interactions carte mais permettre scroll page
         map.setOptions({
           draggable: false,
           zoomControl: false,
           scrollwheel: false,
           disableDoubleClickZoom: true,
-          gestureHandling: "none",
+          gestureHandling: "cooperative",
           keyboardShortcuts: false,
+          clickableIcons: false,
         });
 
         // Centrer et zoomer sur la position (niveau quartier/rue)
