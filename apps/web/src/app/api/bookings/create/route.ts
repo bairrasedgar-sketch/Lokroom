@@ -80,10 +80,13 @@ export async function POST(req: NextRequest) {
   const start = new Date(startDate);
   const end = new Date(endDate);
 
-  // Vérifier que la date de début n'est pas dans le passé
+  // Vérifier que la date de début n'est pas dans le passé (comparaison en UTC)
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  if (start < today) {
+  today.setUTCHours(0, 0, 0, 0);
+  const startUTC = new Date(start);
+  startUTC.setUTCHours(0, 0, 0, 0);
+
+  if (startUTC < today) {
     return NextResponse.json({ error: "INVALID_DATES" }, { status: 400 });
   }
 
