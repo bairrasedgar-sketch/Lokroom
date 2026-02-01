@@ -46,7 +46,7 @@ export default function MapExpandButton({ marker, locationLabel }: MapExpandButt
             </div>
             {/* Carte plein écran */}
             <div className="flex-1">
-              <Map markers={[marker]} />
+              <Map markers={[marker]} useLogoIcon interactive />
             </div>
           </div>
         </div>

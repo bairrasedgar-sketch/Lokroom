@@ -45,6 +45,9 @@ type MapProps = {
   /** Quand true → on utilise le logo Lok'Room comme repère (détail annonce) */
   useLogoIcon?: boolean;
 
+  /** Quand true → carte interactive (pour modal agrandie) */
+  interactive?: boolean;
+
   /** Id de l'annonce survolée dans la liste (pour recentrer / zoomer) */
   hoveredId?: string | null;
 
@@ -289,6 +292,7 @@ const MAP_STYLES = [
 export default function Map({
   markers = [],
   useLogoIcon = false,
+  interactive = false,
   hoveredId,
   onMarkerHover,
   onMarkerClick,
@@ -438,18 +442,31 @@ export default function Map({
       const position = new g.maps.LatLng(m.lat, m.lng);
       bounds.extend(position);
 
-      // Mode logo (page détail) - carte statique, scroll passe à la page
+      // Mode logo (page détail)
       if (useLogoIcon) {
-        // Désactiver TOUTES les interactions - le scroll passe à la page parent
-        map.setOptions({
-          draggable: false,
-          zoomControl: false,
-          scrollwheel: false,
-          disableDoubleClickZoom: true,
-          gestureHandling: "none",
-          keyboardShortcuts: false,
-          clickableIcons: false,
-        });
+        // Si interactive (modal agrandie), permettre zoom et déplacement
+        if (interactive) {
+          map.setOptions({
+            draggable: true,
+            zoomControl: true,
+            scrollwheel: true,
+            disableDoubleClickZoom: false,
+            gestureHandling: "greedy",
+            keyboardShortcuts: true,
+            clickableIcons: false,
+          });
+        } else {
+          // Sinon carte statique, scroll passe à la page parent
+          map.setOptions({
+            draggable: false,
+            zoomControl: false,
+            scrollwheel: false,
+            disableDoubleClickZoom: true,
+            gestureHandling: "none",
+            keyboardShortcuts: false,
+            clickableIcons: false,
+          });
+        }
 
         // Centrer et zoomer sur la position (niveau quartier/rue)
         map.setCenter(position);
