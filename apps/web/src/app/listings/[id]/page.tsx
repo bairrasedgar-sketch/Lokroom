@@ -386,31 +386,35 @@ export default async function ListingDetailPage({
               <h2 className="text-base font-semibold text-gray-900 mb-2">Localisation approximative de l&apos;annonce</h2>
               <p className="text-xs text-gray-500 mb-3">{t.listingDetail.exactLocationNote}</p>
               <div className="relative h-56 w-full overflow-hidden rounded-2xl border border-gray-200 bg-gray-100">
-                <Map
-                  useLogoIcon
-                  markers={[
-                    {
+                <div className="absolute inset-0 pointer-events-none">
+                  <Map
+                    useLogoIcon
+                    markers={[
+                      {
+                        id: listing.id,
+                        lat: lat as number,
+                        lng: lng as number,
+                        label: priceFormatted,
+                      },
+                    ]}
+                  />
+                </div>
+                <div className="absolute bottom-3 right-3 z-10">
+                  <MapExpandButton
+                    marker={{
                       id: listing.id,
                       lat: lat as number,
                       lng: lng as number,
                       label: priceFormatted,
-                    },
-                  ]}
-                />
-                <MapExpandButton
-                  marker={{
-                    id: listing.id,
-                    lat: lat as number,
-                    lng: lng as number,
-                    label: priceFormatted,
-                    title: listing.title,
-                    city: listing.city,
-                    country: listing.country,
-                    priceFormatted: priceFormatted,
-                    imageUrl: listing.images?.[0]?.url,
-                  }}
-                  locationLabel={locationLabel}
-                />
+                      title: listing.title,
+                      city: listing.city,
+                      country: listing.country,
+                      priceFormatted: priceFormatted,
+                      imageUrl: listing.images?.[0]?.url,
+                    }}
+                    locationLabel={locationLabel}
+                  />
+                </div>
               </div>
               <p className="mt-2 text-sm text-gray-600">{locationLabel}</p>
             </div>
@@ -449,7 +453,7 @@ export default async function ListingDetailPage({
 
         {/* Footer sticky mobile avec prix et bouton réserver */}
         {!isOwner && (
-          <div className="fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-gray-200 px-4 py-3 pb-6">
+          <div className="fixed bottom-[60px] left-0 right-0 z-20 bg-white border-t border-gray-200 px-4 py-3">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-lg font-semibold text-gray-900">
@@ -601,31 +605,35 @@ export default async function ListingDetailPage({
                 {t.listingDetail.exactLocationNote}
               </p>
               <div className="relative mt-2 h-64 w-full overflow-hidden rounded-2xl border bg-gray-100">
-                <Map
-                  useLogoIcon
-                  markers={[
-                    {
+                <div className="absolute inset-0 pointer-events-none">
+                  <Map
+                    useLogoIcon
+                    markers={[
+                      {
+                        id: listing.id,
+                        lat: lat as number,
+                        lng: lng as number,
+                        label: priceFormatted,
+                      },
+                    ]}
+                  />
+                </div>
+                <div className="absolute bottom-3 right-3 z-10">
+                  <MapExpandButton
+                    marker={{
                       id: listing.id,
                       lat: lat as number,
                       lng: lng as number,
                       label: priceFormatted,
-                    },
-                  ]}
-                />
-                <MapExpandButton
-                  marker={{
-                    id: listing.id,
-                    lat: lat as number,
-                    lng: lng as number,
-                    label: priceFormatted,
-                    title: listing.title,
-                    city: listing.city,
-                    country: listing.country,
-                    priceFormatted: priceFormatted,
-                    imageUrl: listing.images?.[0]?.url,
-                  }}
-                  locationLabel={locationLabel}
-                />
+                      title: listing.title,
+                      city: listing.city,
+                      country: listing.country,
+                      priceFormatted: priceFormatted,
+                      imageUrl: listing.images?.[0]?.url,
+                    }}
+                    locationLabel={locationLabel}
+                  />
+                </div>
               </div>
             </section>
           )}

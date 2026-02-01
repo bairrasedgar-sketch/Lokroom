@@ -438,15 +438,15 @@ export default function Map({
       const position = new g.maps.LatLng(m.lat, m.lng);
       bounds.extend(position);
 
-      // Mode logo (page détail) - carte statique mais permet scroll de la page
+      // Mode logo (page détail) - carte statique, scroll passe à la page
       if (useLogoIcon) {
-        // Désactiver interactions carte mais permettre scroll page
+        // Désactiver TOUTES les interactions - le scroll passe à la page parent
         map.setOptions({
           draggable: false,
           zoomControl: false,
           scrollwheel: false,
           disableDoubleClickZoom: true,
-          gestureHandling: "cooperative",
+          gestureHandling: "none",
           keyboardShortcuts: false,
           clickableIcons: false,
         });
