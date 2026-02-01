@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMe } from "@/lib/useMe";
+import { useTranslation } from "@/hooks/useTranslation";
 
 type KycWarningProps = {
   className?: string;
@@ -9,15 +10,21 @@ type KycWarningProps = {
 
 export default function KycWarning({ className = "" }: KycWarningProps) {
   const { user, loading } = useMe();
+  const { t } = useTranslation();
 
   // Ne rien afficher pendant le chargement ou si pas connecte
   if (loading || !user) {
     return null;
   }
 
-  // Verifier le statut KYC
-  const kycStatus = user.hostProfile?.kycStatus;
-  const isVerified = kycStatus === "VERIFIED" || kycStatus === "verified";
+  // Verifier le statut KYC (identityStatus pour les guests, hostProfile.kycStatus pour les hosts)
+  const identityStatus = user.identityStatus;
+  const hostKycStatus = user.hostProfile?.kycStatus;
+  const isVerified =
+    identityStatus === "VERIFIED" ||
+    identityStatus === "verified" ||
+    hostKycStatus === "VERIFIED" ||
+    hostKycStatus === "verified";
 
   // Si verifie, ne rien afficher
   if (isVerified) {
@@ -34,16 +41,16 @@ export default function KycWarning({ className = "" }: KycWarningProps) {
         </div>
         <div className="flex-1">
           <h4 className="text-sm font-semibold text-amber-800">
-            Verification d&apos;identite requise
+            {t.listingDetail.kycTitle}
           </h4>
           <p className="mt-1 text-sm text-amber-700">
-            Vous devez verifier votre identite pour pouvoir reserver ce logement.
+            {t.listingDetail.kycMessage}
           </p>
           <Link
             href="/account?tab=security"
             className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-amber-800 underline hover:text-amber-900"
           >
-            Verifier mon identite
+            {t.listingDetail.kycVerify}
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
             </svg>

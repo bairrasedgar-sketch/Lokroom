@@ -1120,6 +1120,20 @@ const en = {
     taxesNote: "Taxes and fees added at checkout.",
     ownerNotice: "You are the owner of this listing.",
     editListing: "Edit listing",
+    // Share
+    linkCopied: "Link copied!",
+    copyError: "Unable to copy link",
+    // Amenities
+    amenitiesTitle: "Amenities",
+    viewAllAmenities: "View all {count} amenities",
+    amenitiesModalTitle: "What this place offers",
+    // KYC
+    kycTitle: "Identity verification required",
+    kycMessage: "You must verify your identity to book this accommodation.",
+    kycVerify: "Verify my identity",
+    // Map
+    mapLocation: "Listing location",
+    approximateLocationTitle: "Approximate listing location",
   },
 
   // ============================================
@@ -1238,10 +1252,18 @@ const en = {
     // ListingGallery
     listingGallery: {
       noImage: "No image",
+      noImagesAvailable: "No images available",
       prevImage: "Previous image",
       nextImage: "Next image",
       goToImage: "Go to image {number}",
       imageAlt: "Image {number}",
+      closeGallery: "Close gallery",
+      viewImageNumber: "View image {number}",
+      viewImageOf: "View image {number} of {total}",
+      thumbnail: "Thumbnail {number}",
+      mainImage: "Main image",
+      morePhotos: "+{count} more",
+      showAllPhotos: "Show all photos",
     },
 
     // ListingImagesManager
@@ -1327,9 +1349,16 @@ const en = {
       averageRating: "Average rating",
       outOf5: "/ 5",
       reviewsCount: "reviews",
-      loading: "Loading reviews…",
+      loading: "Loading…",
+      loadMore: "Load more",
       noReviews: "No reviews yet. Be the first to leave one!",
       defaultTraveler: "Lok'Room Traveler",
+      showMore: "Show more",
+      hostResponse: "Host's response",
+      noReviewsTitle: "No reviews yet",
+      noReviewsDescription: "This space has not received any reviews yet. Be the first to share your experience.",
+      retry: "Retry",
+      showAllReviews: "Show all {count} reviews",
     },
 
     // BookingReviewForm
@@ -1429,6 +1458,14 @@ const en = {
       clickToViewDetails: "Click to view details",
       apiKeyMissing: "Key `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` missing in `.env.local`",
       noLocationAvailable: "Location not available for these listings.",
+      prevImage: "Previous image",
+      nextImage: "Next image",
+      viewImage: "View image {idx}",
+      locationFallback: "Location",
+      perNight: "/ night",
+      viewDetails: "View details →",
+      zoomIn: "Zoom in",
+      zoomOut: "Zoom out",
     },
 
     // FiltersBar
@@ -1625,6 +1662,11 @@ const en = {
       loginRequiredTitle: "Login required",
       loginRequiredDesc: "Log in to book this listing.",
       loginButton: "Log in",
+      taxesAndFeesIncluded: "Taxes and fees included",
+      bookingType: "Booking type",
+      perHourOption: "Per hour",
+      perDayOption: "Per day",
+      perNightOption: "Per night",
     },
 
     // Navbar

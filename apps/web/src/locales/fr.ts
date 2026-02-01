@@ -1114,6 +1114,20 @@ const fr = {
     taxesNote: "Taxes et frais ajoutés au moment du paiement.",
     ownerNotice: "Vous êtes le propriétaire de cette annonce.",
     editListing: "Éditer l'annonce",
+    // Share
+    linkCopied: "Lien copié !",
+    copyError: "Impossible de copier le lien",
+    // Amenities
+    amenitiesTitle: "Équipements",
+    viewAllAmenities: "Voir les {count} équipements",
+    amenitiesModalTitle: "Ce que propose ce logement",
+    // KYC
+    kycTitle: "Vérification d'identité requise",
+    kycMessage: "Vous devez vérifier votre identité pour pouvoir réserver ce logement.",
+    kycVerify: "Vérifier mon identité",
+    // Map
+    mapLocation: "Localisation de l'annonce",
+    approximateLocationTitle: "Localisation approximative de l'annonce",
   },
 
   // ============================================
@@ -1232,10 +1246,18 @@ const fr = {
     // ListingGallery
     listingGallery: {
       noImage: "Pas d'image",
+      noImagesAvailable: "Aucune image disponible",
       prevImage: "Image précédente",
       nextImage: "Image suivante",
       goToImage: "Aller à l'image {number}",
       imageAlt: "Image {number}",
+      closeGallery: "Fermer la galerie",
+      viewImageNumber: "Voir l'image {number}",
+      viewImageOf: "Voir l'image {number} sur {total}",
+      thumbnail: "Miniature {number}",
+      mainImage: "Image principale",
+      morePhotos: "+{count} de plus",
+      showAllPhotos: "Afficher toutes les photos",
     },
 
     // ListingImagesManager
@@ -1321,9 +1343,16 @@ const fr = {
       averageRating: "Note moyenne",
       outOf5: "/ 5",
       reviewsCount: "avis",
-      loading: "Chargement des avis…",
+      loading: "Chargement…",
+      loadMore: "Charger plus",
       noReviews: "Aucun avis pour l'instant. Soyez le premier à en laisser un !",
       defaultTraveler: "Voyageur Lok'Room",
+      showMore: "Afficher plus",
+      hostResponse: "Réponse de l'hôte",
+      noReviewsTitle: "Pas encore de commentaires",
+      noReviewsDescription: "Cet espace n'a pas encore reçu de commentaires. Soyez le premier à partager votre expérience.",
+      retry: "Réessayer",
+      showAllReviews: "Afficher les {count} commentaires",
     },
 
     // BookingReviewForm
@@ -1423,6 +1452,14 @@ const fr = {
       clickToViewDetails: "Cliquer pour voir les détails",
       apiKeyMissing: "Clé `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` absente dans `.env.local`",
       noLocationAvailable: "Localisation non disponible pour ces annonces.",
+      prevImage: "Image précédente",
+      nextImage: "Image suivante",
+      viewImage: "Voir image {idx}",
+      locationFallback: "Emplacement",
+      perNight: "/ nuit",
+      viewDetails: "Voir détails →",
+      zoomIn: "Zoom avant",
+      zoomOut: "Zoom arrière",
     },
 
     // FiltersBar
@@ -1619,6 +1656,11 @@ const fr = {
       loginRequiredTitle: "Connexion requise",
       loginRequiredDesc: "Connectez-vous pour réserver ce logement.",
       loginButton: "Se connecter",
+      taxesAndFeesIncluded: "Taxes et frais inclus",
+      bookingType: "Type de réservation",
+      perHourOption: "À l'heure",
+      perDayOption: "À la journée",
+      perNightOption: "À la nuit",
     },
 
     // Navbar

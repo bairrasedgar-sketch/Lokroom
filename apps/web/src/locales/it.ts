@@ -1095,6 +1095,20 @@ const it = {
     taxesNote: "Tasse e commissioni aggiunte al momento del pagamento.",
     ownerNotice: "Sei il proprietario di questo annuncio.",
     editListing: "Modifica annuncio",
+    // Share
+    linkCopied: "Link copiato!",
+    copyError: "Impossibile copiare il link",
+    // Amenities
+    amenitiesTitle: "Servizi",
+    viewAllAmenities: "Vedi tutti i {count} servizi",
+    amenitiesModalTitle: "Cosa offre questo alloggio",
+    // KYC
+    kycTitle: "Verifica dell'identità richiesta",
+    kycMessage: "Devi verificare la tua identità per poter prenotare questo alloggio.",
+    kycVerify: "Verifica la mia identità",
+    // Map
+    mapLocation: "Posizione dell'annuncio",
+    approximateLocationTitle: "Posizione approssimativa dell'annuncio",
   },
 
   // ============================================
@@ -1213,10 +1227,18 @@ const it = {
     // ListingGallery
     listingGallery: {
       noImage: "Nessuna immagine",
+      noImagesAvailable: "Nessuna immagine disponibile",
       prevImage: "Immagine precedente",
       nextImage: "Immagine successiva",
       goToImage: "Vai all'immagine {number}",
       imageAlt: "Immagine {number}",
+      closeGallery: "Chiudi galleria",
+      viewImageNumber: "Visualizza immagine {number}",
+      viewImageOf: "Visualizza immagine {number} di {total}",
+      thumbnail: "Miniatura {number}",
+      mainImage: "Immagine principale",
+      morePhotos: "+{count} altre",
+      showAllPhotos: "Mostra tutte le foto",
     },
 
     // ListingImagesManager
@@ -1302,9 +1324,16 @@ const it = {
       averageRating: "Valutazione media",
       outOf5: "/ 5",
       reviewsCount: "recensioni",
-      loading: "Caricamento recensioni…",
+      loading: "Caricamento…",
+      loadMore: "Carica altro",
       noReviews: "Ancora nessuna recensione. Sii il primo a lasciarne una!",
       defaultTraveler: "Viaggiatore Lok'Room",
+      showMore: "Mostra di più",
+      hostResponse: "Risposta dell'host",
+      noReviewsTitle: "Ancora nessun commento",
+      noReviewsDescription: "Questo spazio non ha ancora ricevuto commenti. Sii il primo a condividere la tua esperienza.",
+      retry: "Riprova",
+      showAllReviews: "Mostra tutti i {count} commenti",
     },
 
     // BookingReviewForm
@@ -1404,6 +1433,14 @@ const it = {
       clickToViewDetails: "Clicca per vedere i dettagli",
       apiKeyMissing: "Chiave `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` mancante in `.env.local`",
       noLocationAvailable: "Posizione non disponibile per questi annunci.",
+      prevImage: "Immagine precedente",
+      nextImage: "Immagine successiva",
+      viewImage: "Vedi immagine {idx}",
+      locationFallback: "Posizione",
+      perNight: "/ notte",
+      viewDetails: "Vedi dettagli →",
+      zoomIn: "Ingrandisci",
+      zoomOut: "Riduci",
     },
 
     // FiltersBar
@@ -1600,6 +1637,11 @@ const it = {
       loginRequiredTitle: "Accesso richiesto",
       loginRequiredDesc: "Accedi per prenotare questo alloggio.",
       loginButton: "Accedi",
+      taxesAndFeesIncluded: "Tasse e commissioni incluse",
+      bookingType: "Tipo di prenotazione",
+      perHourOption: "All'ora",
+      perDayOption: "Al giorno",
+      perNightOption: "A notte",
     },
 
     // Navbar

@@ -10,6 +10,7 @@ type MeUser = {
   email: string;
   role: Role;
   createdAt: string;
+  identityStatus?: string | null;
   hostProfile?: {
     payoutsEnabled: boolean;
     kycStatus: string;

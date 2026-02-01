@@ -55,7 +55,9 @@ export default function MobileBookingModal({
     discountLabel: string;
   } | null>(null);
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  // Date d'aujourd'hui en format local (YYYY-MM-DD)
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   const totalGuests = guests.adults + guests.children;
 
   const bf = t.components.bookingForm;
@@ -118,12 +120,12 @@ export default function MobileBookingModal({
   // Validate promo code
   async function validatePromoCode() {
     if (!promoCode.trim()) {
-      setPromoError("Veuillez entrer un code promo");
+      setPromoError(bf.enterPromoCode);
       return;
     }
 
     if (!isLoggedIn) {
-      setPromoError("Connectez-vous pour utiliser un code promo");
+      setPromoError(bf.loginForPromo);
       return;
     }
 
@@ -144,16 +146,16 @@ export default function MobileBookingModal({
       const data = await res.json();
 
       if (!res.ok || !data.valid) {
-        setPromoError(data.error || "Code promo invalide");
+        setPromoError(data.error || bf.invalidPromoCode);
         setValidPromo(null);
         return;
       }
 
       setValidPromo(data.promoCode);
       setPromoError(null);
-      toast.success(`Code "${data.promoCode.code}" appliqué`);
+      toast.success(bf.promoApplied.replace("{code}", data.promoCode.code));
     } catch {
-      setPromoError("Erreur lors de la validation");
+      setPromoError(bf.promoValidationError);
     } finally {
       setPromoLoading(false);
     }
@@ -181,7 +183,7 @@ export default function MobileBookingModal({
     const start = new Date(startDate);
 
     if (start < today) {
-      toast.error("La date d'arrivée ne peut pas être dans le passé");
+      toast.error(bf.arrivalNotInPast);
       return;
     }
 
@@ -224,7 +226,7 @@ export default function MobileBookingModal({
       const isConfirmed = data?.booking?.status === "CONFIRMED";
 
       if (useInstantBook && isConfirmed) {
-        toast.success("Réservation confirmée instantanément");
+        toast.success(bf.instantBookConfirmed);
       } else {
         toast.success(bf.bookingCreated);
       }
@@ -248,7 +250,7 @@ export default function MobileBookingModal({
               {priceFormatted}
               <span className="text-sm font-normal text-gray-500"> {getPricingModeLabel()}</span>
             </p>
-            <p className="text-xs text-gray-500">Taxes et frais inclus</p>
+            <p className="text-xs text-gray-500">{bf.taxesAndFeesIncluded}</p>
           </div>
           <button
             type="button"
@@ -287,7 +289,7 @@ export default function MobileBookingModal({
 
               {/* Mode de tarification */}
               <div>
-                <p className="text-sm font-medium text-gray-900 mb-3">Type de réservation</p>
+                <p className="text-sm font-medium text-gray-900 mb-3">{bf.bookingType}</p>
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
@@ -298,7 +300,7 @@ export default function MobileBookingModal({
                         : "border-gray-200 text-gray-700 hover:border-gray-300"
                     }`}
                   >
-                    À l&apos;heure
+                    {bf.perHourOption}
                   </button>
                   <button
                     type="button"
@@ -309,7 +311,7 @@ export default function MobileBookingModal({
                         : "border-gray-200 text-gray-700 hover:border-gray-300"
                     }`}
                   >
-                    À la journée
+                    {bf.perDayOption}
                   </button>
                   <button
                     type="button"
@@ -320,7 +322,7 @@ export default function MobileBookingModal({
                         : "border-gray-200 text-gray-700 hover:border-gray-300"
                     }`}
                   >
-                    À la nuit
+                    {bf.perNightOption}
                   </button>
                 </div>
               </div>
@@ -337,7 +339,11 @@ export default function MobileBookingModal({
                       type="date"
                       value={startDate}
                       min={todayStr}
-                      onChange={(e) => setStartDate(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val < todayStr) return; // Empêcher les dates passées
+                        setStartDate(val);
+                      }}
                       className="w-full text-sm text-gray-900 bg-transparent border-none p-0 focus:outline-none focus:ring-0"
                     />
                   </div>
@@ -349,7 +355,12 @@ export default function MobileBookingModal({
                       type="date"
                       value={endDate}
                       min={startDate || todayStr}
-                      onChange={(e) => setEndDate(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const minDate = startDate || todayStr;
+                        if (val <= minDate) return; // Empêcher les dates avant l'arrivée
+                        setEndDate(val);
+                      }}
                       className="w-full text-sm text-gray-900 bg-transparent border-none p-0 focus:outline-none focus:ring-0"
                     />
                   </div>
@@ -377,8 +388,8 @@ export default function MobileBookingModal({
                   {/* Adultes */}
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">Adultes</p>
-                      <p className="text-xs text-gray-500">13 ans et plus</p>
+                      <p className="text-sm font-medium text-gray-900">{bf.adultsLabel}</p>
+                      <p className="text-xs text-gray-500">{bf.adultsDesc}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <button
@@ -403,8 +414,8 @@ export default function MobileBookingModal({
                   {/* Enfants */}
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">Enfants</p>
-                      <p className="text-xs text-gray-500">2 à 12 ans</p>
+                      <p className="text-sm font-medium text-gray-900">{bf.childrenLabel}</p>
+                      <p className="text-xs text-gray-500">{bf.childrenDesc}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <button
@@ -429,8 +440,8 @@ export default function MobileBookingModal({
                   {/* Bébés */}
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">Bébés</p>
-                      <p className="text-xs text-gray-500">Moins de 2 ans</p>
+                      <p className="text-sm font-medium text-gray-900">{bf.infantsLabelPicker}</p>
+                      <p className="text-xs text-gray-500">{bf.infantsDesc}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <button
@@ -461,7 +472,7 @@ export default function MobileBookingModal({
                   onClick={() => setShowPromoInput(true)}
                   className="w-full text-center text-sm font-medium text-gray-900 underline hover:text-gray-600"
                 >
-                  Ajouter un code promo
+                  {bf.addPromoCode}
                 </button>
               )}
 
@@ -471,7 +482,7 @@ export default function MobileBookingModal({
                     type="text"
                     value={promoCode}
                     onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                    placeholder="Code promo"
+                    placeholder={bf.promoCodePlaceholder}
                     className="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 text-sm uppercase focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                     disabled={promoLoading}
                   />
@@ -508,7 +519,7 @@ export default function MobileBookingModal({
                   className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-base font-semibold rounded-xl shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
                 >
                   <BoltIcon className="h-5 w-5" />
-                  {submitting ? bf.creating : "Réserver instantanément"}
+                  {submitting ? bf.creating : bf.reserveInstantly}
                 </button>
               ) : (
                 <button

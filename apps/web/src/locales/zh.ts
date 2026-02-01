@@ -1095,6 +1095,20 @@ const zh = {
     taxesNote: "税费将在支付时添加。",
     ownerNotice: "你是此房源的所有者。",
     editListing: "编辑房源",
+    // Share
+    linkCopied: "链接已复制！",
+    copyError: "无法复制链接",
+    // Amenities
+    amenitiesTitle: "设施",
+    viewAllAmenities: "查看全部 {count} 项设施",
+    amenitiesModalTitle: "此房源提供的设施",
+    // KYC
+    kycTitle: "需要身份验证",
+    kycMessage: "您必须验证身份才能预订此住宿。",
+    kycVerify: "验证我的身份",
+    // Map
+    mapLocation: "房源位置",
+    approximateLocationTitle: "房源大致位置",
   },
 
   // ============================================
@@ -1213,10 +1227,18 @@ const zh = {
     // ListingGallery
     listingGallery: {
       noImage: "无图片",
+      noImagesAvailable: "暂无图片",
       prevImage: "上一张图片",
       nextImage: "下一张图片",
       goToImage: "前往图片 {number}",
       imageAlt: "图片 {number}",
+      closeGallery: "关闭图库",
+      viewImageNumber: "查看图片 {number}",
+      viewImageOf: "查看图片 {number}，共 {total} 张",
+      thumbnail: "缩略图 {number}",
+      mainImage: "主图",
+      morePhotos: "+{count} 更多",
+      showAllPhotos: "显示所有照片",
     },
 
     // ListingImagesManager
@@ -1302,9 +1324,16 @@ const zh = {
       averageRating: "平均评分",
       outOf5: "/ 5",
       reviewsCount: "条评价",
-      loading: "正在加载评价…",
+      loading: "加载中…",
+      loadMore: "加载更多",
       noReviews: "暂无评价。成为第一个留下评价的人！",
       defaultTraveler: "Lok'Room 旅客",
+      showMore: "显示更多",
+      hostResponse: "房东回复",
+      noReviewsTitle: "暂无评论",
+      noReviewsDescription: "此空间尚未收到任何评论。成为第一个分享体验的人。",
+      retry: "重试",
+      showAllReviews: "显示全部 {count} 条评论",
     },
 
     // BookingReviewForm
@@ -1404,6 +1433,14 @@ const zh = {
       clickToViewDetails: "点击查看详情",
       apiKeyMissing: "`.env.local` 中缺少 `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` 密钥",
       noLocationAvailable: "这些房源没有可用的位置信息。",
+      prevImage: "上一张图片",
+      nextImage: "下一张图片",
+      viewImage: "查看图片 {idx}",
+      locationFallback: "位置",
+      perNight: "/ 晚",
+      viewDetails: "查看详情 →",
+      zoomIn: "放大",
+      zoomOut: "缩小",
     },
 
     // FiltersBar
@@ -1600,6 +1637,11 @@ const zh = {
       loginRequiredTitle: "需要登录",
       loginRequiredDesc: "登录以预订此房源。",
       loginButton: "登录",
+      taxesAndFeesIncluded: "含税费",
+      bookingType: "预订类型",
+      perHourOption: "按小时",
+      perDayOption: "按天",
+      perNightOption: "按晚",
     },
 
     // Navbar

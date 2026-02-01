@@ -367,7 +367,7 @@ export default async function ListingDetailPage({
           {/* Ce que propose ce logement */}
           {listing.amenities && listing.amenities.length > 0 && (
             <div className="py-4 border-b border-gray-100">
-              <h2 className="text-base font-semibold text-gray-900 mb-3">Equipements</h2>
+              <h2 className="text-base font-semibold text-gray-900 mb-3">{t.listingDetail.amenitiesTitle}</h2>
               <AmenitiesModal amenities={listing.amenities} previewCount={6} />
             </div>
           )}
@@ -375,7 +375,7 @@ export default async function ListingDetailPage({
           {/* Localisation */}
           {hasCoords && (
             <div className="py-4 border-b border-gray-100">
-              <h2 className="text-base font-semibold text-gray-900 mb-2">Localisation approximative de l&apos;annonce</h2>
+              <h2 className="text-base font-semibold text-gray-900 mb-2">{t.listingDetail.approximateLocationTitle}</h2>
               <p className="text-xs text-gray-500 mb-3">{t.listingDetail.exactLocationNote}</p>
               <div className="relative h-56 w-full overflow-hidden rounded-2xl border border-gray-200 bg-gray-100">
                 <div className="absolute inset-0 pointer-events-none">
@@ -589,7 +589,7 @@ export default async function ListingDetailPage({
           {hasCoords && (
             <section className="mt-4 space-y-2">
               <h3 className="text-sm font-semibold">
-                Localisation approximative de l&apos;annonce
+                {t.listingDetail.approximateLocationTitle}
               </h3>
               <p className="text-xs text-gray-500">
                 {t.listingDetail.exactLocationNote}

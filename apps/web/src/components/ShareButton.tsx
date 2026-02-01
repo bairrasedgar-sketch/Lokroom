@@ -1,6 +1,7 @@
 "use client";
 
 import { toast } from "sonner";
+import { useTranslation } from "@/hooks/useTranslation";
 
 type ShareButtonProps = {
   className?: string;
@@ -8,12 +9,14 @@ type ShareButtonProps = {
 };
 
 export default function ShareButton({ className = "", variant = "desktop" }: ShareButtonProps) {
+  const { t } = useTranslation();
+
   async function handleShare() {
     try {
       await navigator.clipboard.writeText(window.location.href);
-      toast.success("Lien copie !");
+      toast.success(t.listingDetail.linkCopied);
     } catch {
-      toast.error("Impossible de copier le lien");
+      toast.error(t.listingDetail.copyError);
     }
   }
 
@@ -37,7 +40,7 @@ export default function ShareButton({ className = "", variant = "desktop" }: Sha
       onClick={handleShare}
       className={`inline-flex items-center gap-1 rounded-full border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-800 hover:border-black ${className}`}
     >
-      <span>Partager</span>
+      <span>{t.listingDetail.share}</span>
     </button>
   );
 }

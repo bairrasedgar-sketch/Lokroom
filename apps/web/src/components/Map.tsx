@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useGoogleMaps } from "./GoogleMapsLoader";
 import FavoriteButton from "@/components/FavoriteButton";
+import { useTranslation } from "@/hooks/useTranslation";
 
 // Types pour Google Maps
 type GoogleMap = google.maps.Map;
@@ -76,9 +77,21 @@ const DEFAULT_CENTER = { lat: 45.5019, lng: -73.5674 }; // Montréal
 function MapPopupCard({
   marker,
   onClose,
+  mapT,
 }: {
   marker: MapMarker;
   onClose: () => void;
+  mapT: {
+    closePreview: string;
+    noImage: string;
+    prevImage: string;
+    nextImage: string;
+    viewImage: string;
+    listingAlt: string;
+    locationFallback: string;
+    perNight: string;
+    viewDetails: string;
+  };
 }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -127,7 +140,7 @@ function MapPopupCard({
             onClose();
           }}
           className="absolute left-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-white/95 text-gray-800 shadow-md backdrop-blur-sm transition-all hover:bg-white hover:scale-105"
-          aria-label="Fermer l'aperçu"
+          aria-label={mapT.closePreview}
         >
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -164,7 +177,7 @@ function MapPopupCard({
             </div>
           ) : (
             <div className="absolute inset-0 grid place-items-center text-xs text-gray-400">
-              Pas d&apos;image
+              {mapT.noImage}
             </div>
           )}
         </Link>
@@ -175,7 +188,7 @@ function MapPopupCard({
             <button
               onClick={prevImage}
               className="absolute left-2 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-gray-800 shadow-md backdrop-blur-sm transition-all hover:bg-white hover:scale-110 active:scale-95"
-              aria-label="Image précédente"
+              aria-label={mapT.prevImage}
             >
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -184,7 +197,7 @@ function MapPopupCard({
             <button
               onClick={nextImage}
               className="absolute right-2 top-1/2 z-10 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-gray-800 shadow-md backdrop-blur-sm transition-all hover:bg-white hover:scale-110 active:scale-95"
-              aria-label="Image suivante"
+              aria-label={mapT.nextImage}
             >
               <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
@@ -209,7 +222,7 @@ function MapPopupCard({
                     ? "bg-white w-2"
                     : "bg-white/60 w-1.5 hover:bg-white/80"
                 }`}
-                aria-label={`Voir image ${idx + 1}`}
+                aria-label={mapT.viewImage.replace("{idx}", String(idx + 1))}
               />
             ))}
             {images.length > 5 && (
@@ -223,12 +236,12 @@ function MapPopupCard({
       <Link href={`/listings/${marker.id}`} className="block p-3">
         <div className="flex items-start justify-between gap-2">
           <h3 className="line-clamp-1 text-[14px] font-semibold text-gray-900 flex-1">
-            {marker.title ?? "Annonce Lok'Room"}
+            {marker.title ?? mapT.listingAlt}
           </h3>
         </div>
 
         <p className="mt-0.5 text-[12px] text-gray-500 line-clamp-1">
-          {locationLabel || "Emplacement"}
+          {locationLabel || mapT.locationFallback}
         </p>
 
         <div className="mt-2 flex items-center justify-between">
@@ -236,9 +249,9 @@ function MapPopupCard({
             <span className="font-semibold text-gray-900">
               {marker.priceFormatted ?? marker.label ?? ""}
             </span>
-            <span className="font-normal text-gray-500"> / nuit</span>
+            <span className="font-normal text-gray-500"> {mapT.perNight}</span>
           </p>
-          <span className="text-[11px] text-gray-400">Voir détails →</span>
+          <span className="text-[11px] text-gray-400">{mapT.viewDetails}</span>
         </div>
       </Link>
     </div>
@@ -302,6 +315,8 @@ export default function Map({
   placeId,
 }: MapProps) {
   const { isLoaded: scriptLoaded, loadError: scriptError } = useGoogleMaps();
+  const { t } = useTranslation();
+  const mapT = t.components.map;
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const missingApiKey = !process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -366,7 +381,7 @@ export default function Map({
 
     const g = (window as WindowWithGoogle).google;
     if (!g || !g.maps || typeof g.maps.Map !== "function") {
-      console.error("Google Maps API non prete");
+      console.error(mapT.googleMapsNotReady);
       return;
     }
 
@@ -666,7 +681,7 @@ export default function Map({
               }
             }}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg font-medium text-gray-700 shadow-lg transition-all hover:bg-gray-50 hover:shadow-xl active:scale-95"
-            aria-label="Zoom avant"
+            aria-label={mapT.zoomIn}
           >
             +
           </button>
@@ -679,7 +694,7 @@ export default function Map({
               }
             }}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg font-medium text-gray-700 shadow-lg transition-all hover:bg-gray-50 hover:shadow-xl active:scale-95"
-            aria-label="Zoom arrière"
+            aria-label={mapT.zoomOut}
           >
             −
           </button>
@@ -690,20 +705,20 @@ export default function Map({
           <MapPopupCard
             marker={selectedMarker}
             onClose={() => setSelectedId(null)}
+            mapT={mapT}
           />
         )}
       </div>
 
       {missingApiKey && (
         <div className="flex h-full items-center justify-center text-xs text-red-500">
-          Clé <code>NEXT_PUBLIC_GOOGLE_MAPS_API_KEY</code> absente dans{" "}
-          <code>.env.local</code>
+          {mapT.apiKeyMissing}
         </div>
       )}
 
       {!missingApiKey && scriptLoaded && markers.length === 0 && (
         <div className="mt-2 text-center text-[11px] text-gray-500">
-          Localisation non disponible pour ces annonces.
+          {mapT.noLocationAvailable}
         </div>
       )}
     </>

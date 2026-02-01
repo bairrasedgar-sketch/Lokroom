@@ -1095,6 +1095,20 @@ const pt = {
     taxesNote: "Impostos e taxas adicionados no momento do pagamento.",
     ownerNotice: "Você é o proprietário deste anúncio.",
     editListing: "Editar anúncio",
+    // Share
+    linkCopied: "Link copiado!",
+    copyError: "Não foi possível copiar o link",
+    // Amenities
+    amenitiesTitle: "Comodidades",
+    viewAllAmenities: "Ver todas as {count} comodidades",
+    amenitiesModalTitle: "O que este lugar oferece",
+    // KYC
+    kycTitle: "Verificação de identidade necessária",
+    kycMessage: "Você deve verificar sua identidade para poder reservar esta acomodação.",
+    kycVerify: "Verificar minha identidade",
+    // Map
+    mapLocation: "Localização do anúncio",
+    approximateLocationTitle: "Localização aproximada do anúncio",
   },
 
   // ============================================
@@ -1213,10 +1227,18 @@ const pt = {
     // ListingGallery
     listingGallery: {
       noImage: "Sem imagem",
+      noImagesAvailable: "Nenhuma imagem disponível",
       prevImage: "Imagem anterior",
       nextImage: "Próxima imagem",
       goToImage: "Ir para imagem {number}",
       imageAlt: "Imagem {number}",
+      closeGallery: "Fechar galeria",
+      viewImageNumber: "Ver imagem {number}",
+      viewImageOf: "Ver imagem {number} de {total}",
+      thumbnail: "Miniatura {number}",
+      mainImage: "Imagem principal",
+      morePhotos: "+{count} mais",
+      showAllPhotos: "Mostrar todas as fotos",
     },
 
     // ListingImagesManager
@@ -1302,9 +1324,16 @@ const pt = {
       averageRating: "Avaliação média",
       outOf5: "/ 5",
       reviewsCount: "avaliações",
-      loading: "Carregando avaliações…",
+      loading: "Carregando…",
+      loadMore: "Carregar mais",
       noReviews: "Ainda não há avaliações. Seja o primeiro a deixar uma!",
       defaultTraveler: "Viajante Lok'Room",
+      showMore: "Mostrar mais",
+      hostResponse: "Resposta do anfitrião",
+      noReviewsTitle: "Ainda não há comentários",
+      noReviewsDescription: "Este espaço ainda não recebeu comentários. Seja o primeiro a compartilhar sua experiência.",
+      retry: "Tentar novamente",
+      showAllReviews: "Mostrar os {count} comentários",
     },
 
     // BookingReviewForm
@@ -1404,6 +1433,14 @@ const pt = {
       clickToViewDetails: "Clique para ver detalhes",
       apiKeyMissing: "Chave `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` ausente em `.env.local`",
       noLocationAvailable: "Localização não disponível para estes anúncios.",
+      prevImage: "Imagem anterior",
+      nextImage: "Próxima imagem",
+      viewImage: "Ver imagem {idx}",
+      locationFallback: "Localização",
+      perNight: "/ noite",
+      viewDetails: "Ver detalhes →",
+      zoomIn: "Aumentar zoom",
+      zoomOut: "Diminuir zoom",
     },
 
     // FiltersBar
@@ -1600,6 +1637,11 @@ const pt = {
       loginRequiredTitle: "Login necessário",
       loginRequiredDesc: "Faça login para reservar este anúncio.",
       loginButton: "Entrar",
+      taxesAndFeesIncluded: "Impostos e taxas incluídos",
+      bookingType: "Tipo de reserva",
+      perHourOption: "Por hora",
+      perDayOption: "Por dia",
+      perNightOption: "Por noite",
     },
 
     // Navbar

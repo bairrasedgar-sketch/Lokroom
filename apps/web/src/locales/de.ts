@@ -1095,6 +1095,20 @@ const de = {
     taxesNote: "Steuern und Gebühren werden bei der Zahlung hinzugefügt.",
     ownerNotice: "Du bist der Eigentümer dieses Inserats.",
     editListing: "Inserat bearbeiten",
+    // Share
+    linkCopied: "Link kopiert!",
+    copyError: "Link konnte nicht kopiert werden",
+    // Amenities
+    amenitiesTitle: "Ausstattung",
+    viewAllAmenities: "Alle {count} Ausstattungen anzeigen",
+    amenitiesModalTitle: "Was diese Unterkunft bietet",
+    // KYC
+    kycTitle: "Identitätsverifizierung erforderlich",
+    kycMessage: "Du musst deine Identität verifizieren, um diese Unterkunft zu buchen.",
+    kycVerify: "Meine Identität verifizieren",
+    // Map
+    mapLocation: "Standort des Inserats",
+    approximateLocationTitle: "Ungefährer Standort des Inserats",
   },
 
   // ============================================
@@ -1213,10 +1227,18 @@ const de = {
     // ListingGallery
     listingGallery: {
       noImage: "Kein Bild",
+      noImagesAvailable: "Keine Bilder verfügbar",
       prevImage: "Vorheriges Bild",
       nextImage: "Nächstes Bild",
       goToImage: "Gehe zu Bild {number}",
       imageAlt: "Bild {number}",
+      closeGallery: "Galerie schließen",
+      viewImageNumber: "Bild {number} ansehen",
+      viewImageOf: "Bild {number} von {total} ansehen",
+      thumbnail: "Miniaturansicht {number}",
+      mainImage: "Hauptbild",
+      morePhotos: "+{count} mehr",
+      showAllPhotos: "Alle Fotos anzeigen",
     },
 
     // ListingImagesManager
@@ -1302,9 +1324,16 @@ const de = {
       averageRating: "Durchschnittsbewertung",
       outOf5: "/ 5",
       reviewsCount: "Bewertungen",
-      loading: "Bewertungen werden geladen…",
+      loading: "Laden…",
+      loadMore: "Mehr laden",
       noReviews: "Noch keine Bewertungen. Sei der Erste!",
       defaultTraveler: "Lok'Room Reisender",
+      showMore: "Mehr anzeigen",
+      hostResponse: "Antwort des Gastgebers",
+      noReviewsTitle: "Noch keine Bewertungen",
+      noReviewsDescription: "Dieser Raum hat noch keine Bewertungen erhalten. Sei der Erste, der seine Erfahrung teilt.",
+      retry: "Erneut versuchen",
+      showAllReviews: "Alle {count} Bewertungen anzeigen",
     },
 
     // BookingReviewForm
@@ -1404,6 +1433,14 @@ const de = {
       clickToViewDetails: "Klicken für Details",
       apiKeyMissing: "Schlüssel `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` fehlt in `.env.local`",
       noLocationAvailable: "Standort für diese Inserate nicht verfügbar.",
+      prevImage: "Vorheriges Bild",
+      nextImage: "Nächstes Bild",
+      viewImage: "Bild {idx} anzeigen",
+      locationFallback: "Standort",
+      perNight: "/ Nacht",
+      viewDetails: "Details ansehen →",
+      zoomIn: "Vergrößern",
+      zoomOut: "Verkleinern",
     },
 
     // FiltersBar
@@ -1600,6 +1637,11 @@ const de = {
       loginRequiredTitle: "Anmeldung erforderlich",
       loginRequiredDesc: "Melde dich an, um dieses Inserat zu buchen.",
       loginButton: "Anmelden",
+      taxesAndFeesIncluded: "Steuern und Gebühren inklusive",
+      bookingType: "Buchungsart",
+      perHourOption: "Pro Stunde",
+      perDayOption: "Pro Tag",
+      perNightOption: "Pro Nacht",
     },
 
     // Navbar

@@ -1095,6 +1095,20 @@ const es = {
     taxesNote: "Impuestos y tarifas añadidos al momento del pago.",
     ownerNotice: "Eres el propietario de este anuncio.",
     editListing: "Editar anuncio",
+    // Share
+    linkCopied: "¡Enlace copiado!",
+    copyError: "No se pudo copiar el enlace",
+    // Amenities
+    amenitiesTitle: "Servicios",
+    viewAllAmenities: "Ver los {count} servicios",
+    amenitiesModalTitle: "Lo que ofrece este alojamiento",
+    // KYC
+    kycTitle: "Verificación de identidad requerida",
+    kycMessage: "Debes verificar tu identidad para poder reservar este alojamiento.",
+    kycVerify: "Verificar mi identidad",
+    // Map
+    mapLocation: "Ubicación del anuncio",
+    approximateLocationTitle: "Ubicación aproximada del anuncio",
   },
 
   // ============================================
@@ -1213,10 +1227,18 @@ const es = {
     // ListingGallery
     listingGallery: {
       noImage: "Sin imagen",
+      noImagesAvailable: "No hay imágenes disponibles",
       prevImage: "Imagen anterior",
       nextImage: "Imagen siguiente",
       goToImage: "Ir a la imagen {number}",
       imageAlt: "Imagen {number}",
+      closeGallery: "Cerrar galería",
+      viewImageNumber: "Ver imagen {number}",
+      viewImageOf: "Ver imagen {number} de {total}",
+      thumbnail: "Miniatura {number}",
+      mainImage: "Imagen principal",
+      morePhotos: "+{count} más",
+      showAllPhotos: "Mostrar todas las fotos",
     },
 
     // ListingImagesManager
@@ -1302,9 +1324,16 @@ const es = {
       averageRating: "Puntuación media",
       outOf5: "/ 5",
       reviewsCount: "reseñas",
-      loading: "Cargando reseñas…",
+      loading: "Cargando…",
+      loadMore: "Cargar más",
       noReviews: "Todavía no hay reseñas. ¡Sé el primero en dejar una!",
       defaultTraveler: "Viajero Lok'Room",
+      showMore: "Mostrar más",
+      hostResponse: "Respuesta del anfitrión",
+      noReviewsTitle: "Aún no hay comentarios",
+      noReviewsDescription: "Este espacio aún no ha recibido comentarios. Sé el primero en compartir tu experiencia.",
+      retry: "Reintentar",
+      showAllReviews: "Mostrar los {count} comentarios",
     },
 
     // BookingReviewForm
@@ -1404,6 +1433,14 @@ const es = {
       clickToViewDetails: "Clic para ver detalles",
       apiKeyMissing: "Clave `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` faltante en `.env.local`",
       noLocationAvailable: "Ubicación no disponible para estos anuncios.",
+      prevImage: "Imagen anterior",
+      nextImage: "Imagen siguiente",
+      viewImage: "Ver imagen {idx}",
+      locationFallback: "Ubicación",
+      perNight: "/ noche",
+      viewDetails: "Ver detalles →",
+      zoomIn: "Acercar",
+      zoomOut: "Alejar",
     },
 
     // FiltersBar
@@ -1600,6 +1637,11 @@ const es = {
       loginRequiredTitle: "Inicio de sesión requerido",
       loginRequiredDesc: "Inicia sesión para reservar este alojamiento.",
       loginButton: "Iniciar sesión",
+      taxesAndFeesIncluded: "Impuestos y tasas incluidos",
+      bookingType: "Tipo de reserva",
+      perHourOption: "Por hora",
+      perDayOption: "Por día",
+      perNightOption: "Por noche",
     },
 
     // Navbar

@@ -4,6 +4,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "@/hooks/useTranslation";
 
 type Img = { id: string; url: string };
 
@@ -13,6 +14,9 @@ interface ListingGalleryProps {
 }
 
 export default function ListingGallery({ images, title }: ListingGalleryProps) {
+  const { t } = useTranslation();
+  const gallery = t.components.listingGallery;
+
   const safeImages = useMemo<Img[]>(
     () => (Array.isArray(images) ? images.filter(Boolean) : []),
     [images]
@@ -138,7 +142,7 @@ export default function ListingGallery({ images, title }: ListingGalleryProps) {
   if (total === 0) {
     return (
       <div className="w-full aspect-[4/3] bg-gray-100 rounded-xl flex items-center justify-center text-gray-400">
-        No images available
+        {gallery.noImagesAvailable}
       </div>
     );
   }
@@ -163,7 +167,7 @@ export default function ListingGallery({ images, title }: ListingGalleryProps) {
             type="button"
             onClick={closeModal}
             className="p-2 rounded-full hover:bg-white/10 transition-colors"
-            aria-label="Close gallery"
+            aria-label={gallery.closeGallery}
           >
             <svg
               className="w-6 h-6"
@@ -192,7 +196,7 @@ export default function ListingGallery({ images, title }: ListingGalleryProps) {
             type="button"
             onClick={modalPrev}
             className="absolute left-2 md:left-4 z-10 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors hidden md:flex items-center justify-center"
-            aria-label="Previous image"
+            aria-label={gallery.prevImage}
           >
             <svg
               className="w-6 h-6"
@@ -213,7 +217,7 @@ export default function ListingGallery({ images, title }: ListingGalleryProps) {
           <div className="relative w-full h-full max-w-5xl max-h-[70vh]">
             <Image
               src={safeImages[modalIdx].url}
-              alt={`${title} - Image ${modalIdx + 1} of ${total}`}
+              alt={`${title} - ${gallery.imageAlt.replace("{number}", String(modalIdx + 1))} / ${total}`}
               fill
               className="object-contain"
               sizes="100vw"
@@ -226,7 +230,7 @@ export default function ListingGallery({ images, title }: ListingGalleryProps) {
             type="button"
             onClick={modalNext}
             className="absolute right-2 md:right-4 z-10 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors hidden md:flex items-center justify-center"
-            aria-label="Next image"
+            aria-label={gallery.nextImage}
           >
             <svg
               className="w-6 h-6"
@@ -257,12 +261,12 @@ export default function ListingGallery({ images, title }: ListingGalleryProps) {
                     ? "ring-2 ring-white opacity-100"
                     : "opacity-50 hover:opacity-75"
                 }`}
-                aria-label={`View image ${i + 1}`}
+                aria-label={gallery.viewImageNumber.replace("{number}", String(i + 1))}
                 aria-current={i === modalIdx ? "true" : "false"}
               >
                 <Image
                   src={img.url}
-                  alt={`${title} - Thumbnail ${i + 1}`}
+                  alt={`${title} - ${gallery.thumbnail.replace("{number}", String(i + 1))}`}
                   fill
                   className="object-cover"
                   sizes="80px"
@@ -297,11 +301,11 @@ export default function ListingGallery({ images, title }: ListingGalleryProps) {
                 type="button"
                 className="relative h-full w-full flex-shrink-0"
                 onClick={() => openModal(i)}
-                aria-label={`View image ${i + 1} of ${total}`}
+                aria-label={gallery.viewImageOf.replace("{number}", String(i + 1)).replace("{total}", String(total))}
               >
                 <Image
                   src={img.url}
-                  alt={`${title} - Image ${i + 1} of ${total}`}
+                  alt={`${title} - ${gallery.imageAlt.replace("{number}", String(i + 1))} / ${total}`}
                   fill
                   className="object-cover"
                   sizes="100vw"
@@ -329,7 +333,7 @@ export default function ListingGallery({ images, title }: ListingGalleryProps) {
                       ? "bg-white w-2.5"
                       : "bg-white/60 hover:bg-white/80"
                   }`}
-                  aria-label={`Go to image ${i + 1}`}
+                  aria-label={gallery.goToImage.replace("{number}", String(i + 1))}
                   aria-current={i === mobileIdx ? "true" : "false"}
                 />
               ))}
@@ -346,11 +350,11 @@ export default function ListingGallery({ images, title }: ListingGalleryProps) {
             type="button"
             className="relative aspect-[4/3] rounded-xl overflow-hidden bg-gray-100 cursor-pointer group"
             onClick={() => openModal(0)}
-            aria-label={`View image 1 of ${total}`}
+            aria-label={gallery.viewImageOf.replace("{number}", "1").replace("{total}", String(total))}
           >
             <Image
               src={safeImages[0].url}
-              alt={`${title} - Main image`}
+              alt={`${title} - ${gallery.mainImage}`}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
               sizes="50vw"
@@ -380,11 +384,11 @@ export default function ListingGallery({ images, title }: ListingGalleryProps) {
                   type="button"
                   className="relative aspect-[4/3] rounded-xl overflow-hidden bg-gray-100 cursor-pointer group"
                   onClick={() => openModal(imgIdx)}
-                  aria-label={`View image ${imgIdx + 1} of ${total}`}
+                  aria-label={gallery.viewImageOf.replace("{number}", String(imgIdx + 1)).replace("{total}", String(total))}
                 >
                   <Image
                     src={safeImages[imgIdx].url}
-                    alt={`${title} - Image ${imgIdx + 1}`}
+                    alt={`${title} - ${gallery.imageAlt.replace("{number}", String(imgIdx + 1))}`}
                     fill
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
                     sizes="25vw"
@@ -395,7 +399,7 @@ export default function ListingGallery({ images, title }: ListingGalleryProps) {
                   {gridIdx === 4 && total > 5 && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                       <span className="text-white font-medium text-sm">
-                        +{total - 5} more
+                        {gallery.morePhotos.replace("{count}", String(total - 5))}
                       </span>
                     </div>
                   )}
@@ -412,7 +416,7 @@ export default function ListingGallery({ images, title }: ListingGalleryProps) {
             onClick={() => openModal(0)}
             className="mt-3 px-4 py-2 bg-white border border-gray-900 text-gray-900 text-sm font-medium rounded-lg hover:bg-gray-100 transition-colors"
           >
-            Show all photos
+            {gallery.showAllPhotos}
           </button>
         )}
       </div>

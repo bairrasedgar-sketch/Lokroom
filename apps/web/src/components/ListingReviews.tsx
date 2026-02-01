@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from "react";
 import Image from "next/image";
 import { StarIcon, XMarkIcon, ChatBubbleLeftIcon } from "@heroicons/react/24/outline";
 import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
+import { useTranslation } from "@/hooks/useTranslation";
 
 type Review = {
   id: string;
@@ -52,14 +53,15 @@ type ListingReviewsProps = {
   listingId: string;
 };
 
-// Rating categories configuration
-const RATING_CATEGORIES: { key: keyof ReviewStats; label: string }[] = [
-  { key: "averageCleanliness", label: "Proprete" },
-  { key: "averageAccuracy", label: "Exactitude" },
-  { key: "averageCommunication", label: "Communication" },
-  { key: "averageLocation", label: "Emplacement" },
-  { key: "averageCheckin", label: "Arrivee" },
-  { key: "averageValue", label: "Qualite-prix" },
+// Rating categories configuration - labels are translation keys
+type RatingCategoryKey = "cleanliness" | "accuracy" | "communication" | "location" | "checkIn" | "value";
+const RATING_CATEGORIES: { key: keyof ReviewStats; labelKey: RatingCategoryKey }[] = [
+  { key: "averageCleanliness", labelKey: "cleanliness" },
+  { key: "averageAccuracy", labelKey: "accuracy" },
+  { key: "averageCommunication", labelKey: "communication" },
+  { key: "averageLocation", labelKey: "location" },
+  { key: "averageCheckin", labelKey: "checkIn" },
+  { key: "averageValue", labelKey: "value" },
 ];
 
 function formatDate(dateStr: string): string {
@@ -108,13 +110,45 @@ function SmallStarRating({ rating }: { rating: number }) {
   );
 }
 
+// Type for the listingReviews translations
+type ListingReviewsTranslations = {
+  loadError: string;
+  loadErrorMessage: string;
+  title: string;
+  averageRating: string;
+  outOf5: string;
+  reviewsCount: string;
+  loading: string;
+  loadMore: string;
+  noReviews: string;
+  defaultTraveler: string;
+  showMore: string;
+  hostResponse: string;
+  noReviewsTitle: string;
+  noReviewsDescription: string;
+  retry: string;
+  showAllReviews: string;
+};
+
+// Type for reviews translations
+type ReviewsTranslations = {
+  cleanliness: string;
+  accuracy: string;
+  communication: string;
+  location: string;
+  checkIn: string;
+  value: string;
+};
+
 // Individual review card component
 function ReviewCard({
   review,
-  onShowMore
+  onShowMore,
+  translations,
 }: {
   review: Review;
   onShowMore?: () => void;
+  translations: ListingReviewsTranslations;
 }) {
   const [showResponse, setShowResponse] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -140,7 +174,7 @@ function ReviewCard({
         )}
         <div className="flex flex-col">
           <span className="font-semibold text-gray-900">
-            {review.author?.name || "Voyageur"}
+            {review.author?.name || translations.defaultTraveler}
           </span>
           <span className="text-sm text-gray-500">
             {formatDate(review.createdAt)}
@@ -169,7 +203,7 @@ function ReviewCard({
               }}
               className="mt-1 text-gray-900 font-semibold underline underline-offset-2 hover:text-gray-700 transition-colors text-sm"
             >
-              Afficher plus
+              {translations.showMore}
             </button>
           )}
         </div>
@@ -183,7 +217,7 @@ function ReviewCard({
             className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
           >
             <ChatBubbleLeftIcon className="w-4 h-4" />
-            <span className="font-medium">Reponse de l hote</span>
+            <span className="font-medium">{translations.hostResponse}</span>
             <svg
               className={`w-4 h-4 transition-transform duration-200 ${
                 showResponse ? "rotate-180" : ""
@@ -232,6 +266,8 @@ function ReviewsModal({
   onLoadMore,
   hasMore,
   loading,
+  translations,
+  reviewsTranslations,
 }: {
   isOpen: boolean;
   onClose: () => void;
@@ -240,6 +276,8 @@ function ReviewsModal({
   onLoadMore: () => void;
   hasMore: boolean;
   loading: boolean;
+  translations: ListingReviewsTranslations;
+  reviewsTranslations: ReviewsTranslations;
 }) {
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -274,7 +312,7 @@ function ReviewsModal({
             </span>
             <span className="text-xl text-gray-400 mx-1">.</span>
             <span className="text-xl font-semibold text-gray-900">
-              {stats?.totalReviews || 0} commentaires
+              {stats?.totalReviews || 0} {translations.reviewsCount}
             </span>
           </div>
           <button
@@ -290,12 +328,12 @@ function ReviewsModal({
           {/* Rating categories in modal */}
           {stats && stats.totalReviews > 0 && (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8 pb-8 border-b border-gray-100">
-              {RATING_CATEGORIES.map(({ key, label }) => {
+              {RATING_CATEGORIES.map(({ key, labelKey }) => {
                 const value = stats[key] as number | null;
                 return (
                   <div key={key} className="flex items-center gap-3">
                     <span className="text-sm text-gray-600 w-24 flex-shrink-0">
-                      {label}
+                      {reviewsTranslations[labelKey]}
                     </span>
                     <RatingProgressBar value={value} />
                   </div>
@@ -307,7 +345,7 @@ function ReviewsModal({
           {/* Reviews list */}
           <div className="space-y-8">
             {reviews.map((review) => (
-              <ReviewCard key={review.id} review={review} />
+              <ReviewCard key={review.id} review={review} translations={translations} />
             ))}
           </div>
 
@@ -319,7 +357,7 @@ function ReviewsModal({
                 disabled={loading}
                 className="px-6 py-3 border border-gray-900 text-gray-900 rounded-lg font-medium hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? "Chargement..." : "Charger plus"}
+                {loading ? translations.loading : translations.loadMore}
               </button>
             </div>
           )}
@@ -330,17 +368,17 @@ function ReviewsModal({
 }
 
 // Empty state component
-function EmptyState() {
+function EmptyState({ translations }: { translations: ListingReviewsTranslations }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4">
       <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
         <StarIcon className="w-8 h-8 text-gray-400" />
       </div>
       <h3 className="text-lg font-semibold text-gray-900 mb-1">
-        Pas encore de commentaires
+        {translations.noReviewsTitle}
       </h3>
       <p className="text-gray-500 text-center max-w-sm">
-        Cet espace n a pas encore recu de commentaires. Soyez le premier a partager votre experience.
+        {translations.noReviewsDescription}
       </p>
     </div>
   );
@@ -348,6 +386,10 @@ function EmptyState() {
 
 // Main component
 export default function ListingReviews({ listingId }: ListingReviewsProps) {
+  const { t } = useTranslation();
+  const translations = t.components.listingReviews as ListingReviewsTranslations;
+  const reviewsTranslations = t.reviews as ReviewsTranslations;
+
   const [reviews, setReviews] = useState<Review[]>([]);
   const [stats, setStats] = useState<ReviewStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -366,7 +408,7 @@ export default function ListingReviews({ listingId }: ListingReviewsProps) {
       );
 
       if (!res.ok) {
-        throw new Error("Erreur lors du chargement des avis.");
+        throw new Error(translations.loadError);
       }
 
       const data = await res.json();
@@ -381,11 +423,11 @@ export default function ListingReviews({ listingId }: ListingReviewsProps) {
       setHasMore(data.pagination?.page < data.pagination?.totalPages);
     } catch (e) {
       if (e instanceof Error && e.name === "AbortError") return;
-      setError(e instanceof Error ? e.message : "Impossible de charger les avis.");
+      setError(e instanceof Error ? e.message : translations.loadErrorMessage);
     } finally {
       setLoading(false);
     }
-  }, [listingId]);
+  }, [listingId, translations.loadError, translations.loadErrorMessage]);
 
   useEffect(() => {
     loadReviews(1);
@@ -410,19 +452,19 @@ export default function ListingReviews({ listingId }: ListingReviewsProps) {
         </h2>
         <span className="text-2xl text-gray-400 mx-0.5">.</span>
         <h2 className="text-2xl font-semibold text-gray-900">
-          {stats?.totalReviews || 0} commentaires
+          {stats?.totalReviews || 0} {translations.reviewsCount}
         </h2>
       </div>
 
       {/* Rating categories grid */}
       {stats && stats.totalReviews > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-x-12 gap-y-4 mb-10">
-          {RATING_CATEGORIES.map(({ key, label }) => {
+          {RATING_CATEGORIES.map(({ key, labelKey }) => {
             const value = stats[key] as number | null;
             return (
               <div key={key} className="flex items-center justify-between gap-4">
                 <span className="text-sm text-gray-600 flex-shrink-0">
-                  {label}
+                  {reviewsTranslations[labelKey]}
                 </span>
                 <RatingProgressBar value={value} />
               </div>
@@ -446,20 +488,20 @@ export default function ListingReviews({ listingId }: ListingReviewsProps) {
             onClick={() => loadReviews(1)}
             className="mt-4 text-gray-900 font-medium underline hover:text-gray-700"
           >
-            Reessayer
+            {translations.retry}
           </button>
         </div>
       )}
 
       {/* Empty state */}
-      {!loading && !error && !hasReviews && <EmptyState />}
+      {!loading && !error && !hasReviews && <EmptyState translations={translations} />}
 
       {/* Reviews grid */}
       {!loading && !error && hasReviews && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-10">
             {displayedReviews.map((review) => (
-              <ReviewCard key={review.id} review={review} />
+              <ReviewCard key={review.id} review={review} translations={translations} />
             ))}
           </div>
 
@@ -470,7 +512,7 @@ export default function ListingReviews({ listingId }: ListingReviewsProps) {
                 onClick={() => setIsModalOpen(true)}
                 className="px-6 py-3 border border-gray-900 text-gray-900 rounded-lg font-medium hover:bg-gray-50 transition-colors"
               >
-                Afficher les {stats.totalReviews} commentaires
+                {translations.showAllReviews.replace("{count}", String(stats.totalReviews))}
               </button>
             </div>
           )}
@@ -486,6 +528,8 @@ export default function ListingReviews({ listingId }: ListingReviewsProps) {
         onLoadMore={handleLoadMore}
         hasMore={hasMore}
         loading={loading}
+        translations={translations}
+        reviewsTranslations={reviewsTranslations}
       />
     </section>
   );

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Map, { type MapMarker } from "./Map";
+import { useTranslation } from "@/hooks/useTranslation";
 
 type MapExpandButtonProps = {
   marker: MapMarker;
@@ -10,6 +11,7 @@ type MapExpandButtonProps = {
 
 export default function MapExpandButton({ marker, locationLabel }: MapExpandButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { t } = useTranslation();
 
   return (
     <>
@@ -31,7 +33,7 @@ export default function MapExpandButton({ marker, locationLabel }: MapExpandButt
             {/* Header modal */}
             <div className="flex items-center justify-between px-4 lg:px-6 py-3 lg:py-4 border-b border-gray-200">
               <div>
-                <h3 className="text-base lg:text-lg font-semibold text-gray-900">Localisation de l&apos;annonce</h3>
+                <h3 className="text-base lg:text-lg font-semibold text-gray-900">{t.listingDetail.mapLocation}</h3>
                 <p className="text-sm text-gray-500">{locationLabel}</p>
               </div>
               <button

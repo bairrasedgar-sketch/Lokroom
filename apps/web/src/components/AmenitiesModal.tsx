@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "@/hooks/useTranslation";
 
 type Amenity = {
   key: string;
@@ -14,6 +15,7 @@ type AmenitiesModalProps = {
 
 export default function AmenitiesModal({ amenities, previewCount = 6 }: AmenitiesModalProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { t } = useTranslation();
 
   if (!amenities || amenities.length === 0) {
     return null;
@@ -43,7 +45,7 @@ export default function AmenitiesModal({ amenities, previewCount = 6 }: Amenitie
           onClick={() => setIsOpen(true)}
           className="mt-3 text-sm font-medium text-gray-900 underline hover:text-gray-600"
         >
-          Voir les {amenities.length} equipements
+          {t.listingDetail.viewAllAmenities.replace("{count}", String(amenities.length))}
         </button>
       )}
 
@@ -54,7 +56,7 @@ export default function AmenitiesModal({ amenities, previewCount = 6 }: Amenitie
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">
-                Ce que propose ce logement
+                {t.listingDetail.amenitiesModalTitle}
               </h2>
               <button
                 type="button"
@@ -88,7 +90,7 @@ export default function AmenitiesModal({ amenities, previewCount = 6 }: Amenitie
                 onClick={() => setIsOpen(false)}
                 className="w-full py-3 rounded-xl bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition"
               >
-                Fermer
+                {t.common.close}
               </button>
             </div>
           </div>
