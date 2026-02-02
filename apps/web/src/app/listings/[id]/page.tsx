@@ -634,7 +634,7 @@ export default async function ListingDetailPage({
           <p className="text-xs text-gray-500">
             {t.listingDetail.exactLocationNote}
           </p>
-          <div className="relative mt-2 h-[450px] w-full overflow-hidden rounded-2xl border bg-gray-100 pointer-events-none">
+          <div className="relative mt-2 h-[450px] w-full overflow-hidden rounded-2xl border bg-gray-100">
             <Map
               useLogoIcon={true}
               markers={[
@@ -646,7 +646,7 @@ export default async function ListingDetailPage({
                 },
               ]}
             />
-            <div className="absolute bottom-3 right-3 z-10 pointer-events-auto">
+            <div className="absolute bottom-3 right-3 z-10">
               <MapExpandButton
                 marker={{
                   id: listing.id,
