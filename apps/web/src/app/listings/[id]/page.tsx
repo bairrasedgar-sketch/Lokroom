@@ -589,19 +589,18 @@ export default async function ListingDetailPage({
             </p>
           </aside>
 
-          {/* Localisation approximative avec logo Lok'Room */}
+          {/* Localisation approximative avec logo Lok'Room - pleine largeur */}
           {hasCoords && (
-            <section className="mt-4 space-y-2">
+            <section className="mt-4 space-y-2 col-span-full">
               <h3 className="text-sm font-semibold">
                 {t.listingDetail.approximateLocationTitle}
               </h3>
               <p className="text-xs text-gray-500">
                 {t.listingDetail.exactLocationNote}
               </p>
-              <div className="relative mt-2 h-80 w-full overflow-hidden rounded-2xl border bg-gray-100">
+              <div className="relative mt-2 h-96 w-full overflow-hidden rounded-2xl border bg-gray-100">
                 <Map
                   useLogoIcon={true}
-                  interactive={true}
                   markers={[
                     {
                       id: listing.id,
