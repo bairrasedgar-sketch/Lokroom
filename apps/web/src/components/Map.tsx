@@ -519,7 +519,6 @@ export default function Map({
           const div = document.createElement("div");
           div.style.position = "absolute";
           div.style.cursor = "default";
-          div.style.transition = "width 0.3s cubic-bezier(0.4, 0, 0.2, 1), height 0.3s cubic-bezier(0.4, 0, 0.2, 1), left 0.3s cubic-bezier(0.4, 0, 0.2, 1), top 0.3s cubic-bezier(0.4, 0, 0.2, 1)";
 
           const img = document.createElement("img");
           img.src = "/map-marker-lokroom-2.png";
