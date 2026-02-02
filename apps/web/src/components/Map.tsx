@@ -479,13 +479,13 @@ export default function Map({
             clickableIcons: false,
           });
         } else {
-          // Carte petite sur PC: déplacement OK, PAS de zoom molette, scroll page OK
+          // Carte petite sur PC: PAS d'interaction du tout, scroll page passe à travers
           map.setOptions({
-            draggable: true,
+            draggable: false,
             zoomControl: false,
             scrollwheel: false,
             disableDoubleClickZoom: true,
-            gestureHandling: "cooperative",
+            gestureHandling: "none",
             keyboardShortcuts: false,
             clickableIcons: false,
           });
