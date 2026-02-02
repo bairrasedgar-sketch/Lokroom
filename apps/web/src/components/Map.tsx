@@ -493,10 +493,17 @@ export default function Map({
 
         // Centrer et zoomer sur la position
         // Mobile: zoom 14 (moins zoomé), PC: zoom 16 (niveau rue)
-        map.setCenter(position);
         const isMobile = window.innerWidth < 1024;
         const initialZoom = isMobile ? 14 : 16;
         map.setZoom(initialZoom);
+        map.setCenter(position);
+
+        // Sur mobile, forcer le recentrage après un court délai pour s'assurer que le marqueur est bien centré
+        if (isMobile) {
+          setTimeout(() => {
+            map.setCenter(position);
+          }, 100);
+        }
 
         // Créer un overlay custom pour le marqueur
         // Taille de base 250px au zoom de référence
