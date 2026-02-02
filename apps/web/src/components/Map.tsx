@@ -721,6 +721,22 @@ export default function Map({
     };
   }, [selectedId]);
 
+  // Intercepter le scroll wheel sur la carte pour le laisser passer à la page (PC uniquement)
+  useEffect(() => {
+    if (!useLogoIcon || interactive) return;
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      // Simuler le scroll sur la page
+      window.scrollBy(0, e.deltaY);
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: true });
+    return () => container.removeEventListener('wheel', handleWheel);
+  }, [useLogoIcon, interactive]);
+
   return (
     <>
       <div
