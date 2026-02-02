@@ -589,53 +589,12 @@ export default async function ListingDetailPage({
             </p>
           </aside>
 
-          {/* Localisation approximative avec logo Lok'Room - pleine largeur */}
-          {hasCoords && (
-            <section className="mt-4 space-y-2 col-span-full">
-              <h3 className="text-sm font-semibold">
-                {t.listingDetail.approximateLocationTitle}
-              </h3>
-              <p className="text-xs text-gray-500">
-                {t.listingDetail.exactLocationNote}
-              </p>
-              <div className="relative mt-2 h-96 w-full overflow-hidden rounded-2xl border bg-gray-100">
-                <Map
-                  useLogoIcon={true}
-                  markers={[
-                    {
-                      id: listing.id,
-                      lat: lat as number,
-                      lng: lng as number,
-                      label: priceFormatted,
-                    },
-                  ]}
-                />
-                <div className="absolute bottom-3 right-3 z-10">
-                  <MapExpandButton
-                    marker={{
-                      id: listing.id,
-                      lat: lat as number,
-                      lng: lng as number,
-                      label: priceFormatted,
-                      title: listing.title,
-                      city: listing.city,
-                      country: listing.country,
-                      priceFormatted: priceFormatted,
-                      imageUrl: listing.images?.[0]?.url,
-                    }}
-                    locationLabel={locationLabel}
-                  />
-                </div>
-              </div>
-            </section>
-          )}
-
           {/* Avis sur l'annonce */}
           <ListingReviews listingId={listing.id} />
         </div>
 
-        {/* Colonne droite : carte réservation */}
-        <aside className="w-full lg:w-auto lg:max-w-md lg:min-w-[320px] rounded-xl sm:rounded-2xl border border-gray-200 bg-white p-3 sm:p-4 shadow-md lg:sticky lg:top-24">
+        {/* Colonne droite : carte réservation - PAS sticky, s'arrête avant la carte */}
+        <aside className="w-full lg:w-auto lg:max-w-md lg:min-w-[320px] rounded-xl sm:rounded-2xl border border-gray-200 bg-white p-3 sm:p-4 shadow-md">
           <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
             <div className="min-w-0">
               <p className="text-lg sm:text-xl font-semibold">
@@ -668,6 +627,47 @@ export default async function ListingDetailPage({
           )}
         </aside>
       </section>
+
+      {/* Localisation approximative - PLEINE LARGEUR en dehors des colonnes */}
+      {hasCoords && (
+        <section className="mt-6 space-y-2">
+          <h3 className="text-sm font-semibold">
+            {t.listingDetail.approximateLocationTitle}
+          </h3>
+          <p className="text-xs text-gray-500">
+            {t.listingDetail.exactLocationNote}
+          </p>
+          <div className="relative mt-2 h-[450px] w-full overflow-hidden rounded-2xl border bg-gray-100 pointer-events-none">
+            <Map
+              useLogoIcon={true}
+              markers={[
+                {
+                  id: listing.id,
+                  lat: lat as number,
+                  lng: lng as number,
+                  label: priceFormatted,
+                },
+              ]}
+            />
+            <div className="absolute bottom-3 right-3 z-10 pointer-events-auto">
+              <MapExpandButton
+                marker={{
+                  id: listing.id,
+                  lat: lat as number,
+                  lng: lng as number,
+                  label: priceFormatted,
+                  title: listing.title,
+                  city: listing.city,
+                  country: listing.country,
+                  priceFormatted: priceFormatted,
+                  imageUrl: listing.images?.[0]?.url,
+                }}
+                locationLabel={locationLabel}
+              />
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Actions propriétaire */}
       {isOwner && (
