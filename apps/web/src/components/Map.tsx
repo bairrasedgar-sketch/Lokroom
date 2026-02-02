@@ -495,15 +495,17 @@ export default function Map({
         // Mobile: zoom 14 (moins zoomé), PC: zoom 16 (niveau rue)
         const isMobile = window.innerWidth < 1024;
         const initialZoom = isMobile ? 14 : 16;
+
+        // Sur mobile, centrer la carte sur le marqueur
+        if (isMobile) {
+          // Attendre que la carte soit prête puis centrer
+          g.maps.event.addListenerOnce(map, 'idle', () => {
+            map.setCenter(position);
+            map.setZoom(initialZoom);
+          });
+        }
         map.setZoom(initialZoom);
         map.setCenter(position);
-
-        // Sur mobile, forcer le recentrage après un court délai pour s'assurer que le marqueur est bien centré
-        if (isMobile) {
-          setTimeout(() => {
-            map.setCenter(position);
-          }, 100);
-        }
 
         // Créer un overlay custom pour le marqueur
         // Taille de base 250px au zoom de référence
@@ -546,11 +548,11 @@ export default function Map({
             const currentZoom = map.getZoom() || BASE_ZOOM;
             let size = BASE_SIZE;
 
-            // Seulement quand on zoom (zoom > 16), on agrandit le marqueur
-            if (currentZoom > BASE_ZOOM) {
+            // Sur mobile: taille fixe toujours (même en mode fullscreen)
+            // Sur PC: grandit quand on zoom pour garder la même apparence
+            if (!isMobile && currentZoom > BASE_ZOOM) {
               size = BASE_SIZE * Math.pow(2, currentZoom - BASE_ZOOM);
             }
-            // Quand on dézoom (zoom <= 16), on garde 250px
 
             const halfSize = size / 2;
             div.style.width = size + "px";
