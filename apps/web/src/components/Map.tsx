@@ -721,20 +721,22 @@ export default function Map({
     };
   }, [selectedId]);
 
-  // Intercepter le scroll wheel sur la carte pour le laisser passer à la page (PC uniquement)
+  // Laisser le scroll wheel passer à la page (PC uniquement, carte petite)
   useEffect(() => {
     if (!useLogoIcon || interactive) return;
 
     const container = containerRef.current;
     if (!container) return;
 
+    // Désactiver la capture du wheel par la carte Google Maps
     const handleWheel = (e: WheelEvent) => {
-      // Simuler le scroll sur la page
-      window.scrollBy(0, e.deltaY);
+      // Empêcher Google Maps de capturer l'événement
+      e.stopPropagation();
     };
 
-    container.addEventListener('wheel', handleWheel, { passive: true });
-    return () => container.removeEventListener('wheel', handleWheel);
+    // Capturer en phase de capture pour intervenir avant Google Maps
+    container.addEventListener('wheel', handleWheel, { capture: true, passive: true });
+    return () => container.removeEventListener('wheel', handleWheel, { capture: true });
   }, [useLogoIcon, interactive]);
 
   // Écouter les événements de zoom pour la carte plein écran
