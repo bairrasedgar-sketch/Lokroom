@@ -1651,6 +1651,14 @@ const de = {
       selectGuests: "Bitte wahlen Sie mindestens einen Reisenden",
       tooManyGuests: "Maximal {max} Gaste erlaubt",
       maxGuestsInfo: "Maximal {max} Gaste",
+      // New keys for mobile booking modal redesign
+      reserveButton: "Reservieren",
+      loginToBook: "Anmelden",
+      examineTab: "Überprüfen",
+      reserveTab: "Reservieren",
+      addDates: "Daten hinzufügen",
+      addGuests: "Gäste hinzufügen",
+      nextButton: "Weiter",
     },
 
     // Navbar

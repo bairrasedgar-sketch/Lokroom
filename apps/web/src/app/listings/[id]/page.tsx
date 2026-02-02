@@ -459,6 +459,10 @@ export default async function ListingDetailPage({
             priceFormatted={priceFormatted}
             isInstantBook={listing.isInstantBook ?? false}
             maxGuests={listing.maxGuests ?? undefined}
+            listingTitle={listing.title}
+            listingImage={listing.images[0]?.url ?? "/placeholder.jpg"}
+            listingRating={listing.reviewSummary?.avgRating ?? null}
+            listingReviewCount={listing.reviewSummary?.count ?? 0}
           />
         )}
       </div>

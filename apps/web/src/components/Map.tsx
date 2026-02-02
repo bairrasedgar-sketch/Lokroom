@@ -490,7 +490,7 @@ export default function Map({
 
         // Centrer et zoomer sur la position (niveau quartier/rue)
         map.setCenter(position);
-        map.setZoom(14);
+        map.setZoom(16);
 
         // Ajouter le marqueur (taille fixe qui ne change pas avec le zoom)
         const marker = new g.maps.Marker({
@@ -498,8 +498,8 @@ export default function Map({
           position,
           icon: {
             url: "/map-marker-lokroom-2.png",
-            scaledSize: new g.maps.Size(50, 50),
-            anchor: new g.maps.Point(25, 25),
+            scaledSize: new g.maps.Size(60, 60),
+            anchor: new g.maps.Point(30, 30),
           },
         });
         markersInstancesRef.current.push(marker);

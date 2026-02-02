@@ -16,6 +16,11 @@ type MobileBookingModalProps = {
   priceFormatted: string;
   isInstantBook?: boolean;
   maxGuests?: number;
+  // New props for the review modal
+  listingTitle: string;
+  listingImage: string;
+  listingRating: number | null;
+  listingReviewCount: number;
 };
 
 type PreviewLine = {
@@ -62,6 +67,10 @@ export default function MobileBookingModal({
   priceFormatted,
   isInstantBook = false,
   maxGuests,
+  listingTitle,
+  listingImage,
+  listingRating,
+  listingReviewCount,
 }: MobileBookingModalProps) {
   const router = useRouter();
   const { status } = useSession();
@@ -69,6 +78,8 @@ export default function MobileBookingModal({
   const isLoggedIn = status === "authenticated";
 
   const [isOpen, setIsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"examine" | "reserve">("examine");
+  const [expandedSection, setExpandedSection] = useState<"dates" | "guests" | null>(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [pricingMode, setPricingMode] = useState<"night" | "day" | "hour">("night");
@@ -394,6 +405,31 @@ export default function MobileBookingModal({
     }
   }
 
+  // Format dates for display
+  const formatDateDisplay = (dateStr: string) => {
+    if (!dateStr) return bf.addDates;
+    const date = new Date(dateStr + "T00:00:00");
+    return date.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+  };
+
+  // Format guests for display
+  const formatGuestsDisplay = () => {
+    const parts = [];
+    if (guests.adults > 0) parts.push(`${guests.adults} ${guests.adults > 1 ? bf.adultsLabel.toLowerCase() : "adulte"}`);
+    if (guests.children > 0) parts.push(`${guests.children} ${guests.children > 1 ? bf.childrenLabel.toLowerCase() : "enfant"}`);
+    if (guests.infants > 0) parts.push(`${guests.infants} ${guests.infants > 1 ? bf.infantsLabelPicker.toLowerCase() : "bébé"}`);
+    return parts.length > 0 ? parts.join(", ") : bf.addGuests;
+  };
+
+  // Handle sticky button click
+  const handleStickyButtonClick = () => {
+    if (!isLoggedIn) {
+      signIn("google", { callbackUrl: window.location.href });
+      return;
+    }
+    setIsOpen(true);
+  };
+
   return (
     <>
       {/* Barre sticky en bas */}
@@ -408,11 +444,11 @@ export default function MobileBookingModal({
           </div>
           <button
             type="button"
-            onClick={() => setIsOpen(true)}
+            onClick={handleStickyButtonClick}
             className="px-6 py-3 bg-gradient-to-r from-rose-500 to-pink-600 text-white text-sm font-semibold rounded-xl shadow-lg"
-            aria-label={bf.continueButton}
+            aria-label={isLoggedIn ? bf.reserveButton : bf.loginToBook}
           >
-            {bf.continueButton}
+            {isLoggedIn ? bf.reserveButton : bf.loginToBook}
           </button>
         </div>
       </div>
@@ -421,341 +457,425 @@ export default function MobileBookingModal({
       {isOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-end">
           <div className="bg-white w-full rounded-t-3xl max-h-[90vh] overflow-y-auto animate-slide-up">
-            {/* Header */}
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">{bf.continueButton}</h2>
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100"
-                aria-label={t.common.close}
-              >
-                <XMarkIcon className="w-5 h-5 text-gray-600" />
-              </button>
+            {/* Header avec tabs */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3">
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100"
+                  aria-label={t.common.close}
+                >
+                  <XMarkIcon className="w-5 h-5 text-gray-600" />
+                </button>
+                <div className="flex items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("examine")}
+                    className={`text-sm font-medium pb-1 border-b-2 transition ${
+                      activeTab === "examine"
+                        ? "text-gray-900 border-gray-900"
+                        : "text-gray-500 border-transparent"
+                    }`}
+                  >
+                    {bf.examineTab}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("reserve")}
+                    className={`text-sm font-medium pb-1 border-b-2 transition ${
+                      activeTab === "reserve"
+                        ? "text-gray-900 border-gray-900"
+                        : "text-gray-500 border-transparent"
+                    }`}
+                  >
+                    {bf.reserveTab}
+                  </button>
+                </div>
+                <div className="w-8" /> {/* Spacer for centering */}
+              </div>
             </div>
 
-            <div className="p-4 space-y-6">
-              {/* Prix */}
-              <div className="text-center">
-                <p className="text-2xl font-semibold text-gray-900">
-                  {priceFormatted}
-                  <span className="text-base font-normal text-gray-500"> {getPricingModeLabel()}</span>
+            {/* Tab Content */}
+            {activeTab === "examine" ? (
+              <div className="p-4 space-y-4">
+                {/* Mini card listing */}
+                <div className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50">
+                  <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                    <img
+                      src={listingImage}
+                      alt={listingTitle}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{listingTitle}</p>
+                    {listingRating !== null && (
+                      <div className="flex items-center gap-1 mt-1">
+                        <svg className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                          <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                        </svg>
+                        <span className="text-sm font-medium text-gray-900">{listingRating.toFixed(1)}</span>
+                        <span className="text-sm text-gray-500">({listingReviewCount})</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Bulle Dates - Expandable */}
+                <div className="rounded-xl border border-gray-200 overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setExpandedSection(expandedSection === "dates" ? null : "dates")}
+                    className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition"
+                  >
+                    <div>
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t.home.dates}</p>
+                      <p className="text-sm font-medium text-gray-900 mt-0.5">
+                        {startDate && endDate
+                          ? `${formatDateDisplay(startDate)} - ${formatDateDisplay(endDate)}`
+                          : bf.addDates}
+                      </p>
+                    </div>
+                    <svg
+                      className={`w-5 h-5 text-gray-400 transition-transform ${expandedSection === "dates" ? "rotate-180" : ""}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {expandedSection === "dates" && (
+                    <div className="px-4 pb-4 space-y-3 border-t border-gray-100">
+                      {/* Mode de tarification */}
+                      <div className="pt-3">
+                        <p className="text-xs font-medium text-gray-500 mb-2">{bf.bookingType}</p>
+                        <div className="grid grid-cols-3 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setPricingMode("hour")}
+                            className={`py-2 px-3 rounded-lg text-xs font-medium border transition ${
+                              pricingMode === "hour"
+                                ? "border-gray-900 bg-gray-900 text-white"
+                                : "border-gray-200 text-gray-700"
+                            }`}
+                          >
+                            {bf.perHourOption}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPricingMode("day")}
+                            className={`py-2 px-3 rounded-lg text-xs font-medium border transition ${
+                              pricingMode === "day"
+                                ? "border-gray-900 bg-gray-900 text-white"
+                                : "border-gray-200 text-gray-700"
+                            }`}
+                          >
+                            {bf.perDayOption}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPricingMode("night")}
+                            className={`py-2 px-3 rounded-lg text-xs font-medium border transition ${
+                              pricingMode === "night"
+                                ? "border-gray-900 bg-gray-900 text-white"
+                                : "border-gray-200 text-gray-700"
+                            }`}
+                          >
+                            {bf.perNightOption}
+                          </button>
+                        </div>
+                      </div>
+                      {/* Date inputs */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="rounded-lg border border-gray-300 p-3">
+                          <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">
+                            {bf.arrivalLabel}
+                          </label>
+                          <input
+                            type="date"
+                            value={startDate}
+                            min={todayStr}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val < todayStr) return;
+                              setStartDate(val);
+                            }}
+                            className="w-full text-sm text-gray-900 bg-transparent border-none p-0 focus:outline-none focus:ring-0"
+                          />
+                        </div>
+                        <div className="rounded-lg border border-gray-300 p-3">
+                          <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-1">
+                            {bf.departureLabel}
+                          </label>
+                          <input
+                            type="date"
+                            value={endDate}
+                            min={startDate || todayStr}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              const minDate = startDate || todayStr;
+                              if (val <= minDate) return;
+                              setEndDate(val);
+                            }}
+                            className="w-full text-sm text-gray-900 bg-transparent border-none p-0 focus:outline-none focus:ring-0"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Bulle Voyageurs - Expandable */}
+                <div className="rounded-xl border border-gray-200 overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setExpandedSection(expandedSection === "guests" ? null : "guests")}
+                    className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition"
+                  >
+                    <div>
+                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{t.common.guests}</p>
+                      <p className="text-sm font-medium text-gray-900 mt-0.5">{formatGuestsDisplay()}</p>
+                    </div>
+                    <svg
+                      className={`w-5 h-5 text-gray-400 transition-transform ${expandedSection === "guests" ? "rotate-180" : ""}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {expandedSection === "guests" && (
+                    <div className="px-4 pb-4 space-y-4 border-t border-gray-100 pt-3">
+                      {/* Adultes */}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{bf.adultsLabel}</p>
+                          <p className="text-xs text-gray-500">{bf.adultsDesc}</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setGuests((g) => ({ ...g, adults: Math.max(1, g.adults - 1) }))}
+                            disabled={guests.adults <= 1}
+                            className="flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 text-gray-600 disabled:opacity-50"
+                          >
+                            <MinusIcon className="h-4 w-4" />
+                          </button>
+                          <span className="w-6 text-center text-sm font-medium">{guests.adults}</span>
+                          <button
+                            type="button"
+                            onClick={() => setGuests((g) => ({ ...g, adults: g.adults + 1 }))}
+                            disabled={maxGuests ? totalGuests >= maxGuests : false}
+                            className="flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 text-gray-600 disabled:opacity-50"
+                          >
+                            <PlusIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                      {/* Enfants */}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{bf.childrenLabel}</p>
+                          <p className="text-xs text-gray-500">{bf.childrenDesc}</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setGuests((g) => ({ ...g, children: Math.max(0, g.children - 1) }))}
+                            disabled={guests.children <= 0}
+                            className="flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 text-gray-600 disabled:opacity-50"
+                          >
+                            <MinusIcon className="h-4 w-4" />
+                          </button>
+                          <span className="w-6 text-center text-sm font-medium">{guests.children}</span>
+                          <button
+                            type="button"
+                            onClick={() => setGuests((g) => ({ ...g, children: g.children + 1 }))}
+                            disabled={maxGuests ? totalGuests >= maxGuests : false}
+                            className="flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 text-gray-600 disabled:opacity-50"
+                          >
+                            <PlusIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                      {/* Bébés */}
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{bf.infantsLabelPicker}</p>
+                          <p className="text-xs text-gray-500">{bf.infantsDesc}</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setGuests((g) => ({ ...g, infants: Math.max(0, g.infants - 1) }))}
+                            disabled={guests.infants <= 0}
+                            className="flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 text-gray-600 disabled:opacity-50"
+                          >
+                            <MinusIcon className="h-4 w-4" />
+                          </button>
+                          <span className="w-6 text-center text-sm font-medium">{guests.infants}</span>
+                          <button
+                            type="button"
+                            onClick={() => setGuests((g) => ({ ...g, infants: g.infants + 1 }))}
+                            disabled={maxGuests ? totalGuests >= maxGuests : false}
+                            className="flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 text-gray-600 disabled:opacity-50"
+                          >
+                            <PlusIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                      {maxGuests && (
+                        <p className="text-xs text-gray-500 text-center">
+                          {bf.maxGuestsInfo.replace("{max}", String(maxGuests))}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Instant Book Indicator */}
+                {isInstantBook && startDate && endDate && (
+                  <div>
+                    {checkingEligibility ? (
+                      <div className="flex items-center gap-2 rounded-xl bg-gray-50 p-3 text-sm">
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-amber-500" />
+                        <span className="text-gray-600">{t.common.loading}</span>
+                      </div>
+                    ) : (
+                      <InstantBookIndicator eligible={instantBookEligible} reasons={instantBookReasons} />
+                    )}
+                  </div>
+                )}
+
+                {/* Bouton Suivant */}
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("reserve")}
+                  disabled={!startDate || !endDate}
+                  className="w-full py-4 bg-gradient-to-r from-rose-500 to-pink-600 text-white text-base font-semibold rounded-xl shadow-lg disabled:opacity-50"
+                >
+                  {bf.nextButton}
+                </button>
+              </div>
+            ) : (
+              /* Tab Réserver */
+              <div className="p-4 space-y-4">
+                {/* Price Breakdown */}
+                {preview && (
+                  <div className="space-y-3">
+                    {preview.lines
+                      .filter((line) => !line.emphasize)
+                      .map((line) => (
+                        <div key={line.code} className="flex items-center justify-between text-sm">
+                          <span className="text-gray-600 underline decoration-dotted underline-offset-4">
+                            {line.label}
+                          </span>
+                          <span className="text-gray-900">{formatMoney(line.amountCents, preview.currency)}</span>
+                        </div>
+                      ))}
+
+                    {validPromo && validPromo.discountAmountCents > 0 && (
+                      <div className="flex items-center justify-between text-sm text-green-600">
+                        <span>{bf.discount} ({validPromo.code})</span>
+                        <span>-{formatMoney(validPromo.discountAmountCents, preview.currency)}</span>
+                      </div>
+                    )}
+
+                    {preview.lines
+                      .filter((line) => line.emphasize)
+                      .map((line) => (
+                        <div key={line.code} className="flex items-center justify-between pt-3 border-t border-gray-200">
+                          <span className="font-semibold text-gray-900">{line.label}</span>
+                          <span className="font-semibold text-gray-900">{formatMoney(line.amountCents, preview.currency)}</span>
+                        </div>
+                      ))}
+                  </div>
+                )}
+
+                {previewLoading && (
+                  <div className="text-center text-sm text-gray-500">{bf.calculatingPrice}</div>
+                )}
+
+                {previewError && (
+                  <div className="text-center text-sm text-red-600">{previewError}</div>
+                )}
+
+                {/* Promo Code */}
+                {!showPromoInput && !validPromo && (
+                  <button
+                    type="button"
+                    onClick={() => setShowPromoInput(true)}
+                    className="w-full text-center text-sm font-medium text-gray-900 underline hover:text-gray-600"
+                  >
+                    {bf.addPromoCode}
+                  </button>
+                )}
+
+                {showPromoInput && !validPromo && (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                      placeholder={bf.promoCodePlaceholder}
+                      className="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 text-sm uppercase focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                      disabled={promoLoading}
+                    />
+                    <button
+                      type="button"
+                      onClick={validatePromoCode}
+                      disabled={promoLoading || !promoCode.trim()}
+                      className="px-4 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 disabled:opacity-50"
+                    >
+                      {promoLoading ? "..." : t.common.ok}
+                    </button>
+                  </div>
+                )}
+
+                {validPromo && (
+                  <div className="flex items-center justify-between rounded-xl bg-green-50 border border-green-200 px-4 py-3">
+                    <span className="text-sm font-medium text-green-700">
+                      {validPromo.code} - {validPromo.discountLabel}
+                    </span>
+                    <button type="button" onClick={removePromoCode} className="text-sm text-gray-500 hover:text-gray-700">
+                      {t.common.delete}
+                    </button>
+                  </div>
+                )}
+
+                {promoError && <p className="text-center text-sm text-red-600">{promoError}</p>}
+
+                {/* Bouton réserver */}
+                {isInstantBook && instantBookEligible === true ? (
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={submitting || !startDate || !endDate}
+                    className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-base font-semibold rounded-xl shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    <BoltIcon className="h-5 w-5" />
+                    {submitting ? bf.creating : bf.reserveInstantly}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={submitting || !startDate || !endDate}
+                    className="w-full py-4 bg-gradient-to-r from-rose-500 to-pink-600 text-white text-base font-semibold rounded-xl shadow-lg disabled:opacity-50"
+                  >
+                    {submitting ? bf.creating : t.common.confirm}
+                  </button>
+                )}
+
+                {/* Note */}
+                <p className="text-xs text-gray-500 text-center">
+                  {bf.securePaymentNote}
                 </p>
               </div>
-
-              {/* Mode de tarification */}
-              <div>
-                <p className="text-sm font-medium text-gray-900 mb-3">{bf.bookingType}</p>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setPricingMode("hour")}
-                    className={`py-3 px-4 rounded-xl text-sm font-medium border-2 transition ${
-                      pricingMode === "hour"
-                        ? "border-gray-900 bg-gray-900 text-white"
-                        : "border-gray-200 text-gray-700 hover:border-gray-300"
-                    }`}
-                    aria-label={bf.perHourOption}
-                  >
-                    {bf.perHourOption}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPricingMode("day")}
-                    className={`py-3 px-4 rounded-xl text-sm font-medium border-2 transition ${
-                      pricingMode === "day"
-                        ? "border-gray-900 bg-gray-900 text-white"
-                        : "border-gray-200 text-gray-700 hover:border-gray-300"
-                    }`}
-                    aria-label={bf.perDayOption}
-                  >
-                    {bf.perDayOption}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPricingMode("night")}
-                    className={`py-3 px-4 rounded-xl text-sm font-medium border-2 transition ${
-                      pricingMode === "night"
-                        ? "border-gray-900 bg-gray-900 text-white"
-                        : "border-gray-200 text-gray-700 hover:border-gray-300"
-                    }`}
-                    aria-label={bf.perNightOption}
-                  >
-                    {bf.perNightOption}
-                  </button>
-                </div>
-              </div>
-
-              {/* Dates */}
-              <div>
-                <p className="text-sm font-medium text-gray-900 mb-3">{t.home.dates}</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-xl border border-gray-300 p-3">
-                    <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-1">
-                      {bf.arrivalLabel}
-                    </label>
-                    <input
-                      type="date"
-                      value={startDate}
-                      min={todayStr}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val < todayStr) return; // Empêcher les dates passées
-                        setStartDate(val);
-                      }}
-                      className="w-full text-sm text-gray-900 bg-transparent border-none p-0 focus:outline-none focus:ring-0"
-                    />
-                  </div>
-                  <div className="rounded-xl border border-gray-300 p-3">
-                    <label className="block text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-1">
-                      {bf.departureLabel}
-                    </label>
-                    <input
-                      type="date"
-                      value={endDate}
-                      min={startDate || todayStr}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        const minDate = startDate || todayStr;
-                        if (val <= minDate) return; // Empêcher les dates avant l'arrivée
-                        setEndDate(val);
-                      }}
-                      className="w-full text-sm text-gray-900 bg-transparent border-none p-0 focus:outline-none focus:ring-0"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Instant Book Indicator */}
-              {isInstantBook && startDate && endDate && (
-                <div>
-                  {checkingEligibility ? (
-                    <div className="flex items-center gap-2 rounded-xl bg-gray-50 p-3 text-sm">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-amber-500" />
-                      <span className="text-gray-600">{t.common.loading}</span>
-                    </div>
-                  ) : (
-                    <InstantBookIndicator eligible={instantBookEligible} reasons={instantBookReasons} />
-                  )}
-                </div>
-              )}
-
-              {/* Voyageurs */}
-              <div>
-                <p className="text-sm font-medium text-gray-900 mb-3">{t.common.guests}</p>
-                <div className="space-y-4">
-                  {/* Adultes */}
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{bf.adultsLabel}</p>
-                      <p className="text-xs text-gray-500">{bf.adultsDesc}</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setGuests((g) => ({ ...g, adults: Math.max(1, g.adults - 1) }))}
-                        disabled={guests.adults <= 1}
-                        className="flex items-center justify-center w-10 h-10 rounded-full border border-gray-300 text-gray-600 hover:border-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
-                        aria-label={bf.adultsLabel + " -"}
-                      >
-                        <MinusIcon className="h-4 w-4" />
-                      </button>
-                      <span className="w-8 text-center text-sm font-medium">{guests.adults}</span>
-                      <button
-                        type="button"
-                        onClick={() => setGuests((g) => ({ ...g, adults: g.adults + 1 }))}
-                        disabled={maxGuests ? totalGuests >= maxGuests : false}
-                        className="flex items-center justify-center w-10 h-10 rounded-full border border-gray-300 text-gray-600 hover:border-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
-                        aria-label={bf.adultsLabel + " +"}
-                      >
-                        <PlusIcon className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Enfants */}
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{bf.childrenLabel}</p>
-                      <p className="text-xs text-gray-500">{bf.childrenDesc}</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setGuests((g) => ({ ...g, children: Math.max(0, g.children - 1) }))}
-                        disabled={guests.children <= 0}
-                        className="flex items-center justify-center w-10 h-10 rounded-full border border-gray-300 text-gray-600 hover:border-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
-                        aria-label={bf.childrenLabel + " -"}
-                      >
-                        <MinusIcon className="h-4 w-4" />
-                      </button>
-                      <span className="w-8 text-center text-sm font-medium">{guests.children}</span>
-                      <button
-                        type="button"
-                        onClick={() => setGuests((g) => ({ ...g, children: g.children + 1 }))}
-                        disabled={maxGuests ? totalGuests >= maxGuests : false}
-                        className="flex items-center justify-center w-10 h-10 rounded-full border border-gray-300 text-gray-600 hover:border-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
-                        aria-label={bf.childrenLabel + " +"}
-                      >
-                        <PlusIcon className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Bébés */}
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">{bf.infantsLabelPicker}</p>
-                      <p className="text-xs text-gray-500">{bf.infantsDesc}</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setGuests((g) => ({ ...g, infants: Math.max(0, g.infants - 1) }))}
-                        disabled={guests.infants <= 0}
-                        className="flex items-center justify-center w-10 h-10 rounded-full border border-gray-300 text-gray-600 hover:border-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
-                        aria-label={bf.infantsLabelPicker + " -"}
-                      >
-                        <MinusIcon className="h-4 w-4" />
-                      </button>
-                      <span className="w-8 text-center text-sm font-medium">{guests.infants}</span>
-                      <button
-                        type="button"
-                        onClick={() => setGuests((g) => ({ ...g, infants: g.infants + 1 }))}
-                        disabled={maxGuests ? totalGuests >= maxGuests : false}
-                        className="flex items-center justify-center w-10 h-10 rounded-full border border-gray-300 text-gray-600 hover:border-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
-                        aria-label={bf.infantsLabelPicker + " +"}
-                      >
-                        <PlusIcon className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Max guests info */}
-                  {maxGuests && (
-                    <p className="text-xs text-gray-500 text-center">
-                      {bf.maxGuestsInfo.replace("{max}", String(maxGuests))}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Price Breakdown */}
-              {preview && (
-                <div className="space-y-3 pt-2">
-                  {preview.lines
-                    .filter((line) => !line.emphasize)
-                    .map((line) => (
-                      <div key={line.code} className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600 underline decoration-dotted underline-offset-4">
-                          {line.label}
-                        </span>
-                        <span className="text-gray-900">{formatMoney(line.amountCents, preview.currency)}</span>
-                      </div>
-                    ))}
-
-                  {validPromo && validPromo.discountAmountCents > 0 && (
-                    <div className="flex items-center justify-between text-sm text-green-600">
-                      <span>{bf.discount} ({validPromo.code})</span>
-                      <span>-{formatMoney(validPromo.discountAmountCents, preview.currency)}</span>
-                    </div>
-                  )}
-
-                  {preview.lines
-                    .filter((line) => line.emphasize)
-                    .map((line) => (
-                      <div key={line.code} className="flex items-center justify-between pt-3 border-t border-gray-200">
-                        <span className="font-semibold text-gray-900">{line.label}</span>
-                        <span className="font-semibold text-gray-900">{formatMoney(line.amountCents, preview.currency)}</span>
-                      </div>
-                    ))}
-                </div>
-              )}
-
-              {previewLoading && (
-                <div className="text-center text-sm text-gray-500">{bf.calculatingPrice}</div>
-              )}
-
-              {previewError && (
-                <div className="text-center text-sm text-red-600">{previewError}</div>
-              )}
-
-              {/* Promo Code */}
-              {!showPromoInput && !validPromo && (
-                <button
-                  type="button"
-                  onClick={() => setShowPromoInput(true)}
-                  className="w-full text-center text-sm font-medium text-gray-900 underline hover:text-gray-600"
-                  aria-label={bf.addPromoCode}
-                >
-                  {bf.addPromoCode}
-                </button>
-              )}
-
-              {showPromoInput && !validPromo && (
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={promoCode}
-                    onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                    placeholder={bf.promoCodePlaceholder}
-                    className="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 text-sm uppercase focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
-                    disabled={promoLoading}
-                  />
-                  <button
-                    type="button"
-                    onClick={validatePromoCode}
-                    disabled={promoLoading || !promoCode.trim()}
-                    className="px-4 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 disabled:opacity-50"
-                    aria-label={bf.addPromoCode}
-                  >
-                    {promoLoading ? "..." : t.common.ok}
-                  </button>
-                </div>
-              )}
-
-              {validPromo && (
-                <div className="flex items-center justify-between rounded-xl bg-green-50 border border-green-200 px-4 py-3">
-                  <span className="text-sm font-medium text-green-700">
-                    {validPromo.code} - {validPromo.discountLabel}
-                  </span>
-                  <button type="button" onClick={removePromoCode} className="text-sm text-gray-500 hover:text-gray-700" aria-label={t.common.delete}>
-                    {t.common.delete}
-                  </button>
-                </div>
-              )}
-
-              {promoError && <p className="text-center text-sm text-red-600">{promoError}</p>}
-
-              {/* Bouton réserver */}
-              {isInstantBook && instantBookEligible === true ? (
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={submitting || !startDate || !endDate}
-                  className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 text-white text-base font-semibold rounded-xl shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
-                  aria-label={submitting ? bf.creating : bf.reserveInstantly}
-                >
-                  <BoltIcon className="h-5 w-5" />
-                  {submitting ? bf.creating : bf.reserveInstantly}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={submitting || !startDate || !endDate}
-                  className="w-full py-4 bg-gradient-to-r from-rose-500 to-pink-600 text-white text-base font-semibold rounded-xl shadow-lg disabled:opacity-50"
-                  aria-label={submitting ? bf.creating : t.common.confirm}
-                >
-                  {submitting ? bf.creating : t.common.confirm}
-                </button>
-              )}
-
-              {/* Note */}
-              <p className="text-xs text-gray-500 text-center">
-                {bf.securePaymentNote}
-              </p>
-            </div>
+            )}
           </div>
         </div>
       )}

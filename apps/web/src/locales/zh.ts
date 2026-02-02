@@ -1651,6 +1651,14 @@ const zh = {
       selectGuests: "请至少选择一位旅客",
       tooManyGuests: "最多允许 {max} 位客人",
       maxGuestsInfo: "最多 {max} 位客人",
+      // New keys for mobile booking modal redesign
+      reserveButton: "预订",
+      loginToBook: "登录",
+      examineTab: "查看",
+      reserveTab: "预订",
+      addDates: "添加日期",
+      addGuests: "添加客人",
+      nextButton: "下一步",
     },
 
     // Navbar

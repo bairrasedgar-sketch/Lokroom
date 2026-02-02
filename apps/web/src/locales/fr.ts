@@ -1670,6 +1670,14 @@ const fr = {
       selectGuests: "Veuillez sélectionner au moins un voyageur",
       tooManyGuests: "Maximum {max} voyageurs autorisés",
       maxGuestsInfo: "Maximum {max} voyageurs",
+      // New keys for mobile booking modal redesign
+      reserveButton: "Réserver",
+      loginToBook: "Se connecter",
+      examineTab: "Examiner",
+      reserveTab: "Réserver",
+      addDates: "Ajouter des dates",
+      addGuests: "Ajouter des voyageurs",
+      nextButton: "Suivant",
     },
 
     // Navbar
