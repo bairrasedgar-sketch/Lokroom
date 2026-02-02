@@ -495,17 +495,55 @@ export default function Map({
         map.setCenter(position);
         map.setZoom(16);
 
-        // Ajouter le marqueur (taille fixe qui ne change pas avec le zoom)
-        const marker = new g.maps.Marker({
-          map,
-          position,
-          icon: {
-            url: "/map-marker-lokroom-2.png",
-            scaledSize: new g.maps.Size(120, 120),
-            anchor: new g.maps.Point(60, 60),
-          },
-        });
-        markersInstancesRef.current.push(marker);
+        // Créer un overlay custom pour le marqueur (taille fixe en pixels, ne change pas avec le zoom)
+        const markerOverlay = new g.maps.OverlayView();
+
+        (markerOverlay as any).onAdd = function() {
+          const div = document.createElement("div");
+          div.style.position = "absolute";
+          div.style.width = "150px";
+          div.style.height = "150px";
+          div.style.cursor = "default";
+
+          const img = document.createElement("img");
+          img.src = "/map-marker-lokroom-2.png";
+          img.style.width = "100%";
+          img.style.height = "100%";
+          img.style.objectFit = "contain";
+
+          div.appendChild(img);
+          (this as any).div = div;
+
+          const panes = this.getPanes();
+          if (panes) {
+            panes.overlayMouseTarget.appendChild(div);
+          }
+        };
+
+        (markerOverlay as any).draw = function() {
+          const overlayProjection = this.getProjection();
+          if (!overlayProjection) return;
+
+          const pos = overlayProjection.fromLatLngToDivPixel(position);
+          if (!pos) return;
+
+          const div = (this as any).div;
+          if (div) {
+            // Centrer le marqueur sur la position
+            div.style.left = (pos.x - 75) + "px";
+            div.style.top = (pos.y - 75) + "px";
+          }
+        };
+
+        (markerOverlay as any).onRemove = function() {
+          if ((this as any).div) {
+            (this as any).div.parentNode?.removeChild((this as any).div);
+            (this as any).div = null;
+          }
+        };
+
+        markerOverlay.setMap(map);
+        overlaysRef.current.push(markerOverlay as any);
         return;
       }
 
