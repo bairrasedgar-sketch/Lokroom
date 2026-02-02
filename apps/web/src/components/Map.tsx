@@ -479,13 +479,13 @@ export default function Map({
             clickableIcons: false,
           });
         } else {
-          // Carte petite sur PC: PAS d'interaction du tout, scroll page passe à travers
+          // Carte petite sur PC: déplacement OK, zoom boutons OK, pas de zoom molette
           map.setOptions({
-            draggable: false,
+            draggable: true,
             zoomControl: false,
             scrollwheel: false,
             disableDoubleClickZoom: true,
-            gestureHandling: "none",
+            gestureHandling: "greedy",
             keyboardShortcuts: false,
             clickableIcons: false,
           });
@@ -732,7 +732,7 @@ export default function Map({
 
         {/* Boutons zoom custom ronds - pour carte détail annonce (useLogoIcon && !interactive) */}
         {useLogoIcon && !interactive && (
-          <div className="absolute bottom-4 left-4 z-10 hidden lg:flex flex-col gap-2">
+          <div className="absolute bottom-4 left-4 z-10 hidden lg:flex flex-col gap-2 pointer-events-auto">
             <button
               type="button"
               onClick={() => {
