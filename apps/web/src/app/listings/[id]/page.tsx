@@ -378,35 +378,32 @@ export default async function ListingDetailPage({
               <h2 className="text-base font-semibold text-gray-900 mb-2">{t.listingDetail.approximateLocationTitle}</h2>
               <p className="text-xs text-gray-500 mb-3">{t.listingDetail.exactLocationNote}</p>
               <div className="relative h-56 w-full overflow-hidden rounded-2xl border border-gray-200 bg-gray-100">
-                <div className="absolute inset-0 pointer-events-none">
-                  <Map
-                    useLogoIcon={true}
-                    markers={[
-                      {
-                        id: listing.id,
-                        lat: lat as number,
-                        lng: lng as number,
-                        label: priceFormatted,
-                      },
-                    ]}
-                  />
-                </div>
-                <div className="absolute bottom-3 right-3 z-10">
-                  <MapExpandButton
-                    marker={{
+                <Map
+                  useLogoIcon={true}
+                  markers={[
+                    {
                       id: listing.id,
                       lat: lat as number,
                       lng: lng as number,
                       label: priceFormatted,
-                      title: listing.title,
-                      city: listing.city,
-                      country: listing.country,
-                      priceFormatted: priceFormatted,
-                      imageUrl: listing.images?.[0]?.url,
-                    }}
-                    locationLabel={locationLabel}
-                  />
-                </div>
+                    },
+                  ]}
+                />
+                <MapExpandButton
+                  marker={{
+                    id: listing.id,
+                    lat: lat as number,
+                    lng: lng as number,
+                    label: priceFormatted,
+                    title: listing.title,
+                    city: listing.city,
+                    country: listing.country,
+                    priceFormatted: priceFormatted,
+                    imageUrl: listing.images?.[0]?.url,
+                  }}
+                  locationLabel={locationLabel}
+                  fullScreen={true}
+                />
               </div>
               <p className="mt-2 text-sm text-gray-600">{locationLabel}</p>
             </div>

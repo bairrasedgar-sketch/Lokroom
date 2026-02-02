@@ -8,9 +8,11 @@ import { useGoogleMaps } from "./GoogleMapsLoader";
 type MapExpandButtonProps = {
   marker: MapMarker;
   locationLabel: string;
+  /** Si true, le bouton couvre toute la carte et ouvre en plein écran mobile */
+  fullScreen?: boolean;
 };
 
-export default function MapExpandButton({ marker, locationLabel }: MapExpandButtonProps) {
+export default function MapExpandButton({ marker, locationLabel, fullScreen = false }: MapExpandButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useTranslation();
   const { loadError } = useGoogleMaps();
@@ -32,19 +34,42 @@ export default function MapExpandButton({ marker, locationLabel }: MapExpandButt
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, closeModal]);
 
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
   return (
     <>
-      {/* Bouton agrandir */}
-      <button
-        type="button"
-        onClick={() => setIsOpen(true)}
-        className="flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-lg border border-gray-200 hover:bg-gray-50 transition"
-        aria-label={t.listingDetail.mapLocation}
-      >
-        <svg className="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-        </svg>
-      </button>
+      {/* Bouton agrandir - soit petit bouton, soit overlay plein écran */}
+      {fullScreen ? (
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          className="absolute inset-0 z-10 cursor-pointer"
+          aria-label={t.listingDetail.mapLocation}
+        >
+          <span className="sr-only">{t.listingDetail.mapLocation}</span>
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          className="flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-lg border border-gray-200 hover:bg-gray-50 transition"
+          aria-label={t.listingDetail.mapLocation}
+        >
+          <svg className="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+          </svg>
+        </button>
+      )}
 
       {/* Modal carte agrandie */}
       {isOpen && (
@@ -58,10 +83,6 @@ export default function MapExpandButton({ marker, locationLabel }: MapExpandButt
           >
             {/* Header modal */}
             <div className="flex items-center justify-between px-4 lg:px-6 py-3 lg:py-4 border-b border-gray-200">
-              <div>
-                <h3 className="text-base lg:text-lg font-semibold text-gray-900">{t.listingDetail.mapLocation}</h3>
-                <p className="text-sm text-gray-500">{locationLabel}</p>
-              </div>
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
@@ -72,9 +93,14 @@ export default function MapExpandButton({ marker, locationLabel }: MapExpandButt
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
+              <div className="text-center flex-1">
+                <h3 className="text-base lg:text-lg font-semibold text-gray-900">{t.listingDetail.mapLocation}</h3>
+                <p className="text-xs lg:text-sm text-gray-500">{locationLabel}</p>
+              </div>
+              <div className="w-8" /> {/* Spacer */}
             </div>
             {/* Carte plein ecran avec gestion d'erreur */}
-            <div className="flex-1">
+            <div className="flex-1 relative">
               {loadError ? (
                 <div className="flex h-full items-center justify-center flex-col gap-2 p-4 text-center">
                   <svg className="w-10 h-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
