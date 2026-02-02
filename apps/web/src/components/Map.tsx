@@ -730,6 +730,38 @@ export default function Map({
       >
         <div ref={containerRef} className="h-full w-full rounded-3xl" />
 
+        {/* Boutons zoom custom ronds - pour carte détail annonce (useLogoIcon && !interactive) */}
+        {useLogoIcon && !interactive && (
+          <div className="absolute bottom-4 left-4 z-10 hidden lg:flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                if (mapRef.current) {
+                  const currentZoom = mapRef.current.getZoom() || 12;
+                  mapRef.current.setZoom(currentZoom + 1);
+                }
+              }}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg font-medium text-gray-700 shadow-lg border border-gray-200 transition-all hover:bg-gray-50 hover:shadow-xl active:scale-95"
+              aria-label={mapT.zoomIn}
+            >
+              +
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (mapRef.current) {
+                  const currentZoom = mapRef.current.getZoom() || 12;
+                  mapRef.current.setZoom(currentZoom - 1);
+                }
+              }}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg font-medium text-gray-700 shadow-lg border border-gray-200 transition-all hover:bg-gray-50 hover:shadow-xl active:scale-95"
+              aria-label={mapT.zoomOut}
+            >
+              −
+            </button>
+          </div>
+        )}
+
         {/* Boutons zoom custom - uniquement pour carte liste (pas useLogoIcon) */}
         {!useLogoIcon && (
         <div className="absolute bottom-4 left-4 z-10 hidden md:flex flex-col gap-2">
