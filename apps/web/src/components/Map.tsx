@@ -313,7 +313,10 @@ export default function Map({
   onBoundsChange,
   skipFitBounds = false,
   placeId,
-}: MapProps) {
+  onZoomIn,
+  onZoomOut,
+  mapId,
+}: MapProps & { onZoomIn?: () => void; onZoomOut?: () => void; mapId?: string }) {
   const { isLoaded: scriptLoaded, loadError: scriptError } = useGoogleMaps();
   const { t } = useTranslation();
   const mapT = t.components.map;
@@ -727,7 +730,8 @@ export default function Map({
       >
         <div ref={containerRef} className="h-full w-full rounded-3xl" />
 
-        {/* Boutons zoom custom - desktop uniquement */}
+        {/* Boutons zoom custom - uniquement pour carte liste (pas useLogoIcon) */}
+        {!useLogoIcon && (
         <div className="absolute bottom-4 left-4 z-10 hidden md:flex flex-col gap-2">
           <button
             type="button"
@@ -756,6 +760,7 @@ export default function Map({
             −
           </button>
         </div>
+        )}
 
         {/* Aperçu intégré façon Airbnb avec carousel */}
         {selectedMarker && (
