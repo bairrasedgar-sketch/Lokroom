@@ -464,7 +464,7 @@ export default function Map({
 
       // Mode logo (page détail)
       if (useLogoIcon) {
-        // Si interactive (modal agrandie), permettre zoom et déplacement
+        // Si interactive (modal agrandie), permettre zoom et déplacement complet
         if (interactive) {
           map.setOptions({
             draggable: true,
@@ -476,14 +476,14 @@ export default function Map({
             clickableIcons: false,
           });
         } else {
-          // Sinon carte statique, scroll passe à la page parent
+          // Carte petite sur PC: déplacement et zoom boutons OK, mais pas scroll molette
           map.setOptions({
-            draggable: false,
-            zoomControl: false,
+            draggable: true,
+            zoomControl: true,
             scrollwheel: false,
-            disableDoubleClickZoom: true,
-            gestureHandling: "none",
-            keyboardShortcuts: false,
+            disableDoubleClickZoom: false,
+            gestureHandling: "cooperative",
+            keyboardShortcuts: true,
             clickableIcons: false,
           });
         }
