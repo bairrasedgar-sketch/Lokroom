@@ -598,9 +598,10 @@ export default async function ListingDetailPage({
               <p className="text-xs text-gray-500">
                 {t.listingDetail.exactLocationNote}
               </p>
-              <div className="relative mt-2 h-64 w-full overflow-hidden rounded-2xl border bg-gray-100">
+              <div className="relative mt-2 h-80 w-full overflow-hidden rounded-2xl border bg-gray-100">
                 <Map
                   useLogoIcon={true}
+                  interactive={true}
                   markers={[
                     {
                       id: listing.id,
