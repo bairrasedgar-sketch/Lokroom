@@ -389,6 +389,7 @@ export default async function ListingDetailPage({
                     },
                   ]}
                 />
+                {/* Overlay cliquable + bouton visible en bas à droite */}
                 <MapExpandButton
                   marker={{
                     id: listing.id,
@@ -403,6 +404,7 @@ export default async function ListingDetailPage({
                   }}
                   locationLabel={locationLabel}
                   fullScreen={true}
+                  showButton={true}
                 />
               </div>
               <p className="mt-2 text-sm text-gray-600">{locationLabel}</p>

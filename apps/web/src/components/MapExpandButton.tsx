@@ -10,9 +10,11 @@ type MapExpandButtonProps = {
   locationLabel: string;
   /** Si true, le bouton couvre toute la carte et ouvre en plein écran mobile */
   fullScreen?: boolean;
+  /** Si true avec fullScreen, affiche aussi un bouton visible en bas à droite */
+  showButton?: boolean;
 };
 
-export default function MapExpandButton({ marker, locationLabel, fullScreen = false }: MapExpandButtonProps) {
+export default function MapExpandButton({ marker, locationLabel, fullScreen = false, showButton = false }: MapExpandButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { t } = useTranslation();
   const { loadError } = useGoogleMaps();
@@ -50,14 +52,29 @@ export default function MapExpandButton({ marker, locationLabel, fullScreen = fa
     <>
       {/* Bouton agrandir - soit petit bouton, soit overlay plein écran */}
       {fullScreen ? (
-        <button
-          type="button"
-          onClick={() => setIsOpen(true)}
-          className="absolute inset-0 z-10 cursor-pointer"
-          aria-label={t.listingDetail.mapLocation}
-        >
-          <span className="sr-only">{t.listingDetail.mapLocation}</span>
-        </button>
+        <>
+          <button
+            type="button"
+            onClick={() => setIsOpen(true)}
+            className="absolute inset-0 z-10 cursor-pointer"
+            aria-label={t.listingDetail.mapLocation}
+          >
+            <span className="sr-only">{t.listingDetail.mapLocation}</span>
+          </button>
+          {/* Bouton visible en bas à droite */}
+          {showButton && (
+            <button
+              type="button"
+              onClick={() => setIsOpen(true)}
+              className="absolute bottom-3 right-3 z-20 flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-lg border border-gray-200 hover:bg-gray-50 transition"
+              aria-label={t.listingDetail.mapLocation}
+            >
+              <svg className="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+              </svg>
+            </button>
+          )}
+        </>
       ) : (
         <button
           type="button"

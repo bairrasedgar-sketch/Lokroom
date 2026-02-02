@@ -498,8 +498,8 @@ export default function Map({
           position,
           icon: {
             url: "/map-marker-lokroom-2.png",
-            scaledSize: new g.maps.Size(60, 60),
-            anchor: new g.maps.Point(30, 30),
+            scaledSize: new g.maps.Size(120, 120),
+            anchor: new g.maps.Point(60, 60),
           },
         });
         markersInstancesRef.current.push(marker);

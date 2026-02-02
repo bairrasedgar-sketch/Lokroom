@@ -432,8 +432,8 @@ export default function MobileBookingModal({
 
   return (
     <>
-      {/* Barre sticky en bas */}
-      <div className="fixed bottom-[60px] left-0 right-0 z-20 bg-white border-t border-gray-200 px-4 py-3">
+      {/* Barre sticky en bas - toujours visible, collée au navbar */}
+      <div className="fixed bottom-[56px] left-0 right-0 z-30 bg-white border-t border-gray-200 px-4 py-2">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-lg font-semibold text-gray-900">
@@ -457,7 +457,7 @@ export default function MobileBookingModal({
       {isOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-end">
           <div className="bg-white w-full rounded-t-3xl max-h-[90vh] overflow-y-auto animate-slide-up">
-            {/* Header avec tabs */}
+            {/* Header simple */}
             <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3">
               <div className="flex items-center justify-between">
                 <button
@@ -468,37 +468,15 @@ export default function MobileBookingModal({
                 >
                   <XMarkIcon className="w-5 h-5 text-gray-600" />
                 </button>
-                <div className="flex items-center gap-4">
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("examine")}
-                    className={`text-sm font-medium pb-1 border-b-2 transition ${
-                      activeTab === "examine"
-                        ? "text-gray-900 border-gray-900"
-                        : "text-gray-500 border-transparent"
-                    }`}
-                  >
-                    {bf.examineTab}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setActiveTab("reserve")}
-                    className={`text-sm font-medium pb-1 border-b-2 transition ${
-                      activeTab === "reserve"
-                        ? "text-gray-900 border-gray-900"
-                        : "text-gray-500 border-transparent"
-                    }`}
-                  >
-                    {bf.reserveTab}
-                  </button>
-                </div>
-                <div className="w-8" /> {/* Spacer for centering */}
+                <h2 className="text-base font-semibold text-gray-900">
+                  {bf.examineTab} & {bf.reserveTab}
+                </h2>
+                <div className="w-8" />
               </div>
             </div>
 
-            {/* Tab Content */}
-            {activeTab === "examine" ? (
-              <div className="p-4 space-y-4">
+            {/* Contenu unique - pas de tabs */}
+            <div className="p-4 space-y-4">
                 {/* Mini card listing */}
                 <div className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50">
                   <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
@@ -750,105 +728,7 @@ export default function MobileBookingModal({
                   </div>
                 )}
 
-                {/* Bouton Suivant */}
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("reserve")}
-                  disabled={!startDate || !endDate}
-                  className="w-full py-4 bg-gradient-to-r from-rose-500 to-pink-600 text-white text-base font-semibold rounded-xl shadow-lg disabled:opacity-50"
-                >
-                  {bf.nextButton}
-                </button>
-              </div>
-            ) : (
-              /* Tab Réserver */
-              <div className="p-4 space-y-4">
-                {/* Price Breakdown */}
-                {preview && (
-                  <div className="space-y-3">
-                    {preview.lines
-                      .filter((line) => !line.emphasize)
-                      .map((line) => (
-                        <div key={line.code} className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600 underline decoration-dotted underline-offset-4">
-                            {line.label}
-                          </span>
-                          <span className="text-gray-900">{formatMoney(line.amountCents, preview.currency)}</span>
-                        </div>
-                      ))}
-
-                    {validPromo && validPromo.discountAmountCents > 0 && (
-                      <div className="flex items-center justify-between text-sm text-green-600">
-                        <span>{bf.discount} ({validPromo.code})</span>
-                        <span>-{formatMoney(validPromo.discountAmountCents, preview.currency)}</span>
-                      </div>
-                    )}
-
-                    {preview.lines
-                      .filter((line) => line.emphasize)
-                      .map((line) => (
-                        <div key={line.code} className="flex items-center justify-between pt-3 border-t border-gray-200">
-                          <span className="font-semibold text-gray-900">{line.label}</span>
-                          <span className="font-semibold text-gray-900">{formatMoney(line.amountCents, preview.currency)}</span>
-                        </div>
-                      ))}
-                  </div>
-                )}
-
-                {previewLoading && (
-                  <div className="text-center text-sm text-gray-500">{bf.calculatingPrice}</div>
-                )}
-
-                {previewError && (
-                  <div className="text-center text-sm text-red-600">{previewError}</div>
-                )}
-
-                {/* Promo Code */}
-                {!showPromoInput && !validPromo && (
-                  <button
-                    type="button"
-                    onClick={() => setShowPromoInput(true)}
-                    className="w-full text-center text-sm font-medium text-gray-900 underline hover:text-gray-600"
-                  >
-                    {bf.addPromoCode}
-                  </button>
-                )}
-
-                {showPromoInput && !validPromo && (
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={promoCode}
-                      onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                      placeholder={bf.promoCodePlaceholder}
-                      className="flex-1 px-4 py-2.5 rounded-xl border border-gray-300 text-sm uppercase focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
-                      disabled={promoLoading}
-                    />
-                    <button
-                      type="button"
-                      onClick={validatePromoCode}
-                      disabled={promoLoading || !promoCode.trim()}
-                      className="px-4 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 disabled:opacity-50"
-                    >
-                      {promoLoading ? "..." : t.common.ok}
-                    </button>
-                  </div>
-                )}
-
-                {validPromo && (
-                  <div className="flex items-center justify-between rounded-xl bg-green-50 border border-green-200 px-4 py-3">
-                    <span className="text-sm font-medium text-green-700">
-                      {validPromo.code} - {validPromo.discountLabel}
-                    </span>
-                    <button type="button" onClick={removePromoCode} className="text-sm text-gray-500 hover:text-gray-700">
-                      {t.common.delete}
-                    </button>
-                  </div>
-                )}
-
-                {promoError && <p className="text-center text-sm text-red-600">{promoError}</p>}
-
-                {/* Bouton réserver */}
+                {/* Bouton Réserver */}
                 {isInstantBook && instantBookEligible === true ? (
                   <button
                     type="button"
@@ -874,8 +754,7 @@ export default function MobileBookingModal({
                 <p className="text-xs text-gray-500 text-center">
                   {bf.securePaymentNote}
                 </p>
-              </div>
-            )}
+            </div>
           </div>
         </div>
       )}
