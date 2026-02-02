@@ -616,8 +616,9 @@ export default function Map({
       overlaysRef.current.push(overlay);
     });
 
-    // Ajuster la vue sur les markers UNIQUEMENT si on ne skip pas
-    if (hasValidMarker && !bounds.isEmpty() && !skipFitBounds) {
+    // Ajuster la vue sur les markers UNIQUEMENT si on ne skip pas ET pas en mode logo
+    // (en mode logo, le zoom est déjà géré plus haut à 16)
+    if (hasValidMarker && !bounds.isEmpty() && !skipFitBounds && !useLogoIcon) {
       if (markers.length === 1) {
         const m = markers[0];
         map.setCenter({ lat: m.lat, lng: m.lng });
@@ -633,7 +634,7 @@ export default function Map({
         });
       }
     }
-  }, [markers, useLogoIcon, skipFitBounds]);
+  }, [markers, useLogoIcon, skipFitBounds, interactive]);
 
   // === EFFET 3: Pan vers le marker survolé ===
   useEffect(() => {
