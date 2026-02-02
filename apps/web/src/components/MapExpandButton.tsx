@@ -40,11 +40,25 @@ export default function MapExpandButton({ marker, locationLabel, fullScreen = fa
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
+      // Cacher la navbar quand la carte est agrandie
+      const navbar = document.querySelector('header');
+      if (navbar) {
+        (navbar as HTMLElement).style.display = 'none';
+      }
     } else {
       document.body.style.overflow = "";
+      // Remettre la navbar
+      const navbar = document.querySelector('header');
+      if (navbar) {
+        (navbar as HTMLElement).style.display = '';
+      }
     }
     return () => {
       document.body.style.overflow = "";
+      const navbar = document.querySelector('header');
+      if (navbar) {
+        (navbar as HTMLElement).style.display = '';
+      }
     };
   }, [isOpen]);
 
