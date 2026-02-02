@@ -482,9 +482,12 @@ export default function Map({
             zoomControl: true,
             scrollwheel: false,
             disableDoubleClickZoom: true,
-            gestureHandling: "none",
+            gestureHandling: "cooperative",
             keyboardShortcuts: true,
             clickableIcons: false,
+            zoomControlOptions: {
+              position: g.maps.ControlPosition.LEFT_CENTER,
+            },
           });
         }
 
