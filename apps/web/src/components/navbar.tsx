@@ -345,10 +345,47 @@ export default function Navbar() {
   // Détecter iOS côté client
   const [isIOS, setIsIOS] = useState(false);
 
+  // État pour cacher/montrer la navbar au scroll (PC uniquement, page détail annonce)
+  const [hideNavbar, setHideNavbar] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
   useEffect(() => {
     const userAgent = navigator.userAgent.toLowerCase();
     setIsIOS(/iphone|ipad|ipod/.test(userAgent));
   }, []);
+
+  // Détecter le scroll pour cacher/montrer la navbar sur PC (page détail annonce uniquement)
+  const isListingDetailPage = pathname?.startsWith("/listings/") && pathname !== "/listings";
+
+  useEffect(() => {
+    if (!isListingDetailPage) {
+      setHideNavbar(false);
+      return;
+    }
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const isDesktop = window.innerWidth >= 1024; // lg breakpoint
+
+      if (!isDesktop) {
+        setHideNavbar(false);
+        return;
+      }
+
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        // Scroll vers le bas - cacher
+        setHideNavbar(true);
+      } else if (currentScrollY < lastScrollY) {
+        // Scroll vers le haut - montrer
+        setHideNavbar(false);
+      }
+
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [isListingDetailPage, lastScrollY]);
 
   // Récupérer les catégories et l'état du scroll depuis le contexte
   const searchBarContext = useSearchBarSafe();
@@ -434,7 +471,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-neutral-50">
+      <header className={`sticky top-0 z-50 bg-neutral-50 transition-transform duration-300 ${hideNavbar ? '-translate-y-full' : 'translate-y-0'}`}>
         {/* Barre mobile - Logo + Télécharger l'appli + Utiliser l'appli */}
         <div
           className={`flex md:hidden items-center justify-between px-3 py-2 border-b border-gray-100 transition-all duration-300 ${
