@@ -495,14 +495,17 @@ export default function Map({
         map.setCenter(position);
         map.setZoom(16);
 
-        // Créer un overlay custom pour le marqueur (taille fixe en pixels, ne change pas avec le zoom)
+        // Créer un overlay custom pour le marqueur
+        // Taille de base 250px au zoom 16
+        // Quand on zoom (>16): grandit pour garder la même apparence visuelle
+        // Quand on dézoom (<16): reste à 250px (ne rétrécit pas)
         const markerOverlay = new g.maps.OverlayView();
+        const BASE_ZOOM = 16;
+        const BASE_SIZE = 250;
 
         (markerOverlay as any).onAdd = function() {
           const div = document.createElement("div");
           div.style.position = "absolute";
-          div.style.width = "250px";
-          div.style.height = "250px";
           div.style.cursor = "default";
 
           const img = document.createElement("img");
@@ -529,9 +532,20 @@ export default function Map({
 
           const div = (this as any).div;
           if (div) {
-            // Centrer le marqueur sur la position
-            div.style.left = (pos.x - 125) + "px";
-            div.style.top = (pos.y - 125) + "px";
+            const currentZoom = map.getZoom() || BASE_ZOOM;
+            let size = BASE_SIZE;
+
+            // Seulement quand on zoom (zoom > 16), on agrandit le marqueur
+            if (currentZoom > BASE_ZOOM) {
+              size = BASE_SIZE * Math.pow(2, currentZoom - BASE_ZOOM);
+            }
+            // Quand on dézoom (zoom <= 16), on garde 250px
+
+            const halfSize = size / 2;
+            div.style.width = size + "px";
+            div.style.height = size + "px";
+            div.style.left = (pos.x - halfSize) + "px";
+            div.style.top = (pos.y - halfSize) + "px";
           }
         };
 
