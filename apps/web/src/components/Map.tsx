@@ -476,10 +476,10 @@ export default function Map({
             clickableIcons: false,
           });
         } else {
-          // Carte petite sur PC: pas d'interaction, scroll passe à la page
+          // Carte petite sur PC: pas d'interaction, scroll passe à la page, pas de boutons zoom
           map.setOptions({
             draggable: false,
-            zoomControl: true,
+            zoomControl: false,
             scrollwheel: false,
             disableDoubleClickZoom: true,
             gestureHandling: "none",

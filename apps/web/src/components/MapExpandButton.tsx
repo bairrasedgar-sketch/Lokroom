@@ -91,33 +91,34 @@ export default function MapExpandButton({ marker, locationLabel, fullScreen = fa
       {/* Modal carte agrandie */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/50 lg:flex lg:items-center lg:justify-center lg:p-8"
+          className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-0 lg:p-4"
           onClick={() => setIsOpen(false)}
         >
+          {/* Mobile: plein écran avec header | PC: vraiment plein écran avec bords arrondis */}
           <div
-            className="bg-white h-full lg:h-[80vh] lg:rounded-2xl w-full lg:max-w-4xl flex flex-col overflow-hidden"
+            className="bg-white h-full w-full lg:h-[calc(100vh-32px)] lg:w-[calc(100vw-32px)] lg:rounded-2xl flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header modal */}
-            <div className="flex items-center justify-between px-4 lg:px-6 py-3 lg:py-4 border-b border-gray-200">
+            {/* Header modal - mobile seulement, PC juste bouton fermer */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 lg:border-none lg:absolute lg:top-4 lg:left-4 lg:right-4 lg:z-10 lg:bg-transparent lg:p-0">
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="flex items-center justify-center w-8 h-8 rounded-full hover:bg-gray-100"
+                className="flex items-center justify-center w-8 h-8 rounded-full bg-white shadow-md hover:bg-gray-100 lg:w-10 lg:h-10"
                 aria-label={t.common.close}
               >
                 <svg className="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-              <div className="text-center flex-1">
-                <h3 className="text-base lg:text-lg font-semibold text-gray-900">{t.listingDetail.mapLocation}</h3>
-                <p className="text-xs lg:text-sm text-gray-500">{locationLabel}</p>
+              <div className="text-center flex-1 lg:hidden">
+                <h3 className="text-base font-semibold text-gray-900">{t.listingDetail.mapLocation}</h3>
+                <p className="text-xs text-gray-500">{locationLabel}</p>
               </div>
-              <div className="w-8" /> {/* Spacer */}
+              <div className="w-8 lg:hidden" />
             </div>
             {/* Carte plein ecran avec gestion d'erreur */}
-            <div className="flex-1 relative">
+            <div className="flex-1 relative lg:rounded-2xl lg:overflow-hidden">
               {loadError ? (
                 <div className="flex h-full items-center justify-center flex-col gap-2 p-4 text-center">
                   <svg className="w-10 h-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>

@@ -588,9 +588,6 @@ export default async function ListingDetailPage({
               {listing.owner.name ?? t.listingDetail.lokroomUser}
             </p>
           </aside>
-
-          {/* Avis sur l'annonce */}
-          <ListingReviews listingId={listing.id} />
         </div>
 
         {/* Colonne droite : carte réservation - PAS sticky, s'arrête avant la carte */}
@@ -668,6 +665,9 @@ export default async function ListingDetailPage({
           </div>
         </section>
       )}
+
+      {/* Avis sur l'annonce - APRÈS la carte */}
+      <ListingReviews listingId={listing.id} />
 
       {/* Actions propriétaire */}
       {isOwner && (
