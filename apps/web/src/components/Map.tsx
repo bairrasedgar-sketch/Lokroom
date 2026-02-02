@@ -501,8 +501,8 @@ export default function Map({
         (markerOverlay as any).onAdd = function() {
           const div = document.createElement("div");
           div.style.position = "absolute";
-          div.style.width = "150px";
-          div.style.height = "150px";
+          div.style.width = "250px";
+          div.style.height = "250px";
           div.style.cursor = "default";
 
           const img = document.createElement("img");
@@ -530,8 +530,8 @@ export default function Map({
           const div = (this as any).div;
           if (div) {
             // Centrer le marqueur sur la position
-            div.style.left = (pos.x - 75) + "px";
-            div.style.top = (pos.y - 75) + "px";
+            div.style.left = (pos.x - 125) + "px";
+            div.style.top = (pos.y - 125) + "px";
           }
         };
 
