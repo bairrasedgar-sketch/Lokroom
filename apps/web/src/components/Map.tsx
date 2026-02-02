@@ -508,17 +508,16 @@ export default function Map({
         map.setCenter(position);
 
         // Créer un overlay custom pour le marqueur
-        // Taille de base 250px au zoom de référence
-        // Quand on zoom (>baseZoom): grandit pour garder la même apparence visuelle
-        // Quand on dézoom (<baseZoom): reste à 250px (ne rétrécit pas)
+        // Taille fixe en pixels, ne change jamais
         const markerOverlay = new g.maps.OverlayView();
-        const BASE_ZOOM = initialZoom;
         const BASE_SIZE = isMobile ? 150 : 250;
 
         (markerOverlay as any).onAdd = function() {
           const div = document.createElement("div");
           div.style.position = "absolute";
           div.style.cursor = "default";
+          div.style.width = BASE_SIZE + "px";
+          div.style.height = BASE_SIZE + "px";
 
           const img = document.createElement("img");
           img.src = "/map-marker-lokroom-2.png";
@@ -544,18 +543,7 @@ export default function Map({
 
           const div = (this as any).div;
           if (div) {
-            const currentZoom = map.getZoom() || BASE_ZOOM;
-            let size = BASE_SIZE;
-
-            // Sur mobile: taille fixe toujours (même en mode fullscreen)
-            // Sur PC: grandit quand on zoom pour garder la même apparence
-            if (!isMobile && currentZoom > BASE_ZOOM) {
-              size = BASE_SIZE * Math.pow(2, currentZoom - BASE_ZOOM);
-            }
-
-            const halfSize = size / 2;
-            div.style.width = size + "px";
-            div.style.height = size + "px";
+            const halfSize = BASE_SIZE / 2;
             div.style.left = (pos.x - halfSize) + "px";
             div.style.top = (pos.y - halfSize) + "px";
           }
