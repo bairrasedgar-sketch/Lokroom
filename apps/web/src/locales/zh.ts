@@ -23,6 +23,7 @@ const zh = {
     previous: "上一步",
     submit: "提交",
     confirm: "确认",
+    ok: "确定",
     yes: "是",
     no: "否",
     or: "或",
@@ -1334,6 +1335,9 @@ const zh = {
       noReviewsDescription: "此空间尚未收到任何评论。成为第一个分享体验的人。",
       retry: "重试",
       showAllReviews: "显示全部 {count} 条评论",
+      serverError: "服务器错误。请稍后重试。",
+      reviewsNotFound: "无法找到评价。",
+      requestTimeout: "请求超时。请检查您的连接并重试。",
     },
 
     // BookingReviewForm
@@ -1441,6 +1445,8 @@ const zh = {
       viewDetails: "查看详情 →",
       zoomIn: "放大",
       zoomOut: "缩小",
+      loadError: "无法加载地图",
+      retry: "重试",
     },
 
     // FiltersBar
@@ -1642,6 +1648,9 @@ const zh = {
       perHourOption: "按小时",
       perDayOption: "按天",
       perNightOption: "按晚",
+      selectGuests: "请至少选择一位旅客",
+      tooManyGuests: "最多允许 {max} 位客人",
+      maxGuestsInfo: "最多 {max} 位客人",
     },
 
     // Navbar

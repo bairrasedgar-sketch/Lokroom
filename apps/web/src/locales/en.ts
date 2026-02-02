@@ -23,6 +23,7 @@ const en = {
     previous: "Previous",
     submit: "Submit",
     confirm: "Confirm",
+    ok: "OK",
     yes: "Yes",
     no: "No",
     or: "or",
@@ -1359,6 +1360,9 @@ const en = {
       noReviewsDescription: "This space has not received any reviews yet. Be the first to share your experience.",
       retry: "Retry",
       showAllReviews: "Show all {count} reviews",
+      serverError: "Server error. Please try again later.",
+      reviewsNotFound: "Reviews could not be found.",
+      requestTimeout: "Request timed out. Check your connection and try again.",
     },
 
     // BookingReviewForm
@@ -1466,6 +1470,8 @@ const en = {
       viewDetails: "View details →",
       zoomIn: "Zoom in",
       zoomOut: "Zoom out",
+      loadError: "Unable to load the map",
+      retry: "Retry",
     },
 
     // FiltersBar
@@ -1667,6 +1673,9 @@ const en = {
       perHourOption: "Per hour",
       perDayOption: "Per day",
       perNightOption: "Per night",
+      selectGuests: "Please select at least one traveler",
+      tooManyGuests: "Maximum {max} guests allowed",
+      maxGuestsInfo: "Maximum {max} guests",
     },
 
     // Navbar

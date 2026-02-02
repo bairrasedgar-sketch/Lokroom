@@ -380,7 +380,7 @@ export default async function ListingDetailPage({
               <div className="relative h-56 w-full overflow-hidden rounded-2xl border border-gray-200 bg-gray-100">
                 <div className="absolute inset-0 pointer-events-none">
                   <Map
-                    useLogoIcon
+                    useLogoIcon={true}
                     markers={[
                       {
                         id: listing.id,
@@ -458,6 +458,7 @@ export default async function ListingDetailPage({
             currency={listing.currency}
             priceFormatted={priceFormatted}
             isInstantBook={listing.isInstantBook ?? false}
+            maxGuests={listing.maxGuests ?? undefined}
           />
         )}
       </div>
@@ -596,7 +597,7 @@ export default async function ListingDetailPage({
               </p>
               <div className="relative mt-2 h-64 w-full overflow-hidden rounded-2xl border bg-gray-100">
                 <Map
-                  useLogoIcon
+                  useLogoIcon={true}
                   markers={[
                     {
                       id: listing.id,

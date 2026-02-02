@@ -128,6 +128,9 @@ type ListingReviewsTranslations = {
   noReviewsDescription: string;
   retry: string;
   showAllReviews: string;
+  serverError: string;
+  reviewsNotFound: string;
+  requestTimeout: string;
 };
 
 // Type for reviews translations
@@ -162,7 +165,7 @@ function ReviewCard({
         {review.author?.profile?.avatarUrl ? (
           <Image
             src={review.author.profile.avatarUrl}
-            alt={review.author.name || ""}
+            alt={`Photo de profil de ${review.author.name || "utilisateur"}`}
             width={48}
             height={48}
             className="rounded-full object-cover w-12 h-12"
@@ -279,15 +282,15 @@ function ReviewsModal({
   translations: ListingReviewsTranslations;
   reviewsTranslations: ReviewsTranslations;
 }) {
-  // Prevent body scroll when modal is open
+  // Prevent body scroll when modal is open with robust cleanup
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    if (!isOpen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = originalOverflow;
     };
   }, [isOpen]);
 
@@ -402,13 +405,22 @@ export default function ListingReviews({ listingId }: ListingReviewsProps) {
     setLoading(true);
     setError(null);
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
     try {
       const res = await fetch(
-        `/api/reviews?listingId=${listingId}&page=${pageNum}&limit=6`
+        `/api/reviews?listingId=${listingId}&page=${pageNum}&limit=6`,
+        { signal: controller.signal }
       );
 
       if (!res.ok) {
-        throw new Error(translations.loadError);
+        const statusText = res.status === 500
+          ? translations.serverError
+          : res.status === 404
+          ? translations.reviewsNotFound
+          : `${translations.loadError} (code: ${res.status})`;
+        throw new Error(statusText);
       }
 
       const data = await res.json();
@@ -422,9 +434,13 @@ export default function ListingReviews({ listingId }: ListingReviewsProps) {
       setStats(data.stats);
       setHasMore(data.pagination?.page < data.pagination?.totalPages);
     } catch (e) {
-      if (e instanceof Error && e.name === "AbortError") return;
+      if (e instanceof Error && e.name === "AbortError") {
+        setError(translations.requestTimeout);
+        return;
+      }
       setError(e instanceof Error ? e.message : translations.loadErrorMessage);
     } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
     }
   }, [listingId, translations.loadError, translations.loadErrorMessage]);
@@ -440,7 +456,8 @@ export default function ListingReviews({ listingId }: ListingReviewsProps) {
   };
 
   const hasReviews = reviews.length > 0;
-  const displayedReviews = reviews.slice(0, 6);
+  // Afficher les 6 premiers avis sur la page principale (les autres sont dans la modal)
+  const displayedReviews = reviews.slice(0, Math.min(6, reviews.length));
 
   return (
     <section id="reviews" className="py-12 border-t border-gray-200">

@@ -23,6 +23,7 @@ const fr = {
     previous: "Précédent",
     submit: "Envoyer",
     confirm: "Confirmer",
+    ok: "OK",
     yes: "Oui",
     no: "Non",
     or: "ou",
@@ -1353,6 +1354,9 @@ const fr = {
       noReviewsDescription: "Cet espace n'a pas encore reçu de commentaires. Soyez le premier à partager votre expérience.",
       retry: "Réessayer",
       showAllReviews: "Afficher les {count} commentaires",
+      serverError: "Erreur serveur. Veuillez réessayer plus tard.",
+      reviewsNotFound: "Les avis n'ont pas pu être trouvés.",
+      requestTimeout: "La requête a expiré. Vérifiez votre connexion et réessayez.",
     },
 
     // BookingReviewForm
@@ -1460,6 +1464,8 @@ const fr = {
       viewDetails: "Voir détails →",
       zoomIn: "Zoom avant",
       zoomOut: "Zoom arrière",
+      loadError: "Impossible de charger la carte",
+      retry: "Réessayer",
     },
 
     // FiltersBar
@@ -1661,6 +1667,9 @@ const fr = {
       perHourOption: "À l'heure",
       perDayOption: "À la journée",
       perNightOption: "À la nuit",
+      selectGuests: "Veuillez sélectionner au moins un voyageur",
+      tooManyGuests: "Maximum {max} voyageurs autorisés",
+      maxGuestsInfo: "Maximum {max} voyageurs",
     },
 
     // Navbar
