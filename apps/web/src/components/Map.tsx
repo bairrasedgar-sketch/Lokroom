@@ -491,17 +491,20 @@ export default function Map({
           });
         }
 
-        // Centrer et zoomer sur la position (niveau quartier/rue)
+        // Centrer et zoomer sur la position
+        // Mobile: zoom 14 (moins zoomé), PC: zoom 16 (niveau rue)
         map.setCenter(position);
-        map.setZoom(16);
+        const isMobile = window.innerWidth < 1024;
+        const initialZoom = isMobile ? 14 : 16;
+        map.setZoom(initialZoom);
 
         // Créer un overlay custom pour le marqueur
-        // Taille de base 250px au zoom 16
-        // Quand on zoom (>16): grandit pour garder la même apparence visuelle
-        // Quand on dézoom (<16): reste à 250px (ne rétrécit pas)
+        // Taille de base 250px au zoom de référence
+        // Quand on zoom (>baseZoom): grandit pour garder la même apparence visuelle
+        // Quand on dézoom (<baseZoom): reste à 250px (ne rétrécit pas)
         const markerOverlay = new g.maps.OverlayView();
-        const BASE_ZOOM = 16;
-        const BASE_SIZE = 250;
+        const BASE_ZOOM = initialZoom;
+        const BASE_SIZE = isMobile ? 150 : 250;
 
         (markerOverlay as any).onAdd = function() {
           const div = document.createElement("div");
