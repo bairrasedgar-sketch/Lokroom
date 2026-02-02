@@ -476,18 +476,15 @@ export default function Map({
             clickableIcons: false,
           });
         } else {
-          // Carte petite sur PC: déplacement OK, zoom boutons OK, mais PAS de zoom molette
+          // Carte petite sur PC: déplacement OK, PAS de zoom molette, PAS de boutons zoom Google
           map.setOptions({
             draggable: true,
-            zoomControl: true,
+            zoomControl: false,
             scrollwheel: false,
             disableDoubleClickZoom: true,
-            gestureHandling: "cooperative",
-            keyboardShortcuts: true,
+            gestureHandling: "none",
+            keyboardShortcuts: false,
             clickableIcons: false,
-            zoomControlOptions: {
-              position: g.maps.ControlPosition.LEFT_CENTER,
-            },
           });
         }
 

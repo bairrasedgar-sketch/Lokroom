@@ -635,17 +635,57 @@ export default async function ListingDetailPage({
             {t.listingDetail.exactLocationNote}
           </p>
           <div className="relative mt-2 h-[450px] w-full overflow-hidden rounded-2xl border bg-gray-100">
-            <Map
-              useLogoIcon={true}
-              markers={[
-                {
-                  id: listing.id,
-                  lat: lat as number,
-                  lng: lng as number,
-                  label: priceFormatted,
-                },
-              ]}
-            />
+            {/* Carte avec overlay pour permettre scroll page */}
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="w-full h-full pointer-events-auto" style={{ pointerEvents: 'auto' }}>
+                <Map
+                  useLogoIcon={true}
+                  markers={[
+                    {
+                      id: listing.id,
+                      lat: lat as number,
+                      lng: lng as number,
+                      label: priceFormatted,
+                    },
+                  ]}
+                />
+              </div>
+            </div>
+            {/* Boutons de zoom custom en bas à gauche */}
+            <div className="absolute bottom-3 left-3 z-20 flex flex-col gap-1">
+              <button
+                type="button"
+                onClick={() => {
+                  const mapContainer = document.querySelector('[data-map-container="true"]');
+                  if (mapContainer) {
+                    const event = new CustomEvent('map-zoom-in');
+                    mapContainer.dispatchEvent(event);
+                  }
+                }}
+                className="flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-lg border border-gray-200 hover:bg-gray-50 transition"
+                aria-label="Zoom in"
+              >
+                <svg className="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const mapContainer = document.querySelector('[data-map-container="true"]');
+                  if (mapContainer) {
+                    const event = new CustomEvent('map-zoom-out');
+                    mapContainer.dispatchEvent(event);
+                  }
+                }}
+                className="flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-lg border border-gray-200 hover:bg-gray-50 transition"
+                aria-label="Zoom out"
+              >
+                <svg className="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
+                </svg>
+              </button>
+            </div>
             <div className="absolute bottom-3 right-3 z-10">
               <MapExpandButton
                 marker={{
