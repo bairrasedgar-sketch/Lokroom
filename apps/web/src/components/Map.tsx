@@ -471,7 +471,7 @@ export default function Map({
         if (interactive) {
           map.setOptions({
             draggable: true,
-            zoomControl: true,
+            zoomControl: false,
             scrollwheel: true,
             disableDoubleClickZoom: false,
             gestureHandling: "greedy",
@@ -735,6 +735,33 @@ export default function Map({
 
     container.addEventListener('wheel', handleWheel, { passive: true });
     return () => container.removeEventListener('wheel', handleWheel);
+  }, [useLogoIcon, interactive]);
+
+  // Écouter les événements de zoom pour la carte plein écran
+  useEffect(() => {
+    if (!useLogoIcon || !interactive) return;
+
+    const handleZoomIn = () => {
+      if (mapRef.current) {
+        const currentZoom = mapRef.current.getZoom() || 12;
+        mapRef.current.setZoom(currentZoom + 1);
+      }
+    };
+
+    const handleZoomOut = () => {
+      if (mapRef.current) {
+        const currentZoom = mapRef.current.getZoom() || 12;
+        mapRef.current.setZoom(currentZoom - 1);
+      }
+    };
+
+    window.addEventListener('map-fullscreen-zoom-in', handleZoomIn);
+    window.addEventListener('map-fullscreen-zoom-out', handleZoomOut);
+
+    return () => {
+      window.removeEventListener('map-fullscreen-zoom-in', handleZoomIn);
+      window.removeEventListener('map-fullscreen-zoom-out', handleZoomOut);
+    };
   }, [useLogoIcon, interactive]);
 
   return (

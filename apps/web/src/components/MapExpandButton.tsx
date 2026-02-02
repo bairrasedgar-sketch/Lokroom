@@ -148,7 +148,34 @@ export default function MapExpandButton({ marker, locationLabel, fullScreen = fa
                   </button>
                 </div>
               ) : (
-                <Map markers={[marker]} useLogoIcon={true} interactive={true} />
+                <>
+                  <Map markers={[marker]} useLogoIcon={true} interactive={true} />
+                  {/* Boutons zoom custom ronds en bas à droite - PC uniquement */}
+                  <div className="absolute bottom-4 right-4 z-10 hidden lg:flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const event = new CustomEvent('map-fullscreen-zoom-in');
+                        window.dispatchEvent(event);
+                      }}
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg font-medium text-gray-700 shadow-lg border border-gray-200 transition-all hover:bg-gray-50 hover:shadow-xl active:scale-95"
+                      aria-label="Zoom in"
+                    >
+                      +
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const event = new CustomEvent('map-fullscreen-zoom-out');
+                        window.dispatchEvent(event);
+                      }}
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg font-medium text-gray-700 shadow-lg border border-gray-200 transition-all hover:bg-gray-50 hover:shadow-xl active:scale-95"
+                      aria-label="Zoom out"
+                    >
+                      −
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           </div>
