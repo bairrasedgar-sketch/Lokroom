@@ -899,6 +899,39 @@ export default function NewListingPage() {
     }
   }, []);
 
+  // Poll for Google Maps to be ready (in case it's loaded by another component)
+  useEffect(() => {
+    if (mapsReady) return;
+
+    const checkGoogleMaps = () => {
+      const g = (window as { google?: { maps?: { places?: unknown } } }).google;
+      if (g?.maps?.places) {
+        setMapsReady(true);
+        return true;
+      }
+      return false;
+    };
+
+    // Check immediately
+    if (checkGoogleMaps()) return;
+
+    // Poll every 100ms for up to 10 seconds
+    const interval = setInterval(() => {
+      if (checkGoogleMaps()) {
+        clearInterval(interval);
+      }
+    }, 100);
+
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+    }, 10000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [mapsReady]);
+
   // Setup address autocomplete for map step
   useEffect(() => {
     if (!mapsReady || currentStep !== "map") return;
@@ -1441,7 +1474,7 @@ export default function NewListingPage() {
 
   return (
     <>
-      {apiKey && (
+      {apiKey && !mapsReady && (
         <Script
           src={`https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`}
           strategy="afterInteractive"
