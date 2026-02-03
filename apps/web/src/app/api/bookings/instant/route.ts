@@ -346,19 +346,28 @@ export async function POST(req: NextRequest) {
   }
 
   // Traiter la réservation (conversation, message auto, blocage calendrier)
-  const processResult = await processInstantBooking(booking.id);
+  // SEULEMENT si le paiement a été effectué avec succès
+  let processResult: { success: boolean; conversation?: unknown; error?: string } = { success: false };
 
-  if (!processResult.success) {
-    console.error("[InstantBook] Process error:", processResult.error);
-    // La réservation est déjà créée, on continue quand même
-  }
+  if (paymentIntent && paymentIntent.status === "succeeded") {
+    // Mettre à jour le statut à CONFIRMED après paiement réussi
+    await prisma.booking.update({
+      where: { id: booking.id },
+      data: { status: "CONFIRMED" },
+    });
 
-  // Envoyer les notifications
-  try {
-    await sendInstantBookNotifications(booking.id);
-  } catch (notifError) {
-    console.error("[InstantBook] Notification error:", notifError);
-    // On ne bloque pas si les notifications échouent
+    processResult = await processInstantBooking(booking.id);
+
+    if (!processResult.success) {
+      console.error("[InstantBook] Process error:", processResult.error);
+    }
+
+    // Envoyer les notifications SEULEMENT après paiement réussi
+    try {
+      await sendInstantBookNotifications(booking.id);
+    } catch (notifError) {
+      console.error("[InstantBook] Notification error:", notifError);
+    }
   }
 
   return NextResponse.json({
