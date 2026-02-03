@@ -257,9 +257,9 @@ export const createBookingSchema = z
     guests: z.union([
       z.number().int().min(1).max(100),
       z.object({
-        adults: z.number().int().min(0).max(100).default(1),
-        children: z.number().int().min(0).max(100).default(0),
-        infants: z.number().int().min(0).max(100).default(0),
+        adults: z.number().int().min(1).max(100),
+        children: z.number().int().min(0).max(100),
+        infants: z.number().int().min(0).max(100),
       }),
     ]).optional(),
     promoCodeId: idSchema.optional(),
