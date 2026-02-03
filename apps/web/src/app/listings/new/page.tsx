@@ -985,12 +985,18 @@ export default function NewListingPage() {
         lngPublic,
       }));
 
-      // Update map view
+      // Update map view and move marker to the new position
       const mapElement = document.getElementById("google-map");
-      if (mapElement && (mapElement as MapElementWithGmap).__gmap) {
-        const map = (mapElement as MapElementWithGmap).__gmap!;
-        map.setCenter({ lat, lng });
-        map.setZoom(15);
+      if (mapElement) {
+        const mapWithRefs = mapElement as MapElementWithGmap & { __marker?: GoogleMarker };
+        if (mapWithRefs.__gmap) {
+          mapWithRefs.__gmap.setCenter({ lat, lng });
+          mapWithRefs.__gmap.setZoom(16);
+        }
+        // Move marker to the new position
+        if (mapWithRefs.__marker) {
+          mapWithRefs.__marker.setPosition({ lat, lng });
+        }
       }
     });
 
@@ -1019,53 +1025,48 @@ export default function NewListingPage() {
       ? { lat: formData.lat, lng: formData.lng }
       : defaultCenter;
 
-    // Clean, minimal map style with green tones like Lok'Room
+    // Style écologique pour la map (même que les autres pages Lokroom)
     const mapStyles = [
-      {
-        featureType: "poi",
-        elementType: "labels",
-        stylers: [{ visibility: "off" }],
-      },
-      {
-        featureType: "transit",
-        elementType: "labels",
-        stylers: [{ visibility: "off" }],
-      },
-      {
-        featureType: "road",
-        elementType: "labels.icon",
-        stylers: [{ visibility: "off" }],
-      },
-      {
-        featureType: "water",
-        elementType: "geometry.fill",
-        stylers: [{ color: "#a8dcd1" }],
-      },
-      {
-        featureType: "landscape",
-        elementType: "geometry.fill",
-        stylers: [{ color: "#e8f5e9" }],
-      },
-      {
-        featureType: "road",
-        elementType: "geometry.fill",
-        stylers: [{ color: "#ffffff" }],
-      },
-      {
-        featureType: "road",
-        elementType: "geometry.stroke",
-        stylers: [{ color: "#c8e6c9" }],
-      },
-      {
-        featureType: "road.highway",
-        elementType: "geometry.fill",
-        stylers: [{ color: "#fff9c4" }],
-      },
-      {
-        featureType: "administrative",
-        elementType: "geometry.stroke",
-        stylers: [{ color: "#81c784" }],
-      },
+      // Fond général - beige chaud et reposant
+      { featureType: "landscape", elementType: "geometry.fill", stylers: [{ color: "#f5efe6" }] },
+      { featureType: "landscape.natural", elementType: "geometry.fill", stylers: [{ color: "#f0e9de" }] },
+      { featureType: "landscape.man_made", elementType: "geometry.fill", stylers: [{ color: "#f7f2ea" }] },
+      // Parcs et espaces verts - vert écologique #a5d8a1
+      { featureType: "poi.park", elementType: "geometry.fill", stylers: [{ color: "#a5d8a1" }] },
+      { featureType: "poi.park", elementType: "labels.text.fill", stylers: [{ color: "#4a7c47" }] },
+      // Forêts et végétation
+      { featureType: "landscape.natural.terrain", elementType: "geometry.fill", stylers: [{ color: "#b8e0b4" }] },
+      { featureType: "landscape.natural.landcover", elementType: "geometry.fill", stylers: [{ color: "#c2e8be" }] },
+      // Autres POI - beige avec touches subtiles
+      { featureType: "poi.attraction", elementType: "geometry.fill", stylers: [{ color: "#ebe4d8" }] },
+      { featureType: "poi.business", elementType: "geometry.fill", stylers: [{ color: "#f5efe6" }] },
+      { featureType: "poi.school", elementType: "geometry.fill", stylers: [{ color: "#f0e9de" }] },
+      { featureType: "poi.medical", elementType: "geometry.fill", stylers: [{ color: "#f7f2ea" }] },
+      { featureType: "poi.sports_complex", elementType: "geometry.fill", stylers: [{ color: "#a5d8a1" }] },
+      { featureType: "poi.government", elementType: "geometry.fill", stylers: [{ color: "#ebe4d8" }] },
+      { featureType: "poi.place_of_worship", elementType: "geometry.fill", stylers: [{ color: "#f0e9de" }] },
+      // Cacher les icônes POI
+      { featureType: "poi", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+      { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#8a7a65" }] },
+      // Eau - bleu doux #cae8f2
+      { featureType: "water", elementType: "geometry.fill", stylers: [{ color: "#cae8f2" }] },
+      { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#5a9aaa" }] },
+      // Routes
+      { featureType: "road.highway", elementType: "geometry.fill", stylers: [{ color: "#ffffff" }] },
+      { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#e8e0d5" }] },
+      { featureType: "road.arterial", elementType: "geometry.fill", stylers: [{ color: "#fdfbf8" }] },
+      { featureType: "road.arterial", elementType: "geometry.stroke", stylers: [{ color: "#ebe4d8" }] },
+      { featureType: "road.local", elementType: "geometry.fill", stylers: [{ color: "#faf7f2" }] },
+      { featureType: "road.local", elementType: "geometry.stroke", stylers: [{ color: "#ebe4d8" }] },
+      { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#8a7a65" }] },
+      // Transit
+      { featureType: "transit.station", elementType: "geometry.fill", stylers: [{ color: "#ebe4d8" }] },
+      { featureType: "transit.line", elementType: "geometry.fill", stylers: [{ color: "#e0d8cc" }] },
+      { featureType: "transit", elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+      // Labels
+      { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#5a5045" }] },
+      { featureType: "administrative.neighborhood", elementType: "labels.text.fill", stylers: [{ color: "#7a6a5a" }] },
+      { featureType: "administrative.land_parcel", elementType: "labels.text.fill", stylers: [{ color: "#9a8a7a" }] },
     ];
 
     const map = new g.maps.Map(container, {
@@ -1108,13 +1109,51 @@ export default function NewListingPage() {
         const latPublic = Math.round(lat * 1000) / 1000;
         const lngPublic = Math.round(lng * 1000) / 1000;
 
-        setFormData((prev) => ({
-          ...prev,
-          lat,
-          lng,
-          latPublic,
-          lngPublic,
-        }));
+        // Reverse geocoding pour obtenir l'adresse à partir des coordonnées
+        const geocoder = new g.maps.Geocoder();
+        geocoder.geocode({ location: { lat, lng } }, (results: google.maps.GeocoderResult[] | null, status: string) => {
+          if (status === "OK" && results && results[0]) {
+            const place = results[0];
+            let streetNumber = "";
+            let route = "";
+            let city = "";
+            let postalCode = "";
+
+            for (const comp of place.address_components || []) {
+              if (comp.types.includes("street_number")) streetNumber = comp.long_name;
+              if (comp.types.includes("route")) route = comp.long_name;
+              if (comp.types.includes("locality")) city = comp.long_name;
+              if (comp.types.includes("postal_code")) postalCode = comp.long_name;
+            }
+
+            setFormData((prev) => ({
+              ...prev,
+              addressFull: place.formatted_address || prev.addressFull,
+              addressLine1: streetNumber ? `${streetNumber} ${route}` : route || prev.addressLine1,
+              city: city || prev.city,
+              postalCode: postalCode || prev.postalCode,
+              lat,
+              lng,
+              latPublic,
+              lngPublic,
+            }));
+
+            // Mettre à jour le champ de recherche avec l'adresse
+            const input = document.getElementById("addressSearch") as HTMLInputElement | null;
+            if (input) {
+              input.value = place.formatted_address || "";
+            }
+          } else {
+            // Si le geocoding échoue, on met juste à jour les coordonnées
+            setFormData((prev) => ({
+              ...prev,
+              lat,
+              lng,
+              latPublic,
+              lngPublic,
+            }));
+          }
+        });
       }
     });
 
