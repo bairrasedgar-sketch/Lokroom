@@ -14,10 +14,23 @@ import { getCroppedImage, type PixelCrop } from "@/lib/cropImage";
 // GOOGLE MAPS TYPES (simplified for TypeScript compatibility)
 // ============================================================================
 /* eslint-disable @typescript-eslint/no-explicit-any */
+type GoogleGeocoderResult = {
+  formatted_address?: string;
+  address_components?: Array<{ types: string[]; long_name: string }>;
+};
+
+type GoogleGeocoder = {
+  geocode: (
+    request: { location: { lat: number; lng: number } },
+    callback: (results: GoogleGeocoderResult[] | null, status: string) => void
+  ) => void;
+};
+
 type GoogleMapsAPI = {
   maps: {
     Map: new (container: HTMLElement, options: Record<string, unknown>) => GoogleMap;
     Marker: new (options: Record<string, unknown>) => GoogleMarker;
+    Geocoder: new () => GoogleGeocoder;
     Size: new (width: number, height: number) => unknown;
     Point: new (x: number, y: number) => unknown;
     Animation: { DROP: unknown };
@@ -1111,7 +1124,7 @@ export default function NewListingPage() {
 
         // Reverse geocoding pour obtenir l'adresse à partir des coordonnées
         const geocoder = new g.maps.Geocoder();
-        geocoder.geocode({ location: { lat, lng } }, (results: google.maps.GeocoderResult[] | null, status: string) => {
+        geocoder.geocode({ location: { lat, lng } }, (results: GoogleGeocoderResult[] | null, status: string) => {
           if (status === "OK" && results && results[0]) {
             const place = results[0];
             let streetNumber = "";
