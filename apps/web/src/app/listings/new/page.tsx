@@ -1019,7 +1019,7 @@ export default function NewListingPage() {
       ? { lat: formData.lat, lng: formData.lng }
       : defaultCenter;
 
-    // Clean, minimal map style like Airbnb
+    // Clean, minimal map style with green tones like Lok'Room
     const mapStyles = [
       {
         featureType: "poi",
@@ -1039,12 +1039,12 @@ export default function NewListingPage() {
       {
         featureType: "water",
         elementType: "geometry.fill",
-        stylers: [{ color: "#c8e0f0" }],
+        stylers: [{ color: "#a8dcd1" }],
       },
       {
         featureType: "landscape",
         elementType: "geometry.fill",
-        stylers: [{ color: "#f5f5f5" }],
+        stylers: [{ color: "#e8f5e9" }],
       },
       {
         featureType: "road",
@@ -1054,7 +1054,17 @@ export default function NewListingPage() {
       {
         featureType: "road",
         elementType: "geometry.stroke",
-        stylers: [{ color: "#e0e0e0" }],
+        stylers: [{ color: "#c8e6c9" }],
+      },
+      {
+        featureType: "road.highway",
+        elementType: "geometry.fill",
+        stylers: [{ color: "#fff9c4" }],
+      },
+      {
+        featureType: "administrative",
+        elementType: "geometry.stroke",
+        stylers: [{ color: "#81c784" }],
       },
     ];
 
@@ -1074,8 +1084,8 @@ export default function NewListingPage() {
     // Custom marker icon
     const customIcon = {
       url: "/map-marker-lokroom création d'annonce.png",
-      scaledSize: new g.maps.Size(50, 50),
-      anchor: new g.maps.Point(25, 25), // Anchor at center
+      scaledSize: new g.maps.Size(60, 60),
+      anchor: new g.maps.Point(30, 30), // Anchor at center
     };
 
     const marker = new g.maps.Marker({
@@ -1085,6 +1095,9 @@ export default function NewListingPage() {
       animation: g.maps.Animation.DROP,
       icon: customIcon,
     });
+
+    // Store marker reference for external access
+    (container as MapElementWithGmap & { __marker?: GoogleMarker }).__marker = marker;
 
     // Update position when marker is dragged
     marker.addListener("dragend", () => {
