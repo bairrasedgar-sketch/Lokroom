@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
     startDate?: string;
     endDate?: string;
     paymentMethodId?: string;
-    guests?: number;
+    guests?: number | { adults?: number; children?: number; infants?: number };
     pricingMode?: string;
   };
 
