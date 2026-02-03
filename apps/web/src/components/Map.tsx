@@ -508,14 +508,18 @@ export default function Map({
         map.setCenter(position);
 
         // Créer un overlay custom pour le marqueur
-        // Taille fixe en pixels, ne change jamais
+        // Taille qui s'adapte au zoom pour couvrir toujours la même zone géographique
         const markerOverlay = new g.maps.OverlayView();
+        const BASE_ZOOM = initialZoom;
         const BASE_SIZE = isMobile ? 150 : 250;
 
         (markerOverlay as any).onAdd = function() {
           const div = document.createElement("div");
           div.style.position = "absolute";
           div.style.cursor = "default";
+          // Transition fluide pour le redimensionnement
+          div.style.transition = "transform 0.25s ease-out";
+          div.style.transformOrigin = "center center";
           div.style.width = BASE_SIZE + "px";
           div.style.height = BASE_SIZE + "px";
 
@@ -543,9 +547,18 @@ export default function Map({
 
           const div = (this as any).div;
           if (div) {
+            const currentZoom = map.getZoom() || BASE_ZOOM;
+
+            // Calculer le scale pour que le marqueur couvre toujours la même zone
+            let scale = 1;
+            if (currentZoom > BASE_ZOOM) {
+              scale = Math.pow(2, currentZoom - BASE_ZOOM);
+            }
+
             const halfSize = BASE_SIZE / 2;
             div.style.left = (pos.x - halfSize) + "px";
             div.style.top = (pos.y - halfSize) + "px";
+            div.style.transform = `scale(${scale})`;
           }
         };
 
