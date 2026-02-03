@@ -473,9 +473,48 @@ function PaymentsHistory() {
 }
 
 // ---------- Versements Stripe ----------
+type StripeStatus = {
+  configured: boolean;
+  payoutsEnabled: boolean;
+  kycStatus: string | null;
+  bankAccount: {
+    last4: string;
+    bankName: string;
+    country: string;
+    currency: string;
+  } | null;
+  chargesEnabled?: boolean;
+  detailsSubmitted?: boolean;
+  requirements?: {
+    currentlyDue: string[];
+    pendingVerification: string[];
+  };
+};
+
 function PayoutStripeCard() {
   const [loading, setLoading] = useState(false);
+  const [statusLoading, setStatusLoading] = useState(true);
+  const [status, setStatus] = useState<StripeStatus | null>(null);
   const { t } = useTranslation();
+
+  // Charger le statut au montage
+  useEffect(() => {
+    async function loadStatus() {
+      try {
+        const res = await fetch("/api/host/stripe/status");
+        if (res.ok) {
+          const data = await res.json();
+          setStatus(data);
+        }
+      } catch (error) {
+        console.error("Failed to load Stripe status:", error);
+      } finally {
+        setStatusLoading(false);
+      }
+    }
+
+    void loadStatus();
+  }, []);
 
   async function handleConfigure() {
     try {
@@ -504,31 +543,80 @@ function PayoutStripeCard() {
     }
   }
 
+  const isConfigured = status?.configured && status?.payoutsEnabled && status?.bankAccount;
+
   return (
     <div className="space-y-6">
       {/* Carte configuration Stripe */}
       <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
         <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-100">
-            <StripeIcon className="h-6 w-6 text-indigo-600" />
+          <div className={`flex h-12 w-12 items-center justify-center rounded-full ${isConfigured ? 'bg-emerald-100' : 'bg-indigo-100'}`}>
+            {isConfigured ? (
+              <CheckCircleIcon className="h-6 w-6 text-emerald-600" />
+            ) : (
+              <StripeIcon className="h-6 w-6 text-indigo-600" />
+            )}
           </div>
           <div className="flex-1">
             <h3 className="text-base font-semibold text-gray-900">
               {t.paymentsPage?.stripePayouts || "Versements Stripe"}
             </h3>
-            <p className="mt-1 text-sm text-gray-500">
-              {t.paymentsPage?.stripePayoutsDesc || "Configurez votre compte Stripe pour recevoir vos paiements directement sur votre compte bancaire."}
-            </p>
+            {statusLoading ? (
+              <div className="mt-2 flex items-center gap-2">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+                <span className="text-sm text-gray-500">Chargement...</span>
+              </div>
+            ) : isConfigured && status?.bankAccount ? (
+              <div className="mt-2 space-y-2">
+                <div className="flex items-center gap-2">
+                  <CheckCircleIcon className="h-4 w-4 text-emerald-500" />
+                  <span className="text-sm text-emerald-600 font-medium">Versements configurés</span>
+                </div>
+                <div className="rounded-lg bg-gray-50 p-3">
+                  <p className="text-xs text-gray-500 mb-1">Compte bancaire</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {status.bankAccount.bankName} •••• {status.bankAccount.last4}
+                  </p>
+                  {status.bankAccount.country && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      {status.bankAccount.country} - {status.bankAccount.currency}
+                    </p>
+                  )}
+                </div>
+              </div>
+            ) : status?.configured && !status?.payoutsEnabled ? (
+              <div className="mt-2 space-y-2">
+                <div className="flex items-center gap-2">
+                  <ClockIcon className="h-4 w-4 text-amber-500" />
+                  <span className="text-sm text-amber-600 font-medium">Configuration incomplète</span>
+                </div>
+                <p className="text-sm text-gray-500">
+                  Veuillez compléter la configuration de votre compte Stripe pour recevoir vos versements.
+                </p>
+              </div>
+            ) : (
+              <p className="mt-1 text-sm text-gray-500">
+                {t.paymentsPage?.stripePayoutsDesc || "Configurez votre compte Stripe pour recevoir vos paiements directement sur votre compte bancaire."}
+              </p>
+            )}
           </div>
         </div>
 
         <button
           type="button"
           onClick={handleConfigure}
-          disabled={loading}
-          className="mt-6 w-full rounded-xl bg-gray-900 px-5 py-3 text-sm font-medium text-white hover:bg-black disabled:cursor-not-allowed disabled:opacity-60 transition"
+          disabled={loading || statusLoading}
+          className={`mt-6 w-full rounded-xl px-5 py-3 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${
+            isConfigured
+              ? "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              : "bg-gray-900 text-white hover:bg-black"
+          }`}
         >
-          {loading ? (t.paymentsPage?.redirectingToStripe || "Redirection...") : (t.paymentsPage?.configurePayouts || "Configurer les versements")}
+          {loading
+            ? (t.paymentsPage?.redirectingToStripe || "Redirection...")
+            : isConfigured
+            ? "Modifier les informations bancaires"
+            : (t.paymentsPage?.configurePayouts || "Configurer les versements")}
         </button>
 
         <p className="mt-3 text-center text-xs text-gray-400">
