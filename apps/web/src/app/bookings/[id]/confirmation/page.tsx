@@ -29,9 +29,9 @@ type BookingDetails = {
       } | null;
     };
   };
-  conversation?: {
+  conversations?: {
     id: string;
-  } | null;
+  }[] | null;
 };
 
 export default function BookingConfirmationPage({
@@ -224,7 +224,7 @@ export default function BookingConfirmationPage({
               </div>
             </div>
             <Link
-              href={booking.conversation ? `/messages/${booking.conversation.id}` : `/messages?listingId=${booking.listing.id}`}
+              href={booking.conversations?.[0] ? `/messages/${booking.conversations[0].id}` : `/messages?listingId=${booking.listing.id}`}
               className="flex items-center gap-2 rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-black transition"
             >
               <ChatBubbleLeftRightIcon className="h-4 w-4" />

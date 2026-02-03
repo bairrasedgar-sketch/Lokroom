@@ -57,10 +57,11 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
           email: true,
         },
       },
-      conversation: {
+      conversations: {
         select: {
           id: true,
         },
+        take: 1,
       },
     },
   });
