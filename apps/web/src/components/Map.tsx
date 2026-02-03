@@ -508,7 +508,9 @@ export default function Map({
         map.setCenter(position);
 
         // Créer un overlay custom pour le marqueur
-        // Taille qui s'adapte au zoom pour couvrir toujours la même zone géographique
+        // Deux images superposées:
+        // - Extérieur (map-marker-lokroom-2.png): taille FIXE, ne bouge jamais
+        // - Intérieur (map-marker-lokroom interieur-2.png): grandit/rétréci au zoom
         const markerOverlay = new g.maps.OverlayView();
         const BASE_ZOOM = initialZoom;
         const BASE_SIZE = isMobile ? 150 : 250;
@@ -517,20 +519,35 @@ export default function Map({
           const div = document.createElement("div");
           div.style.position = "absolute";
           div.style.cursor = "default";
-          // Transition fluide pour le redimensionnement
-          div.style.transition = "transform 0.25s ease-out";
-          div.style.transformOrigin = "center center";
           div.style.width = BASE_SIZE + "px";
           div.style.height = BASE_SIZE + "px";
 
-          const img = document.createElement("img");
-          img.src = "/map-marker-lokroom-2.png";
-          img.style.width = "100%";
-          img.style.height = "100%";
-          img.style.objectFit = "contain";
+          // Image extérieure - FIXE, ne change jamais de taille
+          const imgOuter = document.createElement("img");
+          imgOuter.src = "/map-marker-lokroom-2.png";
+          imgOuter.style.position = "absolute";
+          imgOuter.style.width = "100%";
+          imgOuter.style.height = "100%";
+          imgOuter.style.objectFit = "contain";
+          imgOuter.style.top = "0";
+          imgOuter.style.left = "0";
 
-          div.appendChild(img);
+          // Image intérieure - grandit/rétréci au zoom
+          const imgInner = document.createElement("img");
+          imgInner.src = "/map-marker-lokroom interieur-2.png";
+          imgInner.style.position = "absolute";
+          imgInner.style.width = "100%";
+          imgInner.style.height = "100%";
+          imgInner.style.objectFit = "contain";
+          imgInner.style.top = "0";
+          imgInner.style.left = "0";
+          imgInner.style.transition = "transform 0.25s ease-out";
+          imgInner.style.transformOrigin = "center center";
+
+          div.appendChild(imgOuter);
+          div.appendChild(imgInner);
           (this as any).div = div;
+          (this as any).imgInner = imgInner;
 
           const panes = this.getPanes();
           if (panes) {
@@ -546,19 +563,23 @@ export default function Map({
           if (!pos) return;
 
           const div = (this as any).div;
+          const imgInner = (this as any).imgInner;
           if (div) {
-            const currentZoom = map.getZoom() || BASE_ZOOM;
-
-            // Calculer le scale pour que le marqueur couvre toujours la même zone
-            let scale = 1;
-            if (currentZoom > BASE_ZOOM) {
-              scale = Math.pow(2, currentZoom - BASE_ZOOM);
-            }
-
             const halfSize = BASE_SIZE / 2;
             div.style.left = (pos.x - halfSize) + "px";
             div.style.top = (pos.y - halfSize) + "px";
-            div.style.transform = `scale(${scale})`;
+
+            // Calculer le scale pour l'image intérieure
+            if (imgInner) {
+              const currentZoom = map.getZoom() || BASE_ZOOM;
+              let scale = 1;
+              if (currentZoom > BASE_ZOOM) {
+                scale = Math.pow(2, currentZoom - BASE_ZOOM);
+              } else if (currentZoom < BASE_ZOOM) {
+                scale = Math.pow(2, currentZoom - BASE_ZOOM);
+              }
+              imgInner.style.transform = `scale(${scale})`;
+            }
           }
         };
 
