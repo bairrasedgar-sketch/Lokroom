@@ -33,7 +33,17 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
           price: true,
           currency: true,
           ownerId: true,
-          images: { select: { id: true, url: true }, take: 1 },
+          city: true,
+          country: true,
+          addressFull: true,
+          images: { select: { id: true, url: true }, take: 1, orderBy: { position: "asc" } },
+          owner: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+            },
+          },
         },
       },
       guest: {
@@ -41,6 +51,11 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
           id: true,
           name: true,
           email: true,
+        },
+      },
+      conversation: {
+        select: {
+          id: true,
         },
       },
     },

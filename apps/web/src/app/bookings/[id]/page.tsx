@@ -218,13 +218,13 @@ function StripePaymentForm(props: {
 
       if (paymentIntent?.status === "succeeded") {
         toast.success(t.payment.paymentConfirmed);
-        router.push("/bookings?paid=1");
+        router.push(`/bookings/${props.bookingId}/confirmation`);
         return;
       }
 
       if (paymentIntent?.status === "processing") {
         toast(t.payment.paymentProcessing);
-        router.push("/bookings?processing=1");
+        router.push(`/bookings/${props.bookingId}/confirmation`);
         return;
       }
 
@@ -412,7 +412,7 @@ export default function BookingPaymentPage({
 
   // Callback pour le succès PayPal
   const handlePayPalSuccess = (data: { bookingId: string; captureId: string }) => {
-    router.push("/bookings?paid=1");
+    router.push(`/bookings/${data.bookingId}/confirmation`);
   };
 
   // Aucune méthode de paiement disponible
