@@ -377,7 +377,7 @@ export default async function ListingDetailPage({
             <div className="py-4 border-b border-gray-100">
               <h2 className="text-base font-semibold text-gray-900 mb-2">{t.listingDetail.approximateLocationTitle}</h2>
               <p className="text-xs text-gray-500 mb-3">{t.listingDetail.exactLocationNote}</p>
-              <div className="relative h-56 w-full overflow-hidden rounded-2xl border border-gray-200 bg-gray-100">
+              <div className="relative h-72 w-full overflow-hidden rounded-2xl border border-gray-200 bg-gray-100">
                 <Map
                   useLogoIcon={true}
                   markers={[
