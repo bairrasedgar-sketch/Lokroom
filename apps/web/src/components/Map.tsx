@@ -509,8 +509,8 @@ export default function Map({
 
         // Créer un overlay custom pour le marqueur
         // Deux images superposées:
-        // - Extérieur (map-marker-lokroom-2.png): taille FIXE, ne bouge jamais
-        // - Intérieur (map-marker-lokroom interieur-2.png): grandit/rétréci au zoom
+        // - Extérieur (map-marker-lokroom-2.png): grandit/rétréci au zoom
+        // - Intérieur (map-marker-lokroom interieur-2.png): taille FIXE, ne bouge jamais
         const markerOverlay = new g.maps.OverlayView();
         const BASE_ZOOM = initialZoom;
         const BASE_SIZE = isMobile ? 150 : 250;
@@ -522,7 +522,7 @@ export default function Map({
           div.style.width = BASE_SIZE + "px";
           div.style.height = BASE_SIZE + "px";
 
-          // Image extérieure - FIXE, ne change jamais de taille
+          // Image extérieure - grandit/rétréci au zoom
           const imgOuter = document.createElement("img");
           imgOuter.src = "/map-marker-lokroom-2.png";
           imgOuter.style.position = "absolute";
@@ -531,8 +531,10 @@ export default function Map({
           imgOuter.style.objectFit = "contain";
           imgOuter.style.top = "0";
           imgOuter.style.left = "0";
+          imgOuter.style.transition = "transform 0.25s ease-out";
+          imgOuter.style.transformOrigin = "center center";
 
-          // Image intérieure - grandit/rétréci au zoom
+          // Image intérieure - FIXE, ne change jamais de taille
           const imgInner = document.createElement("img");
           imgInner.src = "/map-marker-lokroom interieur-2.png";
           imgInner.style.position = "absolute";
@@ -541,13 +543,11 @@ export default function Map({
           imgInner.style.objectFit = "contain";
           imgInner.style.top = "0";
           imgInner.style.left = "0";
-          imgInner.style.transition = "transform 0.25s ease-out";
-          imgInner.style.transformOrigin = "center center";
 
           div.appendChild(imgOuter);
           div.appendChild(imgInner);
           (this as any).div = div;
-          (this as any).imgInner = imgInner;
+          (this as any).imgOuter = imgOuter;
 
           const panes = this.getPanes();
           if (panes) {
@@ -563,14 +563,14 @@ export default function Map({
           if (!pos) return;
 
           const div = (this as any).div;
-          const imgInner = (this as any).imgInner;
+          const imgOuter = (this as any).imgOuter;
           if (div) {
             const halfSize = BASE_SIZE / 2;
             div.style.left = (pos.x - halfSize) + "px";
             div.style.top = (pos.y - halfSize) + "px";
 
-            // Calculer le scale pour l'image intérieure
-            if (imgInner) {
+            // Calculer le scale pour l'image extérieure
+            if (imgOuter) {
               const currentZoom = map.getZoom() || BASE_ZOOM;
               let scale = 1;
               if (currentZoom > BASE_ZOOM) {
@@ -578,7 +578,7 @@ export default function Map({
               } else if (currentZoom < BASE_ZOOM) {
                 scale = Math.pow(2, currentZoom - BASE_ZOOM);
               }
-              imgInner.style.transform = `scale(${scale})`;
+              imgOuter.style.transform = `scale(${scale})`;
             }
           }
         };
