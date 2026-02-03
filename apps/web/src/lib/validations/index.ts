@@ -253,8 +253,16 @@ export const createBookingSchema = z
       .optional(),
     timezone: z.string().max(50).optional(),
     guestMessage: z.string().max(1000).optional(),
-    // Nombre de voyageurs (optionnel pour compatibilité)
-    guests: z.number().int().min(1).max(100).optional(),
+    // Nombre de voyageurs - accepte un nombre ou un objet { adults, children, infants }
+    guests: z.union([
+      z.number().int().min(1).max(100),
+      z.object({
+        adults: z.number().int().min(0).max(100).default(1),
+        children: z.number().int().min(0).max(100).default(0),
+        infants: z.number().int().min(0).max(100).default(0),
+      }),
+    ]).optional(),
+    promoCodeId: idSchema.optional(),
   })
   .refine((data) => new Date(data.endDate) > new Date(data.startDate), {
     message: "La date de fin doit être après la date de début",
