@@ -127,13 +127,17 @@ export async function POST(req: NextRequest) {
   }
 
   // Validation du nombre de voyageurs (si fourni et si le listing a une limite)
-  if (guests !== undefined && listing.maxGuests !== null && guests > listing.maxGuests) {
+  const totalGuests = guests !== undefined
+    ? (typeof guests === 'number' ? guests : (guests.adults || 0) + (guests.children || 0) + (guests.infants || 0))
+    : 0;
+
+  if (totalGuests > 0 && listing.maxGuests !== null && totalGuests > listing.maxGuests) {
     return NextResponse.json(
       {
         error: "GUESTS_EXCEED_CAPACITY",
-        message: `Le nombre de voyageurs (${guests}) dépasse la capacité maximale (${listing.maxGuests})`,
+        message: `Le nombre de voyageurs (${totalGuests}) dépasse la capacité maximale (${listing.maxGuests})`,
         maxGuests: listing.maxGuests,
-        requestedGuests: guests,
+        requestedGuests: totalGuests,
       },
       { status: 400 },
     );
