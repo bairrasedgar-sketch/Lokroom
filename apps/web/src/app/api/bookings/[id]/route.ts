@@ -41,7 +41,11 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
             select: {
               id: true,
               name: true,
-              image: true,
+              profile: {
+                select: {
+                  avatarUrl: true,
+                },
+              },
             },
           },
         },

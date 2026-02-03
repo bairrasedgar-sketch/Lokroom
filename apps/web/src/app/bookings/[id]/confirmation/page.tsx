@@ -24,7 +24,9 @@ type BookingDetails = {
     images: { url: string }[];
     owner: {
       name: string | null;
-      image: string | null;
+      profile?: {
+        avatarUrl: string | null;
+      } | null;
     };
   };
   conversation?: {
@@ -203,9 +205,9 @@ export default function BookingConfirmationPage({
           <h3 className="text-base font-semibold text-gray-900">Votre hôte</h3>
           <div className="mt-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {booking.listing.owner?.image ? (
+              {booking.listing.owner?.profile?.avatarUrl ? (
                 <Image
-                  src={booking.listing.owner.image}
+                  src={booking.listing.owner.profile.avatarUrl}
                   alt={hostName}
                   width={48}
                   height={48}
