@@ -217,6 +217,14 @@ function StripePaymentForm(props: {
       }
 
       if (paymentIntent?.status === "succeeded") {
+        // Confirmer le paiement côté serveur (met à jour le statut + envoie les emails)
+        try {
+          await fetch(`/api/bookings/${props.bookingId}/confirm-payment`, {
+            method: "POST",
+          });
+        } catch (e) {
+          console.error("Error confirming payment:", e);
+        }
         toast.success(t.payment.paymentConfirmed);
         router.push(`/bookings/${props.bookingId}/confirmation`);
         return;
