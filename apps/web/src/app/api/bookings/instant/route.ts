@@ -267,7 +267,7 @@ export async function POST(req: NextRequest) {
   // Calculer le prix total
   const totalPrice = listing.price * nights;
 
-  // Créer la réservation avec statut CONFIRMED directement
+  // Créer la réservation avec statut PENDING (sera confirmée après paiement)
   const booking = await prisma.booking.create({
     data: {
       listingId: listing.id,
@@ -276,7 +276,7 @@ export async function POST(req: NextRequest) {
       endDate,
       totalPrice,
       currency: listing.currency,
-      status: "CONFIRMED", // Instant book = confirmé immédiatement
+      status: "PENDING", // Reste PENDING jusqu'au paiement réussi
       pricingMode: listing.pricingMode,
     },
     select: {
