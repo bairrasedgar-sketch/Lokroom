@@ -151,12 +151,27 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       },
     });
 
-    // SÉCURITÉ: Ne retourner que les informations nécessaires au frontend
-    // Les frais internes (hostFeeCents, platformNetCents, etc.) sont confidentiels
+    // Calcul du net plateforme
+    const platformNetCents = hostFeeCents - stripeFeeEstimateCents;
+
+    // Déterminer la région pour les taxes
+    const region = booking.listing.country?.toUpperCase() === "CA"
+      ? (booking.listing.province || "CA")
+      : (booking.listing.country || "FR");
+
     return NextResponse.json({
+      bookingId: booking.id,
       clientSecret: paymentIntent.client_secret,
       amountCents: priceCents,
       currency: booking.currency,
+      fees: {
+        hostFeeCents,
+        guestFeeCents,
+        taxOnGuestFeeCents,
+        stripeFeeEstimateCents,
+        platformNetCents,
+        region,
+      },
     });
   } catch (e) {
     console.error("bookings/[id]/pay error:", e);
