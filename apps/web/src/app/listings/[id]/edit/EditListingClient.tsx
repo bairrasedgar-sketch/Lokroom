@@ -406,7 +406,7 @@ export default function EditListingClient({ listing }: { listing: ListingData })
     (container as MapElementWithGmap).__gmap = map;
 
     const customIcon = {
-      url: "/map-marker-lokroom création d'annonce.png",
+      url: "/map-marker-lokroom-creation.png",
       scaledSize: new g.maps.Size(50, 50),
       anchor: new g.maps.Point(25, 25),
     };

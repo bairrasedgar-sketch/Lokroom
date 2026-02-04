@@ -1097,7 +1097,7 @@ export default function NewListingPage() {
 
     // Custom marker icon
     const customIcon = {
-      url: "/map-marker-lokroom création d'annonce.png",
+      url: "/map-marker-lokroom-creation.png",
       scaledSize: new g.maps.Size(60, 60),
       anchor: new g.maps.Point(30, 30), // Anchor at center
     };
