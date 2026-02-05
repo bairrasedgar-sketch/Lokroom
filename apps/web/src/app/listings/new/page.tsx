@@ -776,7 +776,10 @@ export default function NewListingPage() {
   }, []);
 
   // Delete a specific draft
-  const handleDeleteDraft = useCallback((draftId: string) => {
+  const handleDeleteDraft = useCallback((draftId: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
     const updatedDrafts = availableDrafts.filter(d => d.id !== draftId);
     setAvailableDrafts(updatedDrafts);
     if (typeof window !== "undefined") {
@@ -1094,6 +1097,7 @@ export default function NewListingPage() {
       scaleControl: false,
       clickableIcons: false,
       disableDefaultUI: true,
+      gestureHandling: "greedy",
       styles: mapStyles,
     });
 
@@ -1558,9 +1562,9 @@ export default function NewListingPage() {
           <div className="mx-auto flex h-16 max-w-5xl 2xl:max-w-6xl items-center justify-between px-4 sm:px-6">
             <button
               onClick={() => router.push("/")}
-              className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+              className="flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
             >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
               Quitter
@@ -1578,7 +1582,25 @@ export default function NewListingPage() {
               ))}
             </div>
 
-            <div className="w-16" />
+            {/* Finir plus tard button */}
+            <button
+              type="button"
+              onClick={handleSaveDraft}
+              disabled={savingDraft}
+              className="flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
+              {savingDraft ? (
+                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+              )}
+              <span className="hidden sm:inline">Finir plus tard</span>
+            </button>
           </div>
         </header>
 
@@ -2806,64 +2828,45 @@ export default function NewListingPage() {
           )}
         </main>
 
-        {/* Footer navigation */}
-        <footer className="sticky bottom-0 border-t border-gray-200 bg-white">
-          {/* Draft status bar */}
-          {lastSaved && (
-            <div className="border-b border-gray-100 bg-gray-50 px-4 py-1.5">
-              <p className="text-center text-xs text-gray-500">
-                Brouillon enregistré à {lastSaved.toLocaleTimeString()}
-              </p>
-            </div>
-          )}
-          <div className="mx-auto flex h-20 max-w-2xl items-center justify-between px-4">
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={handleBack}
-                disabled={isFirstStep}
-                className="text-sm font-medium text-gray-900 underline disabled:invisible"
-              >
-                Retour
-              </button>
-              {/* Save draft button */}
-              <button
-                type="button"
-                onClick={handleSaveDraft}
-                disabled={savingDraft}
-                className="hidden sm:inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
-              >
-                {savingDraft ? (
-                  <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                ) : (
-                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                  </svg>
-                )}
-                Finir plus tard
-              </button>
-            </div>
+        {/* Footer navigation - floating buttons */}
+        <div className="fixed bottom-6 left-0 right-0 z-40 px-4">
+          <div className="mx-auto max-w-2xl flex items-center justify-between">
+            {/* Retour button */}
+            <button
+              type="button"
+              onClick={handleBack}
+              disabled={isFirstStep}
+              className={`flex items-center gap-2 rounded-full border border-gray-300 bg-white px-5 py-3 text-sm font-medium text-gray-700 shadow-lg hover:bg-gray-50 transition-all ${isFirstStep ? "invisible" : ""}`}
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+              Retour
+            </button>
 
+            {/* Suivant / Publier button */}
             {isLastStep ? (
               <button
                 type="button"
                 onClick={handleSubmit}
                 disabled={submitting || uploading || !canProceed()}
-                className="rounded-lg bg-gradient-to-r from-pink-500 to-rose-500 px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="flex items-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
               >
                 {submitting || uploading ? (
-                  <span className="flex items-center gap-2">
+                  <>
                     <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
-                    {uploading ? "Upload des photos..." : "Publication..."}
-                  </span>
+                    {uploading ? "Upload..." : "Publication..."}
+                  </>
                 ) : (
-                  "Publier l'annonce"
+                  <>
+                    Publier
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </>
                 )}
               </button>
             ) : (
@@ -2871,13 +2874,16 @@ export default function NewListingPage() {
                 type="button"
                 onClick={handleNext}
                 disabled={!canProceed()}
-                className="rounded-lg bg-gray-900 px-6 py-3 text-sm font-semibold text-white transition-opacity hover:bg-black disabled:opacity-50"
+                className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-opacity hover:bg-black disabled:opacity-50"
               >
                 Suivant
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
               </button>
             )}
           </div>
-        </footer>
+        </div>
       </div>
 
       {/* Draft Choice Modal - Multi-draft support */}
@@ -2940,7 +2946,7 @@ export default function NewListingPage() {
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => handleDeleteDraft(draft.id)}
+                        onClick={(e) => handleDeleteDraft(draft.id, e)}
                         className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                         title="Supprimer ce brouillon"
                       >
