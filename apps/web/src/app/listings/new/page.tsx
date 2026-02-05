@@ -585,6 +585,9 @@ export default function NewListingPage() {
   // Maps
   const [mapsReady, setMapsReady] = useState(false);
 
+  // Footer visibility for button positioning
+  const [footerVisible, setFooterVisible] = useState(false);
+
   // Loading
   const [submitting, setSubmitting] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -947,6 +950,22 @@ export default function NewListingPage() {
       clearTimeout(timeout);
     };
   }, [mapsReady]);
+
+  // Detect footer visibility to adjust button positioning
+  useEffect(() => {
+    const footer = document.getElementById("site-footer");
+    if (!footer) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setFooterVisible(entry.isIntersecting);
+      },
+      { threshold: 0 }
+    );
+
+    observer.observe(footer);
+    return () => observer.disconnect();
+  }, []);
 
   // Setup address autocomplete for map step
   useEffect(() => {
@@ -2834,7 +2853,7 @@ export default function NewListingPage() {
         </main>
 
         {/* Footer navigation - floating buttons on sides of main content */}
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-full max-w-4xl px-4 pointer-events-none">
+        <div className={`fixed left-1/2 -translate-x-1/2 z-40 w-full max-w-4xl px-4 pointer-events-none transition-all duration-300 ${footerVisible ? "bottom-24" : "bottom-6"}`}>
           <div className="flex items-center justify-between">
             {/* Retour button - left side */}
             <button
