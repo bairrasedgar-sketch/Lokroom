@@ -1624,8 +1624,66 @@ export default function NewListingPage() {
           </div>
         </header>
 
-        {/* Main content */}
-        <main className="mx-auto max-w-2xl 2xl:max-w-3xl px-4 sm:px-6 py-8">
+        {/* Main layout with side buttons */}
+        <div className="relative mx-auto max-w-5xl px-4 sm:px-6">
+          {/* Retour button - fixed left side */}
+          <div className="hidden lg:block fixed left-[calc(50%-640px)] top-1/2 -translate-y-1/2 z-30">
+            <button
+              type="button"
+              onClick={handleBack}
+              disabled={isFirstStep}
+              className={`flex items-center gap-2 rounded-full border border-gray-300 bg-white px-5 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-all ${isFirstStep ? "opacity-0 pointer-events-none" : ""}`}
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+              Retour
+            </button>
+          </div>
+
+          {/* Suivant button - fixed right side */}
+          <div className="hidden lg:block fixed right-[calc(50%-640px)] top-1/2 -translate-y-1/2 z-30">
+            {isLastStep ? (
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={submitting || uploading || !canProceed()}
+                className="flex items-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+              >
+                {submitting || uploading ? (
+                  <>
+                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    {uploading ? "Upload..." : "Publication..."}
+                  </>
+                ) : (
+                  <>
+                    Publier
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </>
+                )}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleNext}
+                disabled={!canProceed()}
+                className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-opacity hover:bg-black disabled:opacity-50"
+              >
+                Suivant
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* Main content */}
+          <main className="mx-auto max-w-2xl 2xl:max-w-3xl py-8">
           {/* Step title */}
           <div className="mb-8 text-center">
             <p className="text-sm font-medium text-gray-500">
@@ -2851,9 +2909,8 @@ export default function NewListingPage() {
             </div>
           )}
 
-          {/* Navigation buttons - inside main content */}
-          <div className="mt-8 flex items-center justify-between pb-8">
-            {/* Retour button - left side */}
+          {/* Navigation buttons - mobile only (bottom) */}
+          <div className="lg:hidden mt-8 flex items-center justify-between pb-8">
             <button
               type="button"
               onClick={handleBack}
@@ -2866,7 +2923,6 @@ export default function NewListingPage() {
               Retour
             </button>
 
-            {/* Suivant / Publier button - right side */}
             {isLastStep ? (
               <button
                 type="button"
@@ -2906,6 +2962,7 @@ export default function NewListingPage() {
             )}
           </div>
         </main>
+        </div>
       </div>
 
       {/* Draft Choice Modal - Multi-draft support */}
