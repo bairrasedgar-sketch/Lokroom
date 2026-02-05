@@ -1088,7 +1088,12 @@ export default function NewListingPage() {
       mapTypeControl: false,
       streetViewControl: false,
       fullscreenControl: false,
-      zoomControl: false, // Disable default zoom controls
+      zoomControl: false,
+      panControl: false,
+      rotateControl: false,
+      scaleControl: false,
+      clickableIcons: false,
+      disableDefaultUI: true,
       styles: mapStyles,
     });
 
