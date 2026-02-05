@@ -2850,17 +2850,15 @@ export default function NewListingPage() {
               </p>
             </div>
           )}
-        </main>
 
-        {/* Footer navigation - floating buttons on sides of main content */}
-        <div className={`fixed left-1/2 -translate-x-1/2 z-40 w-full max-w-4xl px-4 pointer-events-none transition-all duration-300 ${footerVisible ? "bottom-24" : "bottom-6"}`}>
-          <div className="flex items-center justify-between">
+          {/* Navigation buttons - inside main content */}
+          <div className="mt-8 flex items-center justify-between pb-8">
             {/* Retour button - left side */}
             <button
               type="button"
               onClick={handleBack}
               disabled={isFirstStep}
-              className={`pointer-events-auto flex items-center gap-2 rounded-full border border-gray-300 bg-white px-5 py-3 text-sm font-medium text-gray-700 shadow-lg hover:bg-gray-50 transition-all ${isFirstStep ? "opacity-0 pointer-events-none" : ""}`}
+              className={`flex items-center gap-2 rounded-full border border-gray-300 bg-white px-5 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-all ${isFirstStep ? "opacity-0 pointer-events-none" : ""}`}
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -2874,7 +2872,7 @@ export default function NewListingPage() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={submitting || uploading || !canProceed()}
-                className="pointer-events-auto flex items-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="flex items-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
               >
                 {submitting || uploading ? (
                   <>
@@ -2898,7 +2896,7 @@ export default function NewListingPage() {
                 type="button"
                 onClick={handleNext}
                 disabled={!canProceed()}
-                className="pointer-events-auto flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-opacity hover:bg-black disabled:opacity-50"
+                className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-opacity hover:bg-black disabled:opacity-50"
               >
                 Suivant
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -2907,7 +2905,7 @@ export default function NewListingPage() {
               </button>
             )}
           </div>
-        </div>
+        </main>
       </div>
 
       {/* Draft Choice Modal - Multi-draft support */}
