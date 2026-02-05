@@ -1095,11 +1095,11 @@ export default function NewListingPage() {
     // Store map reference
     (container as MapElementWithGmap).__gmap = map;
 
-    // Custom marker icon
+    // Custom marker icon - like the default red marker but with custom image
     const customIcon = {
       url: "/map-marker-lokroom-creation.png",
-      scaledSize: new g.maps.Size(60, 60),
-      anchor: new g.maps.Point(30, 30), // Anchor at center
+      scaledSize: new g.maps.Size(40, 40),
+      anchor: new g.maps.Point(20, 40), // Anchor at bottom center (like default pin)
     };
 
     const marker = new g.maps.Marker({

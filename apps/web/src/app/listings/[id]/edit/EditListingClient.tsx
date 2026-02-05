@@ -407,8 +407,8 @@ export default function EditListingClient({ listing }: { listing: ListingData })
 
     const customIcon = {
       url: "/map-marker-lokroom-creation.png",
-      scaledSize: new g.maps.Size(50, 50),
-      anchor: new g.maps.Point(25, 25),
+      scaledSize: new g.maps.Size(40, 40),
+      anchor: new g.maps.Point(20, 40), // Anchor at bottom center (like default pin)
     };
 
     const marker = new g.maps.Marker({
