@@ -1097,7 +1097,8 @@ export default function NewListingPage() {
       scaleControl: false,
       clickableIcons: false,
       disableDefaultUI: true,
-      gestureHandling: "greedy",
+      gestureHandling: "none",
+      scrollwheel: false,
       styles: mapStyles,
     });
 
@@ -1379,7 +1380,7 @@ export default function NewListingPage() {
     }
     if (!isLastStep) {
       setCurrentStep(STEPS[stepIndex + 1].key);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo(0, 0);
     }
   }
 
