@@ -1539,10 +1539,10 @@ export default function NewListingPage() {
 
   return (
     <>
-      {apiKey && !mapsReady && (
+      {apiKey && (
         <Script
           src={`https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`}
-          strategy="afterInteractive"
+          strategy="beforeInteractive"
           onLoad={() => setMapsReady(true)}
         />
       )}
