@@ -4,6 +4,29 @@ import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { cookies } from "next/headers";
 import { Metadata } from "next";
+import {
+  Home,
+  Users,
+  Bed,
+  Bath,
+  Layers,
+  Trees,
+  Waves,
+  Sun,
+  Camera,
+  Music,
+  Mic,
+  Palette,
+  Car,
+  Lock,
+  Zap,
+  Ruler,
+  Clock,
+  Sparkles,
+  DollarSign,
+  Percent,
+  MapPin,
+} from "lucide-react";
 
 import { authOptions } from "@/lib/auth";
 import DeleteListingButton from "@/components/DeleteListingButton";
@@ -45,11 +68,74 @@ type Listing = {
   // Instant Book
   isInstantBook?: boolean;
 
-  // SEO fields
+  // Basic fields
   type?: string;
+  pricingMode?: string;
   maxGuests?: number | null;
   beds?: number | null;
   bathrooms?: number | null;
+  desks?: number | null;
+  parkings?: number | null;
+
+  // Detailed configuration
+  bedrooms?: number | null;
+  bedConfiguration?: any;
+  bathroomsFull?: number | null;
+  bathroomsHalf?: number | null;
+  spaceType?: string | null;
+
+  // House specific
+  floors?: number | null;
+  hasGarden?: boolean;
+  gardenSize?: number | null;
+  hasPool?: boolean;
+  poolType?: string | null;
+  poolHeated?: boolean;
+  hasTerrace?: boolean;
+  terraceSize?: number | null;
+
+  // Studio specific
+  studioType?: string | null;
+  studioHeight?: number | null;
+  hasGreenScreen?: boolean;
+  hasSoundproofing?: boolean;
+
+  // Parking specific
+  parkingType?: string | null;
+  parkingCovered?: boolean;
+  parkingSecured?: boolean;
+  parkingLength?: number | null;
+  parkingWidth?: number | null;
+  parkingHeight?: number | null;
+  hasEVCharger?: boolean;
+
+  // Pricing advanced
+  hourlyPrice?: number | null;
+  hourlyIncrement?: number;
+  minDurationMinutes?: number | null;
+  cleaningFee?: number | null;
+  extraGuestFee?: number | null;
+  extraGuestThreshold?: number | null;
+
+  // Discounts
+  discountHours2Plus?: number | null;
+  discountHours3Plus?: number | null;
+  discountHours4Plus?: number | null;
+  discountHours6Plus?: number | null;
+  discountHours8Plus?: number | null;
+  discountDays2Plus?: number | null;
+  discountDays3Plus?: number | null;
+  discountDays5Plus?: number | null;
+  discountWeekly?: number | null;
+  discountDays14Plus?: number | null;
+  discountMonthly?: number | null;
+
+  // Description enrichie
+  spaceDescription?: string | null;
+  guestAccessDescription?: string | null;
+  neighborhoodDescription?: string | null;
+  highlights?: string[];
+
   amenities?: { key: string; label: string }[];
   reviewSummary?: {
     count: number;
@@ -356,13 +442,330 @@ export default async function ListingDetailPage({
             </div>
           </div>
 
+          {/* Points forts */}
+          {listing.highlights && listing.highlights.length > 0 && (
+            <div className="py-4 border-b border-gray-100">
+              <h2 className="text-base font-semibold text-gray-900 mb-3">Points forts</h2>
+              <div className="space-y-2">
+                {listing.highlights.map((highlight, idx) => (
+                  <div key={idx} className="flex items-start gap-2">
+                    <Sparkles className="h-5 w-5 text-gray-900 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">{highlight}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Détails de l'espace */}
+          {(listing.type === "APARTMENT" || listing.type === "HOUSE") && (
+            <div className="py-4 border-b border-gray-100">
+              <h2 className="text-base font-semibold text-gray-900 mb-3">Détails du logement</h2>
+              <div className="grid grid-cols-2 gap-3">
+                {listing.bedrooms && (
+                  <div className="flex items-center gap-2">
+                    <Bed className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">{listing.bedrooms} chambre{listing.bedrooms > 1 ? "s" : ""}</span>
+                  </div>
+                )}
+                {listing.beds && (
+                  <div className="flex items-center gap-2">
+                    <Bed className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">{listing.beds} lit{listing.beds > 1 ? "s" : ""}</span>
+                  </div>
+                )}
+                {listing.bathroomsFull && (
+                  <div className="flex items-center gap-2">
+                    <Bath className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">{listing.bathroomsFull} salle{listing.bathroomsFull > 1 ? "s" : ""} de bain</span>
+                  </div>
+                )}
+                {listing.bathroomsHalf && (
+                  <div className="flex items-center gap-2">
+                    <Bath className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">{listing.bathroomsHalf} salle{listing.bathroomsHalf > 1 ? "s" : ""} d'eau</span>
+                  </div>
+                )}
+                {listing.maxGuests && (
+                  <div className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">{listing.maxGuests} voyageur{listing.maxGuests > 1 ? "s" : ""}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Caractéristiques maison */}
+          {listing.type === "HOUSE" && (listing.floors || listing.hasGarden || listing.hasPool || listing.hasTerrace) && (
+            <div className="py-4 border-b border-gray-100">
+              <h2 className="text-base font-semibold text-gray-900 mb-3">Caractéristiques de la maison</h2>
+              <div className="space-y-2">
+                {listing.floors && (
+                  <div className="flex items-center gap-2">
+                    <Layers className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">{listing.floors} étage{listing.floors > 1 ? "s" : ""}</span>
+                  </div>
+                )}
+                {listing.hasGarden && (
+                  <div className="flex items-center gap-2">
+                    <Trees className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">
+                      Jardin{listing.gardenSize ? ` (${listing.gardenSize} m²)` : ""}
+                    </span>
+                  </div>
+                )}
+                {listing.hasPool && (
+                  <div className="flex items-center gap-2">
+                    <Waves className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">
+                      Piscine {listing.poolType === "indoor" ? "intérieure" : "extérieure"}
+                      {listing.poolHeated ? " chauffée" : ""}
+                    </span>
+                  </div>
+                )}
+                {listing.hasTerrace && (
+                  <div className="flex items-center gap-2">
+                    <Sun className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">
+                      Terrasse{listing.terraceSize ? ` (${listing.terraceSize} m²)` : ""}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Caractéristiques studio */}
+          {(listing.type === "STUDIO" || listing.type === "RECORDING_STUDIO") && (
+            <div className="py-4 border-b border-gray-100">
+              <h2 className="text-base font-semibold text-gray-900 mb-3">Caractéristiques du studio</h2>
+              <div className="space-y-2">
+                {listing.studioType && (
+                  <div className="flex items-center gap-2">
+                    {listing.studioType === "photo" && <Camera className="h-5 w-5 text-gray-600" />}
+                    {listing.studioType === "video" && <Camera className="h-5 w-5 text-gray-600" />}
+                    {listing.studioType === "music" && <Music className="h-5 w-5 text-gray-600" />}
+                    {listing.studioType === "podcast" && <Mic className="h-5 w-5 text-gray-600" />}
+                    {listing.studioType === "art" && <Palette className="h-5 w-5 text-gray-600" />}
+                    <span className="text-sm text-gray-700 capitalize">Studio {listing.studioType}</span>
+                  </div>
+                )}
+                {listing.studioHeight && (
+                  <div className="flex items-center gap-2">
+                    <Ruler className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">Hauteur sous plafond: {listing.studioHeight}m</span>
+                  </div>
+                )}
+                {listing.hasGreenScreen && (
+                  <div className="flex items-center gap-2">
+                    <Camera className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">Fond vert disponible</span>
+                  </div>
+                )}
+                {listing.hasSoundproofing && (
+                  <div className="flex items-center gap-2">
+                    <Music className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">Isolation phonique</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Caractéristiques parking */}
+          {(listing.type === "PARKING" || listing.type === "GARAGE") && (
+            <div className="py-4 border-b border-gray-100">
+              <h2 className="text-base font-semibold text-gray-900 mb-3">Caractéristiques du parking</h2>
+              <div className="space-y-2">
+                {listing.parkingType && (
+                  <div className="flex items-center gap-2">
+                    <Car className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700 capitalize">
+                      {listing.parkingType === "outdoor" && "Extérieur"}
+                      {listing.parkingType === "indoor" && "Intérieur"}
+                      {listing.parkingType === "underground" && "Souterrain"}
+                    </span>
+                  </div>
+                )}
+                {(listing.parkingLength || listing.parkingWidth || listing.parkingHeight) && (
+                  <div className="flex items-center gap-2">
+                    <Ruler className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">
+                      Dimensions: {listing.parkingLength || "?"}m × {listing.parkingWidth || "?"}m × {listing.parkingHeight || "?"}m
+                    </span>
+                  </div>
+                )}
+                {listing.parkingCovered && (
+                  <div className="flex items-center gap-2">
+                    <Home className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">Couvert</span>
+                  </div>
+                )}
+                {listing.parkingSecured && (
+                  <div className="flex items-center gap-2">
+                    <Lock className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">Sécurisé</span>
+                  </div>
+                )}
+                {listing.hasEVCharger && (
+                  <div className="flex items-center gap-2">
+                    <Zap className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">Borne de recharge électrique</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Description */}
           <div className="py-4 border-b border-gray-100">
             <h2 className="text-base font-semibold text-gray-900 mb-2">{t.listingDetail.aboutSpace}</h2>
-            <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
-              {listing.description || t.listingDetail.noDescription}
-            </p>
+
+            {listing.spaceDescription && (
+              <div className="mb-3">
+                <h3 className="text-sm font-medium text-gray-900 mb-1">L'espace</h3>
+                <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
+                  {listing.spaceDescription}
+                </p>
+              </div>
+            )}
+
+            {listing.guestAccessDescription && (
+              <div className="mb-3">
+                <h3 className="text-sm font-medium text-gray-900 mb-1">Accès voyageurs</h3>
+                <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
+                  {listing.guestAccessDescription}
+                </p>
+              </div>
+            )}
+
+            {listing.neighborhoodDescription && (
+              <div className="mb-3">
+                <h3 className="text-sm font-medium text-gray-900 mb-1">Le quartier</h3>
+                <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
+                  {listing.neighborhoodDescription}
+                </p>
+              </div>
+            )}
+
+            {!listing.spaceDescription && !listing.guestAccessDescription && !listing.neighborhoodDescription && (
+              <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
+                {listing.description || t.listingDetail.noDescription}
+              </p>
+            )}
           </div>
+
+          {/* Tarification */}
+          {(listing.hourlyPrice || listing.cleaningFee || listing.extraGuestFee) && (
+            <div className="py-4 border-b border-gray-100">
+              <h2 className="text-base font-semibold text-gray-900 mb-3">Tarification</h2>
+              <div className="space-y-2">
+                {listing.hourlyPrice && (
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">
+                      {listing.hourlyPrice}€/heure
+                      {listing.hourlyIncrement === 30 && " (incréments de 30 min)"}
+                    </span>
+                  </div>
+                )}
+                {listing.cleaningFee && (
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">Frais de ménage: {listing.cleaningFee}€</span>
+                  </div>
+                )}
+                {listing.extraGuestFee && (
+                  <div className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">
+                      Frais par voyageur supplémentaire: {listing.extraGuestFee}€
+                      {listing.extraGuestThreshold && ` (à partir de ${listing.extraGuestThreshold} voyageurs)`}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Réductions */}
+          {(listing.discountHours2Plus || listing.discountHours3Plus || listing.discountHours4Plus ||
+            listing.discountHours6Plus || listing.discountHours8Plus || listing.discountDays2Plus ||
+            listing.discountDays3Plus || listing.discountDays5Plus || listing.discountWeekly ||
+            listing.discountDays14Plus || listing.discountMonthly) && (
+            <div className="py-4 border-b border-gray-100">
+              <h2 className="text-base font-semibold text-gray-900 mb-3">Réductions disponibles</h2>
+              <div className="grid grid-cols-2 gap-2">
+                {listing.discountHours2Plus && (
+                  <div className="flex items-center gap-2">
+                    <Percent className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm text-gray-700">-{listing.discountHours2Plus}% dès 2h</span>
+                  </div>
+                )}
+                {listing.discountHours3Plus && (
+                  <div className="flex items-center gap-2">
+                    <Percent className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm text-gray-700">-{listing.discountHours3Plus}% dès 3h</span>
+                  </div>
+                )}
+                {listing.discountHours4Plus && (
+                  <div className="flex items-center gap-2">
+                    <Percent className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm text-gray-700">-{listing.discountHours4Plus}% dès 4h</span>
+                  </div>
+                )}
+                {listing.discountHours6Plus && (
+                  <div className="flex items-center gap-2">
+                    <Percent className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm text-gray-700">-{listing.discountHours6Plus}% dès 6h</span>
+                  </div>
+                )}
+                {listing.discountHours8Plus && (
+                  <div className="flex items-center gap-2">
+                    <Percent className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm text-gray-700">-{listing.discountHours8Plus}% dès 8h</span>
+                  </div>
+                )}
+                {listing.discountDays2Plus && (
+                  <div className="flex items-center gap-2">
+                    <Percent className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm text-gray-700">-{listing.discountDays2Plus}% dès 2 jours</span>
+                  </div>
+                )}
+                {listing.discountDays3Plus && (
+                  <div className="flex items-center gap-2">
+                    <Percent className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm text-gray-700">-{listing.discountDays3Plus}% dès 3 jours</span>
+                  </div>
+                )}
+                {listing.discountDays5Plus && (
+                  <div className="flex items-center gap-2">
+                    <Percent className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm text-gray-700">-{listing.discountDays5Plus}% dès 5 jours</span>
+                  </div>
+                )}
+                {listing.discountWeekly && (
+                  <div className="flex items-center gap-2">
+                    <Percent className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm text-gray-700">-{listing.discountWeekly}% dès 7 jours</span>
+                  </div>
+                )}
+                {listing.discountDays14Plus && (
+                  <div className="flex items-center gap-2">
+                    <Percent className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm text-gray-700">-{listing.discountDays14Plus}% dès 14 jours</span>
+                  </div>
+                )}
+                {listing.discountMonthly && (
+                  <div className="flex items-center gap-2">
+                    <Percent className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm text-gray-700">-{listing.discountMonthly}% dès 28 jours</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Ce que propose ce logement */}
           {listing.amenities && listing.amenities.length > 0 && (
@@ -371,6 +774,30 @@ export default async function ListingDetailPage({
               <AmenitiesModal amenities={listing.amenities} previewCount={6} />
             </div>
           )}
+
+          {/* Ce qu'il faut savoir */}
+          <div className="grid gap-4 border-b pb-4 text-sm sm:grid-cols-3">
+            <div className="space-y-1">
+              <p className="font-semibold">
+                {t.listingDetail.cancellationPolicy}
+              </p>
+              <p className="text-xs text-gray-600">
+                {t.listingDetail.cancellationPolicyDesc}
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="font-semibold">{t.listingDetail.spaceRules}</p>
+              <p className="text-xs text-gray-600">
+                {t.listingDetail.spaceRulesDesc}
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p className="font-semibold">{t.listingDetail.security}</p>
+              <p className="text-xs text-gray-600">
+                {t.listingDetail.securityDesc}
+              </p>
+            </div>
+          </div>
 
           {/* Localisation */}
           {hasCoords && (
@@ -549,37 +976,338 @@ export default async function ListingDetailPage({
             </div>
           </div>
 
+          {/* Points forts */}
+          {listing.highlights && listing.highlights.length > 0 && (
+            <div className="space-y-2 border-b pb-4">
+              <h3 className="text-sm font-semibold">Points forts</h3>
+              <div className="space-y-2">
+                {listing.highlights.map((highlight, idx) => (
+                  <div key={idx} className="flex items-start gap-2">
+                    <Sparkles className="h-5 w-5 text-gray-900 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-gray-700">{highlight}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Détails de l'espace */}
+          {(listing.type === "APARTMENT" || listing.type === "HOUSE") && (
+            <div className="space-y-2 border-b pb-4">
+              <h3 className="text-sm font-semibold">Détails du logement</h3>
+              <div className="grid grid-cols-2 gap-3">
+                {listing.bedrooms && (
+                  <div className="flex items-center gap-2">
+                    <Bed className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">{listing.bedrooms} chambre{listing.bedrooms > 1 ? "s" : ""}</span>
+                  </div>
+                )}
+                {listing.beds && (
+                  <div className="flex items-center gap-2">
+                    <Bed className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">{listing.beds} lit{listing.beds > 1 ? "s" : ""}</span>
+                  </div>
+                )}
+                {listing.bathroomsFull && (
+                  <div className="flex items-center gap-2">
+                    <Bath className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">{listing.bathroomsFull} salle{listing.bathroomsFull > 1 ? "s" : ""} de bain</span>
+                  </div>
+                )}
+                {listing.bathroomsHalf && (
+                  <div className="flex items-center gap-2">
+                    <Bath className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">{listing.bathroomsHalf} salle{listing.bathroomsHalf > 1 ? "s" : ""} d'eau</span>
+                  </div>
+                )}
+                {listing.maxGuests && (
+                  <div className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">{listing.maxGuests} voyageur{listing.maxGuests > 1 ? "s" : ""}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Caractéristiques maison */}
+          {listing.type === "HOUSE" && (listing.floors || listing.hasGarden || listing.hasPool || listing.hasTerrace) && (
+            <div className="space-y-2 border-b pb-4">
+              <h3 className="text-sm font-semibold">Caractéristiques de la maison</h3>
+              <div className="space-y-2">
+                {listing.floors && (
+                  <div className="flex items-center gap-2">
+                    <Layers className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">{listing.floors} étage{listing.floors > 1 ? "s" : ""}</span>
+                  </div>
+                )}
+                {listing.hasGarden && (
+                  <div className="flex items-center gap-2">
+                    <Trees className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">
+                      Jardin{listing.gardenSize ? ` (${listing.gardenSize} m²)` : ""}
+                    </span>
+                  </div>
+                )}
+                {listing.hasPool && (
+                  <div className="flex items-center gap-2">
+                    <Waves className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">
+                      Piscine {listing.poolType === "indoor" ? "intérieure" : "extérieure"}
+                      {listing.poolHeated ? " chauffée" : ""}
+                    </span>
+                  </div>
+                )}
+                {listing.hasTerrace && (
+                  <div className="flex items-center gap-2">
+                    <Sun className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">
+                      Terrasse{listing.terraceSize ? ` (${listing.terraceSize} m²)` : ""}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Caractéristiques studio */}
+          {(listing.type === "STUDIO" || listing.type === "RECORDING_STUDIO") && (
+            <div className="space-y-2 border-b pb-4">
+              <h3 className="text-sm font-semibold">Caractéristiques du studio</h3>
+              <div className="space-y-2">
+                {listing.studioType && (
+                  <div className="flex items-center gap-2">
+                    {listing.studioType === "photo" && <Camera className="h-5 w-5 text-gray-600" />}
+                    {listing.studioType === "video" && <Camera className="h-5 w-5 text-gray-600" />}
+                    {listing.studioType === "music" && <Music className="h-5 w-5 text-gray-600" />}
+                    {listing.studioType === "podcast" && <Mic className="h-5 w-5 text-gray-600" />}
+                    {listing.studioType === "art" && <Palette className="h-5 w-5 text-gray-600" />}
+                    <span className="text-sm text-gray-700 capitalize">Studio {listing.studioType}</span>
+                  </div>
+                )}
+                {listing.studioHeight && (
+                  <div className="flex items-center gap-2">
+                    <Ruler className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">Hauteur sous plafond: {listing.studioHeight}m</span>
+                  </div>
+                )}
+                {listing.hasGreenScreen && (
+                  <div className="flex items-center gap-2">
+                    <Camera className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">Fond vert disponible</span>
+                  </div>
+                )}
+                {listing.hasSoundproofing && (
+                  <div className="flex items-center gap-2">
+                    <Music className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">Isolation phonique</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Caractéristiques parking */}
+          {(listing.type === "PARKING" || listing.type === "GARAGE") && (
+            <div className="space-y-2 border-b pb-4">
+              <h3 className="text-sm font-semibold">Caractéristiques du parking</h3>
+              <div className="space-y-2">
+                {listing.parkingType && (
+                  <div className="flex items-center gap-2">
+                    <Car className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700 capitalize">
+                      {listing.parkingType === "outdoor" && "Extérieur"}
+                      {listing.parkingType === "indoor" && "Intérieur"}
+                      {listing.parkingType === "underground" && "Souterrain"}
+                    </span>
+                  </div>
+                )}
+                {(listing.parkingLength || listing.parkingWidth || listing.parkingHeight) && (
+                  <div className="flex items-center gap-2">
+                    <Ruler className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">
+                      Dimensions: {listing.parkingLength || "?"}m × {listing.parkingWidth || "?"}m × {listing.parkingHeight || "?"}m
+                    </span>
+                  </div>
+                )}
+                {listing.parkingCovered && (
+                  <div className="flex items-center gap-2">
+                    <Home className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">Couvert</span>
+                  </div>
+                )}
+                {listing.parkingSecured && (
+                  <div className="flex items-center gap-2">
+                    <Lock className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">Sécurisé</span>
+                  </div>
+                )}
+                {listing.hasEVCharger && (
+                  <div className="flex items-center gap-2">
+                    <Zap className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">Borne de recharge électrique</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Description */}
           <div className="space-y-2 border-b pb-4">
             <h3 className="text-sm font-semibold">{t.listingDetail.aboutSpace}</h3>
-            <p className="whitespace-pre-wrap text-sm text-gray-700">
-              {listing.description || t.listingDetail.noDescription}
-            </p>
+
+            {listing.spaceDescription && (
+              <div className="mb-3">
+                <h4 className="text-sm font-medium text-gray-900 mb-1">L'espace</h4>
+                <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                  {listing.spaceDescription}
+                </p>
+              </div>
+            )}
+
+            {listing.guestAccessDescription && (
+              <div className="mb-3">
+                <h4 className="text-sm font-medium text-gray-900 mb-1">Accès voyageurs</h4>
+                <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                  {listing.guestAccessDescription}
+                </p>
+              </div>
+            )}
+
+            {listing.neighborhoodDescription && (
+              <div className="mb-3">
+                <h4 className="text-sm font-medium text-gray-900 mb-1">Le quartier</h4>
+                <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                  {listing.neighborhoodDescription}
+                </p>
+              </div>
+            )}
+
+            {!listing.spaceDescription && !listing.guestAccessDescription && !listing.neighborhoodDescription && (
+              <p className="whitespace-pre-wrap text-sm text-gray-700">
+                {listing.description || t.listingDetail.noDescription}
+              </p>
+            )}
           </div>
 
-          {/* Ce qu'il faut savoir */}
-          <div className="grid gap-4 border-b pb-4 text-sm sm:grid-cols-3">
-            <div className="space-y-1">
-              <p className="font-semibold">
-                {t.listingDetail.cancellationPolicy}
-              </p>
-              <p className="text-xs text-gray-600">
-                {t.listingDetail.cancellationPolicyDesc}
-              </p>
+          {/* Tarification */}
+          {(listing.hourlyPrice || listing.cleaningFee || listing.extraGuestFee) && (
+            <div className="space-y-2 border-b pb-4">
+              <h3 className="text-sm font-semibold">Tarification</h3>
+              <div className="space-y-2">
+                {listing.hourlyPrice && (
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">
+                      {listing.hourlyPrice}€/heure
+                      {listing.hourlyIncrement === 30 && " (incréments de 30 min)"}
+                    </span>
+                  </div>
+                )}
+                {listing.cleaningFee && (
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">Frais de ménage: {listing.cleaningFee}€</span>
+                  </div>
+                )}
+                {listing.extraGuestFee && (
+                  <div className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-gray-600" />
+                    <span className="text-sm text-gray-700">
+                      Frais par voyageur supplémentaire: {listing.extraGuestFee}€
+                      {listing.extraGuestThreshold && ` (à partir de ${listing.extraGuestThreshold} voyageurs)`}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="space-y-1">
-              <p className="font-semibold">{t.listingDetail.spaceRules}</p>
-              <p className="text-xs text-gray-600">
-                {t.listingDetail.spaceRulesDesc}
-              </p>
+          )}
+
+          {/* Réductions */}
+          {(listing.discountHours2Plus || listing.discountHours3Plus || listing.discountHours4Plus ||
+            listing.discountHours6Plus || listing.discountHours8Plus || listing.discountDays2Plus ||
+            listing.discountDays3Plus || listing.discountDays5Plus || listing.discountWeekly ||
+            listing.discountDays14Plus || listing.discountMonthly) && (
+            <div className="space-y-2 border-b pb-4">
+              <h3 className="text-sm font-semibold">Réductions disponibles</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {listing.discountHours2Plus && (
+                  <div className="flex items-center gap-2">
+                    <Percent className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm text-gray-700">-{listing.discountHours2Plus}% dès 2h</span>
+                  </div>
+                )}
+                {listing.discountHours3Plus && (
+                  <div className="flex items-center gap-2">
+                    <Percent className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm text-gray-700">-{listing.discountHours3Plus}% dès 3h</span>
+                  </div>
+                )}
+                {listing.discountHours4Plus && (
+                  <div className="flex items-center gap-2">
+                    <Percent className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm text-gray-700">-{listing.discountHours4Plus}% dès 4h</span>
+                  </div>
+                )}
+                {listing.discountHours6Plus && (
+                  <div className="flex items-center gap-2">
+                    <Percent className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm text-gray-700">-{listing.discountHours6Plus}% dès 6h</span>
+                  </div>
+                )}
+                {listing.discountHours8Plus && (
+                  <div className="flex items-center gap-2">
+                    <Percent className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm text-gray-700">-{listing.discountHours8Plus}% dès 8h</span>
+                  </div>
+                )}
+                {listing.discountDays2Plus && (
+                  <div className="flex items-center gap-2">
+                    <Percent className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm text-gray-700">-{listing.discountDays2Plus}% dès 2 jours</span>
+                  </div>
+                )}
+                {listing.discountDays3Plus && (
+                  <div className="flex items-center gap-2">
+                    <Percent className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm text-gray-700">-{listing.discountDays3Plus}% dès 3 jours</span>
+                  </div>
+                )}
+                {listing.discountDays5Plus && (
+                  <div className="flex items-center gap-2">
+                    <Percent className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm text-gray-700">-{listing.discountDays5Plus}% dès 5 jours</span>
+                  </div>
+                )}
+                {listing.discountWeekly && (
+                  <div className="flex items-center gap-2">
+                    <Percent className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm text-gray-700">-{listing.discountWeekly}% dès 7 jours</span>
+                  </div>
+                )}
+                {listing.discountDays14Plus && (
+                  <div className="flex items-center gap-2">
+                    <Percent className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm text-gray-700">-{listing.discountDays14Plus}% dès 14 jours</span>
+                  </div>
+                )}
+                {listing.discountMonthly && (
+                  <div className="flex items-center gap-2">
+                    <Percent className="h-4 w-4 text-gray-600" />
+                    <span className="text-sm text-gray-700">-{listing.discountMonthly}% dès 28 jours</span>
+                  </div>
+                )}
+              </div>
             </div>
-            <div className="space-y-1">
-              <p className="font-semibold">{t.listingDetail.security}</p>
-              <p className="text-xs text-gray-600">
-                {t.listingDetail.securityDesc}
-              </p>
+          )}
+
+          {/* Ce que propose ce logement */}
+          {listing.amenities && listing.amenities.length > 0 && (
+            <div className="space-y-2 border-b pb-4">
+              <h3 className="text-sm font-semibold">{t.listingDetail.amenitiesTitle}</h3>
+              <AmenitiesModal amenities={listing.amenities} previewCount={6} />
             </div>
-          </div>
+          )}
 
           {/* Infos hôte */}
           <aside className="space-y-1">
