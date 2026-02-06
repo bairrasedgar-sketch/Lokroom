@@ -9,6 +9,8 @@ import Image from "next/image";
 import Cropper from "react-easy-crop";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { getCroppedImage, type PixelCrop } from "@/lib/cropImage";
+import AmenitiesSelector from "@/components/listings/AmenitiesSelector";
+import BedConfiguration from "@/components/listings/BedConfiguration";
 
 // ============================================================================
 // GOOGLE MAPS TYPES (simplified for TypeScript compatibility)
@@ -156,6 +158,62 @@ type FormData = {
   discountDays3Plus: number | null;
   discountWeekly: number | null;
   discountMonthly: number | null;
+
+  // === NOUVEAUX CHAMPS ===
+  // Configuration détaillée
+  bedrooms: number | null;
+  bedConfiguration: any;
+  bathroomsFull: number | null;
+  bathroomsHalf: number | null;
+  spaceType: string;
+
+  // House
+  floors: number | null;
+  hasGarden: boolean;
+  gardenSize: number | null;
+  hasPool: boolean;
+  poolType: string | null;
+  hasTerrace: boolean;
+  terraceSize: number | null;
+
+  // Studio
+  studioType: string | null;
+  studioHeight: number | null;
+  hasGreenScreen: boolean;
+  hasSoundproofing: boolean;
+
+  // Parking
+  parkingType: string | null;
+  parkingCovered: boolean;
+  parkingSecured: boolean;
+  parkingLength: number | null;
+  parkingWidth: number | null;
+  parkingHeight: number | null;
+  hasEVCharger: boolean;
+
+  // Tarification avancée
+  hourlyIncrement: number;
+  minDurationMinutes: number | null;
+  cleaningFee: number | null;
+  extraGuestFee: number | null;
+  extraGuestThreshold: number | null;
+
+  // Réductions avancées
+  discountHours2Plus: number | null;
+  discountHours4Plus: number | null;
+  discountHours8Plus: number | null;
+  discountDays2Plus: number | null;
+  discountDays5Plus: number | null;
+  discountDays14Plus: number | null;
+
+  // Description enrichie
+  spaceDescription: string;
+  guestAccessDescription: string;
+  neighborhoodDescription: string;
+  highlights: string[];
+
+  // Amenities
+  amenityIds: string[];
 };
 
 // ============================================================================
@@ -371,6 +429,34 @@ const REGIONS_FR = [
   { value: "MAY", label: "Mayotte" },
 ];
 
+// Helper function to map Google Maps region names to region codes
+function mapRegionNameToCode(regionName: string, country: string): string {
+  if (country === "France") {
+    const region = REGIONS_FR.find(r => r.label.toLowerCase() === regionName.toLowerCase());
+    return region ? region.value : "";
+  } else if (country === "Canada") {
+    // Google Maps returns English names for Canadian provinces
+    const provinceMap: Record<string, string> = {
+      "quebec": "QC",
+      "québec": "QC",
+      "ontario": "ON",
+      "british columbia": "BC",
+      "alberta": "AB",
+      "manitoba": "MB",
+      "saskatchewan": "SK",
+      "nova scotia": "NS",
+      "new brunswick": "NB",
+      "newfoundland and labrador": "NL",
+      "prince edward island": "PE",
+      "northwest territories": "NT",
+      "yukon": "YT",
+      "nunavut": "NU",
+    };
+    return provinceMap[regionName.toLowerCase()] || "";
+  }
+  return "";
+}
+
 // Caractéristiques d'espace disponibles
 const SPACE_FEATURES = [
   { value: "well-located", label: "Bien situé", icon: "📍" },
@@ -551,6 +637,54 @@ export default function NewListingPage() {
     discountDays3Plus: null,
     discountWeekly: null,
     discountMonthly: null,
+
+    // === NOUVEAUX CHAMPS ===
+    bedrooms: null,
+    bedConfiguration: null,
+    bathroomsFull: null,
+    bathroomsHalf: null,
+    spaceType: "ENTIRE_PLACE",
+
+    floors: null,
+    hasGarden: false,
+    gardenSize: null,
+    hasPool: false,
+    poolType: null,
+    hasTerrace: false,
+    terraceSize: null,
+
+    studioType: null,
+    studioHeight: null,
+    hasGreenScreen: false,
+    hasSoundproofing: false,
+
+    parkingType: null,
+    parkingCovered: false,
+    parkingSecured: false,
+    parkingLength: null,
+    parkingWidth: null,
+    parkingHeight: null,
+    hasEVCharger: false,
+
+    hourlyIncrement: 60,
+    minDurationMinutes: null,
+    cleaningFee: null,
+    extraGuestFee: null,
+    extraGuestThreshold: null,
+
+    discountHours2Plus: null,
+    discountHours4Plus: null,
+    discountHours8Plus: null,
+    discountDays2Plus: null,
+    discountDays5Plus: null,
+    discountDays14Plus: null,
+
+    spaceDescription: "",
+    guestAccessDescription: "",
+    neighborhoodDescription: "",
+    highlights: [],
+
+    amenityIds: [],
   });
 
   // City suggestions for autocomplete
@@ -725,6 +859,54 @@ export default function NewListingPage() {
         discountDays3Plus: null,
         discountWeekly: null,
         discountMonthly: null,
+
+        // === NOUVEAUX CHAMPS ===
+        bedrooms: null,
+        bedConfiguration: null,
+        bathroomsFull: null,
+        bathroomsHalf: null,
+        spaceType: "ENTIRE_PLACE",
+
+        floors: null,
+        hasGarden: false,
+        gardenSize: null,
+        hasPool: false,
+        poolType: null,
+        hasTerrace: false,
+        terraceSize: null,
+
+        studioType: null,
+        studioHeight: null,
+        hasGreenScreen: false,
+        hasSoundproofing: false,
+
+        parkingType: null,
+        parkingCovered: false,
+        parkingSecured: false,
+        parkingLength: null,
+        parkingWidth: null,
+        parkingHeight: null,
+        hasEVCharger: false,
+
+        hourlyIncrement: 60,
+        minDurationMinutes: null,
+        cleaningFee: null,
+        extraGuestFee: null,
+        extraGuestThreshold: null,
+
+        discountHours2Plus: null,
+        discountHours4Plus: null,
+        discountHours8Plus: null,
+        discountDays2Plus: null,
+        discountDays5Plus: null,
+        discountDays14Plus: null,
+
+        spaceDescription: "",
+        guestAccessDescription: "",
+        neighborhoodDescription: "",
+        highlights: [],
+
+        amenityIds: [],
       };
 
       // Fusionner les données sauvegardées avec les valeurs par défaut
@@ -1000,13 +1182,18 @@ export default function NewListingPage() {
       let route = "";
       let city = "";
       let postalCode = "";
+      let region = "";
 
       for (const comp of place.address_components || []) {
         if (comp.types.includes("street_number")) streetNumber = comp.long_name;
         if (comp.types.includes("route")) route = comp.long_name;
         if (comp.types.includes("locality")) city = comp.long_name;
         if (comp.types.includes("postal_code")) postalCode = comp.long_name;
+        if (comp.types.includes("administrative_area_level_1")) region = comp.long_name;
       }
+
+      // Map region name to region code
+      const regionCode = region ? mapRegionNameToCode(region, formData.country) : "";
 
       setFormData((prev) => ({
         ...prev,
@@ -1014,6 +1201,8 @@ export default function NewListingPage() {
         addressLine1: streetNumber ? `${streetNumber} ${route}` : route,
         city: city || prev.city,
         postalCode: postalCode || prev.postalCode,
+        regionFR: formData.country === "France" && regionCode ? regionCode : prev.regionFR,
+        province: formData.country === "Canada" && regionCode ? regionCode : prev.province,
         lat,
         lng,
         latPublic,
@@ -1160,13 +1349,18 @@ export default function NewListingPage() {
             let route = "";
             let city = "";
             let postalCode = "";
+            let region = "";
 
             for (const comp of place.address_components || []) {
               if (comp.types.includes("street_number")) streetNumber = comp.long_name;
               if (comp.types.includes("route")) route = comp.long_name;
               if (comp.types.includes("locality")) city = comp.long_name;
               if (comp.types.includes("postal_code")) postalCode = comp.long_name;
+              if (comp.types.includes("administrative_area_level_1")) region = comp.long_name;
             }
+
+            // Map region name to region code
+            const regionCode = region ? mapRegionNameToCode(region, formData.country) : "";
 
             setFormData((prev) => ({
               ...prev,
@@ -1174,6 +1368,8 @@ export default function NewListingPage() {
               addressLine1: streetNumber ? `${streetNumber} ${route}` : route || prev.addressLine1,
               city: city || prev.city,
               postalCode: postalCode || prev.postalCode,
+              regionFR: formData.country === "France" && regionCode ? regionCode : prev.regionFR,
+              province: formData.country === "Canada" && regionCode ? regionCode : prev.province,
               lat,
               lng,
               latPublic,
@@ -1462,6 +1658,53 @@ export default function NewListingPage() {
         discountDays3Plus: formData.discountDays3Plus,
         discountWeekly: formData.discountWeekly,
         discountMonthly: formData.discountMonthly,
+
+        // === NOUVEAUX CHAMPS ===
+        bedrooms: formData.bedrooms,
+        bedConfiguration: formData.bedConfiguration,
+        bathroomsFull: formData.bathroomsFull,
+        bathroomsHalf: formData.bathroomsHalf,
+        spaceType: formData.spaceType,
+
+        floors: formData.floors,
+        hasGarden: formData.hasGarden,
+        gardenSize: formData.gardenSize,
+        hasPool: formData.hasPool,
+        poolType: formData.poolType,
+        hasTerrace: formData.hasTerrace,
+        terraceSize: formData.terraceSize,
+
+        studioType: formData.studioType,
+        studioHeight: formData.studioHeight,
+        hasGreenScreen: formData.hasGreenScreen,
+        hasSoundproofing: formData.hasSoundproofing,
+
+        parkingType: formData.parkingType,
+        parkingCovered: formData.parkingCovered,
+        parkingSecured: formData.parkingSecured,
+        parkingLength: formData.parkingLength,
+        parkingWidth: formData.parkingWidth,
+        parkingHeight: formData.parkingHeight,
+        hasEVCharger: formData.hasEVCharger,
+
+        hourlyIncrement: formData.hourlyIncrement,
+        minDurationMinutes: formData.minDurationMinutes,
+        cleaningFee: formData.cleaningFee,
+        extraGuestFee: formData.extraGuestFee,
+
+        discountHours2Plus: formData.discountHours2Plus,
+        discountHours4Plus: formData.discountHours4Plus,
+        discountHours8Plus: formData.discountHours8Plus,
+        discountDays2Plus: formData.discountDays2Plus,
+        discountDays5Plus: formData.discountDays5Plus,
+        discountDays14Plus: formData.discountDays14Plus,
+
+        spaceDescription: formData.spaceDescription,
+        guestAccessDescription: formData.guestAccessDescription,
+        neighborhoodDescription: formData.neighborhoodDescription,
+        highlights: formData.highlights,
+
+        amenityIds: formData.amenityIds,
       };
 
       const res = await fetch("/api/listings", {
@@ -1627,7 +1870,13 @@ export default function NewListingPage() {
         {/* Main layout with side buttons */}
         <div className="relative mx-auto max-w-5xl px-4 sm:px-6">
           {/* Retour button - fixed left side */}
-          <div className="hidden lg:block fixed left-[calc(50%-640px)] top-1/2 -translate-y-1/2 z-30">
+          <div
+            className="hidden lg:block fixed left-[calc(50%-640px)] z-30 transition-all duration-300"
+            style={{
+              top: footerVisible ? 'calc(50% - 150px)' : '50%',
+              transform: 'translateY(-50%)',
+            }}
+          >
             <button
               type="button"
               onClick={handleBack}
@@ -1642,7 +1891,13 @@ export default function NewListingPage() {
           </div>
 
           {/* Suivant button - fixed right side */}
-          <div className="hidden lg:block fixed right-[calc(50%-640px)] top-1/2 -translate-y-1/2 z-30">
+          <div
+            className="hidden lg:block fixed right-[calc(50%-640px)] z-30 transition-all duration-300"
+            style={{
+              top: footerVisible ? 'calc(50% - 150px)' : '50%',
+              transform: 'translateY(-50%)',
+            }}
+          >
             {isLastStep ? (
               <button
                 type="button"
@@ -2295,53 +2550,13 @@ export default function NewListingPage() {
           {currentStep === "features" && (
             <div className="space-y-6">
               <p className="text-sm text-gray-600">
-                Sélectionnez les caractéristiques qui décrivent le mieux votre espace (optionnel)
+                Sélectionnez les équipements disponibles dans votre espace
               </p>
 
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {SPACE_FEATURES.map((feature) => {
-                  const features = Array.isArray(formData.spaceFeatures) ? formData.spaceFeatures : [];
-                  const isSelected = features.includes(feature.value);
-                  return (
-                    <button
-                      key={feature.value}
-                      type="button"
-                      onClick={() => {
-                        setFormData((prev) => {
-                          const currentFeatures = Array.isArray(prev.spaceFeatures) ? prev.spaceFeatures : [];
-                          return {
-                            ...prev,
-                            spaceFeatures: isSelected
-                              ? currentFeatures.filter((f) => f !== feature.value)
-                              : [...currentFeatures, feature.value],
-                          };
-                        });
-                      }}
-                      className={`flex items-center gap-2 rounded-xl border-2 p-3 text-left transition-all ${
-                        isSelected ? "border-gray-900 bg-gray-50" : "border-gray-200 hover:border-gray-400"
-                      }`}
-                    >
-                      <span className="text-lg">{feature.icon}</span>
-                      <span className={`text-sm font-medium ${isSelected ? "text-gray-900" : "text-gray-700"}`}>
-                        {feature.label}
-                      </span>
-                      {isSelected && (
-                        <svg className="ml-auto h-4 w-4 text-gray-900" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {Array.isArray(formData.spaceFeatures) && formData.spaceFeatures.length > 0 && (
-                <div className="rounded-xl bg-gray-50 p-4">
-                  <p className="text-sm text-gray-600">
-                    <span className="font-medium">{formData.spaceFeatures.length}</span> caractéristique{formData.spaceFeatures.length > 1 ? "s" : ""} sélectionnée{formData.spaceFeatures.length > 1 ? "s" : ""}
-                  </p>
-                </div>
-              )}
+              <AmenitiesSelector
+                selectedIds={formData.amenityIds}
+                onChange={(ids) => setFormData((prev) => ({ ...prev, amenityIds: ids }))}
+              />
             </div>
           )}
 
@@ -2483,18 +2698,123 @@ export default function NewListingPage() {
                 <p className="text-right text-xs text-gray-400">{formData.title.length}/120</p>
               </div>
 
+              {/* Points forts */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Points forts (2-3 maximum)
+                </label>
+                <p className="text-xs text-gray-500">
+                  Sélectionnez ce qui rend votre espace unique
+                </p>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {[
+                    "Vue exceptionnelle",
+                    "Proche transports",
+                    "Très lumineux",
+                    "Calme",
+                    "Centre-ville",
+                    "Parking inclus",
+                    "WiFi rapide",
+                    "Équipement pro",
+                    "Récemment rénové",
+                  ].map((highlight) => {
+                    const isSelected = formData.highlights.includes(highlight);
+                    return (
+                      <button
+                        key={highlight}
+                        type="button"
+                        onClick={() => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            highlights: isSelected
+                              ? prev.highlights.filter((h) => h !== highlight)
+                              : prev.highlights.length < 3
+                              ? [...prev.highlights, highlight]
+                              : prev.highlights,
+                          }));
+                        }}
+                        className={`rounded-lg border-2 px-3 py-2 text-xs font-medium transition-all ${
+                          isSelected
+                            ? "border-gray-900 bg-gray-50"
+                            : "border-gray-200 hover:border-gray-400"
+                        }`}
+                      >
+                        {highlight}
+                      </button>
+                    );
+                  })}
+                </div>
+                {formData.highlights.length > 0 && (
+                  <p className="text-xs text-gray-500">
+                    {formData.highlights.length}/3 sélectionné{formData.highlights.length > 1 ? "s" : ""}
+                  </p>
+                )}
+              </div>
+
+              {/* Description de l'espace */}
+              <div className="space-y-2">
+                <label htmlFor="spaceDescription" className="text-sm font-medium text-gray-700">
+                  L&apos;espace
+                </label>
+                <textarea
+                  id="spaceDescription"
+                  value={formData.spaceDescription}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, spaceDescription: e.target.value }))}
+                  rows={4}
+                  maxLength={1000}
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                  placeholder="Décrivez votre espace : ce qui le rend unique, les équipements disponibles, l'ambiance..."
+                />
+                <p className="text-right text-xs text-gray-400">{formData.spaceDescription.length}/1000</p>
+              </div>
+
+              {/* Accès voyageurs */}
+              <div className="space-y-2">
+                <label htmlFor="guestAccessDescription" className="text-sm font-medium text-gray-700">
+                  Accès voyageurs (optionnel)
+                </label>
+                <textarea
+                  id="guestAccessDescription"
+                  value={formData.guestAccessDescription}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, guestAccessDescription: e.target.value }))}
+                  rows={3}
+                  maxLength={500}
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                  placeholder="Comment les voyageurs accèdent-ils à l'espace ? Y a-t-il des zones partagées ?"
+                />
+                <p className="text-right text-xs text-gray-400">{formData.guestAccessDescription.length}/500</p>
+              </div>
+
+              {/* Le quartier */}
+              <div className="space-y-2">
+                <label htmlFor="neighborhoodDescription" className="text-sm font-medium text-gray-700">
+                  Le quartier (optionnel)
+                </label>
+                <textarea
+                  id="neighborhoodDescription"
+                  value={formData.neighborhoodDescription}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, neighborhoodDescription: e.target.value }))}
+                  rows={3}
+                  maxLength={500}
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                  placeholder="Décrivez le quartier : ambiance, commerces, restaurants, attractions..."
+                />
+                <p className="text-right text-xs text-gray-400">{formData.neighborhoodDescription.length}/500</p>
+              </div>
+
+              {/* Description principale (fallback) */}
               <div className="space-y-2">
                 <label htmlFor="description" className="text-sm font-medium text-gray-700">
-                  Description
+                  Description générale
                 </label>
                 <textarea
                   id="description"
                   value={formData.description}
                   onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-                  rows={6}
+                  rows={4}
                   maxLength={2000}
                   className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
-                  placeholder="Décrivez votre espace : ce qui le rend unique, les équipements disponibles, l'ambiance, le quartier..."
+                  placeholder="Toute autre information importante..."
                 />
                 <p className="text-right text-xs text-gray-400">{formData.description.length}/2000</p>
               </div>
@@ -2581,6 +2901,35 @@ export default function NewListingPage() {
                     Prix par heure ({formData.currency})
                   </label>
 
+                  {/* Incrément horaire */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-gray-700">Incrément de réservation</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setFormData((prev) => ({ ...prev, hourlyIncrement: 30 }))}
+                        className={`rounded-lg border-2 px-3 py-2 text-sm font-medium transition-all ${
+                          formData.hourlyIncrement === 30
+                            ? "border-gray-900 bg-gray-50"
+                            : "border-gray-200 hover:border-gray-400"
+                        }`}
+                      >
+                        30 minutes
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData((prev) => ({ ...prev, hourlyIncrement: 60 }))}
+                        className={`rounded-lg border-2 px-3 py-2 text-sm font-medium transition-all ${
+                          formData.hourlyIncrement === 60
+                            ? "border-gray-900 bg-gray-50"
+                            : "border-gray-200 hover:border-gray-400"
+                        }`}
+                      >
+                        1 heure
+                      </button>
+                    </div>
+                  </div>
+
                   {/* Hourly price slider */}
                   <div className="space-y-3">
                     <input
@@ -2616,8 +2965,89 @@ export default function NewListingPage() {
                       {formData.currency === "EUR" ? "€" : "$"} / h
                     </span>
                   </div>
+
+                  {/* Durée minimum */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-gray-700">Durée minimum de réservation (optionnel)</label>
+                    <select
+                      value={formData.minDurationMinutes || ""}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, minDurationMinutes: e.target.value ? parseInt(e.target.value) : null }))}
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+                    >
+                      <option value="">Aucune</option>
+                      <option value="30">30 minutes</option>
+                      <option value="60">1 heure</option>
+                      <option value="90">1h30</option>
+                      <option value="120">2 heures</option>
+                      <option value="180">3 heures</option>
+                      <option value="240">4 heures</option>
+                    </select>
+                  </div>
                 </div>
               )}
+
+              {/* Frais supplémentaires */}
+              <div className="space-y-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                <h3 className="text-sm font-medium text-gray-900">Frais supplémentaires (optionnel)</h3>
+
+                <div className="space-y-2">
+                  <label htmlFor="cleaningFee" className="text-xs font-medium text-gray-700">
+                    Frais de ménage (une fois par séjour)
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="cleaningFee"
+                      type="number"
+                      min="0"
+                      max="500"
+                      value={formData.cleaningFee || ""}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, cleaningFee: parseFloat(e.target.value) || null }))}
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-12 text-sm focus:border-gray-900 focus:outline-none"
+                      placeholder="0"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                      {formData.currency === "EUR" ? "€" : "$"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="extraGuestFee" className="text-xs font-medium text-gray-700">
+                    Frais par voyageur supplémentaire
+                  </label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <input
+                        id="extraGuestFee"
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={formData.extraGuestFee || ""}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, extraGuestFee: parseFloat(e.target.value) || null }))}
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-12 text-sm focus:border-gray-900 focus:outline-none"
+                        placeholder="0"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
+                        {formData.currency === "EUR" ? "€" : "$"}
+                      </span>
+                    </div>
+                    <div className="w-32">
+                      <input
+                        type="number"
+                        min="1"
+                        max="20"
+                        value={formData.extraGuestThreshold || ""}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, extraGuestThreshold: parseInt(e.target.value) || null }))}
+                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+                        placeholder="À partir de"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    Ex: 10{formData.currency === "EUR" ? "€" : "$"} à partir de 3 voyageurs
+                  </p>
+                </div>
+              </div>
 
               <div className="rounded-xl bg-gray-50 p-4">
                 <p className="text-sm text-gray-600">
@@ -2719,8 +3149,27 @@ export default function NewListingPage() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between rounded-xl border border-gray-200 p-4">
                       <div>
-                        <p className="font-medium text-gray-900">3 heures ou plus</p>
+                        <p className="font-medium text-gray-900">2 heures ou plus</p>
                         <p className="text-sm text-gray-500">Réduction appliquée automatiquement</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min={0}
+                          max={50}
+                          value={formData.discountHours2Plus || ""}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, discountHours2Plus: parseInt(e.target.value) || null }))}
+                          className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-center text-sm focus:border-gray-900 focus:outline-none"
+                          placeholder="0"
+                        />
+                        <span className="text-sm text-gray-500">%</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-xl border border-gray-200 p-4">
+                      <div>
+                        <p className="font-medium text-gray-900">3 heures ou plus</p>
+                        <p className="text-sm text-gray-500">Pour les sessions prolongées</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <input
@@ -2729,6 +3178,25 @@ export default function NewListingPage() {
                           max={50}
                           value={formData.discountHours3Plus || ""}
                           onChange={(e) => setFormData((prev) => ({ ...prev, discountHours3Plus: parseInt(e.target.value) || null }))}
+                          className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-center text-sm focus:border-gray-900 focus:outline-none"
+                          placeholder="0"
+                        />
+                        <span className="text-sm text-gray-500">%</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-xl border border-gray-200 p-4">
+                      <div>
+                        <p className="font-medium text-gray-900">4 heures ou plus</p>
+                        <p className="text-sm text-gray-500">Demi-journée</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min={0}
+                          max={50}
+                          value={formData.discountHours4Plus || ""}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, discountHours4Plus: parseInt(e.target.value) || null }))}
                           className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-center text-sm focus:border-gray-900 focus:outline-none"
                           placeholder="0"
                         />
@@ -2754,6 +3222,25 @@ export default function NewListingPage() {
                         <span className="text-sm text-gray-500">%</span>
                       </div>
                     </div>
+
+                    <div className="flex items-center justify-between rounded-xl border border-gray-200 p-4">
+                      <div>
+                        <p className="font-medium text-gray-900">8 heures ou plus</p>
+                        <p className="text-sm text-gray-500">Journée complète</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min={0}
+                          max={50}
+                          value={formData.discountHours8Plus || ""}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, discountHours8Plus: parseInt(e.target.value) || null }))}
+                          className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-center text-sm focus:border-gray-900 focus:outline-none"
+                          placeholder="0"
+                        />
+                        <span className="text-sm text-gray-500">%</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -2764,6 +3251,25 @@ export default function NewListingPage() {
                   <h3 className="text-sm font-medium text-gray-900">Réductions à la journée</h3>
 
                   <div className="space-y-3">
+                    <div className="flex items-center justify-between rounded-xl border border-gray-200 p-4">
+                      <div>
+                        <p className="font-medium text-gray-900">2 jours ou plus</p>
+                        <p className="text-sm text-gray-500">Week-end</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min={0}
+                          max={50}
+                          value={formData.discountDays2Plus || ""}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, discountDays2Plus: parseInt(e.target.value) || null }))}
+                          className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-center text-sm focus:border-gray-900 focus:outline-none"
+                          placeholder="0"
+                        />
+                        <span className="text-sm text-gray-500">%</span>
+                      </div>
+                    </div>
+
                     <div className="flex items-center justify-between rounded-xl border border-gray-200 p-4">
                       <div>
                         <p className="font-medium text-gray-900">3 jours ou plus</p>
@@ -2785,6 +3291,25 @@ export default function NewListingPage() {
 
                     <div className="flex items-center justify-between rounded-xl border border-gray-200 p-4">
                       <div>
+                        <p className="font-medium text-gray-900">5 jours ou plus</p>
+                        <p className="text-sm text-gray-500">Séjour d&apos;une semaine</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min={0}
+                          max={50}
+                          value={formData.discountDays5Plus || ""}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, discountDays5Plus: parseInt(e.target.value) || null }))}
+                          className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-center text-sm focus:border-gray-900 focus:outline-none"
+                          placeholder="0"
+                        />
+                        <span className="text-sm text-gray-500">%</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-xl border border-gray-200 p-4">
+                      <div>
                         <p className="font-medium text-gray-900">Semaine (7+ jours)</p>
                         <p className="text-sm text-gray-500">Attirez les séjours d&apos;une semaine</p>
                       </div>
@@ -2795,6 +3320,25 @@ export default function NewListingPage() {
                           max={60}
                           value={formData.discountWeekly || ""}
                           onChange={(e) => setFormData((prev) => ({ ...prev, discountWeekly: parseInt(e.target.value) || null }))}
+                          className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-center text-sm focus:border-gray-900 focus:outline-none"
+                          placeholder="0"
+                        />
+                        <span className="text-sm text-gray-500">%</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between rounded-xl border border-gray-200 p-4">
+                      <div>
+                        <p className="font-medium text-gray-900">2 semaines (14+ jours)</p>
+                        <p className="text-sm text-gray-500">Séjours moyens</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min={0}
+                          max={60}
+                          value={formData.discountDays14Plus || ""}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, discountDays14Plus: parseInt(e.target.value) || null }))}
                           className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-center text-sm focus:border-gray-900 focus:outline-none"
                           placeholder="0"
                         />
@@ -2825,14 +3369,20 @@ export default function NewListingPage() {
               )}
 
               {/* Preview of discounts */}
-              {(formData.discountHours3Plus || formData.discountHours6Plus || formData.discountDays3Plus || formData.discountWeekly || formData.discountMonthly) && (
+              {(formData.discountHours2Plus || formData.discountHours3Plus || formData.discountHours4Plus || formData.discountHours6Plus || formData.discountHours8Plus || formData.discountDays2Plus || formData.discountDays3Plus || formData.discountDays5Plus || formData.discountWeekly || formData.discountDays14Plus || formData.discountMonthly) && (
                 <div className="rounded-xl bg-green-50 border border-green-200 p-4">
                   <h4 className="text-sm font-medium text-green-900 mb-2">Aperçu des réductions</h4>
                   <div className="space-y-1 text-sm text-green-800">
+                    {formData.discountHours2Plus && <p>2+ heures : -{formData.discountHours2Plus}%</p>}
                     {formData.discountHours3Plus && <p>3+ heures : -{formData.discountHours3Plus}%</p>}
+                    {formData.discountHours4Plus && <p>4+ heures : -{formData.discountHours4Plus}%</p>}
                     {formData.discountHours6Plus && <p>6+ heures : -{formData.discountHours6Plus}%</p>}
+                    {formData.discountHours8Plus && <p>8+ heures : -{formData.discountHours8Plus}%</p>}
+                    {formData.discountDays2Plus && <p>2+ jours : -{formData.discountDays2Plus}%</p>}
                     {formData.discountDays3Plus && <p>3+ jours : -{formData.discountDays3Plus}%</p>}
+                    {formData.discountDays5Plus && <p>5+ jours : -{formData.discountDays5Plus}%</p>}
                     {formData.discountWeekly && <p>Semaine : -{formData.discountWeekly}%</p>}
+                    {formData.discountDays14Plus && <p>2 semaines : -{formData.discountDays14Plus}%</p>}
                     {formData.discountMonthly && <p>Mois : -{formData.discountMonthly}%</p>}
                   </div>
                 </div>

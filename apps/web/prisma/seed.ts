@@ -909,16 +909,90 @@ const LISTINGS = [
   },
 ];
 
+// Amenities de base par catégorie
+const AMENITIES = [
+  // GENERAL
+  { slug: "wifi", label: "WiFi", category: "GENERAL" },
+  { slug: "air-conditioning", label: "Climatisation", category: "GENERAL" },
+  { slug: "heating", label: "Chauffage", category: "GENERAL" },
+  { slug: "tv", label: "Télévision", category: "GENERAL" },
+  { slug: "workspace", label: "Espace de travail", category: "GENERAL" },
+  { slug: "kitchen", label: "Cuisine", category: "GENERAL" },
+  { slug: "washer", label: "Lave-linge", category: "GENERAL" },
+  { slug: "dryer", label: "Sèche-linge", category: "GENERAL" },
+  { slug: "iron", label: "Fer à repasser", category: "GENERAL" },
+  { slug: "hair-dryer", label: "Sèche-cheveux", category: "GENERAL" },
+  { slug: "essentials", label: "Essentiels (serviettes, draps, savon)", category: "GENERAL" },
+  { slug: "hangers", label: "Cintres", category: "GENERAL" },
+
+  // BUSINESS
+  { slug: "printer", label: "Imprimante", category: "BUSINESS" },
+  { slug: "projector", label: "Vidéoprojecteur", category: "BUSINESS" },
+  { slug: "whiteboard", label: "Tableau blanc", category: "BUSINESS" },
+  { slug: "conference-phone", label: "Téléphone de conférence", category: "BUSINESS" },
+  { slug: "high-speed-internet", label: "Internet haut débit", category: "BUSINESS" },
+  { slug: "meeting-room", label: "Salle de réunion", category: "BUSINESS" },
+
+  // PARKING
+  { slug: "free-parking", label: "Parking gratuit", category: "PARKING" },
+  { slug: "paid-parking", label: "Parking payant", category: "PARKING" },
+  { slug: "ev-charger", label: "Borne de recharge électrique", category: "PARKING" },
+  { slug: "garage", label: "Garage", category: "PARKING" },
+
+  // ACCESSIBILITY
+  { slug: "elevator", label: "Ascenseur", category: "ACCESSIBILITY" },
+  { slug: "wheelchair-accessible", label: "Accessible en fauteuil roulant", category: "ACCESSIBILITY" },
+  { slug: "ground-floor", label: "Rez-de-chaussée", category: "ACCESSIBILITY" },
+
+  // OUTDOOR
+  { slug: "pool", label: "Piscine", category: "OUTDOOR" },
+  { slug: "hot-tub", label: "Jacuzzi", category: "OUTDOOR" },
+  { slug: "garden", label: "Jardin", category: "OUTDOOR" },
+  { slug: "balcony", label: "Balcon", category: "OUTDOOR" },
+  { slug: "terrace", label: "Terrasse", category: "OUTDOOR" },
+  { slug: "bbq", label: "Barbecue", category: "OUTDOOR" },
+
+  // MEDIA
+  { slug: "sound-system", label: "Système audio", category: "MEDIA" },
+  { slug: "recording-equipment", label: "Équipement d'enregistrement", category: "MEDIA" },
+  { slug: "lighting-equipment", label: "Équipement d'éclairage", category: "MEDIA" },
+  { slug: "green-screen", label: "Fond vert", category: "MEDIA" },
+  { slug: "soundproofing", label: "Isolation phonique", category: "MEDIA" },
+];
+
 async function main() {
-  console.log("🗑️  Suppression des annonces existantes...");
+  console.log("🗑️  Suppression des données existantes...");
 
   // Supprimer toutes les images d'annonces
   await prisma.listingImage.deleteMany();
   console.log("  ✓ Images supprimées");
 
+  // Supprimer les relations amenities
+  await prisma.listingAmenity.deleteMany();
+  console.log("  ✓ Relations amenities supprimées");
+
   // Supprimer toutes les annonces
   await prisma.listing.deleteMany();
   console.log("  ✓ Annonces supprimées");
+
+  // Supprimer les amenities existantes
+  await prisma.amenity.deleteMany();
+  console.log("  ✓ Amenities supprimées");
+
+  // Créer les amenities
+  console.log("\n🏷️  Création des amenities...");
+  const createdAmenities = [];
+  for (const amenity of AMENITIES) {
+    const created = await prisma.amenity.create({
+      data: {
+        slug: amenity.slug,
+        label: amenity.label,
+        category: amenity.category as any,
+      },
+    });
+    createdAmenities.push(created);
+  }
+  console.log(`  ✓ ${createdAmenities.length} amenities créées`);
 
   // Trouver ou créer un utilisateur hôte
   console.log("\n👤 Recherche d'un utilisateur hôte...");

@@ -204,7 +204,7 @@ model Listing {
   id                 String             @id @default(cuid())
   title              String
   description        String
-  /// Prix par nuit / par jour (frontend décidera comment l’afficher)
+  /// Prix par nuit / par jour (frontend décidera comment l'afficher)
   price              Float
   country            String
   /// Ville : obligatoire (défaut vide pour anciennes lignes)
@@ -213,15 +213,15 @@ model Listing {
   ownerId            String
   currency           Currency           @default(EUR)
   province           ProvinceCA?
-  /// Adresse exacte de l’espace (jamais affichée publiquement)
+  /// Adresse exacte de l'espace (jamais affichée publiquement)
   addressFull        String             @default("")
   /// Coordonnées exactes
   lat                Float              @default(0)
-  /// Coordonnées “publiques” (approx)
+  /// Coordonnées "publiques" (approx)
   latPublic          Float              @default(0)
   lng                Float              @default(0)
   lngPublic          Float              @default(0)
-  /// Ligne d’adresse principale (numéro + rue)
+  /// Ligne d'adresse principale (numéro + rue)
   addressLine1       String?
   /// ID du lieu renvoyé par le provider
   mapPlaceId         String?
@@ -237,11 +237,11 @@ model Listing {
   /// Capacité de l'espace (nombre de personnes max)
   maxGuests          Int?
   maxNights          Int?
-  /// Contraintes de durée pour les réservations à l’heure
+  /// Contraintes de durée pour les réservations à l'heure
   minDurationHours   Int?
   /// Contraintes de durée pour les réservations à la journée / nuitée
   minNights          Int?
-  /// Mode de tarification (à l’heure, à la journée, ou les deux)
+  /// Mode de tarification (à l'heure, à la journée, ou les deux)
   pricingMode        PricingMode        @default(DAILY)
   /// Type d'espace principal (chambre, bureau, parking, studio, etc.)
   type               ListingType        @default(OTHER)
@@ -277,6 +277,121 @@ model Listing {
   rating             Float              @default(0)
   updatedAt          DateTime           @default(now())
   viewCount          Int                @default(0)
+
+  // === CONFIGURATION DÉTAILLÉE ===
+
+  /// Chambres et lits (pour APARTMENT, HOUSE, ROOM)
+  bedrooms           Int?
+  /// Configuration détaillée des lits par chambre (JSON)
+  bedConfiguration   Json?
+  /// Salles de bain complètes
+  bathroomsFull      Int?
+  /// Salles d'eau (sans baignoire)
+  bathroomsHalf      Int?
+  /// Salles de bain partagées
+  bathroomsShared    Boolean            @default(false)
+
+  /// Type d'accès à l'espace
+  spaceType          SpaceAccessType    @default(ENTIRE_PLACE)
+
+  /// Espaces (pour HOUSE)
+  floors             Int?
+  hasGarden          Boolean            @default(false)
+  gardenSize         Int?
+  hasPool            Boolean            @default(false)
+  poolType           String?
+  poolHeated         Boolean            @default(false)
+  hasSpa             Boolean            @default(false)
+  hasTerrace         Boolean            @default(false)
+  terraceSize        Int?
+  garageSpaces       Int?
+
+  /// Studio spécifique
+  studioType         String?
+  studioHeight       Float?
+  hasGreenScreen     Boolean            @default(false)
+  hasSoundproofing   Boolean            @default(false)
+
+  /// Parking/Garage spécifique
+  parkingType        String?
+  parkingCovered     Boolean            @default(false)
+  parkingSecured     Boolean            @default(false)
+  parkingLength      Float?
+  parkingWidth       Float?
+  parkingHeight      Float?
+  hasEVCharger       Boolean            @default(false)
+
+  // === TARIFICATION AVANCÉE ===
+
+  /// Incréments horaires (30 ou 60 minutes)
+  hourlyIncrement    Int                @default(60)
+  /// Durée minimum en minutes
+  minDurationMinutes Int?
+  /// Durée maximum en minutes
+  maxDurationMinutes Int?
+
+  /// Préavis minimum (jours)
+  advanceNoticeDays  Int                @default(1)
+  /// Réservation max X jours à l'avance
+  maxAdvanceBookingDays Int?
+
+  /// Frais supplémentaires
+  cleaningFee        Float?
+  extraGuestFee      Float?
+  extraGuestThreshold Int?
+
+  /// Weekend pricing
+  weekendPriceMultiplier Float?
+
+  // === RÉDUCTIONS AVANCÉES ===
+
+  /// Réductions horaires supplémentaires
+  discountHours2Plus Int?
+  discountHours4Plus Int?
+  discountHours8Plus Int?
+
+  /// Réductions journalières supplémentaires
+  discountDays2Plus  Int?
+  discountDays5Plus  Int?
+  discountDays14Plus Int?
+
+  /// Réductions stratégiques
+  lastMinuteDiscount Int?
+  lastMinuteDiscountDays Int?
+  earlyBirdDiscount  Int?
+  earlyBirdDiscountDays Int?
+  firstBookingDiscount Int?
+
+  // === DESCRIPTION ENRICHIE ===
+
+  spaceDescription   String?
+  guestAccessDescription String?
+  neighborhoodDescription String?
+  transitDescription String?
+  notesDescription   String?
+  highlights         String[]           @default([])
+
+  // === RÈGLES DE LA MAISON ===
+
+  houseRules         String[]           @default([])
+  customHouseRules   String?
+  checkInStart       String?
+  checkInEnd         String?
+  checkOutTime       String?
+  selfCheckIn        Boolean            @default(false)
+  checkInMethod      CheckInMethod?
+
+  /// Politiques
+  petsAllowed        Boolean            @default(false)
+  petTypes           String[]           @default([])
+  petFee             Float?
+  smokingAllowed     Boolean            @default(false)
+  eventsAllowed      Boolean            @default(false)
+  childrenAllowed    Boolean            @default(true)
+
+  quietHoursStart    String?
+  quietHoursEnd      String?
+
   bookings           Booking[]
   calendar           CalendarBlock[]
   CalendarExport     CalendarExport?
@@ -1682,4 +1797,22 @@ enum SupportMessageType {
   AI                /// Message de l'IA
   ADMIN             /// Message d'un admin
   SYSTEM            /// Message système (ex: "Un agent va vous répondre")
+}
+
+/// Type d'accès à l'espace
+enum SpaceAccessType {
+  ENTIRE_PLACE      /// Logement entier
+  PRIVATE_ROOM      /// Chambre privée
+  SHARED_ROOM       /// Chambre partagée
+  SHARED_SPACE      /// Espace partagé
+}
+
+/// Méthode de check-in
+enum CheckInMethod {
+  MEET_IN_PERSON    /// Rencontre en personne
+  LOCKBOX           /// Boîte à clés
+  KEYPAD            /// Clavier à code
+  SMART_LOCK        /// Serrure connectée
+  DOORMAN           /// Portier
+  BUILDING_STAFF    /// Personnel de l'immeuble
 }

@@ -171,6 +171,22 @@ export const listingTypeSchema = z.enum([
 
 export const pricingModeSchema = z.enum(["HOURLY", "DAILY", "BOTH"]);
 
+export const spaceAccessTypeSchema = z.enum([
+  "ENTIRE_PLACE",
+  "PRIVATE_ROOM",
+  "SHARED_ROOM",
+  "SHARED_SPACE",
+]);
+
+export const checkInMethodSchema = z.enum([
+  "MEET_IN_PERSON",
+  "LOCKBOX",
+  "KEYPAD",
+  "SMART_LOCK",
+  "DOORMAN",
+  "BUILDING_STAFF",
+]);
+
 export const createListingSchema = z.object({
   title: z
     .string()
@@ -210,6 +226,99 @@ export const createListingSchema = z.object({
   discountDays3Plus: z.number().int().min(0).max(100).optional().nullable(),
   discountWeekly: z.number().int().min(0).max(100).optional().nullable(),
   discountMonthly: z.number().int().min(0).max(100).optional().nullable(),
+
+  // === CONFIGURATION DÉTAILLÉE ===
+  bedrooms: z.number().int().min(0).max(20).optional().nullable(),
+  bedConfiguration: z.any().optional().nullable(), // JSON
+  bathroomsFull: z.number().int().min(0).max(20).optional().nullable(),
+  bathroomsHalf: z.number().int().min(0).max(20).optional().nullable(),
+  bathroomsShared: z.boolean().optional(),
+  spaceType: spaceAccessTypeSchema.optional(),
+
+  // Espaces (HOUSE)
+  floors: z.number().int().min(1).max(10).optional().nullable(),
+  hasGarden: z.boolean().optional(),
+  gardenSize: z.number().int().min(0).max(100000).optional().nullable(),
+  hasPool: z.boolean().optional(),
+  poolType: z.enum(["indoor", "outdoor"]).optional().nullable(),
+  poolHeated: z.boolean().optional(),
+  hasSpa: z.boolean().optional(),
+  hasTerrace: z.boolean().optional(),
+  terraceSize: z.number().int().min(0).max(10000).optional().nullable(),
+  garageSpaces: z.number().int().min(0).max(10).optional().nullable(),
+
+  // Studio spécifique
+  studioType: z.enum(["photo", "video", "music", "podcast", "dance", "art"]).optional().nullable(),
+  studioHeight: z.number().min(2).max(20).optional().nullable(),
+  hasGreenScreen: z.boolean().optional(),
+  hasSoundproofing: z.boolean().optional(),
+
+  // Parking/Garage spécifique
+  parkingType: z.enum(["outdoor", "indoor", "underground"]).optional().nullable(),
+  parkingCovered: z.boolean().optional(),
+  parkingSecured: z.boolean().optional(),
+  parkingLength: z.number().min(0).max(50).optional().nullable(),
+  parkingWidth: z.number().min(0).max(50).optional().nullable(),
+  parkingHeight: z.number().min(0).max(10).optional().nullable(),
+  hasEVCharger: z.boolean().optional(),
+
+  // === TARIFICATION AVANCÉE ===
+  hourlyIncrement: z.number().int().refine((val) => val === 30 || val === 60, {
+    message: "L'incrément doit être 30 ou 60 minutes",
+  }).optional(),
+  minDurationMinutes: z.number().int().min(30).max(1440).optional().nullable(),
+  maxDurationMinutes: z.number().int().min(30).max(43200).optional().nullable(),
+  advanceNoticeDays: z.number().int().min(0).max(365).optional(),
+  maxAdvanceBookingDays: z.number().int().min(1).max(730).optional().nullable(),
+
+  // Frais supplémentaires
+  cleaningFee: z.number().min(0).max(10000).optional().nullable(),
+  extraGuestFee: z.number().min(0).max(1000).optional().nullable(),
+  extraGuestThreshold: z.number().int().min(1).max(100).optional().nullable(),
+  weekendPriceMultiplier: z.number().min(1).max(5).optional().nullable(),
+
+  // === RÉDUCTIONS AVANCÉES ===
+  discountHours2Plus: z.number().int().min(0).max(100).optional().nullable(),
+  discountHours4Plus: z.number().int().min(0).max(100).optional().nullable(),
+  discountHours8Plus: z.number().int().min(0).max(100).optional().nullable(),
+  discountDays2Plus: z.number().int().min(0).max(100).optional().nullable(),
+  discountDays5Plus: z.number().int().min(0).max(100).optional().nullable(),
+  discountDays14Plus: z.number().int().min(0).max(100).optional().nullable(),
+  lastMinuteDiscount: z.number().int().min(0).max(100).optional().nullable(),
+  lastMinuteDiscountDays: z.number().int().min(1).max(30).optional().nullable(),
+  earlyBirdDiscount: z.number().int().min(0).max(100).optional().nullable(),
+  earlyBirdDiscountDays: z.number().int().min(1).max(365).optional().nullable(),
+  firstBookingDiscount: z.number().int().min(0).max(100).optional().nullable(),
+
+  // === DESCRIPTION ENRICHIE ===
+  spaceDescription: z.string().max(2000).optional().nullable(),
+  guestAccessDescription: z.string().max(1000).optional().nullable(),
+  neighborhoodDescription: z.string().max(1000).optional().nullable(),
+  transitDescription: z.string().max(1000).optional().nullable(),
+  notesDescription: z.string().max(1000).optional().nullable(),
+  highlights: z.array(z.string().max(100)).max(3).optional(),
+
+  // === RÈGLES DE LA MAISON ===
+  houseRules: z.array(z.string().max(200)).max(20).optional(),
+  customHouseRules: z.string().max(2000).optional().nullable(),
+  checkInStart: z.string().regex(/^\d{2}:\d{2}$/).optional().nullable(),
+  checkInEnd: z.string().regex(/^\d{2}:\d{2}$/).optional().nullable(),
+  checkOutTime: z.string().regex(/^\d{2}:\d{2}$/).optional().nullable(),
+  selfCheckIn: z.boolean().optional(),
+  checkInMethod: checkInMethodSchema.optional().nullable(),
+
+  // Politiques
+  petsAllowed: z.boolean().optional(),
+  petTypes: z.array(z.string().max(50)).max(10).optional(),
+  petFee: z.number().min(0).max(1000).optional().nullable(),
+  smokingAllowed: z.boolean().optional(),
+  eventsAllowed: z.boolean().optional(),
+  childrenAllowed: z.boolean().optional(),
+  quietHoursStart: z.string().regex(/^\d{2}:\d{2}$/).optional().nullable(),
+  quietHoursEnd: z.string().regex(/^\d{2}:\d{2}$/).optional().nullable(),
+
+  // Amenities (IDs)
+  amenityIds: z.array(z.string()).max(50).optional(),
 });
 
 export const updateListingSchema = createListingSchema.partial();

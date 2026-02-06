@@ -92,7 +92,7 @@ export default function Footer() {
   // (anciennement masqué sur /listings)
 
   return (
-    <footer className="relative z-30 pb-20 md:pb-0" style={{ backgroundColor: '#f5f5f5' }}>
+    <footer id="site-footer" className="relative z-30 pb-20 md:pb-0" style={{ backgroundColor: '#f5f5f5' }}>
       {/* Main footer content */}
       <div className="mx-auto max-w-7xl 2xl:max-w-[1600px] 3xl:max-w-[1920px] px-4 py-6 sm:py-5 sm:px-6 lg:px-8 xl:px-10">
         {/* Mobile: Sections en accordéon / Desktop: Grille avec illustration */}

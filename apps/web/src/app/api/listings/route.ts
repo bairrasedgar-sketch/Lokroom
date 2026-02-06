@@ -266,6 +266,95 @@ export async function POST(req: NextRequest) {
         ...(data.latPublic != null && data.lngPublic != null
           ? { latPublic: data.latPublic, lngPublic: data.lngPublic }
           : {}),
+
+        // === CONFIGURATION DÉTAILLÉE ===
+        bedrooms: data.bedrooms ?? undefined,
+        bedConfiguration: data.bedConfiguration ?? undefined,
+        bathroomsFull: data.bathroomsFull ?? undefined,
+        bathroomsHalf: data.bathroomsHalf ?? undefined,
+        bathroomsShared: data.bathroomsShared ?? false,
+        spaceType: data.spaceType ?? "ENTIRE_PLACE",
+
+        // Espaces (HOUSE)
+        floors: data.floors ?? undefined,
+        hasGarden: data.hasGarden ?? false,
+        gardenSize: data.gardenSize ?? undefined,
+        hasPool: data.hasPool ?? false,
+        poolType: data.poolType ?? undefined,
+        poolHeated: data.poolHeated ?? false,
+        hasSpa: data.hasSpa ?? false,
+        hasTerrace: data.hasTerrace ?? false,
+        terraceSize: data.terraceSize ?? undefined,
+        garageSpaces: data.garageSpaces ?? undefined,
+
+        // Studio spécifique
+        studioType: data.studioType ?? undefined,
+        studioHeight: data.studioHeight ?? undefined,
+        hasGreenScreen: data.hasGreenScreen ?? false,
+        hasSoundproofing: data.hasSoundproofing ?? false,
+
+        // Parking/Garage spécifique
+        parkingType: data.parkingType ?? undefined,
+        parkingCovered: data.parkingCovered ?? false,
+        parkingSecured: data.parkingSecured ?? false,
+        parkingLength: data.parkingLength ?? undefined,
+        parkingWidth: data.parkingWidth ?? undefined,
+        parkingHeight: data.parkingHeight ?? undefined,
+        hasEVCharger: data.hasEVCharger ?? false,
+
+        // === TARIFICATION AVANCÉE ===
+        hourlyIncrement: typeof data.hourlyIncrement === 'number' ? data.hourlyIncrement : 60,
+        minDurationMinutes: data.minDurationMinutes ?? undefined,
+        maxDurationMinutes: data.maxDurationMinutes ?? undefined,
+        advanceNoticeDays: data.advanceNoticeDays ?? 1,
+        maxAdvanceBookingDays: data.maxAdvanceBookingDays ?? undefined,
+
+        // Frais supplémentaires
+        cleaningFee: data.cleaningFee ?? undefined,
+        extraGuestFee: data.extraGuestFee ?? undefined,
+        extraGuestThreshold: data.extraGuestThreshold ?? undefined,
+        weekendPriceMultiplier: data.weekendPriceMultiplier ?? undefined,
+
+        // === RÉDUCTIONS AVANCÉES ===
+        discountHours2Plus: data.discountHours2Plus ?? undefined,
+        discountHours4Plus: data.discountHours4Plus ?? undefined,
+        discountHours8Plus: data.discountHours8Plus ?? undefined,
+        discountDays2Plus: data.discountDays2Plus ?? undefined,
+        discountDays5Plus: data.discountDays5Plus ?? undefined,
+        discountDays14Plus: data.discountDays14Plus ?? undefined,
+        lastMinuteDiscount: data.lastMinuteDiscount ?? undefined,
+        lastMinuteDiscountDays: data.lastMinuteDiscountDays ?? undefined,
+        earlyBirdDiscount: data.earlyBirdDiscount ?? undefined,
+        earlyBirdDiscountDays: data.earlyBirdDiscountDays ?? undefined,
+        firstBookingDiscount: data.firstBookingDiscount ?? undefined,
+
+        // === DESCRIPTION ENRICHIE ===
+        spaceDescription: data.spaceDescription ?? undefined,
+        guestAccessDescription: data.guestAccessDescription ?? undefined,
+        neighborhoodDescription: data.neighborhoodDescription ?? undefined,
+        transitDescription: data.transitDescription ?? undefined,
+        notesDescription: data.notesDescription ?? undefined,
+        highlights: data.highlights ?? [],
+
+        // === RÈGLES DE LA MAISON ===
+        houseRules: data.houseRules ?? [],
+        customHouseRules: data.customHouseRules ?? undefined,
+        checkInStart: data.checkInStart ?? undefined,
+        checkInEnd: data.checkInEnd ?? undefined,
+        checkOutTime: data.checkOutTime ?? undefined,
+        selfCheckIn: data.selfCheckIn ?? false,
+        checkInMethod: data.checkInMethod ?? undefined,
+
+        // Politiques
+        petsAllowed: data.petsAllowed ?? false,
+        petTypes: data.petTypes ?? [],
+        petFee: data.petFee ?? undefined,
+        smokingAllowed: data.smokingAllowed ?? false,
+        eventsAllowed: data.eventsAllowed ?? false,
+        childrenAllowed: data.childrenAllowed ?? true,
+        quietHoursStart: data.quietHoursStart ?? undefined,
+        quietHoursEnd: data.quietHoursEnd ?? undefined,
+
         ownerId: user.id,
       },
       include: {
@@ -274,6 +363,16 @@ export async function POST(req: NextRequest) {
         },
       },
     });
+
+    // Ajouter les amenities si fournies
+    if (data.amenityIds && data.amenityIds.length > 0) {
+      await prisma.listingAmenity.createMany({
+        data: data.amenityIds.map((amenityId) => ({
+          listingId: listing.id,
+          amenityId,
+        })),
+      });
+    }
 
     return NextResponse.json({
       listing,
