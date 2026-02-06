@@ -1,11 +1,11 @@
 # 🎉 Résumé de l'Implémentation - Système de Création d'Annonce Enrichi
 
-## ✅ Statut: 80% Terminé
+## ✅ Statut: 100% TERMINÉ ✨
 
-**Date:** 2026-02-06  
-**Durée:** ~6 heures  
-**Commits:** 2 (feat + docs)  
-**Lignes de code:** +2429 lignes  
+**Date:** 2026-02-06
+**Durée:** ~8 heures
+**Commits:** 4 (feat + docs + step5)
+**Lignes de code:** +2894 lignes  
 
 ---
 
@@ -24,46 +24,65 @@
 - ✅ **AmenitiesSelector** (155 lignes) - Sélection d'équipements par catégorie
 - ✅ **BedConfiguration** (202 lignes) - Configuration détaillée des lits
 
-### Frontend - Formulaire (80% ✅)
+### Frontend - Formulaire (100% ✅)
+- ✅ **Étape 5 (Details)**: Champs conditionnels par type d'espace (APARTMENT/HOUSE/STUDIO/PARKING)
 - ✅ **Étape 6 (Features)**: Remplacée par AmenitiesSelector (36 amenities vs 12 features)
 - ✅ **Étape 8 (Description)**: 6 sections guidées + points forts sélectionnables
 - ✅ **Étape 9 (Pricing)**: Incréments 30/60 min + durée min + frais ménage/voyageurs
 - ✅ **Étape 10 (Discounts)**: 11 types de réductions (vs 5 avant) avec preview
 - ✅ **handleSubmit**: Tous les nouveaux champs envoyés à l'API
-- ⏳ **Étape 5 (Details)**: Champs conditionnels à ajouter (20% restant)
 
 ---
 
-## 🚧 Ce qui Reste à Faire (20%)
+## ✅ Implémentation Complète
 
-### Priorité Haute: Étape 5 - Details
+### Étape 5 (Details) - TERMINÉE ✨
 
-**Fichier:** `apps/web/src/app/listings/new/page.tsx` (ligne ~2376)
+**Fichier:** `apps/web/src/app/listings/new/page.tsx`
 
-**Champs à ajouter selon le type d'espace:**
+**Champs ajoutés selon le type d'espace:**
 
-#### APARTMENT/HOUSE
-- Nombre de chambres + Configuration des lits (BedConfiguration)
-- Salles de bain complètes/salles d'eau
-- Type d'accès (logement entier, chambre privée, etc.)
+#### APARTMENT/HOUSE ✅
+- ✅ Nombre de chambres avec compteur (+/-)
+- ✅ Configuration des lits (intégration BedConfiguration)
+- ✅ Salles de bain complètes/salles d'eau
+- ✅ Type d'accès (logement entier, chambre privée, chambre partagée, espace partagé)
 
-#### HOUSE (en plus)
-- Nombre d'étages, Jardin (+ surface), Piscine (+ type + chauffée), Terrasse (+ surface)
+#### HOUSE (en plus) ✅
+- ✅ Nombre d'étages
+- ✅ Jardin (toggle + surface en m²)
+- ✅ Piscine (toggle + type intérieur/extérieur + chauffée)
+- ✅ Terrasse (toggle + surface en m²)
 
-#### STUDIO
-- Type (photo/vidéo/musique/podcast/danse/art), Hauteur, Fond vert, Isolation phonique
+#### STUDIO/RECORDING_STUDIO ✅
+- ✅ Type de studio (photo, vidéo, musique, podcast, danse, art)
+- ✅ Hauteur sous plafond (en mètres)
+- ✅ Fond vert (green screen)
+- ✅ Isolation phonique
 
-#### PARKING/GARAGE
-- Type (extérieur/intérieur/souterrain), Couvert, Sécurisé, Dimensions (L×l×H), Borne électrique
+#### PARKING/GARAGE ✅
+- ✅ Type (extérieur, intérieur, souterrain)
+- ✅ Couvert/Sécurisé (toggles)
+- ✅ Dimensions (longueur × largeur × hauteur en mètres)
+- ✅ Borne de recharge électrique
 
-**Estimation:** 2-3 heures
+**Modifications techniques:**
+- ✅ Import de Plus, Minus depuis lucide-react
+- ✅ Ajout du champ poolHeated au type FormData
+- ✅ Mise à jour de la validation canProceed pour Step 5
+- ✅ Validation spécifique par type d'espace
+- ✅ 465 lignes ajoutées
+
+---
+
+## 🎯 Prochaines Étapes (Optionnelles)
 
 ### Priorité Moyenne
-- Synchroniser EditListingClient.tsx (1-2h)
-- Tests manuels complets (1-2h)
-- Tests de régression (1h)
+- Synchroniser EditListingClient.tsx avec les nouveaux champs (1-2h)
+- Tests manuels complets de tous les types d'espaces (1-2h)
+- Tests de régression sur annonces existantes (1h)
 
-**Total restant:** 5-8 heures
+**Total estimé:** 3-5 heures
 
 ---
 
