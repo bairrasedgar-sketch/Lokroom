@@ -8,6 +8,9 @@ import { toast } from "sonner";
 import Cropper from "react-easy-crop";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { getCroppedImage, type PixelCrop } from "@/lib/cropImage";
+import AmenitiesSelector from "@/components/listings/AmenitiesSelector";
+import BedConfiguration from "@/components/listings/BedConfiguration";
+import { Plus, Minus } from "lucide-react";
 
 // ============================================================================
 // GOOGLE MAPS TYPES (simplified for TypeScript compatibility)
@@ -128,6 +131,55 @@ type ListingData = {
   discountWeekly?: number | null;
   discountMonthly?: number | null;
   images: ExistingImage[];
+
+  // === NOUVEAUX CHAMPS ===
+  bedrooms?: number | null;
+  bedConfiguration?: any;
+  bathroomsFull?: number | null;
+  bathroomsHalf?: number | null;
+  spaceType?: string | null;
+
+  floors?: number | null;
+  hasGarden?: boolean;
+  gardenSize?: number | null;
+  hasPool?: boolean;
+  poolType?: string | null;
+  poolHeated?: boolean;
+  hasTerrace?: boolean;
+  terraceSize?: number | null;
+
+  studioType?: string | null;
+  studioHeight?: number | null;
+  hasGreenScreen?: boolean;
+  hasSoundproofing?: boolean;
+
+  parkingType?: string | null;
+  parkingCovered?: boolean;
+  parkingSecured?: boolean;
+  parkingLength?: number | null;
+  parkingWidth?: number | null;
+  parkingHeight?: number | null;
+  hasEVCharger?: boolean;
+
+  hourlyIncrement?: number;
+  minDurationMinutes?: number | null;
+  cleaningFee?: number | null;
+  extraGuestFee?: number | null;
+  extraGuestThreshold?: number | null;
+
+  discountHours2Plus?: number | null;
+  discountHours4Plus?: number | null;
+  discountHours8Plus?: number | null;
+  discountDays2Plus?: number | null;
+  discountDays5Plus?: number | null;
+  discountDays14Plus?: number | null;
+
+  spaceDescription?: string;
+  guestAccessDescription?: string;
+  neighborhoodDescription?: string;
+  highlights?: string[];
+
+  amenityIds?: string[];
 };
 
 // ============================================================================
@@ -321,6 +373,55 @@ export default function EditListingClient({ listing }: { listing: ListingData })
     discountDays3Plus: listing.discountDays3Plus || null,
     discountWeekly: listing.discountWeekly || null,
     discountMonthly: listing.discountMonthly || null,
+
+    // === NOUVEAUX CHAMPS ===
+    bedrooms: listing.bedrooms || null,
+    bedConfiguration: listing.bedConfiguration || null,
+    bathroomsFull: listing.bathroomsFull || null,
+    bathroomsHalf: listing.bathroomsHalf || null,
+    spaceType: listing.spaceType || "ENTIRE_PLACE",
+
+    floors: listing.floors || null,
+    hasGarden: listing.hasGarden || false,
+    gardenSize: listing.gardenSize || null,
+    hasPool: listing.hasPool || false,
+    poolType: listing.poolType || null,
+    poolHeated: listing.poolHeated || false,
+    hasTerrace: listing.hasTerrace || false,
+    terraceSize: listing.terraceSize || null,
+
+    studioType: listing.studioType || null,
+    studioHeight: listing.studioHeight || null,
+    hasGreenScreen: listing.hasGreenScreen || false,
+    hasSoundproofing: listing.hasSoundproofing || false,
+
+    parkingType: listing.parkingType || null,
+    parkingCovered: listing.parkingCovered || false,
+    parkingSecured: listing.parkingSecured || false,
+    parkingLength: listing.parkingLength || null,
+    parkingWidth: listing.parkingWidth || null,
+    parkingHeight: listing.parkingHeight || null,
+    hasEVCharger: listing.hasEVCharger || false,
+
+    hourlyIncrement: listing.hourlyIncrement || 60,
+    minDurationMinutes: listing.minDurationMinutes || null,
+    cleaningFee: listing.cleaningFee || null,
+    extraGuestFee: listing.extraGuestFee || null,
+    extraGuestThreshold: listing.extraGuestThreshold || null,
+
+    discountHours2Plus: listing.discountHours2Plus || null,
+    discountHours4Plus: listing.discountHours4Plus || null,
+    discountHours8Plus: listing.discountHours8Plus || null,
+    discountDays2Plus: listing.discountDays2Plus || null,
+    discountDays5Plus: listing.discountDays5Plus || null,
+    discountDays14Plus: listing.discountDays14Plus || null,
+
+    spaceDescription: listing.spaceDescription || "",
+    guestAccessDescription: listing.guestAccessDescription || "",
+    neighborhoodDescription: listing.neighborhoodDescription || "",
+    highlights: listing.highlights || [],
+
+    amenityIds: listing.amenityIds || [],
   });
 
   // Images
@@ -707,6 +808,55 @@ export default function EditListingClient({ listing }: { listing: ListingData })
         discountDays3Plus: formData.discountDays3Plus,
         discountWeekly: formData.discountWeekly,
         discountMonthly: formData.discountMonthly,
+
+        // === NOUVEAUX CHAMPS ===
+        bedrooms: formData.bedrooms,
+        bedConfiguration: formData.bedConfiguration,
+        bathroomsFull: formData.bathroomsFull,
+        bathroomsHalf: formData.bathroomsHalf,
+        spaceType: formData.spaceType,
+
+        floors: formData.floors,
+        hasGarden: formData.hasGarden,
+        gardenSize: formData.gardenSize,
+        hasPool: formData.hasPool,
+        poolType: formData.poolType,
+        poolHeated: formData.poolHeated,
+        hasTerrace: formData.hasTerrace,
+        terraceSize: formData.terraceSize,
+
+        studioType: formData.studioType,
+        studioHeight: formData.studioHeight,
+        hasGreenScreen: formData.hasGreenScreen,
+        hasSoundproofing: formData.hasSoundproofing,
+
+        parkingType: formData.parkingType,
+        parkingCovered: formData.parkingCovered,
+        parkingSecured: formData.parkingSecured,
+        parkingLength: formData.parkingLength,
+        parkingWidth: formData.parkingWidth,
+        parkingHeight: formData.parkingHeight,
+        hasEVCharger: formData.hasEVCharger,
+
+        hourlyIncrement: formData.hourlyIncrement,
+        minDurationMinutes: formData.minDurationMinutes,
+        cleaningFee: formData.cleaningFee,
+        extraGuestFee: formData.extraGuestFee,
+        extraGuestThreshold: formData.extraGuestThreshold,
+
+        discountHours2Plus: formData.discountHours2Plus,
+        discountHours4Plus: formData.discountHours4Plus,
+        discountHours8Plus: formData.discountHours8Plus,
+        discountDays2Plus: formData.discountDays2Plus,
+        discountDays5Plus: formData.discountDays5Plus,
+        discountDays14Plus: formData.discountDays14Plus,
+
+        spaceDescription: formData.spaceDescription,
+        guestAccessDescription: formData.guestAccessDescription,
+        neighborhoodDescription: formData.neighborhoodDescription,
+        highlights: formData.highlights,
+
+        amenityIds: formData.amenityIds,
       };
 
       const res = await fetch(`/api/listings/${listing.id}`, {
@@ -899,19 +1049,123 @@ export default function EditListingClient({ listing }: { listing: ListingData })
                       <p className="text-right text-xs text-gray-400">{formData.title.length}/120</p>
                     </div>
 
-                    {/* Description */}
+                    {/* Points forts */}
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Points forts (2-3 maximum)
+                      </label>
+                      <p className="text-xs text-gray-500">
+                        Sélectionnez ce qui rend votre espace unique
+                      </p>
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                        {[
+                          "Vue exceptionnelle",
+                          "Proche transports",
+                          "Très lumineux",
+                          "Calme",
+                          "Centre-ville",
+                          "Parking inclus",
+                          "WiFi rapide",
+                          "Équipement pro",
+                          "Récemment rénové",
+                        ].map((highlight) => {
+                          const isSelected = formData.highlights?.includes(highlight);
+                          return (
+                            <button
+                              key={highlight}
+                              type="button"
+                              onClick={() => {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  highlights: isSelected
+                                    ? (prev.highlights || []).filter((h) => h !== highlight)
+                                    : (prev.highlights || []).length < 3
+                                    ? [...(prev.highlights || []), highlight]
+                                    : prev.highlights || [],
+                                }));
+                              }}
+                              className={`rounded-lg border-2 px-3 py-2 text-xs font-medium transition-all ${
+                                isSelected
+                                  ? "border-gray-900 bg-gray-50"
+                                  : "border-gray-200 hover:border-gray-400"
+                              }`}
+                            >
+                              {highlight}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {(formData.highlights?.length || 0) > 0 && (
+                        <p className="text-xs text-gray-500">
+                          {formData.highlights?.length}/3 sélectionné{(formData.highlights?.length || 0) > 1 ? "s" : ""}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Description de l'espace */}
+                    <div className="space-y-2">
+                      <label htmlFor="spaceDescription" className="block text-sm font-medium text-gray-700">
+                        L&apos;espace
+                      </label>
+                      <textarea
+                        id="spaceDescription"
+                        value={formData.spaceDescription}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, spaceDescription: e.target.value }))}
+                        rows={4}
+                        maxLength={1000}
+                        className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                        placeholder="Décrivez votre espace : ce qui le rend unique, les équipements disponibles, l'ambiance..."
+                      />
+                      <p className="text-right text-xs text-gray-400">{formData.spaceDescription?.length || 0}/1000</p>
+                    </div>
+
+                    {/* Accès voyageurs */}
+                    <div className="space-y-2">
+                      <label htmlFor="guestAccessDescription" className="block text-sm font-medium text-gray-700">
+                        Accès voyageurs (optionnel)
+                      </label>
+                      <textarea
+                        id="guestAccessDescription"
+                        value={formData.guestAccessDescription}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, guestAccessDescription: e.target.value }))}
+                        rows={3}
+                        maxLength={500}
+                        className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                        placeholder="Comment les voyageurs accèdent-ils à l'espace ? Y a-t-il des zones partagées ?"
+                      />
+                      <p className="text-right text-xs text-gray-400">{formData.guestAccessDescription?.length || 0}/500</p>
+                    </div>
+
+                    {/* Le quartier */}
+                    <div className="space-y-2">
+                      <label htmlFor="neighborhoodDescription" className="block text-sm font-medium text-gray-700">
+                        Le quartier (optionnel)
+                      </label>
+                      <textarea
+                        id="neighborhoodDescription"
+                        value={formData.neighborhoodDescription}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, neighborhoodDescription: e.target.value }))}
+                        rows={3}
+                        maxLength={500}
+                        className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                        placeholder="Décrivez le quartier : ambiance, commerces, restaurants, attractions..."
+                      />
+                      <p className="text-right text-xs text-gray-400">{formData.neighborhoodDescription?.length || 0}/500</p>
+                    </div>
+
+                    {/* Description principale (fallback) */}
                     <div className="space-y-2">
                       <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                        Description
+                        Description générale
                       </label>
                       <textarea
                         id="description"
                         value={formData.description}
                         onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-                        rows={6}
+                        rows={4}
                         maxLength={2000}
-                        className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900 resize-none"
-                        placeholder="Décrivez votre espace en détail..."
+                        className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                        placeholder="Toute autre information importante..."
                       />
                       <p className="text-right text-xs text-gray-400">{formData.description.length}/2000</p>
                     </div>
@@ -948,6 +1202,17 @@ export default function EditListingClient({ listing }: { listing: ListingData })
                           );
                         })}
                       </div>
+                    </div>
+
+                    {/* Amenities Selector */}
+                    <div className="space-y-3">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Équipements disponibles
+                      </label>
+                      <AmenitiesSelector
+                        selectedIds={formData.amenityIds || []}
+                        onChange={(ids) => setFormData((prev) => ({ ...prev, amenityIds: ids }))}
+                      />
                     </div>
 
                     {/* Instant booking */}
@@ -1171,6 +1436,447 @@ export default function EditListingClient({ listing }: { listing: ListingData })
                           );
                         })}
                       </div>
+                    )}
+
+                    {/* === CHAMPS SPÉCIFIQUES APARTMENT/HOUSE === */}
+                    {(formData.type === "APARTMENT" || formData.type === "HOUSE") && (
+                      <>
+                        {/* Nombre de chambres */}
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-700">Nombre de chambres</label>
+                          <div className="flex items-center gap-4">
+                            <button
+                              type="button"
+                              onClick={() => setFormData((prev) => ({ ...prev, bedrooms: Math.max(0, (prev.bedrooms || 0) - 1) }))}
+                              className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:border-gray-900"
+                            >
+                              <Minus className="h-5 w-5" />
+                            </button>
+                            <span className="w-20 text-center text-lg font-medium">
+                              {formData.bedrooms || 0}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setFormData((prev) => ({ ...prev, bedrooms: Math.min(20, (prev.bedrooms || 0) + 1) }))}
+                              className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:border-gray-900"
+                            >
+                              <Plus className="h-5 w-5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Configuration des lits */}
+                        {(formData.bedrooms || 0) > 0 && (
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-700">Configuration des lits</label>
+                            <BedConfiguration
+                              value={formData.bedConfiguration}
+                              onChange={(config) => setFormData((prev) => ({ ...prev, bedConfiguration: config }))}
+                              bedrooms={formData.bedrooms || 1}
+                            />
+                          </div>
+                        )}
+
+                        {/* Salles de bain */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-700">Salles de bain complètes</label>
+                            <div className="flex items-center gap-4">
+                              <button
+                                type="button"
+                                onClick={() => setFormData((prev) => ({ ...prev, bathroomsFull: Math.max(0, (prev.bathroomsFull || 0) - 1) }))}
+                                className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:border-gray-900"
+                              >
+                                <Minus className="h-5 w-5" />
+                              </button>
+                              <span className="w-12 text-center text-lg font-medium">
+                                {formData.bathroomsFull || 0}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setFormData((prev) => ({ ...prev, bathroomsFull: Math.min(10, (prev.bathroomsFull || 0) + 1) }))}
+                                className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:border-gray-900"
+                              >
+                                <Plus className="h-5 w-5" />
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-gray-700">Salles d&apos;eau</label>
+                            <div className="flex items-center gap-4">
+                              <button
+                                type="button"
+                                onClick={() => setFormData((prev) => ({ ...prev, bathroomsHalf: Math.max(0, (prev.bathroomsHalf || 0) - 1) }))}
+                                className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:border-gray-900"
+                              >
+                                <Minus className="h-5 w-5" />
+                              </button>
+                              <span className="w-12 text-center text-lg font-medium">
+                                {formData.bathroomsHalf || 0}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setFormData((prev) => ({ ...prev, bathroomsHalf: Math.min(10, (prev.bathroomsHalf || 0) + 1) }))}
+                                className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:border-gray-900"
+                              >
+                                <Plus className="h-5 w-5" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Type d'accès */}
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-700">Type d&apos;accès</label>
+                          <div className="grid grid-cols-2 gap-3">
+                            {[
+                              { value: "ENTIRE_PLACE", label: "Logement entier" },
+                              { value: "PRIVATE_ROOM", label: "Chambre privée" },
+                              { value: "SHARED_ROOM", label: "Chambre partagée" },
+                              { value: "SHARED_SPACE", label: "Espace partagé" },
+                            ].map((option) => (
+                              <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => setFormData((prev) => ({ ...prev, spaceType: option.value }))}
+                                className={`rounded-xl border-2 p-3 text-sm font-medium transition-all ${
+                                  formData.spaceType === option.value
+                                    ? "border-gray-900 bg-gray-50"
+                                    : "border-gray-200 hover:border-gray-300"
+                                }`}
+                              >
+                                {option.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {/* === CHAMPS SPÉCIFIQUES HOUSE === */}
+                    {formData.type === "HOUSE" && (
+                      <>
+                        {/* Nombre d'étages */}
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-700">Nombre d&apos;étages</label>
+                          <div className="flex items-center gap-4">
+                            <button
+                              type="button"
+                              onClick={() => setFormData((prev) => ({ ...prev, floors: Math.max(1, (prev.floors || 1) - 1) }))}
+                              className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:border-gray-900"
+                            >
+                              <Minus className="h-5 w-5" />
+                            </button>
+                            <span className="w-20 text-center text-lg font-medium">
+                              {formData.floors || 1}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => setFormData((prev) => ({ ...prev, floors: Math.min(10, (prev.floors || 1) + 1) }))}
+                              className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 text-gray-600 hover:border-gray-900"
+                            >
+                              <Plus className="h-5 w-5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Jardin */}
+                        <div className="space-y-3">
+                          <button
+                            type="button"
+                            onClick={() => setFormData((prev) => ({ ...prev, hasGarden: !prev.hasGarden }))}
+                            className={`flex w-full items-center justify-between rounded-xl border-2 p-4 transition-all ${
+                              formData.hasGarden ? "border-gray-900 bg-gray-50" : "border-gray-200"
+                            }`}
+                          >
+                            <span className="font-medium text-gray-900">Jardin</span>
+                            <div className={`h-6 w-11 rounded-full transition-colors ${formData.hasGarden ? "bg-gray-900" : "bg-gray-200"}`}>
+                              <div className={`h-5 w-5 translate-y-0.5 rounded-full bg-white shadow transition-transform ${formData.hasGarden ? "translate-x-5" : "translate-x-0.5"}`} />
+                            </div>
+                          </button>
+                          {formData.hasGarden && (
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium text-gray-700">Surface du jardin (m²)</label>
+                              <input
+                                type="number"
+                                value={formData.gardenSize || ""}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, gardenSize: e.target.value ? parseInt(e.target.value) : null }))}
+                                placeholder="Ex: 100"
+                                className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                              />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Piscine */}
+                        <div className="space-y-3">
+                          <button
+                            type="button"
+                            onClick={() => setFormData((prev) => ({ ...prev, hasPool: !prev.hasPool }))}
+                            className={`flex w-full items-center justify-between rounded-xl border-2 p-4 transition-all ${
+                              formData.hasPool ? "border-gray-900 bg-gray-50" : "border-gray-200"
+                            }`}
+                          >
+                            <span className="font-medium text-gray-900">Piscine</span>
+                            <div className={`h-6 w-11 rounded-full transition-colors ${formData.hasPool ? "bg-gray-900" : "bg-gray-200"}`}>
+                              <div className={`h-5 w-5 translate-y-0.5 rounded-full bg-white shadow transition-transform ${formData.hasPool ? "translate-x-5" : "translate-x-0.5"}`} />
+                            </div>
+                          </button>
+                          {formData.hasPool && (
+                            <div className="space-y-3">
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-700">Type de piscine</label>
+                                <div className="grid grid-cols-2 gap-3">
+                                  {[
+                                    { value: "indoor", label: "Intérieure" },
+                                    { value: "outdoor", label: "Extérieure" },
+                                  ].map((option) => (
+                                    <button
+                                      key={option.value}
+                                      type="button"
+                                      onClick={() => setFormData((prev) => ({ ...prev, poolType: option.value }))}
+                                      className={`rounded-xl border-2 p-3 text-sm font-medium transition-all ${
+                                        formData.poolType === option.value
+                                          ? "border-gray-900 bg-gray-50"
+                                          : "border-gray-200 hover:border-gray-300"
+                                      }`}
+                                    >
+                                      {option.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setFormData((prev) => ({ ...prev, poolHeated: !prev.poolHeated }))}
+                                className={`flex w-full items-center justify-between rounded-xl border-2 p-4 transition-all ${
+                                  formData.poolHeated ? "border-gray-900 bg-gray-50" : "border-gray-200"
+                                }`}
+                              >
+                                <span className="font-medium text-gray-900">Piscine chauffée</span>
+                                <div className={`h-6 w-11 rounded-full transition-colors ${formData.poolHeated ? "bg-gray-900" : "bg-gray-200"}`}>
+                                  <div className={`h-5 w-5 translate-y-0.5 rounded-full bg-white shadow transition-transform ${formData.poolHeated ? "translate-x-5" : "translate-x-0.5"}`} />
+                                </div>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Terrasse */}
+                        <div className="space-y-3">
+                          <button
+                            type="button"
+                            onClick={() => setFormData((prev) => ({ ...prev, hasTerrace: !prev.hasTerrace }))}
+                            className={`flex w-full items-center justify-between rounded-xl border-2 p-4 transition-all ${
+                              formData.hasTerrace ? "border-gray-900 bg-gray-50" : "border-gray-200"
+                            }`}
+                          >
+                            <span className="font-medium text-gray-900">Terrasse</span>
+                            <div className={`h-6 w-11 rounded-full transition-colors ${formData.hasTerrace ? "bg-gray-900" : "bg-gray-200"}`}>
+                              <div className={`h-5 w-5 translate-y-0.5 rounded-full bg-white shadow transition-transform ${formData.hasTerrace ? "translate-x-5" : "translate-x-0.5"}`} />
+                            </div>
+                          </button>
+                          {formData.hasTerrace && (
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium text-gray-700">Surface de la terrasse (m²)</label>
+                              <input
+                                type="number"
+                                value={formData.terraceSize || ""}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, terraceSize: e.target.value ? parseInt(e.target.value) : null }))}
+                                placeholder="Ex: 30"
+                                className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+
+                    {/* === CHAMPS SPÉCIFIQUES STUDIO === */}
+                    {(formData.type === "STUDIO" || formData.type === "RECORDING_STUDIO") && (
+                      <>
+                        {/* Type de studio */}
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-700">Type de studio</label>
+                          <div className="grid grid-cols-2 gap-3">
+                            {[
+                              { value: "photo", label: "Photo" },
+                              { value: "video", label: "Vidéo" },
+                              { value: "music", label: "Musique" },
+                              { value: "podcast", label: "Podcast" },
+                              { value: "dance", label: "Danse" },
+                              { value: "art", label: "Art" },
+                            ].map((option) => (
+                              <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => setFormData((prev) => ({ ...prev, studioType: option.value }))}
+                                className={`rounded-xl border-2 p-3 text-sm font-medium transition-all ${
+                                  formData.studioType === option.value
+                                    ? "border-gray-900 bg-gray-50"
+                                    : "border-gray-200 hover:border-gray-300"
+                                }`}
+                              >
+                                {option.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Hauteur sous plafond */}
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-700">Hauteur sous plafond (m)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={formData.studioHeight || ""}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, studioHeight: e.target.value ? parseFloat(e.target.value) : null }))}
+                            placeholder="Ex: 3.5"
+                            className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                          />
+                        </div>
+
+                        {/* Fond vert */}
+                        <button
+                          type="button"
+                          onClick={() => setFormData((prev) => ({ ...prev, hasGreenScreen: !prev.hasGreenScreen }))}
+                          className={`flex w-full items-center justify-between rounded-xl border-2 p-4 transition-all ${
+                            formData.hasGreenScreen ? "border-gray-900 bg-gray-50" : "border-gray-200"
+                          }`}
+                        >
+                          <span className="font-medium text-gray-900">Fond vert (green screen)</span>
+                          <div className={`h-6 w-11 rounded-full transition-colors ${formData.hasGreenScreen ? "bg-gray-900" : "bg-gray-200"}`}>
+                            <div className={`h-5 w-5 translate-y-0.5 rounded-full bg-white shadow transition-transform ${formData.hasGreenScreen ? "translate-x-5" : "translate-x-0.5"}`} />
+                          </div>
+                        </button>
+
+                        {/* Isolation phonique */}
+                        <button
+                          type="button"
+                          onClick={() => setFormData((prev) => ({ ...prev, hasSoundproofing: !prev.hasSoundproofing }))}
+                          className={`flex w-full items-center justify-between rounded-xl border-2 p-4 transition-all ${
+                            formData.hasSoundproofing ? "border-gray-900 bg-gray-50" : "border-gray-200"
+                          }`}
+                        >
+                          <span className="font-medium text-gray-900">Isolation phonique</span>
+                          <div className={`h-6 w-11 rounded-full transition-colors ${formData.hasSoundproofing ? "bg-gray-900" : "bg-gray-200"}`}>
+                            <div className={`h-5 w-5 translate-y-0.5 rounded-full bg-white shadow transition-transform ${formData.hasSoundproofing ? "translate-x-5" : "translate-x-0.5"}`} />
+                          </div>
+                        </button>
+                      </>
+                    )}
+
+                    {/* === CHAMPS SPÉCIFIQUES PARKING/GARAGE === */}
+                    {(formData.type === "PARKING" || formData.type === "GARAGE") && (
+                      <>
+                        {/* Type de parking */}
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-700">Type de parking</label>
+                          <div className="grid grid-cols-3 gap-3">
+                            {[
+                              { value: "outdoor", label: "Extérieur" },
+                              { value: "indoor", label: "Intérieur" },
+                              { value: "underground", label: "Souterrain" },
+                            ].map((option) => (
+                              <button
+                                key={option.value}
+                                type="button"
+                                onClick={() => setFormData((prev) => ({ ...prev, parkingType: option.value }))}
+                                className={`rounded-xl border-2 p-3 text-sm font-medium transition-all ${
+                                  formData.parkingType === option.value
+                                    ? "border-gray-900 bg-gray-50"
+                                    : "border-gray-200 hover:border-gray-300"
+                                }`}
+                              >
+                                {option.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Couvert */}
+                        <button
+                          type="button"
+                          onClick={() => setFormData((prev) => ({ ...prev, parkingCovered: !prev.parkingCovered }))}
+                          className={`flex w-full items-center justify-between rounded-xl border-2 p-4 transition-all ${
+                            formData.parkingCovered ? "border-gray-900 bg-gray-50" : "border-gray-200"
+                          }`}
+                        >
+                          <span className="font-medium text-gray-900">Parking couvert</span>
+                          <div className={`h-6 w-11 rounded-full transition-colors ${formData.parkingCovered ? "bg-gray-900" : "bg-gray-200"}`}>
+                            <div className={`h-5 w-5 translate-y-0.5 rounded-full bg-white shadow transition-transform ${formData.parkingCovered ? "translate-x-5" : "translate-x-0.5"}`} />
+                          </div>
+                        </button>
+
+                        {/* Sécurisé */}
+                        <button
+                          type="button"
+                          onClick={() => setFormData((prev) => ({ ...prev, parkingSecured: !prev.parkingSecured }))}
+                          className={`flex w-full items-center justify-between rounded-xl border-2 p-4 transition-all ${
+                            formData.parkingSecured ? "border-gray-900 bg-gray-50" : "border-gray-200"
+                          }`}
+                        >
+                          <span className="font-medium text-gray-900">Parking sécurisé</span>
+                          <div className={`h-6 w-11 rounded-full transition-colors ${formData.parkingSecured ? "bg-gray-900" : "bg-gray-200"}`}>
+                            <div className={`h-5 w-5 translate-y-0.5 rounded-full bg-white shadow transition-transform ${formData.parkingSecured ? "translate-x-5" : "translate-x-0.5"}`} />
+                          </div>
+                        </button>
+
+                        {/* Dimensions */}
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-700">Dimensions (mètres)</label>
+                          <div className="grid grid-cols-3 gap-3">
+                            <div className="space-y-1">
+                              <label className="text-xs text-gray-500">Longueur</label>
+                              <input
+                                type="number"
+                                step="0.1"
+                                value={formData.parkingLength || ""}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, parkingLength: e.target.value ? parseFloat(e.target.value) : null }))}
+                                placeholder="5.0"
+                                className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs text-gray-500">Largeur</label>
+                              <input
+                                type="number"
+                                step="0.1"
+                                value={formData.parkingWidth || ""}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, parkingWidth: e.target.value ? parseFloat(e.target.value) : null }))}
+                                placeholder="2.5"
+                                className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs text-gray-500">Hauteur</label>
+                              <input
+                                type="number"
+                                step="0.1"
+                                value={formData.parkingHeight || ""}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, parkingHeight: e.target.value ? parseFloat(e.target.value) : null }))}
+                                placeholder="2.0"
+                                className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Borne électrique */}
+                        <button
+                          type="button"
+                          onClick={() => setFormData((prev) => ({ ...prev, hasEVCharger: !prev.hasEVCharger }))}
+                          className={`flex w-full items-center justify-between rounded-xl border-2 p-4 transition-all ${
+                            formData.hasEVCharger ? "border-gray-900 bg-gray-50" : "border-gray-200"
+                          }`}
+                        >
+                          <span className="font-medium text-gray-900">Borne de recharge électrique</span>
+                          <div className={`h-6 w-11 rounded-full transition-colors ${formData.hasEVCharger ? "bg-gray-900" : "bg-gray-200"}`}>
+                            <div className={`h-5 w-5 translate-y-0.5 rounded-full bg-white shadow transition-transform ${formData.hasEVCharger ? "translate-x-5" : "translate-x-0.5"}`} />
+                          </div>
+                        </button>
+                      </>
                     )}
 
                     {/* Min/Max nights */}
