@@ -3286,239 +3286,472 @@ export default function NewListingPage() {
 
           {/* ========== STEP: PRICING ========== */}
           {currentStep === "pricing" && (
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Mode de tarification</label>
-                <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-8">
+              {/* Mode de tarification - Cards visuelles */}
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-gray-900">Choisissez votre mode de tarification</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {([
-                    { value: "DAILY", label: "Par nuitée" },
-                    { value: "HOURLY", label: "À l'heure" },
-                    { value: "BOTH", label: "Les deux" },
+                    {
+                      value: "DAILY",
+                      label: "Par nuitée",
+                      icon: "🌙",
+                      desc: "Idéal pour les hébergements",
+                      badge: "Populaire"
+                    },
+                    {
+                      value: "HOURLY",
+                      label: "À l'heure",
+                      icon: "⏱️",
+                      desc: "Parfait pour les studios & espaces",
+                      badge: "Flexible"
+                    },
+                    {
+                      value: "BOTH",
+                      label: "Les deux",
+                      icon: "✨",
+                      desc: "Maximum de flexibilité",
+                      badge: "Recommandé"
+                    },
                   ] as const).map((mode) => (
                     <button
                       key={mode.value}
                       type="button"
                       onClick={() => setFormData((prev) => ({ ...prev, pricingMode: mode.value }))}
-                      className={`rounded-xl border-2 px-3 py-2.5 text-sm font-medium transition-all ${
+                      className={`group relative overflow-hidden rounded-2xl border-2 p-5 text-left transition-all hover:shadow-lg ${
                         formData.pricingMode === mode.value
-                          ? "border-gray-900 bg-gray-50"
-                          : "border-gray-200 hover:border-gray-400"
+                          ? "border-gray-900 bg-gradient-to-br from-gray-50 to-gray-100 shadow-md"
+                          : "border-gray-200 bg-white hover:border-gray-400"
                       }`}
                     >
-                      {mode.label}
+                      {formData.pricingMode === mode.value && (
+                        <div className="absolute top-3 right-3">
+                          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-900">
+                            <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                        </div>
+                      )}
+                      <div className="text-3xl mb-2">{mode.icon}</div>
+                      <div className="font-semibold text-gray-900 mb-1">{mode.label}</div>
+                      <div className="text-xs text-gray-500 mb-2">{mode.desc}</div>
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                        formData.pricingMode === mode.value
+                          ? "bg-gray-900 text-white"
+                          : "bg-gray-100 text-gray-600 group-hover:bg-gray-200"
+                      }`}>
+                        {mode.badge}
+                      </span>
                     </button>
                   ))}
                 </div>
               </div>
 
+              {/* Prix par jour/nuit */}
               {(formData.pricingMode === "DAILY" || formData.pricingMode === "BOTH") && (
-                <div className="space-y-4">
-                  <label htmlFor="price" className="text-sm font-medium text-gray-700">
-                    Prix par jour/nuit ({formData.currency})
-                  </label>
-
-                  {/* Price slider */}
-                  <div className="space-y-3">
-                    <input
-                      type="range"
-                      min={2}
-                      max={1000}
-                      step={1}
-                      value={formData.price || 2}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, price: parseInt(e.target.value) }))}
-                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-900"
-                    />
-                    <div className="flex justify-between text-xs text-gray-500">
-                      <span>2{formData.currency === "EUR" ? "€" : "$"}</span>
-                      <span>1000{formData.currency === "EUR" ? "€" : "$"}</span>
+                <div className="space-y-6 rounded-2xl border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">Prix par nuitée</h3>
+                      <p className="text-sm text-gray-500">Définissez votre tarif journalier</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-3xl font-bold text-gray-900">
+                        {formData.price || 0}
+                        <span className="text-xl text-gray-400">{formData.currency === "EUR" ? "€" : "$"}</span>
+                      </div>
+                      <div className="text-xs text-gray-500">par nuit</div>
                     </div>
                   </div>
 
-                  {/* Manual price input */}
-                  <div className="relative">
-                    <input
-                      id="price"
-                      type="text"
-                      value={formData.price || ""}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/[^0-9.,]/g, "").replace(",", ".");
-                        const numValue = parseFloat(value) || 0;
-                        setFormData((prev) => ({ ...prev, price: Math.min(100000, numValue) }));
-                      }}
-                      className="w-full rounded-xl border border-gray-300 px-4 py-3 pr-16 text-lg font-medium focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
-                      placeholder="0"
-                    />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
-                      {formData.currency === "EUR" ? "€" : "$"} / jour
-                    </span>
+                  {/* Slider interactif avec gradient */}
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <input
+                        type="range"
+                        min={2}
+                        max={1000}
+                        step={1}
+                        value={formData.price || 2}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, price: parseInt(e.target.value) }))}
+                        className="w-full h-3 bg-gradient-to-r from-green-200 via-blue-200 to-purple-200 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gray-900 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110"
+                      />
+                      <div className="flex justify-between mt-2 text-xs font-medium text-gray-500">
+                        <span>2{formData.currency === "EUR" ? "€" : "$"}</span>
+                        <span className="text-gray-400">Prix compétitif</span>
+                        <span>1000{formData.currency === "EUR" ? "€" : "$"}</span>
+                      </div>
+                    </div>
+
+                    {/* Input manuel avec design moderne */}
+                    <div className="relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-gray-400">
+                        {formData.currency === "EUR" ? "€" : "$"}
+                      </div>
+                      <input
+                        id="price"
+                        type="text"
+                        value={formData.price || ""}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^0-9.,]/g, "").replace(",", ".");
+                          const numValue = parseFloat(value) || 0;
+                          setFormData((prev) => ({ ...prev, price: Math.min(100000, numValue) }));
+                        }}
+                        className="w-full rounded-xl border-2 border-gray-300 bg-white px-14 py-4 text-2xl font-bold text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20 transition-all"
+                        placeholder="0"
+                      />
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+                        par nuit
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 text-center">
+                      💡 Vous pouvez saisir un prix supérieur à 1000{formData.currency === "EUR" ? "€" : "$"} manuellement
+                    </p>
                   </div>
-                  <p className="text-xs text-gray-500">
-                    Vous pouvez saisir un prix supérieur à 1000{formData.currency === "EUR" ? "€" : "$"} manuellement
-                  </p>
+
+                  {/* Simulateur de revenus mensuels */}
+                  {formData.price > 0 && (
+                    <div className="rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
+                          <svg className="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <h4 className="font-semibold text-green-900">Revenus estimés</h4>
+                      </div>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="rounded-lg bg-white/60 p-3 text-center">
+                          <div className="text-xs text-green-700 mb-1">50% occupation</div>
+                          <div className="text-lg font-bold text-green-900">
+                            {Math.round(formData.price * 15)}{formData.currency === "EUR" ? "€" : "$"}
+                          </div>
+                          <div className="text-xs text-green-600">par mois</div>
+                        </div>
+                        <div className="rounded-lg bg-white/60 p-3 text-center">
+                          <div className="text-xs text-green-700 mb-1">70% occupation</div>
+                          <div className="text-lg font-bold text-green-900">
+                            {Math.round(formData.price * 21)}{formData.currency === "EUR" ? "€" : "$"}
+                          </div>
+                          <div className="text-xs text-green-600">par mois</div>
+                        </div>
+                        <div className="rounded-lg bg-white/60 p-3 text-center">
+                          <div className="text-xs text-green-700 mb-1">90% occupation</div>
+                          <div className="text-lg font-bold text-green-900">
+                            {Math.round(formData.price * 27)}{formData.currency === "EUR" ? "€" : "$"}
+                          </div>
+                          <div className="text-xs text-green-600">par mois</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
+              {/* Prix horaire */}
               {(formData.pricingMode === "HOURLY" || formData.pricingMode === "BOTH") && (
-                <div className="space-y-4">
-                  <label htmlFor="hourlyPrice" className="text-sm font-medium text-gray-700">
-                    Prix par heure ({formData.currency})
-                  </label>
+                <div className="space-y-6 rounded-2xl border-2 border-gray-200 bg-gradient-to-br from-white to-blue-50 p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">Prix horaire</h3>
+                      <p className="text-sm text-gray-500">Tarif flexible à l'heure</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-3xl font-bold text-gray-900">
+                        {formData.hourlyPrice || 0}
+                        <span className="text-xl text-gray-400">{formData.currency === "EUR" ? "€" : "$"}</span>
+                      </div>
+                      <div className="text-xs text-gray-500">par heure</div>
+                    </div>
+                  </div>
 
-                  {/* Incrément horaire */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-medium text-gray-700">Incrément de réservation</label>
-                    <div className="grid grid-cols-2 gap-3">
+                  {/* Incrément horaire - Toggle moderne */}
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium text-gray-700">Incrément de réservation</label>
+                    <div className="relative inline-flex w-full rounded-xl bg-gray-100 p-1">
                       <button
                         type="button"
                         onClick={() => setFormData((prev) => ({ ...prev, hourlyIncrement: 30 }))}
-                        className={`rounded-lg border-2 px-3 py-2 text-sm font-medium transition-all ${
+                        className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${
                           formData.hourlyIncrement === 30
-                            ? "border-gray-900 bg-gray-50"
-                            : "border-gray-200 hover:border-gray-400"
+                            ? "bg-white text-gray-900 shadow-md"
+                            : "text-gray-600 hover:text-gray-900"
                         }`}
                       >
-                        30 minutes
+                        ⚡ 30 minutes
                       </button>
                       <button
                         type="button"
                         onClick={() => setFormData((prev) => ({ ...prev, hourlyIncrement: 60 }))}
-                        className={`rounded-lg border-2 px-3 py-2 text-sm font-medium transition-all ${
+                        className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all ${
                           formData.hourlyIncrement === 60
-                            ? "border-gray-900 bg-gray-50"
-                            : "border-gray-200 hover:border-gray-400"
+                            ? "bg-white text-gray-900 shadow-md"
+                            : "text-gray-600 hover:text-gray-900"
                         }`}
                       >
-                        1 heure
+                        🕐 1 heure
                       </button>
                     </div>
                   </div>
 
-                  {/* Hourly price slider */}
-                  <div className="space-y-3">
-                    <input
-                      type="range"
-                      min={1}
-                      max={200}
-                      step={1}
-                      value={formData.hourlyPrice || 1}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, hourlyPrice: parseInt(e.target.value) }))}
-                      className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-900"
-                    />
-                    <div className="flex justify-between text-xs text-gray-500">
-                      <span>1{formData.currency === "EUR" ? "€" : "$"}</span>
-                      <span>200{formData.currency === "EUR" ? "€" : "$"}</span>
+                  {/* Slider avec gradient */}
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <input
+                        type="range"
+                        min={1}
+                        max={200}
+                        step={1}
+                        value={formData.hourlyPrice || 1}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, hourlyPrice: parseInt(e.target.value) }))}
+                        className="w-full h-3 bg-gradient-to-r from-blue-200 via-purple-200 to-pink-200 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-6 [&::-webkit-slider-thumb]:h-6 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gray-900 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110"
+                      />
+                      <div className="flex justify-between mt-2 text-xs font-medium text-gray-500">
+                        <span>1{formData.currency === "EUR" ? "€" : "$"}</span>
+                        <span className="text-gray-400">Prix flexible</span>
+                        <span>200{formData.currency === "EUR" ? "€" : "$"}</span>
+                      </div>
+                    </div>
+
+                    {/* Input manuel */}
+                    <div className="relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-gray-400">
+                        {formData.currency === "EUR" ? "€" : "$"}
+                      </div>
+                      <input
+                        id="hourlyPrice"
+                        type="text"
+                        value={formData.hourlyPrice || ""}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^0-9.,]/g, "").replace(",", ".");
+                          const numValue = parseFloat(value) || 0;
+                          setFormData((prev) => ({ ...prev, hourlyPrice: Math.min(10000, numValue) || null }));
+                        }}
+                        className="w-full rounded-xl border-2 border-gray-300 bg-white px-14 py-4 text-2xl font-bold text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20 transition-all"
+                        placeholder="0"
+                      />
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+                        par heure
+                      </div>
                     </div>
                   </div>
 
-                  {/* Manual hourly price input */}
-                  <div className="relative">
-                    <input
-                      id="hourlyPrice"
-                      type="text"
-                      value={formData.hourlyPrice || ""}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/[^0-9.,]/g, "").replace(",", ".");
-                        const numValue = parseFloat(value) || 0;
-                        setFormData((prev) => ({ ...prev, hourlyPrice: Math.min(10000, numValue) || null }));
-                      }}
-                      className="w-full rounded-xl border border-gray-300 px-4 py-3 pr-16 text-lg font-medium focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
-                      placeholder="0"
-                    />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
-                      {formData.currency === "EUR" ? "€" : "$"} / h
-                    </span>
-                  </div>
+                  {/* Calculateur de revenus horaires */}
+                  {formData.hourlyPrice && formData.hourlyPrice > 0 && (
+                    <div className="rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
+                          <svg className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <h4 className="font-semibold text-blue-900">Exemples de tarifs</h4>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="rounded-lg bg-white/60 p-3 text-center">
+                          <div className="text-xs text-blue-700 mb-1">2 heures</div>
+                          <div className="text-lg font-bold text-blue-900">
+                            {formData.hourlyPrice * 2}{formData.currency === "EUR" ? "€" : "$"}
+                          </div>
+                        </div>
+                        <div className="rounded-lg bg-white/60 p-3 text-center">
+                          <div className="text-xs text-blue-700 mb-1">4 heures</div>
+                          <div className="text-lg font-bold text-blue-900">
+                            {formData.hourlyPrice * 4}{formData.currency === "EUR" ? "€" : "$"}
+                          </div>
+                        </div>
+                        <div className="rounded-lg bg-white/60 p-3 text-center">
+                          <div className="text-xs text-blue-700 mb-1">Demi-journée</div>
+                          <div className="text-lg font-bold text-blue-900">
+                            {formData.hourlyPrice * 4}{formData.currency === "EUR" ? "€" : "$"}
+                          </div>
+                        </div>
+                        <div className="rounded-lg bg-white/60 p-3 text-center">
+                          <div className="text-xs text-blue-700 mb-1">Journée (8h)</div>
+                          <div className="text-lg font-bold text-blue-900">
+                            {formData.hourlyPrice * 8}{formData.currency === "EUR" ? "€" : "$"}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Durée minimum */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-medium text-gray-700">Durée minimum de réservation (optionnel)</label>
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium text-gray-700">Durée minimum de réservation</label>
                     <select
                       value={formData.minDurationMinutes || ""}
                       onChange={(e) => setFormData((prev) => ({ ...prev, minDurationMinutes: e.target.value ? parseInt(e.target.value) : null }))}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
+                      className="w-full rounded-xl border-2 border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-900 focus:border-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-900/20 transition-all"
                     >
-                      <option value="">Aucune</option>
-                      <option value="30">30 minutes</option>
-                      <option value="60">1 heure</option>
-                      <option value="90">1h30</option>
-                      <option value="120">2 heures</option>
-                      <option value="180">3 heures</option>
-                      <option value="240">4 heures</option>
+                      <option value="">Aucune durée minimum</option>
+                      <option value="30">30 minutes minimum</option>
+                      <option value="60">1 heure minimum</option>
+                      <option value="90">1h30 minimum</option>
+                      <option value="120">2 heures minimum</option>
+                      <option value="180">3 heures minimum</option>
+                      <option value="240">4 heures minimum</option>
                     </select>
                   </div>
                 </div>
               )}
 
-              {/* Frais supplémentaires */}
-              <div className="space-y-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
-                <h3 className="text-sm font-medium text-gray-900">Frais supplémentaires (optionnel)</h3>
-
-                <div className="space-y-2">
-                  <label htmlFor="cleaningFee" className="text-xs font-medium text-gray-700">
-                    Frais de ménage (une fois par séjour)
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="cleaningFee"
-                      type="number"
-                      min="0"
-                      max="500"
-                      value={formData.cleaningFee || ""}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, cleaningFee: parseFloat(e.target.value) || null }))}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-12 text-sm focus:border-gray-900 focus:outline-none"
-                      placeholder="0"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
-                      {formData.currency === "EUR" ? "€" : "$"}
-                    </span>
+              {/* Frais supplémentaires - Design moderne */}
+              <div className="space-y-6 rounded-2xl border-2 border-purple-200 bg-gradient-to-br from-white to-purple-50 p-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100">
+                    <svg className="h-5 w-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Frais supplémentaires</h3>
+                    <p className="text-sm text-gray-500">Optionnel - Ajoutez des frais si nécessaire</p>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label htmlFor="extraGuestFee" className="text-xs font-medium text-gray-700">
-                    Frais par voyageur supplémentaire
-                  </label>
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
+                <div className="space-y-5">
+                  {/* Frais de ménage */}
+                  <div className="rounded-xl bg-white border border-purple-100 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl">🧹</span>
+                        <div>
+                          <label htmlFor="cleaningFee" className="text-sm font-semibold text-gray-900">
+                            Frais de ménage
+                          </label>
+                          <p className="text-xs text-gray-500">Une fois par séjour</p>
+                        </div>
+                      </div>
+                      {formData.cleaningFee && formData.cleaningFee > 0 && (
+                        <div className="text-right">
+                          <div className="text-lg font-bold text-purple-600">
+                            +{formData.cleaningFee}{formData.currency === "EUR" ? "€" : "$"}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-lg font-bold text-gray-400">
+                        {formData.currency === "EUR" ? "€" : "$"}
+                      </div>
                       <input
-                        id="extraGuestFee"
+                        id="cleaningFee"
                         type="number"
                         min="0"
-                        max="100"
-                        value={formData.extraGuestFee || ""}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, extraGuestFee: parseFloat(e.target.value) || null }))}
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-12 text-sm focus:border-gray-900 focus:outline-none"
+                        max="500"
+                        value={formData.cleaningFee || ""}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, cleaningFee: parseFloat(e.target.value) || null }))}
+                        className="w-full rounded-lg border-2 border-gray-200 bg-gray-50 pl-10 pr-4 py-3 text-lg font-semibold text-gray-900 focus:border-purple-400 focus:bg-white focus:outline-none transition-all"
                         placeholder="0"
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">
-                        {formData.currency === "EUR" ? "€" : "$"}
-                      </span>
-                    </div>
-                    <div className="w-32">
-                      <input
-                        type="number"
-                        min="1"
-                        max="20"
-                        value={formData.extraGuestThreshold || ""}
-                        onChange={(e) => setFormData((prev) => ({ ...prev, extraGuestThreshold: parseInt(e.target.value) || null }))}
-                        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none"
-                        placeholder="À partir de"
                       />
                     </div>
                   </div>
-                  <p className="text-xs text-gray-500">
-                    Ex: 10{formData.currency === "EUR" ? "€" : "$"} à partir de 3 voyageurs
-                  </p>
+
+                  {/* Frais par voyageur supplémentaire */}
+                  <div className="rounded-xl bg-white border border-purple-100 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-2xl">👥</span>
+                        <div>
+                          <label htmlFor="extraGuestFee" className="text-sm font-semibold text-gray-900">
+                            Frais par voyageur supplémentaire
+                          </label>
+                          <p className="text-xs text-gray-500">À partir d'un certain nombre</p>
+                        </div>
+                      </div>
+                      {formData.extraGuestFee && formData.extraGuestFee > 0 && formData.extraGuestThreshold && (
+                        <div className="text-right">
+                          <div className="text-lg font-bold text-purple-600">
+                            +{formData.extraGuestFee}{formData.currency === "EUR" ? "€" : "$"}
+                          </div>
+                          <div className="text-xs text-gray-500">à partir de {formData.extraGuestThreshold}</div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-3">
+                      <div className="relative flex-1">
+                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-lg font-bold text-gray-400">
+                          {formData.currency === "EUR" ? "€" : "$"}
+                        </div>
+                        <input
+                          id="extraGuestFee"
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={formData.extraGuestFee || ""}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, extraGuestFee: parseFloat(e.target.value) || null }))}
+                          className="w-full rounded-lg border-2 border-gray-200 bg-gray-50 pl-10 pr-4 py-3 text-lg font-semibold text-gray-900 focus:border-purple-400 focus:bg-white focus:outline-none transition-all"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div className="w-32">
+                        <input
+                          type="number"
+                          min="1"
+                          max="20"
+                          value={formData.extraGuestThreshold || ""}
+                          onChange={(e) => setFormData((prev) => ({ ...prev, extraGuestThreshold: parseInt(e.target.value) || null }))}
+                          className="w-full rounded-lg border-2 border-gray-200 bg-gray-50 px-3 py-3 text-center text-lg font-semibold text-gray-900 focus:border-purple-400 focus:bg-white focus:outline-none transition-all"
+                          placeholder="À partir de"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 flex items-center gap-1">
+                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Exemple: 10{formData.currency === "EUR" ? "€" : "$"} à partir de 3 voyageurs
+                    </p>
+                  </div>
+
+                  {/* Preview du prix total */}
+                  {((formData.price > 0 && (formData.pricingMode === "DAILY" || formData.pricingMode === "BOTH")) ||
+                    (formData.hourlyPrice && formData.hourlyPrice > 0 && (formData.pricingMode === "HOURLY" || formData.pricingMode === "BOTH"))) &&
+                   (formData.cleaningFee || formData.extraGuestFee) && (
+                    <div className="rounded-xl bg-gradient-to-r from-purple-100 to-pink-100 p-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <svg className="h-4 w-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                        </svg>
+                        <span className="text-sm font-semibold text-purple-900">Exemple de calcul</span>
+                      </div>
+                      <div className="space-y-1 text-sm text-purple-800">
+                        {formData.pricingMode === "DAILY" || formData.pricingMode === "BOTH" ? (
+                          <div className="flex justify-between">
+                            <span>3 nuits × {formData.price}{formData.currency === "EUR" ? "€" : "$"}</span>
+                            <span className="font-semibold">{formData.price * 3}{formData.currency === "EUR" ? "€" : "$"}</span>
+                          </div>
+                        ) : null}
+                        {formData.cleaningFee && (
+                          <div className="flex justify-between">
+                            <span>Frais de ménage</span>
+                            <span className="font-semibold">+{formData.cleaningFee}{formData.currency === "EUR" ? "€" : "$"}</span>
+                          </div>
+                        )}
+                        {formData.extraGuestFee && formData.extraGuestThreshold && (
+                          <div className="flex justify-between">
+                            <span>Voyageur supplémentaire (×1)</span>
+                            <span className="font-semibold">+{formData.extraGuestFee}{formData.currency === "EUR" ? "€" : "$"}</span>
+                          </div>
+                        )}
+                        <div className="border-t border-purple-300 pt-1 mt-1 flex justify-between font-bold text-purple-900">
+                          <span>Total</span>
+                          <span>
+                            {(formData.pricingMode === "DAILY" || formData.pricingMode === "BOTH" ? formData.price * 3 : 0) +
+                             (formData.cleaningFee || 0) +
+                             (formData.extraGuestFee || 0)}
+                            {formData.currency === "EUR" ? "€" : "$"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="rounded-xl bg-gray-50 p-4">
-                <p className="text-sm text-gray-600">
-                  <span className="font-medium">Conseil :</span> Regardez les prix des espaces similaires dans votre région pour rester compétitif.
-                </p>
-              </div>
-
-              {/* Recommandation de prix */}
+              {/* Recommandation de prix - Design amélioré */}
               {formData.type && formData.city && (
                 (() => {
                   const recommendation = getPriceRecommendation(formData.type, formData.city);
@@ -3527,67 +3760,125 @@ export default function NewListingPage() {
                   const symbol = formData.currency === "EUR" ? "€" : "$";
 
                   return (
-                    <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-blue-100">
-                          <svg className="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
+                    <div className="rounded-2xl border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50 p-6 shadow-lg">
+                      <div className="flex items-start gap-4">
+                        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-md">
+                          <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                           </svg>
                         </div>
                         <div className="flex-1">
-                          <h4 className="text-sm font-medium text-blue-900">
-                            Prix recommandés pour {formData.city}
-                            <span className="ml-2 inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-                              {isUrban ? "Zone urbaine" : "Zone rurale"}
+                          <div className="flex items-center gap-2 mb-2">
+                            <h4 className="text-lg font-bold text-blue-900">
+                              Prix recommandés pour {formData.city}
+                            </h4>
+                            <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+                              {isUrban ? "🏙️ Zone urbaine" : "🌳 Zone rurale"}
                             </span>
-                          </h4>
-                          <div className="mt-2 space-y-1.5 text-sm text-blue-800">
+                          </div>
+
+                          <div className="space-y-3 mt-4">
                             {(formData.pricingMode === "DAILY" || formData.pricingMode === "BOTH") && (
-                              <p>
-                                <span className="font-medium">Par nuitée :</span>{" "}
-                                {recommendation.daily.min}{symbol} - {recommendation.daily.max}{symbol}
+                              <div className="rounded-xl bg-white/80 backdrop-blur-sm p-4 border border-blue-100">
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-sm font-semibold text-blue-900">💰 Par nuitée</span>
+                                  <span className="text-lg font-bold text-blue-900">
+                                    {recommendation.daily.min}{symbol} - {recommendation.daily.max}{symbol}
+                                  </span>
+                                </div>
                                 {formData.price > 0 && (
-                                  <span className={`ml-2 text-xs ${
-                                    formData.price >= recommendation.daily.min && formData.price <= recommendation.daily.max
-                                      ? "text-green-600"
-                                      : formData.price < recommendation.daily.min
-                                      ? "text-amber-600"
-                                      : "text-amber-600"
-                                  }`}>
-                                    {formData.price >= recommendation.daily.min && formData.price <= recommendation.daily.max
-                                      ? "✓ Dans la fourchette"
-                                      : formData.price < recommendation.daily.min
-                                      ? "↓ En dessous"
-                                      : "↑ Au dessus"}
-                                  </span>
+                                  <div className="mt-2">
+                                    <div className="flex items-center justify-between text-xs mb-1">
+                                      <span className="text-blue-700">Votre prix: {formData.price}{symbol}</span>
+                                      <span className={`font-semibold ${
+                                        formData.price >= recommendation.daily.min && formData.price <= recommendation.daily.max
+                                          ? "text-green-600"
+                                          : formData.price < recommendation.daily.min
+                                          ? "text-amber-600"
+                                          : "text-red-600"
+                                      }`}>
+                                        {formData.price >= recommendation.daily.min && formData.price <= recommendation.daily.max
+                                          ? "✓ Prix optimal"
+                                          : formData.price < recommendation.daily.min
+                                          ? "⚠️ En dessous du marché"
+                                          : "⚠️ Au dessus du marché"}
+                                      </span>
+                                    </div>
+                                    <div className="relative h-2 bg-blue-100 rounded-full overflow-hidden">
+                                      <div
+                                        className="absolute h-full bg-gradient-to-r from-green-400 to-green-500 rounded-full"
+                                        style={{
+                                          left: `${Math.max(0, ((recommendation.daily.min - 2) / 998) * 100)}%`,
+                                          width: `${((recommendation.daily.max - recommendation.daily.min) / 998) * 100}%`
+                                        }}
+                                      />
+                                      <div
+                                        className="absolute h-full w-1 bg-blue-900 rounded-full"
+                                        style={{
+                                          left: `${Math.min(100, ((formData.price - 2) / 998) * 100)}%`
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
                                 )}
-                              </p>
+                              </div>
                             )}
+
                             {(formData.pricingMode === "HOURLY" || formData.pricingMode === "BOTH") && (
-                              <p>
-                                <span className="font-medium">Par heure :</span>{" "}
-                                {recommendation.hourly.min}{symbol} - {recommendation.hourly.max}{symbol}
-                                {formData.hourlyPrice && formData.hourlyPrice > 0 && (
-                                  <span className={`ml-2 text-xs ${
-                                    formData.hourlyPrice >= recommendation.hourly.min && formData.hourlyPrice <= recommendation.hourly.max
-                                      ? "text-green-600"
-                                      : formData.hourlyPrice < recommendation.hourly.min
-                                      ? "text-amber-600"
-                                      : "text-amber-600"
-                                  }`}>
-                                    {formData.hourlyPrice >= recommendation.hourly.min && formData.hourlyPrice <= recommendation.hourly.max
-                                      ? "✓ Dans la fourchette"
-                                      : formData.hourlyPrice < recommendation.hourly.min
-                                      ? "↓ En dessous"
-                                      : "↑ Au dessus"}
+                              <div className="rounded-xl bg-white/80 backdrop-blur-sm p-4 border border-blue-100">
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-sm font-semibold text-blue-900">⏱️ Par heure</span>
+                                  <span className="text-lg font-bold text-blue-900">
+                                    {recommendation.hourly.min}{symbol} - {recommendation.hourly.max}{symbol}
                                   </span>
+                                </div>
+                                {formData.hourlyPrice && formData.hourlyPrice > 0 && (
+                                  <div className="mt-2">
+                                    <div className="flex items-center justify-between text-xs mb-1">
+                                      <span className="text-blue-700">Votre prix: {formData.hourlyPrice}{symbol}</span>
+                                      <span className={`font-semibold ${
+                                        formData.hourlyPrice >= recommendation.hourly.min && formData.hourlyPrice <= recommendation.hourly.max
+                                          ? "text-green-600"
+                                          : formData.hourlyPrice < recommendation.hourly.min
+                                          ? "text-amber-600"
+                                          : "text-red-600"
+                                      }`}>
+                                        {formData.hourlyPrice >= recommendation.hourly.min && formData.hourlyPrice <= recommendation.hourly.max
+                                          ? "✓ Prix optimal"
+                                          : formData.hourlyPrice < recommendation.hourly.min
+                                          ? "⚠️ En dessous du marché"
+                                          : "⚠️ Au dessus du marché"}
+                                      </span>
+                                    </div>
+                                    <div className="relative h-2 bg-blue-100 rounded-full overflow-hidden">
+                                      <div
+                                        className="absolute h-full bg-gradient-to-r from-green-400 to-green-500 rounded-full"
+                                        style={{
+                                          left: `${Math.max(0, ((recommendation.hourly.min - 1) / 199) * 100)}%`,
+                                          width: `${((recommendation.hourly.max - recommendation.hourly.min) / 199) * 100}%`
+                                        }}
+                                      />
+                                      <div
+                                        className="absolute h-full w-1 bg-blue-900 rounded-full"
+                                        style={{
+                                          left: `${Math.min(100, ((formData.hourlyPrice - 1) / 199) * 100)}%`
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
                                 )}
-                              </p>
+                              </div>
                             )}
                           </div>
-                          <p className="mt-2 text-xs text-blue-600">
-                            Ces prix sont indicatifs. Tu es libre de fixer le tarif que tu souhaites.
-                          </p>
+
+                          <div className="mt-4 flex items-start gap-2 rounded-lg bg-blue-100/50 p-3">
+                            <svg className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <p className="text-xs text-blue-800">
+                              Ces prix sont basés sur le marché local. Tu es libre de fixer le tarif que tu souhaites selon la qualité de ton espace.
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -3862,10 +4153,10 @@ export default function NewListingPage() {
           {/* ========== STEP: REVIEW ========== */}
           {currentStep === "review" && (
             <div className="space-y-6">
-              <div className="overflow-hidden rounded-2xl border border-gray-200">
-                {/* Preview image */}
+              {/* Hero Card avec image et infos principales */}
+              <div className="overflow-hidden rounded-2xl border-2 border-gray-200 bg-white shadow-lg">
                 {images[0] && (
-                  <div className="aspect-[16/9] bg-gray-100">
+                  <div className="aspect-[16/9] bg-gradient-to-br from-gray-100 to-gray-200">
                     {/* eslint-disable-next-line @next/next/no-img-element -- blob URL preview */}
                     <img
                       src={images[0].previewUrl}
@@ -3875,50 +4166,358 @@ export default function NewListingPage() {
                   </div>
                 )}
 
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {formData.title || "Titre de l'annonce"}
-                  </h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    {formData.city}, {formData.country}
-                  </p>
-                  <p className="mt-2 text-lg font-semibold">
-                    {formData.price} {formData.currency === "EUR" ? "€" : "$"} / jour
-                    {formData.hourlyPrice && (
-                      <span className="ml-2 text-sm font-normal text-gray-500">
-                        ou {formData.hourlyPrice} {formData.currency === "EUR" ? "€" : "$"} / h
+                <div className="p-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <h3 className="text-2xl font-bold text-gray-900">
+                        {formData.title || "Titre de l'annonce"}
+                      </h3>
+                      <p className="mt-2 flex items-center gap-2 text-gray-600">
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        {formData.city}, {formData.country}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-3xl font-bold text-gray-900">
+                        {formData.price}{formData.currency === "EUR" ? "€" : "$"}
+                      </div>
+                      <div className="text-sm text-gray-500">par nuit</div>
+                      {formData.hourlyPrice && (
+                        <div className="mt-2 text-lg font-semibold text-gray-600">
+                          {formData.hourlyPrice}{formData.currency === "EUR" ? "€" : "$"}/h
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Détails de l'espace */}
+              <div className="rounded-2xl border-2 border-gray-200 bg-white p-6">
+                <h4 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-900">
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                  </svg>
+                  Détails de l'espace
+                </h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-500">Type:</span>
+                    <span className="font-semibold text-gray-900">{LISTING_TYPES.find((t) => t.value === formData.type)?.label}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-500">Capacité:</span>
+                    <span className="font-semibold text-gray-900">{formData.maxGuests} personne{formData.maxGuests > 1 ? "s" : ""}</span>
+                  </div>
+
+                  {/* Détails APARTMENT/HOUSE */}
+                  {(formData.type === "APARTMENT" || formData.type === "HOUSE") && (
+                    <>
+                      {formData.bedrooms && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-500">Chambres:</span>
+                          <span className="font-semibold text-gray-900">{formData.bedrooms}</span>
+                        </div>
+                      )}
+                      {(formData.bathroomsFull || formData.bathroomsHalf) && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-500">Salles de bain:</span>
+                          <span className="font-semibold text-gray-900">
+                            {formData.bathroomsFull || 0} complète{(formData.bathroomsFull || 0) > 1 ? "s" : ""}
+                            {formData.bathroomsHalf ? `, ${formData.bathroomsHalf} d'eau` : ""}
+                          </span>
+                        </div>
+                      )}
+                      {formData.spaceType && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-500">Accès:</span>
+                          <span className="font-semibold text-gray-900">
+                            {formData.spaceType === "ENTIRE_PLACE" ? "Logement entier" :
+                             formData.spaceType === "PRIVATE_ROOM" ? "Chambre privée" :
+                             formData.spaceType === "SHARED_ROOM" ? "Chambre partagée" : "Espace partagé"}
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* Détails HOUSE */}
+                  {formData.type === "HOUSE" && (
+                    <>
+                      {formData.floors && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-500">Étages:</span>
+                          <span className="font-semibold text-gray-900">{formData.floors}</span>
+                        </div>
+                      )}
+                      {formData.hasGarden && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-500">Jardin:</span>
+                          <span className="font-semibold text-gray-900">
+                            Oui{formData.gardenSize ? ` (${formData.gardenSize}m²)` : ""}
+                          </span>
+                        </div>
+                      )}
+                      {formData.hasPool && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-500">Piscine:</span>
+                          <span className="font-semibold text-gray-900">
+                            {formData.poolType === "indoor" ? "Intérieure" : "Extérieure"}
+                            {formData.poolHeated ? " (chauffée)" : ""}
+                          </span>
+                        </div>
+                      )}
+                      {formData.hasTerrace && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-500">Terrasse:</span>
+                          <span className="font-semibold text-gray-900">
+                            Oui{formData.terraceSize ? ` (${formData.terraceSize}m²)` : ""}
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* Détails STUDIO */}
+                  {(formData.type === "STUDIO" || formData.type === "RECORDING_STUDIO") && (
+                    <>
+                      {formData.studioType && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-500">Type:</span>
+                          <span className="font-semibold text-gray-900 capitalize">{formData.studioType}</span>
+                        </div>
+                      )}
+                      {formData.studioHeight && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-500">Hauteur:</span>
+                          <span className="font-semibold text-gray-900">{formData.studioHeight}m</span>
+                        </div>
+                      )}
+                      {formData.hasGreenScreen && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-green-600">✓ Fond vert</span>
+                        </div>
+                      )}
+                      {formData.hasSoundproofing && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-green-600">✓ Isolation phonique</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* Détails PARKING */}
+                  {(formData.type === "PARKING" || formData.type === "GARAGE") && (
+                    <>
+                      {formData.parkingType && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-500">Type:</span>
+                          <span className="font-semibold text-gray-900 capitalize">
+                            {formData.parkingType === "outdoor" ? "Extérieur" :
+                             formData.parkingType === "indoor" ? "Intérieur" : "Souterrain"}
+                          </span>
+                        </div>
+                      )}
+                      {(formData.parkingLength || formData.parkingWidth || formData.parkingHeight) && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-500">Dimensions:</span>
+                          <span className="font-semibold text-gray-900">
+                            {formData.parkingLength}m × {formData.parkingWidth}m × {formData.parkingHeight}m
+                          </span>
+                        </div>
+                      )}
+                      {formData.parkingCovered && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-green-600">✓ Couvert</span>
+                        </div>
+                      )}
+                      {formData.parkingSecured && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-green-600">✓ Sécurisé</span>
+                        </div>
+                      )}
+                      {formData.hasEVCharger && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-green-600">✓ Borne électrique</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-500">Photos:</span>
+                    <span className="font-semibold text-gray-900">{images.length} photo{images.length > 1 ? "s" : ""}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-500">Réservation:</span>
+                    <span className="font-semibold text-gray-900">{formData.isInstantBook ? "Instantanée" : "Sur demande"}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Équipements */}
+              {formData.amenityIds && formData.amenityIds.length > 0 && (
+                <div className="rounded-2xl border-2 border-gray-200 bg-white p-6">
+                  <h4 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-900">
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Équipements ({formData.amenityIds.length})
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {formData.amenityIds.map((id, idx) => (
+                      <span key={idx} className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700">
+                        ✓ Équipement {idx + 1}
                       </span>
-                    )}
-                  </p>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Description */}
+              {(formData.highlights.length > 0 || formData.spaceDescription || formData.description) && (
+                <div className="rounded-2xl border-2 border-gray-200 bg-white p-6">
+                  <h4 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-900">
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h7" />
+                    </svg>
+                    Description
+                  </h4>
+
+                  {formData.highlights.length > 0 && (
+                    <div className="mb-4">
+                      <h5 className="mb-2 text-sm font-semibold text-gray-700">Points forts</h5>
+                      <div className="flex flex-wrap gap-2">
+                        {formData.highlights.map((highlight, idx) => (
+                          <span key={idx} className="inline-flex items-center rounded-lg bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 px-3 py-1.5 text-sm font-medium text-blue-900">
+                            ⭐ {highlight}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {formData.spaceDescription && (
+                    <div className="mb-3">
+                      <h5 className="mb-1 text-sm font-semibold text-gray-700">L'espace</h5>
+                      <p className="text-sm text-gray-600">{formData.spaceDescription}</p>
+                    </div>
+                  )}
+
+                  {formData.guestAccessDescription && (
+                    <div className="mb-3">
+                      <h5 className="mb-1 text-sm font-semibold text-gray-700">Accès voyageurs</h5>
+                      <p className="text-sm text-gray-600">{formData.guestAccessDescription}</p>
+                    </div>
+                  )}
+
+                  {formData.neighborhoodDescription && (
+                    <div className="mb-3">
+                      <h5 className="mb-1 text-sm font-semibold text-gray-700">Le quartier</h5>
+                      <p className="text-sm text-gray-600">{formData.neighborhoodDescription}</p>
+                    </div>
+                  )}
+
+                  {formData.description && !formData.spaceDescription && (
+                    <p className="text-sm text-gray-600">{formData.description}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Tarification */}
+              <div className="rounded-2xl border-2 border-gray-200 bg-gradient-to-br from-white to-green-50 p-6">
+                <h4 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-900">
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Tarification
+                </h4>
+                <div className="space-y-3 text-sm">
+                  {(formData.pricingMode === "DAILY" || formData.pricingMode === "BOTH") && (
+                    <div className="flex justify-between rounded-lg bg-white p-3">
+                      <span className="text-gray-600">Prix par nuit</span>
+                      <span className="text-lg font-bold text-gray-900">{formData.price}{formData.currency === "EUR" ? "€" : "$"}</span>
+                    </div>
+                  )}
+                  {(formData.pricingMode === "HOURLY" || formData.pricingMode === "BOTH") && (
+                    <>
+                      <div className="flex justify-between rounded-lg bg-white p-3">
+                        <span className="text-gray-600">Prix par heure</span>
+                        <span className="text-lg font-bold text-gray-900">{formData.hourlyPrice}{formData.currency === "EUR" ? "€" : "$"}</span>
+                      </div>
+                      {formData.hourlyIncrement && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Incrément</span>
+                          <span className="font-semibold text-gray-900">{formData.hourlyIncrement} min</span>
+                        </div>
+                      )}
+                      {formData.minDurationMinutes && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Durée minimum</span>
+                          <span className="font-semibold text-gray-900">{formData.minDurationMinutes} min</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                  {formData.cleaningFee && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Frais de ménage</span>
+                      <span className="font-semibold text-gray-900">+{formData.cleaningFee}{formData.currency === "EUR" ? "€" : "$"}</span>
+                    </div>
+                  )}
+                  {formData.extraGuestFee && formData.extraGuestThreshold && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Frais voyageur (à partir de {formData.extraGuestThreshold})</span>
+                      <span className="font-semibold text-gray-900">+{formData.extraGuestFee}{formData.currency === "EUR" ? "€" : "$"}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* Summary */}
-              <div className="space-y-3 rounded-xl bg-gray-50 p-4">
-                <h4 className="font-medium text-gray-900">Récapitulatif</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Type d&apos;espace</span>
-                    <span className="font-medium">{LISTING_TYPES.find((t) => t.value === formData.type)?.label}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Capacité</span>
-                    <span className="font-medium">{formData.maxGuests} personne{formData.maxGuests > 1 ? "s" : ""}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Photos</span>
-                    <span className="font-medium">{images.length} photo{images.length > 1 ? "s" : ""}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Réservation instantanée</span>
-                    <span className="font-medium">{formData.isInstantBook ? "Oui" : "Non"}</span>
-                  </div>
-                </div>
-              </div>
+              {/* Réductions */}
+              {(() => {
+                const activeDiscounts = [
+                  formData.discountHours2Plus && { label: "2h+", value: formData.discountHours2Plus },
+                  formData.discountHours3Plus && { label: "3h+", value: formData.discountHours3Plus },
+                  formData.discountHours4Plus && { label: "4h+", value: formData.discountHours4Plus },
+                  formData.discountHours6Plus && { label: "6h+", value: formData.discountHours6Plus },
+                  formData.discountHours8Plus && { label: "8h+", value: formData.discountHours8Plus },
+                  formData.discountDays2Plus && { label: "2j+", value: formData.discountDays2Plus },
+                  formData.discountDays3Plus && { label: "3j+", value: formData.discountDays3Plus },
+                  formData.discountDays5Plus && { label: "5j+", value: formData.discountDays5Plus },
+                  formData.discountWeekly && { label: "7j+", value: formData.discountWeekly },
+                  formData.discountDays14Plus && { label: "14j+", value: formData.discountDays14Plus },
+                  formData.discountMonthly && { label: "28j+", value: formData.discountMonthly },
+                ].filter(Boolean);
 
-              <p className="text-center text-sm text-gray-500">
-                En publiant, vous acceptez nos conditions d&apos;utilisation et notre politique de confidentialité.
-              </p>
+                return activeDiscounts.length > 0 ? (
+                  <div className="rounded-2xl border-2 border-gray-200 bg-gradient-to-br from-white to-amber-50 p-6">
+                    <h4 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-900">
+                      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                      </svg>
+                      Réductions ({activeDiscounts.length})
+                    </h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {activeDiscounts.map((discount: any, idx: number) => (
+                        <div key={idx} className="rounded-lg bg-white border border-amber-200 p-3 text-center">
+                          <div className="text-xs text-gray-600">{discount.label}</div>
+                          <div className="text-lg font-bold text-amber-600">-{discount.value}%</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null;
+              })()}
+
+              <div className="rounded-xl bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 p-4">
+                <p className="text-center text-sm text-gray-700">
+                  <span className="font-semibold">✓ Tout est prêt !</span> En publiant, vous acceptez nos conditions d&apos;utilisation et notre politique de confidentialité.
+                </p>
+              </div>
             </div>
           )}
 
