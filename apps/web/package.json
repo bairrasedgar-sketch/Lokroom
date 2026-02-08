@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "node dev.js",
     "build": "prisma generate --schema=./prisma/schema.prisma && next build",
-    "build:mobile": "CAPACITOR_BUILD=true prisma generate --schema=./prisma/schema.prisma && next build",
+    "build:mobile": "cross-env CAPACITOR_BUILD=true prisma generate --schema=./prisma/schema.prisma && cross-env CAPACITOR_BUILD=true next build",
     "start": "next start -p 3000",
     "postinstall": "prisma generate --schema=./prisma/schema.prisma",
     "lint": "next lint",
@@ -81,6 +81,7 @@
     "@typescript-eslint/parser": "^8.45.0",
     "autoprefixer": "^10.4.18",
     "baseline-browser-mapping": "^2.8.30",
+    "cross-env": "^10.1.0",
     "eslint": "^8.57.1",
     "eslint-config-next": "^14.2.33",
     "eslint-config-prettier": "^9.1.0",
