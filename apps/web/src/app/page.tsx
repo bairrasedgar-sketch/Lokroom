@@ -99,7 +99,7 @@ async function getFeaturedListings() {
       },
     },
     orderBy: { createdAt: "desc" },
-    take: 12,
+    // Charger toutes les annonces pour que les filtres par catégorie fonctionnent
   });
 
   return listings;
