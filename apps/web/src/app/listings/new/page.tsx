@@ -1841,46 +1841,48 @@ export default function NewListingPage() {
         />
       )}
 
-      <div className="min-h-screen bg-white">
-        {/* Header */}
-        <header className="sticky top-0 z-40 border-b border-gray-200 bg-white">
-          <div className="mx-auto flex h-16 max-w-5xl 2xl:max-w-6xl items-center justify-between px-4 sm:px-6">
+      <div className="min-h-screen bg-white pb-safe">
+        {/* Header - Mobile optimized */}
+        <header className="sticky top-0 z-40 border-b border-gray-200 bg-white shadow-sm">
+          <div className="mx-auto flex h-14 sm:h-16 max-w-5xl 2xl:max-w-6xl items-center justify-between px-3 sm:px-6 gap-2 sm:gap-4">
+            {/* Quitter button - compact on mobile */}
             <button
               onClick={() => router.push("/")}
-              className="flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-1.5 sm:gap-2 rounded-lg sm:rounded-full border border-gray-300 px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
-              Quitter
+              <span className="hidden xs:inline">Quitter</span>
             </button>
 
-            {/* Progress bar */}
-            <div className="flex items-center gap-2">
+            {/* Progress bar - more visible on mobile */}
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-1 justify-center max-w-xs">
               {STEPS.map((s, i) => (
                 <div
                   key={s.key}
-                  className={`h-1.5 w-8 rounded-full transition-colors ${
+                  className={`h-1.5 sm:h-2 flex-1 max-w-[32px] sm:max-w-[40px] rounded-full transition-all duration-300 ${
                     i <= stepIndex ? "bg-gray-900" : "bg-gray-200"
                   }`}
                 />
               ))}
             </div>
 
-            {/* Finir plus tard button */}
+            {/* Finir plus tard button - icon only on mobile */}
             <button
               type="button"
               onClick={handleSaveDraft}
               disabled={savingDraft}
-              className="flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="flex items-center gap-1.5 sm:gap-2 rounded-lg sm:rounded-full border border-gray-300 px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              title="Finir plus tard"
             >
               {savingDraft ? (
-                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4 animate-spin" viewBox="0 0 24 24" fill="none">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
               ) : (
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                 </svg>
               )}
@@ -4521,18 +4523,24 @@ export default function NewListingPage() {
             </div>
           )}
 
-          {/* Navigation buttons - mobile only (bottom) */}
-          <div className="lg:hidden mt-8 flex items-center justify-between pb-8">
+          {/* Spacer for mobile sticky navigation */}
+          <div className="lg:hidden h-24" />
+          </main>
+        </div>
+
+        {/* Mobile sticky navigation - fixed at bottom */}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-lg safe-area-bottom">
+          <div className="mx-auto max-w-5xl px-4 py-3 flex items-center justify-between gap-3">
             <button
               type="button"
               onClick={handleBack}
               disabled={isFirstStep}
-              className={`flex items-center gap-2 rounded-full border border-gray-300 bg-white px-5 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-all ${isFirstStep ? "opacity-0 pointer-events-none" : ""}`}
+              className={`flex items-center justify-center gap-2 rounded-lg border-2 border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-all min-w-[100px] ${isFirstStep ? "opacity-0 pointer-events-none" : ""}`}
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
-              Retour
+              <span className="hidden xs:inline">Retour</span>
             </button>
 
             {isLastStep ? (
@@ -4540,7 +4548,7 @@ export default function NewListingPage() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={submitting || uploading || !canProceed()}
-                className="flex items-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-pink-500 to-rose-500 px-6 py-3 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting || uploading ? (
                   <>
@@ -4552,7 +4560,7 @@ export default function NewListingPage() {
                   </>
                 ) : (
                   <>
-                    Publier
+                    Publier l'annonce
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
@@ -4564,7 +4572,7 @@ export default function NewListingPage() {
                 type="button"
                 onClick={handleNext}
                 disabled={!canProceed()}
-                className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-opacity hover:bg-black disabled:opacity-50"
+                className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-md transition-all hover:bg-black hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Suivant
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -4573,6 +4581,7 @@ export default function NewListingPage() {
               </button>
             )}
           </div>
+        </div>
         </main>
         </div>
       </div>
