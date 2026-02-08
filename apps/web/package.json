@@ -18,8 +18,8 @@
     "cap:open:ios": "cap open ios",
     "cap:open:android": "cap open android",
     "mobile:build": "npm run build:mobile && npm run cap:sync",
-    "migrate:api": "node scripts/migrate-api-calls.js",
-    "deploy:mobile": "node scripts/deploy-mobile.js",
+    "migrate:api": "node scripts/migrate-api-calls.cjs",
+    "deploy:mobile": "node scripts/deploy-mobile.cjs",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"

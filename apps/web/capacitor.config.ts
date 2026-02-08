@@ -5,7 +5,10 @@ const config: CapacitorConfig = {
   appName: 'Lokroom',
   webDir: 'out',
   server: {
-    androidScheme: 'https'
+    androidScheme: 'https',
+    // L'app mobile appelle le backend Vercel pour les APIs
+    url: 'https://www.lokroom.com',
+    cleartext: false,
   },
   plugins: {
     SplashScreen: {
