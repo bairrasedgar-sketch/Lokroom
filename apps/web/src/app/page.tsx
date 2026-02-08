@@ -122,6 +122,20 @@ async function getListingStats() {
   };
 }
 
+async function getCategoryCounts() {
+  const counts = await prisma.listing.groupBy({
+    by: ["type"],
+    _count: true,
+  });
+
+  const countMap: Record<string, number> = {};
+  counts.forEach(c => {
+    countMap[c.type] = c._count;
+  });
+
+  return countMap;
+}
+
 export default async function Home() {
   const displayCurrency =
     (cookies().get("currency")?.value as Currency) ?? "EUR";
@@ -129,9 +143,10 @@ export default async function Home() {
   const { dict } = getServerDictionary();
   const t = dict.home;
 
-  const [listings, stats] = await Promise.all([
+  const [listings, stats, categoryCounts] = await Promise.all([
     getFeaturedListings(),
     getListingStats(),
+    getCategoryCounts(),
   ]);
 
   const cards = await Promise.all(
@@ -160,14 +175,14 @@ export default async function Home() {
   );
 
   const categories = [
-    { key: "APARTMENT", label: "Appartements", icon: "🏢", count: listings.filter(l => l.type === "APARTMENT").length },
-    { key: "HOUSE", label: "Maisons", icon: "🏠", count: listings.filter(l => l.type === "HOUSE").length },
-    { key: "STUDIO", label: "Studios", icon: "🎨", count: listings.filter(l => l.type === "STUDIO").length },
-    { key: "OFFICE", label: "Bureaux", icon: "💼", count: listings.filter(l => l.type === "OFFICE").length },
-    { key: "COWORKING", label: "Coworking", icon: "👥", count: listings.filter(l => l.type === "COWORKING").length },
-    { key: "PARKING", label: "Parkings", icon: "🚗", count: listings.filter(l => l.type === "PARKING").length },
-    { key: "EVENT_SPACE", label: "Événementiel", icon: "🎉", count: listings.filter(l => l.type === "EVENT_SPACE").length },
-    { key: "RECORDING_STUDIO", label: "Studios d'enregistrement", icon: "🎙️", count: listings.filter(l => l.type === "RECORDING_STUDIO").length },
+    { key: "APARTMENT", label: "Appartements", icon: "🏢", count: categoryCounts["APARTMENT"] || 0 },
+    { key: "HOUSE", label: "Maisons", icon: "🏠", count: categoryCounts["HOUSE"] || 0 },
+    { key: "STUDIO", label: "Studios", icon: "🎨", count: categoryCounts["STUDIO"] || 0 },
+    { key: "OFFICE", label: "Bureaux", icon: "💼", count: categoryCounts["OFFICE"] || 0 },
+    { key: "COWORKING", label: "Coworking", icon: "👥", count: categoryCounts["COWORKING"] || 0 },
+    { key: "PARKING", label: "Parkings", icon: "🚗", count: categoryCounts["PARKING"] || 0 },
+    { key: "EVENT_SPACE", label: "Événementiel", icon: "🎉", count: categoryCounts["EVENT_SPACE"] || 0 },
+    { key: "RECORDING_STUDIO", label: "Studios d'enregistrement", icon: "🎙️", count: categoryCounts["RECORDING_STUDIO"] || 0 },
   ];
 
   return (
