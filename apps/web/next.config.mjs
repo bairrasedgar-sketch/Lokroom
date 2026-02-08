@@ -29,15 +29,13 @@ if (process.env.NEXT_PUBLIC_ASSET_HOST) {
 
 const nextConfig = {
   reactStrictMode: true,
-  // Configuration pour Capacitor (export static)
-  output: process.env.CAPACITOR_BUILD === 'true' ? 'export' : undefined,
+  // Configuration pour Capacitor - PAS de mode export static
+  // L'app mobile appelle directement le backend Vercel
   experimental: {
     instrumentationHook: true,
   },
   images: {
     remotePatterns,
-    // Désactiver l'optimisation d'images pour l'export static Capacitor
-    unoptimized: process.env.CAPACITOR_BUILD === 'true',
   },
 };
 
