@@ -240,7 +240,25 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // ─────────────────────────────────────────────────────────────
-  // 0. ONBOARDING - Forcer la complétion du profil
+  // 0. CORS pour App Mobile (Architecture Professionnelle)
+  // ─────────────────────────────────────────────────────────────
+  if (pathname.startsWith('/api')) {
+    // Autoriser les requêtes OPTIONS (preflight)
+    if (req.method === 'OPTIONS') {
+      return new NextResponse(null, {
+        status: 200,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+          'Access-Control-Max-Age': '86400',
+        },
+      });
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // 1. ONBOARDING - Forcer la complétion du profil
   // ─────────────────────────────────────────────────────────────
   const isOnboardingExcluded =
     pathname === "/onboarding" ||
@@ -393,6 +411,14 @@ export async function middleware(req: NextRequest) {
   // --- Content-Security-Policy ---
   const isDev = process.env.NODE_ENV === "development";
   res.headers.set("Content-Security-Policy", generateCSP(isDev));
+
+  // --- CORS pour App Mobile ---
+  if (pathname.startsWith('/api')) {
+    res.headers.set('Access-Control-Allow-Origin', '*');
+    res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.headers.set('Access-Control-Allow-Credentials', 'true');
+  }
 
   return res;
 }
