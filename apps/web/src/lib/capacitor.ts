@@ -1,54 +1,42 @@
+// apps/web/src/lib/capacitor.ts
 import { Capacitor } from '@capacitor/core';
-import { StatusBar, Style } from '@capacitor/status-bar';
-import { SplashScreen } from '@capacitor/splash-screen';
-import { Keyboard } from '@capacitor/keyboard';
 
 /**
- * Détecte si l'app tourne dans un environnement mobile natif (iOS/Android)
+ * Détecte si l'app tourne dans Capacitor (app native iOS/Android)
  */
-export const isNativeMobile = () => {
+export function isCapacitor(): boolean {
   return Capacitor.isNativePlatform();
-};
+}
 
 /**
- * Détecte la plateforme (web, ios, android)
+ * Alias pour isCapacitor (compatibilité)
  */
-export const getPlatform = () => {
-  return Capacitor.getPlatform();
-};
+export function isNativeMobile(): boolean {
+  return isCapacitor();
+}
 
 /**
- * Initialise les plugins Capacitor pour mobile
+ * Détecte la plateforme native (ios, android, ou web)
  */
-export const initializeCapacitor = async () => {
-  if (!isNativeMobile()) return;
+export function getPlatform(): 'ios' | 'android' | 'web' {
+  return Capacitor.getPlatform() as 'ios' | 'android' | 'web';
+}
 
-  try {
-    // Configuration de la barre de statut
-    if (Capacitor.isPluginAvailable('StatusBar')) {
-      await StatusBar.setStyle({ style: Style.Light });
-      await StatusBar.setBackgroundColor({ color: '#ffffff' });
-    }
+/**
+ * Détecte si on est sur mobile web (pas l'app native)
+ */
+export function isMobileWeb(): boolean {
+  if (typeof window === 'undefined') return false;
+  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && !isCapacitor();
+}
 
-    // Masquer le splash screen après le chargement
-    if (Capacitor.isPluginAvailable('SplashScreen')) {
-      await SplashScreen.hide();
-    }
-
-    // Configuration du clavier
-    if (Capacitor.isPluginAvailable('Keyboard')) {
-      await Keyboard.setAccessoryBarVisible({ isVisible: true });
-    }
-
-    console.log('✅ Capacitor initialized successfully');
-  } catch (error) {
-    console.error('❌ Error initializing Capacitor:', error);
+/**
+ * Initialise Capacitor (appelé au démarrage de l'app)
+ */
+export function initializeCapacitor(): void {
+  // Capacitor s'initialise automatiquement
+  // Cette fonction existe pour la compatibilité
+  if (isCapacitor()) {
+    console.log('[Capacitor] App native détectée:', getPlatform());
   }
-};
-
-/**
- * Hook pour détecter si on est sur mobile
- */
-export const useIsMobile = () => {
-  return isNativeMobile();
-};
+}

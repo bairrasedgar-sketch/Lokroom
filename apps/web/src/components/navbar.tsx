@@ -11,6 +11,7 @@ import { useMobileSheetSafe } from "@/contexts/MobileSheetContext";
 import { COUNTRIES, DEFAULT_COUNTRY, type Country } from "@/data/countries";
 import NotificationBell from "./NotificationBell";
 import CategoryIcon from "./CategoryIcon";
+import { isCapacitor, isMobileWeb } from "@/lib/capacitor";
 
 type LocaleOption = {
   code: string;
@@ -345,6 +346,9 @@ export default function Navbar() {
   // Détecter iOS côté client
   const [isIOS, setIsIOS] = useState(false);
 
+  // Détecter si on est dans l'app Capacitor
+  const [isNativeApp, setIsNativeApp] = useState(false);
+
   // État pour cacher/montrer la navbar au scroll (PC uniquement, page détail annonce)
   const [hideNavbar, setHideNavbar] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -352,6 +356,8 @@ export default function Navbar() {
   useEffect(() => {
     const userAgent = navigator.userAgent.toLowerCase();
     setIsIOS(/iphone|ipad|ipod/.test(userAgent));
+    // Détecter si on est dans l'app native Capacitor
+    setIsNativeApp(isCapacitor());
   }, []);
 
   // Détecter le scroll pour cacher/montrer la navbar sur PC (page détail annonce uniquement)
@@ -473,42 +479,45 @@ export default function Navbar() {
     <>
       <header className={`sticky top-0 z-50 bg-neutral-50 transition-transform duration-300 ${hideNavbar ? '-translate-y-full' : 'translate-y-0'}`}>
         {/* Barre mobile - Logo + Télécharger l'appli + Utiliser l'appli */}
-        <div
-          className={`flex md:hidden items-center justify-between px-3 py-2 border-b border-gray-100 transition-all duration-300 ${
-            shouldHideMobileHeader ? 'opacity-0 -translate-y-full h-0 py-0 overflow-hidden' : 'opacity-100 translate-y-0'
-          }`}
-        >
-          {/* Logo Lok'Room */}
-          <Link href="/" className="flex-shrink-0 flex items-center">
-            <Image
-              src="/logo.svg"
-              alt="Lok'Room"
-              width={85}
-              height={28}
-              className="h-6 w-auto"
-              priority
-              unoptimized
-            />
-          </Link>
+        {/* Cacher complètement ce banner dans l'app native Capacitor */}
+        {!isNativeApp && (
+          <div
+            className={`flex md:hidden items-center justify-between px-3 py-2 border-b border-gray-100 transition-all duration-300 ${
+              shouldHideMobileHeader ? 'opacity-0 -translate-y-full h-0 py-0 overflow-hidden' : 'opacity-100 translate-y-0'
+            }`}
+          >
+            {/* Logo Lok'Room */}
+            <Link href="/" className="flex-shrink-0 flex items-center">
+              <Image
+                src="/logo.svg"
+                alt="Lok'Room"
+                width={85}
+                height={28}
+                className="h-6 w-auto"
+                priority
+                unoptimized
+              />
+            </Link>
 
-          {/* Partie droite : Télécharger l'appli + bouton */}
-          <div className="flex items-center gap-2">
-            {/* Texte Télécharger l'appli */}
-            <span className="text-[10px] text-gray-500 hidden min-[340px]:block">
-              Télécharger l'appli
-            </span>
+            {/* Partie droite : Télécharger l'appli + bouton */}
+            <div className="flex items-center gap-2">
+              {/* Texte Télécharger l'appli */}
+              <span className="text-[10px] text-gray-500 hidden min-[340px]:block">
+                Télécharger l'appli
+              </span>
 
-            {/* Bouton Utiliser l'appli */}
-            <a
-              href={isIOS
-                ? "https://apps.apple.com/app/lokroom/id123456789"
-                : "https://play.google.com/store/apps/details?id=com.lokroom.app"}
-              className="bg-[#0066FF] hover:bg-[#0052CC] active:bg-[#004499] text-white text-[11px] font-semibold px-3 py-1.5 rounded-full transition-colors shadow-sm flex items-center justify-center leading-none"
-            >
-              Utiliser l'appli
-            </a>
+              {/* Bouton Utiliser l'appli */}
+              <a
+                href={isIOS
+                  ? "https://apps.apple.com/app/lokroom/id123456789"
+                  : "https://play.google.com/store/apps/details?id=com.lokroom.app"}
+                className="bg-[#0066FF] hover:bg-[#0052CC] active:bg-[#004499] text-white text-[11px] font-semibold px-3 py-1.5 rounded-full transition-colors shadow-sm flex items-center justify-center leading-none"
+              >
+                Utiliser l'appli
+              </a>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Barre desktop - inchangée */}
         <div className="hidden md:flex relative items-center justify-between px-4 sm:px-6 lg:px-8 py-4 sm:py-5 max-w-[1760px] 3xl:max-w-[2200px] 4xl:max-w-[2800px] mx-auto">
