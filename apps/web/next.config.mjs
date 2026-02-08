@@ -18,7 +18,7 @@ const remotePatterns = [
   { protocol: "http", hostname: "localhost" },
 ];
 
-// Si tu as un domaine public dédié dans l’ENV, on l’ajoute proprement
+// Si tu as un domaine public dédié dans l'ENV, on l'ajoute proprement
 // Exemple: NEXT_PUBLIC_ASSET_HOST=cdn.mondomaine.com
 if (process.env.NEXT_PUBLIC_ASSET_HOST) {
   remotePatterns.push({
@@ -29,12 +29,15 @@ if (process.env.NEXT_PUBLIC_ASSET_HOST) {
 
 const nextConfig = {
   reactStrictMode: true,
+  // Configuration pour Capacitor (export static)
+  output: process.env.CAPACITOR_BUILD === 'true' ? 'export' : undefined,
   experimental: {
     instrumentationHook: true,
   },
   images: {
     remotePatterns,
-    // Si tu veux forcer la taille minimale des formats, tu peux ajouter formats: ['image/avif','image/webp']
+    // Désactiver l'optimisation d'images pour l'export static Capacitor
+    unoptimized: process.env.CAPACITOR_BUILD === 'true',
   },
 };
 
