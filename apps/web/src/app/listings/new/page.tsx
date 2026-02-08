@@ -1892,9 +1892,8 @@ export default function NewListingPage() {
 
         {/* Main layout with side buttons */}
         <div className="relative mx-auto max-w-5xl px-4 sm:px-6">
-          {/* Retour button - fixed left side (desktop only) */}
-          <div
-            className="hidden lg:block fixed left-[calc(50%-640px)] z-30 transition-all duration-300"
+          {/* Retour button - TOUJOURS VISIBLE (mobile et desktop) */}
+          <div className="fixed left-4 lg:left-[calc(50%-640px)] z-30 transition-all duration-300"
             style={{
               top: footerVisible ? 'calc(50% - 150px)' : '50%',
               transform: 'translateY(-50%)',
@@ -1904,18 +1903,17 @@ export default function NewListingPage() {
               type="button"
               onClick={handleBack}
               disabled={isFirstStep}
-              className={`flex items-center gap-2 rounded-full border border-gray-300 bg-white px-5 py-3 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-all ${isFirstStep ? "opacity-0 pointer-events-none" : ""}`}
+              className={`flex items-center justify-center gap-2 rounded-full border-2 border-gray-300 bg-white w-14 h-14 lg:w-auto lg:h-auto lg:px-5 lg:py-3 text-sm font-medium text-gray-700 shadow-lg hover:bg-gray-50 transition-all ${isFirstStep ? "opacity-0 pointer-events-none" : ""}`}
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
-              Retour
+              <span className="hidden lg:inline">Retour</span>
             </button>
           </div>
 
-          {/* Suivant button - fixed right side (desktop only) */}
-          <div
-            className="hidden lg:block fixed right-[calc(50%-640px)] z-30 transition-all duration-300"
+          {/* Suivant button - TOUJOURS VISIBLE (mobile et desktop) */}
+          <div className="fixed right-4 lg:right-[calc(50%-640px)] z-30 transition-all duration-300"
             style={{
               top: footerVisible ? 'calc(50% - 150px)' : '50%',
               transform: 'translateY(-50%)',
@@ -1926,20 +1924,20 @@ export default function NewListingPage() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={submitting || uploading || !canProceed()}
-                className="flex items-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+                className="flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 w-14 h-14 lg:w-auto lg:h-auto lg:px-6 lg:py-3 text-sm font-semibold text-white shadow-lg transition-opacity hover:opacity-90 disabled:opacity-50"
               >
                 {submitting || uploading ? (
-                  <>
-                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    {uploading ? "Upload..." : "Publication..."}
-                  </>
+                  <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
                 ) : (
                   <>
-                    Publier
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="h-5 w-5 lg:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="hidden lg:inline">Publier</span>
+                    <svg className="hidden lg:block h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   </>
@@ -1950,27 +1948,27 @@ export default function NewListingPage() {
                 type="button"
                 onClick={handleNext}
                 disabled={!canProceed()}
-                className="flex items-center gap-2 rounded-full bg-gray-900 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-opacity hover:bg-black disabled:opacity-50"
+                className="flex items-center justify-center gap-2 rounded-full bg-gray-900 w-14 h-14 lg:w-auto lg:h-auto lg:px-6 lg:py-3 text-sm font-semibold text-white shadow-lg transition-opacity hover:bg-black disabled:opacity-50"
               >
-                Suivant
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
+                <span className="hidden lg:inline">Suivant</span>
               </button>
             )}
           </div>
 
           {/* Main content */}
-          <main className="mx-auto max-w-2xl 2xl:max-w-3xl py-6 lg:py-8 pb-32 lg:pb-8">
+          <main className="mx-auto max-w-2xl 2xl:max-w-3xl py-6 lg:py-8 pb-8 lg:pb-8">
           {/* Step title */}
-          <div className="mb-6 lg:mb-8 text-center">
+          <div className="mb-6 lg:mb-8 text-center px-16 lg:px-0">
             <p className="text-xs lg:text-sm font-medium text-gray-500">
               Étape {stepIndex + 1} sur {STEPS.length}
             </p>
-            <h1 className="mt-2 text-xl lg:text-2xl xl:text-3xl font-semibold text-gray-900 px-4 lg:px-0">
+            <h1 className="mt-2 text-xl lg:text-2xl xl:text-3xl font-semibold text-gray-900">
               {STEPS[stepIndex].title}
             </h1>
-            <p className="mt-1 text-sm lg:text-base text-gray-500 px-4 lg:px-0">{STEPS[stepIndex].subtitle}</p>
+            <p className="mt-1 text-sm lg:text-base text-gray-500">{STEPS[stepIndex].subtitle}</p>
           </div>
 
           {/* ========== STEP: TYPE ========== */}
@@ -4522,65 +4520,10 @@ export default function NewListingPage() {
             </div>
           )}
 
-          {/* Spacer for mobile sticky navigation */}
-          <div className="lg:hidden h-20" />
+          {/* Spacer removed - no more bottom navigation */}
         </main>
         </div>
-
-        {/* Mobile sticky navigation - fixed at bottom */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-lg safe-area-bottom">
-          <div className="mx-auto max-w-5xl px-4 py-4 flex items-center justify-between gap-3">
-            <button
-              type="button"
-              onClick={handleBack}
-              disabled={isFirstStep}
-              className={`flex items-center justify-center gap-2 rounded-xl border-2 border-gray-300 bg-white px-6 py-3.5 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 transition-all min-w-[120px] ${isFirstStep ? "opacity-0 pointer-events-none" : ""}`}
-            >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-              Retour
-            </button>
-
-            {isLastStep ? (
-              <button
-                type="button"
-                onClick={handleSubmit}
-                disabled={submitting || uploading || !canProceed()}
-                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 px-6 py-3.5 text-base font-semibold text-white shadow-md transition-all hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {submitting || uploading ? (
-                  <>
-                    <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    {uploading ? "Upload..." : "Publication..."}
-                  </>
-                ) : (
-                  <>
-                    Publier l'annonce
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </>
-                )}
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleNext}
-                disabled={!canProceed()}
-                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-gray-900 px-6 py-3.5 text-base font-semibold text-white shadow-md transition-all hover:bg-black hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Suivant
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            )}
-          </div>
-        </div>
+      </div>
       </div>
 
       {/* Draft Choice Modal - Multi-draft support */}

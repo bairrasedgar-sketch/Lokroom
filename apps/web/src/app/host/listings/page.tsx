@@ -240,7 +240,7 @@ export default function HostListingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl 2xl:max-w-6xl 3xl:max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+    <div className="mx-auto max-w-5xl 2xl:max-w-6xl 3xl:max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-10 pb-24 md:pb-10">
       {/* Header */}
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -300,7 +300,7 @@ export default function HostListingsPage() {
 
       {/* Stats (only for published) */}
       {activeTab === "published" && stats && stats.total > 0 && (
-        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mb-8 grid gap-4 grid-cols-2 lg:grid-cols-4">
           <div className="rounded-xl border border-gray-200 bg-white p-4">
             <p className="text-xs font-medium uppercase text-gray-500">Total</p>
             <p className="mt-1 text-2xl font-semibold text-gray-900">{stats.total}</p>
@@ -349,17 +349,17 @@ export default function HostListingsPage() {
               {listings.map((listing) => (
                 <div
                   key={listing.id}
-                  className="group flex gap-4 rounded-xl border border-gray-200 bg-white p-4 transition hover:border-gray-300 hover:shadow-sm"
+                  className="group flex flex-col sm:flex-row gap-4 rounded-xl border border-gray-200 bg-white p-4 transition hover:border-gray-300 hover:shadow-sm"
                 >
                   {/* Image */}
-                  <div className="relative h-24 w-32 shrink-0 overflow-hidden rounded-lg bg-gray-100 sm:h-32 sm:w-44">
+                  <div className="relative h-48 sm:h-32 w-full sm:w-44 shrink-0 overflow-hidden rounded-lg bg-gray-100">
                     {listing.images[0] ? (
                       <Image
                         src={listing.images[0].url}
                         alt={listing.title}
                         fill
                         className="object-cover"
-                        sizes="(max-width: 640px) 128px, 176px"
+                        sizes="(max-width: 640px) 100vw, 176px"
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center">
@@ -374,7 +374,7 @@ export default function HostListingsPage() {
                   <div className="flex flex-1 flex-col justify-between">
                     <div>
                       <div className="flex items-start justify-between gap-2">
-                        <div>
+                        <div className="flex-1">
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="inline-block rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium uppercase text-gray-600">
                               {SPACE_TYPE_LABELS[listing.type] || listing.type}
@@ -395,17 +395,17 @@ export default function HostListingsPage() {
                               </span>
                             )}
                           </div>
-                          <h3 className="mt-1 font-semibold text-gray-900 group-hover:text-gray-700">
+                          <h3 className="mt-1 text-base font-semibold text-gray-900 group-hover:text-gray-700">
                             {listing.title}
                           </h3>
+                          <p className="mt-0.5 text-sm text-gray-500">
+                            {listing.city}{listing.city && listing.country ? ", " : ""}{listing.country}
+                          </p>
                         </div>
                         <p className="shrink-0 text-sm font-semibold text-gray-900">
                           {formatPrice(listing)}
                         </p>
                       </div>
-                      <p className="mt-0.5 text-sm text-gray-500">
-                        {listing.city}{listing.city && listing.country ? ", " : ""}{listing.country}
-                      </p>
                     </div>
 
                     <div className="mt-3 flex items-center gap-4 text-xs text-gray-500">
@@ -425,16 +425,16 @@ export default function HostListingsPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex shrink-0 flex-col justify-center gap-2">
+                  <div className="flex sm:flex-col justify-between sm:justify-center gap-2 pt-3 sm:pt-0 border-t sm:border-t-0 sm:border-l sm:pl-4">
                     <Link
                       href={`/listings/${listing.id}`}
-                      className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                      className="flex-1 sm:flex-none rounded-lg border border-gray-200 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 text-center"
                     >
                       Voir
                     </Link>
                     <Link
                       href={`/listings/${listing.id}/edit`}
-                      className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                      className="flex-1 sm:flex-none rounded-lg border border-gray-200 px-4 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 text-center"
                     >
                       Modifier
                     </Link>
