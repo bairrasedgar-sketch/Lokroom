@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
+import { signOut } from "next-auth/react";
 import PaymentsPage from "./payments/page";
 import useTranslation from "@/hooks/useTranslation";
 import { SUPPORTED_LANGS, type SupportedLang } from "@/locales";
@@ -2741,13 +2742,10 @@ function MobileAccountView({
   const handleLogout = async () => {
     setLoggingOut(true);
     try {
-      const res = await fetch("/api/auth/signout", { method: "POST" });
-      if (res.ok) {
-        window.location.href = "/";
-      } else {
-        toast.error("Erreur lors de la déconnexion");
-        setLoggingOut(false);
-      }
+      await signOut({
+        callbackUrl: "/",
+        redirect: true
+      });
     } catch (e) {
       console.error("Erreur deconnexion:", e);
       toast.error("Erreur lors de la déconnexion");
