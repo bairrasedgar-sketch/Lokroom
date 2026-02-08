@@ -28,8 +28,10 @@ const PROTECTED_ROUTES = [
   "/messages",
   "/trips",
   "/profile",
-  "/host",
 ];
+
+// Routes qui nécessitent le rôle HOST
+const HOST_ROUTES = ["/host"];
 
 // Routes qui nécessitent le rôle ADMIN
 const ADMIN_ROUTES = ["/admin"];
@@ -264,6 +266,7 @@ export async function middleware(req: NextRequest) {
   // ─────────────────────────────────────────────────────────────
   const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
   const isProtectedRoute = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
+  const isHostRoute = HOST_ROUTES.some((route) => pathname.startsWith(route));
   const isAdminRoute = ADMIN_ROUTES.some((route) => pathname.startsWith(route));
 
   // Routes admin - nécessitent authentification + rôle admin
@@ -302,6 +305,32 @@ export async function middleware(req: NextRequest) {
       const adminUrl = new URL("/admin", req.url);
       adminUrl.searchParams.set("error", "forbidden");
       return NextResponse.redirect(adminUrl);
+    }
+  }
+
+  // Routes hôtes - nécessitent authentification + rôle HOST ou BOTH
+  if (isHostRoute) {
+    const token = await getToken({
+      req,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
+
+    if (!token) {
+      // Non connecté - rediriger vers /login
+      const loginUrl = new URL("/login", req.url);
+      loginUrl.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    const role = token.role as string | undefined;
+    const isHost = token.isHost as boolean | undefined;
+
+    // Vérifier que l'utilisateur est hôte (role HOST/BOTH ou isHost true)
+    if (!isHost && role !== "HOST" && role !== "BOTH") {
+      // Pas hôte - rediriger vers la page d'accueil avec erreur
+      const homeUrl = new URL("/", req.url);
+      homeUrl.searchParams.set("error", "host_only");
+      return NextResponse.redirect(homeUrl);
     }
   }
 
