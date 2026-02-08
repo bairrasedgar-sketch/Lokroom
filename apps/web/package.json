@@ -17,7 +17,8 @@
     "cap:sync": "cap sync",
     "cap:open:ios": "cap open ios",
     "cap:open:android": "cap open android",
-    "mobile:build": "npm run build:mobile && npm run cap:sync"
+    "mobile:build": "npm run build:mobile && npm run cap:sync",
+    "migrate:api": "node scripts/migrate-api-calls.js"
   },
   "prisma": {
     "schema": "prisma/schema.prisma"
