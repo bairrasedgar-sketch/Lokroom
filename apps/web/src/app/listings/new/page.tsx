@@ -4525,7 +4525,7 @@ export default function NewListingPage() {
 
           {/* Spacer for mobile sticky navigation */}
           <div className="lg:hidden h-24" />
-          </main>
+        </main>
         </div>
 
         {/* Mobile sticky navigation - fixed at bottom */}
@@ -4581,8 +4581,6 @@ export default function NewListingPage() {
               </button>
             )}
           </div>
-        </div>
-        </main>
         </div>
       </div>
 
