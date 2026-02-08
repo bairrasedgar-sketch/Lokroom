@@ -4524,7 +4524,6 @@ export default function NewListingPage() {
         </main>
         </div>
       </div>
-      </div>
 
       {/* Draft Choice Modal - Multi-draft support */}
       {showDraftModal && availableDrafts.length > 0 && (
