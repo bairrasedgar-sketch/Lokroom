@@ -26,7 +26,20 @@ export default function MobileNavBar() {
   // Vérifier si l'utilisateur est hôte
   type SessionUser = { isHost?: boolean; role?: string };
   const sessionUser = session?.user as SessionUser | undefined;
-  const isHost = sessionUser?.isHost || sessionUser?.role === "HOST" || sessionUser?.role === "BOTH";
+
+  // Vérification stricte: isHost doit être explicitement true
+  const isHost = sessionUser?.isHost === true ||
+                 sessionUser?.role === "HOST" ||
+                 sessionUser?.role === "BOTH";
+
+  // Debug: afficher les valeurs dans la console
+  if (typeof window !== 'undefined' && sessionUser) {
+    console.log('[MobileNavBar] Session user:', {
+      isHost: sessionUser.isHost,
+      role: sessionUser.role,
+      computed_isHost: isHost
+    });
+  }
 
   const navItems = [
     {
