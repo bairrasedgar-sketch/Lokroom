@@ -288,8 +288,8 @@ export const authOptions: NextAuthOptions = {
         token.role = (user as { role?: string }).role as typeof token.role;
       }
 
-      // Rafraîchir le role et onboardingCompleted depuis la DB
-      if (trigger === "update" || !token.role || token.onboardingCompleted === undefined) {
+      // Rafraîchir le role, onboardingCompleted et isHost depuis la DB
+      if (trigger === "update" || !token.role || token.onboardingCompleted === undefined || token.isHost === undefined) {
         const email = token.email as string | undefined;
         if (email) {
           const dbUser = await prisma.user.findUnique({
@@ -303,10 +303,29 @@ export const authOptions: NextAuthOptions = {
                   lastName: true,
                 },
               },
+              hostProfile: {
+                select: {
+                  payoutsEnabled: true,
+                },
+              },
+              _count: {
+                select: {
+                  Listing: true,
+                },
+              },
             },
           });
           if (dbUser) {
             token.role = dbUser.role;
+
+            // Calculer isHost
+            const isHost =
+              dbUser.role === "HOST" ||
+              dbUser.role === "BOTH" ||
+              !!dbUser.hostProfile?.payoutsEnabled ||
+              dbUser._count.Listing > 0;
+            token.isHost = isHost;
+
             // Onboarding complété si l'utilisateur a un mot de passe ET un profil avec nom/prénom
             token.onboardingCompleted = !!(
               dbUser.passwordHash &&
@@ -334,43 +353,7 @@ export const authOptions: NextAuthOptions = {
       // Utiliser les données du token directement
       extendedUser.id = token.sub as string;
       extendedUser.role = token.role as string;
-
-      // Stocker isHost dans le token pour éviter les requêtes DB
-      if (token.isHost !== undefined) {
-        extendedUser.isHost = token.isHost as boolean;
-      } else {
-        // Première fois : récupérer depuis la DB et stocker dans le token
-        const email = token.email as string | undefined;
-        if (email) {
-          const dbUser = await prisma.user.findUnique({
-            where: { email },
-            select: {
-              role: true,
-              hostProfile: {
-                select: {
-                  payoutsEnabled: true,
-                },
-              },
-              _count: {
-                select: {
-                  Listing: true,
-                },
-              },
-            },
-          });
-
-          if (dbUser) {
-            const isHost =
-              dbUser.role === "HOST" ||
-              dbUser.role === "BOTH" ||
-              !!dbUser.hostProfile?.payoutsEnabled ||
-              dbUser._count.Listing > 0;
-
-            extendedUser.isHost = isHost;
-            token.isHost = isHost; // Stocker pour les prochaines fois
-          }
-        }
-      }
+      extendedUser.isHost = token.isHost as boolean;
 
       return session;
     },
