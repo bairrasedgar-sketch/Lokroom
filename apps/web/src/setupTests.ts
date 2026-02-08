@@ -50,7 +50,7 @@ Object.defineProperty(window, 'matchMedia', {
 global.IntersectionObserver = class IntersectionObserver {
   constructor() {}
   disconnect() {}
-  observe()
+  observe(): void {}
   takeRecords() {
     return [];
   }

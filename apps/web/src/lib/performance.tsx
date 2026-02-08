@@ -4,7 +4,7 @@
  */
 
 import dynamic from 'next/dynamic';
-import { ComponentType } from 'react';
+import React, { ComponentType } from 'react';
 
 /**
  * Lazy load un composant avec loading state
@@ -12,7 +12,7 @@ import { ComponentType } from 'react';
 export function lazyLoad<T extends ComponentType<any>>(
   importFunc: () => Promise<{ default: T }>,
   options?: {
-    loading?: ComponentType;
+    loading?: () => React.ReactElement | null;
     ssr?: boolean;
   }
 ) {
@@ -28,47 +28,44 @@ export function lazyLoad<T extends ComponentType<any>>(
 
 /**
  * Composants lazy loadés pour optimiser le bundle
+ * Décommentez et adaptez selon vos composants existants
  */
 
-// Modals (chargés uniquement quand nécessaire)
-export const LazyLoginModal = lazyLoad(
-  () => import('@/components/modals/LoginModal'),
-  { ssr: false }
-);
+// Exemple de lazy loading (à adapter selon vos composants)
+// export const LazyLoginModal = lazyLoad(
+//   () => import('@/components/modals/LoginModal'),
+//   { ssr: false }
+// );
 
-export const LazyBookingModal = lazyLoad(
-  () => import('@/components/modals/BookingModal'),
-  { ssr: false }
-);
+// export const LazyBookingModal = lazyLoad(
+//   () => import('@/components/modals/BookingModal'),
+//   { ssr: false }
+// );
 
-export const LazyImageGallery = lazyLoad(
-  () => import('@/components/ImageGallery'),
-  { ssr: false }
-);
+// export const LazyImageGallery = lazyLoad(
+//   () => import('@/components/ImageGallery'),
+//   { ssr: false }
+// );
 
-// Maps (lourd, chargé uniquement sur les pages qui en ont besoin)
-export const LazyMap = lazyLoad(
-  () => import('@/components/Map'),
-  { ssr: false }
-);
+// export const LazyMap = lazyLoad(
+//   () => import('@/components/Map'),
+//   { ssr: false }
+// );
 
-// Éditeur de texte riche (très lourd)
-export const LazyRichTextEditor = lazyLoad(
-  () => import('@/components/RichTextEditor'),
-  { ssr: false }
-);
+// export const LazyRichTextEditor = lazyLoad(
+//   () => import('@/components/RichTextEditor'),
+//   { ssr: false }
+// );
 
-// Graphiques et analytics
-export const LazyChart = lazyLoad(
-  () => import('@/components/Chart'),
-  { ssr: false }
-);
+// export const LazyChart = lazyLoad(
+//   () => import('@/components/Chart'),
+//   { ssr: false }
+// );
 
-// Calendrier (lourd)
-export const LazyCalendar = lazyLoad(
-  () => import('@/components/Calendar'),
-  { ssr: false }
-);
+// export const LazyCalendar = lazyLoad(
+//   () => import('@/components/Calendar'),
+//   { ssr: false }
+// );
 
 /**
  * Précharger un composant (pour améliorer la perception de performance)
@@ -279,6 +276,3 @@ export function useRenderPerformance(componentName: string) {
     };
   });
 }
-
-// Import React pour les hooks
-import React from 'react';

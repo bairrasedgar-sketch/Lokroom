@@ -64,7 +64,7 @@ export const TokenManager = {
 /**
  * Configuration des requêtes
  */
-interface RequestConfig extends RequestInit {
+interface RequestConfig extends Omit<RequestInit, 'cache'> {
   timeout?: number;
   retry?: number;
   cache?: boolean;
@@ -123,10 +123,17 @@ export async function apiCall<T = any>(
   const token = await TokenManager.getToken();
 
   // Préparer les headers
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...fetchConfig.headers,
   };
+
+  // Ajouter les headers personnalisés
+  if (fetchConfig.headers) {
+    const customHeaders = new Headers(fetchConfig.headers);
+    customHeaders.forEach((value, key) => {
+      headers[key] = value;
+    });
+  }
 
   // Ajouter le token si disponible
   if (token) {
