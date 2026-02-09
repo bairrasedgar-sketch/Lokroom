@@ -8,3 +8,7 @@ node_modules
 
 # Claude Code settings (may contain sensitive data)
 .claude/settings.local.json
+
+# Logs
+logs/
+*.log
