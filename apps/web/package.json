@@ -99,6 +99,7 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
+    "@types/web-push": "^3.6.4",
     "@typescript-eslint/eslint-plugin": "^8.45.0",
     "@typescript-eslint/parser": "^8.45.0",
     "autoprefixer": "^10.4.18",
