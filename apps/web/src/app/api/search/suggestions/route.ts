@@ -20,14 +20,18 @@ export async function GET(req: NextRequest) {
 
     // Suggestions de villes
     if (type === "cities" || type === "all") {
+      const whereClause: any = {
+        isActive: true,
+        city: { not: "" },
+      };
+
+      if (query) {
+        whereClause.city = { contains: query, mode: "insensitive" };
+      }
+
       const cities = await prisma.listing.groupBy({
         by: ["city", "country"],
-        where: {
-          isActive: true,
-          city: query
-            ? { contains: query, mode: "insensitive" }
-            : { not: null },
-        },
+        where: whereClause,
         _count: {
           id: true,
         },

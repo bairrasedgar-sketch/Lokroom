@@ -170,13 +170,13 @@ export async function POST(req: NextRequest) {
     });
 
     // 6. Envoyer une notification email au destinataire (asynchrone)
-    const recipientId = userId === conv.hostId ? conv.guestId : conv.hostId;
+    const messageRecipientId = userId === conv.hostId ? conv.guestId : conv.hostId;
     const recipient = await prisma.user.findUnique({
-      where: { id: recipientId },
+      where: { id: messageRecipientId },
       select: { email: true, name: true, notificationPreferences: true },
     });
 
-    if (recipient?.email && recipient.notificationPreferences?.emailNotifications !== false) {
+    if (recipient?.email && recipient.notificationPreferences?.emailEnabled !== false) {
       // Import dynamique pour éviter les erreurs au build
       import("@/lib/email/queue").then(({ queueEmail }) => {
         queueEmail({

@@ -58,7 +58,7 @@ async function processQueue(): Promise<void> {
 
         // Remettre dans la queue après un délai
         setTimeout(() => {
-          emailQueue.push(job);
+          inMemoryEmailQueue.push(job);
           if (!isProcessing) processQueue();
         }, RETRY_DELAY * job.retries);
       } else {
@@ -123,7 +123,7 @@ async function sendEmailByType(job: EmailJob): Promise<void> {
 /**
  * Helpers pour ajouter des emails à la queue
  */
-export const emailQueue = {
+export const emailQueueHelpers = {
   bookingConfirmation: (to: string, data: any) =>
     queueEmail({ type: "booking-confirmation", to, data }),
 
