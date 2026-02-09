@@ -413,6 +413,10 @@ model Listing {
   reviews            Review[]
   instantBookSettings InstantBookSettings?
   securityDepositPolicy SecurityDepositPolicy?
+  /// Recommandations utilisant ce listing
+  recommendations       UserRecommendation[]
+  /// Comportements liés à ce listing
+  behaviors             UserBehavior[]
 
   @@index([ownerId])
   @@index([createdAt])
