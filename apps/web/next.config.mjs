@@ -68,6 +68,39 @@ const nextConfig = {
     }),
   },
 
+  // Redirects for 404 pages
+  async redirects() {
+    if (isCapacitorBuild) return [];
+
+    return [
+      {
+        source: '/lokcover',
+        destination: '/insurance',
+        permanent: true,
+      },
+      {
+        source: '/accessibility',
+        destination: '/about',
+        permanent: true,
+      },
+      {
+        source: '/press',
+        destination: '/about',
+        permanent: true,
+      },
+      {
+        source: '/investors',
+        destination: '/about',
+        permanent: true,
+      },
+      {
+        source: '/gift-cards',
+        destination: '/',
+        permanent: true,
+      },
+    ];
+  },
+
   // Security Headers (complément au middleware)
   async headers() {
     if (isCapacitorBuild) return [];

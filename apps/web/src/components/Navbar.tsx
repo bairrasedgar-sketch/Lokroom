@@ -499,23 +499,21 @@ export default function Navbar() {
               />
             </Link>
 
-            {/* Partie droite : Télécharger l'appli + bouton */}
+            {/* Partie droite : Application mobile bientôt disponible */}
             <div className="flex items-center gap-2">
-              {/* Texte Télécharger l'appli */}
+              {/* Texte Application mobile */}
               <span className="text-[10px] text-gray-500 hidden min-[340px]:block">
-                Télécharger l'appli
+                Application mobile
               </span>
 
-              {/* Bouton Utiliser l'appli */}
-              <a
-                href={isIOS
-                  ? "https://apps.apple.com/app/lokroom/id123456789"
-                  : "https://play.google.com/store/apps/details?id=com.lokroom.app"}
+              {/* Bouton Rejoindre la liste d'attente */}
+              <Link
+                href="/waitlist"
                 className="bg-[#0066FF] hover:bg-[#0052CC] active:bg-[#004499] text-white text-[11px] font-semibold px-3 py-1.5 rounded-full transition-colors shadow-sm flex items-center justify-center leading-none"
-                aria-label={`Télécharger l'application Lok'Room sur ${isIOS ? "l'App Store" : "Google Play"}`}
+                aria-label="Rejoindre la liste d'attente pour l'application mobile Lok'Room"
               >
-                Utiliser l'appli
-              </a>
+                Rejoindre
+              </Link>
             </div>
           </div>
         )}

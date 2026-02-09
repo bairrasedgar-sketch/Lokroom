@@ -6,6 +6,7 @@ import { SearchBar } from "@/components/search/SearchBar";
 import { AdvancedFilters, type FilterValues } from "@/components/search/AdvancedFilters";
 import { ListingCard } from "@/components/home/ListingCard";
 import { Loader2, MapPin, SlidersHorizontal } from "lucide-react";
+import type { Currency } from "@/lib/currency";
 
 interface Listing {
   id: string;
@@ -73,6 +74,14 @@ export default function SearchPage() {
   });
   const [sortBy, setSortBy] = useState(searchParams.get("sortBy") || "relevance");
   const [showFilters, setShowFilters] = useState(false);
+  const [userCurrency, setUserCurrency] = useState<Currency>("EUR");
+
+  useEffect(() => {
+    // Get user's currency preference from cookie
+    const match = document.cookie.match(/(?:^|;\s*)currency=([^;]+)/);
+    const currency = (match?.[1] as Currency | undefined) || "EUR";
+    setUserCurrency(currency);
+  }, []);
 
   useEffect(() => {
     fetchListings();
@@ -150,20 +159,34 @@ export default function SearchPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const formatListingCard = (listing: Listing) => ({
-    id: listing.id,
-    title: listing.title,
-    city: listing.city,
-    country: listing.country,
-    type: listing.type,
-    createdAt: new Date(),
-    images: listing.images,
-    priceFormatted: `${listing.price}€`,
-    ownerName: listing.owner.name,
-    maxGuests: listing.maxGuests,
-    beds: listing.bedrooms,
-    isInstantBook: listing.isInstantBook,
-  });
+  const formatListingCard = (listing: Listing) => {
+    // Format price with currency symbol
+    const currencySymbols: Record<Currency, string> = {
+      EUR: "€",
+      USD: "$",
+      CAD: "CAD$",
+      GBP: "£",
+      CNY: "¥",
+    };
+
+    const symbol = currencySymbols[userCurrency] || "€";
+    const priceFormatted = `${listing.price}${symbol}`;
+
+    return {
+      id: listing.id,
+      title: listing.title,
+      city: listing.city,
+      country: listing.country,
+      type: listing.type,
+      createdAt: new Date(),
+      images: listing.images,
+      priceFormatted,
+      ownerName: listing.owner.name,
+      maxGuests: listing.maxGuests,
+      beds: listing.bedrooms,
+      isInstantBook: listing.isInstantBook,
+    };
+  };
 
   const query = searchParams.get("q");
   const city = searchParams.get("city");

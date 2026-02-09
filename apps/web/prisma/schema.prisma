@@ -1933,3 +1933,13 @@ model UserBehavior {
   @@index([listingId])
   @@index([action])
 }
+
+/// Liste d'attente pour l'application mobile
+model Waitlist {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  source    String   @default("mobile_app")
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
