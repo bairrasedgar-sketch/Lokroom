@@ -220,7 +220,7 @@ async function processWebhookDelivery(
           ? (result.response as never)
           : result.error
           ? ({ error: result.error } as never)
-          : null,
+          : ({} as never),
       },
     });
 

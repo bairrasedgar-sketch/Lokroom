@@ -1,0 +1,155 @@
+/**
+ * API Admin - Gestion des backups de base de données
+ * GET /api/admin/backups - Liste des backups
+ * POST /api/admin/backups - Déclencher un backup manuel
+ */
+
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { requireAdminPermission } from "@/lib/admin-auth";
+import { exec } from "child_process";
+import { promisify } from "util";
+
+const execAsync = promisify(exec);
+
+/**
+ * GET - Liste des backups avec pagination
+ */
+export async function GET(request: NextRequest) {
+  const auth = await requireAdminPermission("backups:view");
+  if ("error" in auth) return auth.error;
+
+  try {
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "20");
+    const type = searchParams.get("type") as "DAILY" | "WEEKLY" | "MONTHLY" | "MANUAL" | null;
+    const status = searchParams.get("status") as "PENDING" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "DELETED" | null;
+
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+    if (type) where.type = type;
+    if (status) where.status = status;
+
+    const [backups, total] = await Promise.all([
+      prisma.databaseBackup.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+      prisma.databaseBackup.count({ where }),
+    ]);
+
+    // Statistiques
+    const stats = await prisma.databaseBackup.groupBy({
+      by: ["status"],
+      _count: true,
+    });
+
+    const totalSize = await prisma.databaseBackup.aggregate({
+      where: { status: "COMPLETED" },
+      _sum: { fileSize: true },
+    });
+
+    const lastBackup = await prisma.databaseBackup.findFirst({
+      where: { status: "COMPLETED" },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return NextResponse.json({
+      backups,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+      stats: {
+        byStatus: stats.reduce((acc: any, item: any) => {
+          acc[item.status] = item._count;
+          return acc;
+        }, {}),
+        totalSize: totalSize._sum.fileSize || 0,
+        lastBackup: lastBackup ? {
+          id: lastBackup.id,
+          createdAt: lastBackup.createdAt,
+          type: lastBackup.type,
+          fileSize: lastBackup.fileSize,
+        } : null,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching backups:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch backups" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * POST - Déclencher un backup manuel
+ */
+export async function POST(request: NextRequest) {
+  const auth = await requireAdminPermission("backups:create");
+  if ("error" in auth) return auth.error;
+
+  try {
+    // Vérifier qu'il n'y a pas déjà un backup en cours
+    const inProgressBackup = await prisma.databaseBackup.findFirst({
+      where: {
+        status: { in: ["PENDING", "IN_PROGRESS"] },
+      },
+    });
+
+    if (inProgressBackup) {
+      return NextResponse.json(
+        { error: "A backup is already in progress" },
+        { status: 409 }
+      );
+    }
+
+    // Créer un enregistrement de backup en attente
+    const backup = await prisma.databaseBackup.create({
+      data: {
+        filename: `manual-backup-${Date.now()}.sql.gz`,
+        fileUrl: "",
+        fileSize: 0,
+        type: "MANUAL",
+        status: "PENDING",
+        startedAt: new Date(),
+      },
+    });
+
+    // Déclencher le script de backup en arrière-plan
+    // Note: En production, cela devrait être fait via un job queue (Bull, BullMQ, etc.)
+    const scriptPath = process.platform === "win32"
+      ? "scripts\\backup-database.ts"
+      : "scripts/backup-database.ts";
+
+    execAsync(`npx tsx ${scriptPath}`)
+      .then(() => {
+        console.log("Manual backup completed successfully");
+      })
+      .catch((error) => {
+        console.error("Manual backup failed:", error);
+      });
+
+    return NextResponse.json({
+      message: "Backup started",
+      backup: {
+        id: backup.id,
+        status: backup.status,
+        startedAt: backup.startedAt,
+      },
+    });
+  } catch (error) {
+    console.error("Error starting backup:", error);
+    return NextResponse.json(
+      { error: "Failed to start backup" },
+      { status: 500 }
+    );
+  }
+}
