@@ -76,9 +76,10 @@ export default function NotificationPermission({
       }
 
       // Créer l'abonnement push
+      const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+        applicationServerKey: applicationServerKey as BufferSource,
       });
 
       // Envoyer l'abonnement au serveur
