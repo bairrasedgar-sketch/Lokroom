@@ -1403,7 +1403,7 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
             {/* Illustration - À gauche */}
             <div className="relative hidden sm:block">
               <Image
-                src="/illustration final 2.png"
+                src="/illustration final 2.webp"
                 alt="Illustration Lok'Room"
                 width={700}
                 height={500}

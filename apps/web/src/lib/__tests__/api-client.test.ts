@@ -1,5 +1,5 @@
-import { api } from './api-client';
-import { logger } from './logger';
+import { api } from '../api-client';
+import { logger } from '../logger';
 
 /**
  * Tests unitaires pour l'API Client
@@ -9,7 +9,7 @@ import { logger } from './logger';
 describe('API Client', () => {
   describe('TokenManager', () => {
     it('should store and retrieve token', async () => {
-      const { TokenManager } = await import('./api-client');
+      const { TokenManager } = await import('../api-client');
       const testToken = 'test-jwt-token-123';
 
       await TokenManager.setToken(testToken);
@@ -19,7 +19,7 @@ describe('API Client', () => {
     });
 
     it('should remove token', async () => {
-      const { TokenManager } = await import('./api-client');
+      const { TokenManager } = await import('../api-client');
       const testToken = 'test-jwt-token-123';
 
       await TokenManager.setToken(testToken);

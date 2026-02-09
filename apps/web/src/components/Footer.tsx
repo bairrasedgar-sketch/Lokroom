@@ -120,7 +120,7 @@ export default function Footer() {
                 }}
               />
               <Image
-                src="/illustration final.png"
+                src="/illustration final.webp"
                 alt="Illustration Lok'Room"
                 width={900}
                 height={600}
