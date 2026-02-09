@@ -1,5 +1,6 @@
-// GET /api/auth/2fa/status - Obtenir le statut 2FA de l'utilisateur
 export const dynamic = "force-dynamic";
+
+// GET /api/auth/2fa/status - Obtenir le statut 2FA de l'utilisateur
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";

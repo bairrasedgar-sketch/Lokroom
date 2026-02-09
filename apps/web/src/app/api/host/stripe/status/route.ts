@@ -1,5 +1,6 @@
-// apps/web/src/app/api/host/stripe/status/route.ts
 export const dynamic = "force-dynamic";
+
+// apps/web/src/app/api/host/stripe/status/route.ts
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";

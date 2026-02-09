@@ -10,8 +10,8 @@ import Redis from "ioredis";
 let redis: Redis | null = null;
 
 export function getRedisClient(): Redis {
-  // Ne pas initialiser Redis pendant le build
-  if (process.env.NEXT_PHASE === 'phase-production-build') {
+  // Ne JAMAIS initialiser Redis pendant le build
+  if (process.env.VERCEL_ENV === 'production' && !process.env.REDIS_URL) {
     throw new Error('Redis not available during build');
   }
 
@@ -24,51 +24,41 @@ export function getRedisClient(): Redis {
     }
 
     redis = new Redis(redisUrl, {
-      maxRetriesPerRequest: 3,
+      maxRetriesPerRequest: 1,
       retryStrategy(times) {
-        // Limiter les tentatives pendant le build
-        if (times > 3) return null;
-        const delay = Math.min(times * 50, 2000);
-        return delay;
+        // Ne pas réessayer pendant le build
+        if (times > 1) return null;
+        return null; // Pas de retry
       },
-      reconnectOnError(err) {
-        const targetError = "READONLY";
-        if (err.message.includes(targetError)) {
-          return true;
-        }
-        return false;
+      reconnectOnError() {
+        return false; // Pas de reconnexion
       },
       lazyConnect: true,
-      enableReadyCheck: true,
-      enableOfflineQueue: false, // Désactiver la queue si pas connecté
+      enableReadyCheck: false,
+      enableOfflineQueue: false,
+      connectTimeout: 1000, // Timeout rapide
     });
 
-    redis.on("error", (err) => {
-      console.error("[Redis] Connection error:", err.message);
+    // Désactiver tous les logs pendant le build
+    redis.on("error", () => {
+      // Silencieux
     });
 
     redis.on("connect", () => {
-      console.log("[Redis] Connected successfully");
+      // Silencieux
     });
 
     redis.on("ready", () => {
-      console.log("[Redis] Ready to accept commands");
+      // Silencieux
     });
 
     redis.on("close", () => {
-      console.log("[Redis] Connection closed");
+      // Silencieux
     });
 
     redis.on("reconnecting", () => {
-      console.log("[Redis] Reconnecting...");
+      // Silencieux
     });
-
-    // Connecter seulement en runtime, pas pendant le build
-    if (typeof window === 'undefined' && process.env.NODE_ENV !== 'test') {
-      redis.connect().catch((err) => {
-        console.error("[Redis] Initial connection failed:", err.message);
-      });
-    }
   }
 
   return redis;
