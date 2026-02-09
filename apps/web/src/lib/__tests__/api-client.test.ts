@@ -315,7 +315,7 @@ describe('Logger', () => {
 
 describe('Performance Measurement', () => {
   it('should measure function performance', async () => {
-    const { measurePerformance } = await import('./logger');
+    const { measurePerformance } = await import('../logger');
 
     const slowFunction = () => {
       return new Promise((resolve) => setTimeout(() => resolve('done'), 100));
@@ -326,13 +326,13 @@ describe('Performance Measurement', () => {
     expect(result).toBe('done');
 
     const logs = logger.getRecentLogs();
-    const perfLog = logs.find((log) => log.message.includes('slow_function'));
+    const perfLog = logs.find((log: { message: string }) => log.message.includes('slow_function'));
     expect(perfLog).toBeDefined();
     expect(perfLog?.context?.duration).toBeGreaterThan(90);
   });
 
   it('should log errors in measured functions', async () => {
-    const { measurePerformance } = await import('./logger');
+    const { measurePerformance } = await import('../logger');
 
     const failingFunction = () => {
       throw new Error('Function failed');
@@ -343,7 +343,7 @@ describe('Performance Measurement', () => {
     ).rejects.toThrow('Function failed');
 
     const logs = logger.getRecentLogs();
-    const errorLog = logs.find((log) => log.level === 'error');
+    const errorLog = logs.find((log: { level: string }) => log.level === 'error');
     expect(errorLog).toBeDefined();
   });
 });

@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Navbar from "@/components/navbar";
-import Footer from "@/components/Footer";
+import Footer from "@/components/footer";
 import { CookieBanner } from "@/components/CookieBanner";
 import MobileNavBar from "@/components/MobileNavBar";
 
