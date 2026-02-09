@@ -99,9 +99,9 @@ function generateScriptSrc(config: CspConfig): string {
   ];
 
   if (config.isDevelopment) {
-    sources.push(SCRIPT_SOURCES.dev);
+    sources.push(SCRIPT_SOURCES.dev as string);
   } else {
-    sources.push(SCRIPT_SOURCES.prod);
+    sources.push(SCRIPT_SOURCES.prod as string);
   }
 
   if (config.nonce) {
