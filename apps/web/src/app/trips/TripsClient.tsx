@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import useTranslation from "@/hooks/useTranslation";
@@ -46,7 +46,7 @@ function TripsPageContent() {
   const { locale, dict } = useTranslation();
   const t = dict.trips;
 
-  const [activeTab, setActiveTab] = React.useState<Tab>("upcoming");
+  const [activeTab, setActiveTab] = useState<Tab>("upcoming");
 
   // Use SWR for bookings with cache
   const { data, error, isLoading } = useSWRFetch<ApiShape1 | ApiShape2>('/api/bookings', {

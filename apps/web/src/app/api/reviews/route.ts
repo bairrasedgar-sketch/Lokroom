@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: validation.error }, { status: 400 });
   }
 
-  const { page, limit } = validation.data;
+  const { page = 1, limit = 20 } = validation.data;
 
   // Construire le filtre
   const where: Record<string, unknown> = {
@@ -194,7 +194,7 @@ export async function POST(req: NextRequest) {
 
   // Récupérer la réservation
   const booking = await prisma.booking.findUnique({
-    where: { id: body.bookingId },
+    where: { id: bookingId },
     include: {
       listing: {
         select: {

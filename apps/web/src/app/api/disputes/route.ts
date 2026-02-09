@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: validation.error }, { status: 400 });
   }
 
-  const { page, limit } = validation.data;
+  const { page = 1, limit = 20 } = validation.data;
   const status = req.nextUrl.searchParams.get("status");
 
   // Construire le filtre

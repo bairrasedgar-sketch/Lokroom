@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     const { text, targetLanguage, sourceLanguage } = validation.data;
 
     // Detecter la langue source si non fournie
-    let detectedLang = sourceLanguage as SupportedLanguage | undefined;
+    let detectedLang: SupportedLanguage = sourceLanguage as SupportedLanguage;
     if (!detectedLang) {
       const detection = await detectLanguage(text);
       detectedLang = detection.language;
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Traduire
-    const result = await translateText(text, targetLanguage, detectedLang);
+    const result = await translateText(text, targetLanguage as SupportedLanguage, detectedLang);
 
     return NextResponse.json({
       translatedText: result.translatedText,

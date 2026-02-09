@@ -94,8 +94,8 @@ export async function POST(req: NextRequest) {
       data: {
         userId: session.user.id,
         destination: destination.trim(),
-        startDate: checkIn ? new Date(checkIn) : null,
-        endDate: checkOut ? new Date(checkOut) : null,
+        startDate: checkIn || null,
+        endDate: checkOut || null,
         guests: guests || null,
       },
     });
