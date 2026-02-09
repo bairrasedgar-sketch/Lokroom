@@ -1,4 +1,3 @@
-// apps/web/vercel.json
 {
   "crons": [
     {
