@@ -41,7 +41,7 @@ export async function GET(
     // Créer un log d'audit
     await prisma.auditLog.create({
       data: {
-        adminId: auth.session.userId,
+        adminId: auth.session.user.id,
         action: "USER_UPDATED",
         entityType: "DatabaseBackup",
         entityId: backupId,

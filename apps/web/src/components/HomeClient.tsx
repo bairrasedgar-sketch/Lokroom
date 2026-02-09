@@ -18,6 +18,15 @@ const SearchModal = dynamicImport(() => import("./SearchModal"), {
   ssr: false,
 });
 
+// Lazy load RecommendedListings - only for logged in users
+const RecommendedListings = dynamicImport(
+  () => import("./recommendations/RecommendedListings").then((mod) => ({ default: mod.RecommendedListings })),
+  {
+    loading: () => null,
+    ssr: false,
+  }
+);
+
 type ListingCard = {
   id: string;
   title: string;
@@ -208,6 +217,9 @@ export default function HomeClient({ cards, categories }: HomeClientProps) {
         categories={categories}
         activeCategory={activeCategory}
       />
+
+      {/* RECOMMENDED LISTINGS - Only for logged in users */}
+      {isLoggedIn && <RecommendedListings />}
 
       {/* DECORATIVE VISUAL SECTION */}
       <FeaturesSection />
