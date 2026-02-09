@@ -75,6 +75,7 @@ const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
     "promos:view", "promos:create", "promos:edit", "promos:delete",
     "logs:view",
     "config:view", "config:edit",
+    "backups:view", "backups:create", "backups:download", "backups:restore", "backups:delete",
   ],
 
   // Modérateur - gère users et annonces

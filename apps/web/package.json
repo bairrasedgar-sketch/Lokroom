@@ -26,6 +26,7 @@
     "backup:database": "tsx scripts/backup-database.ts",
     "backup:restore": "tsx scripts/restore-database.ts",
     "backup:list": "tsx scripts/list-backups.ts",
+    "test:backup": "tsx scripts/test-backup-system.ts",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
