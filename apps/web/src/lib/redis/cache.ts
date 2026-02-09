@@ -6,9 +6,21 @@
  */
 
 import { getRedisClient } from "./client";
+import type { Redis } from "ioredis";
 
 export class CacheService {
-  private redis = getRedisClient();
+  private redis: Redis | null = null;
+
+  /**
+   * Initialise Redis de manière lazy (seulement quand nécessaire).
+   * Ne lance pas d'erreur pendant le build.
+   */
+  private getRedis(): Redis {
+    if (!this.redis) {
+      this.redis = getRedisClient();
+    }
+    return this.redis;
+  }
 
   /**
    * Récupère une valeur du cache avec fallback optionnel.
@@ -20,7 +32,7 @@ export class CacheService {
     ttl?: number
   ): Promise<T | null> {
     try {
-      const cached = await this.redis.get(key);
+      const cached = await this.getRedis().get(key);
 
       if (cached) {
         try {
@@ -52,7 +64,7 @@ export class CacheService {
   async set(key: string, value: unknown, ttl: number = 3600): Promise<void> {
     try {
       const serialized = JSON.stringify(value);
-      await this.redis.setex(key, ttl, serialized);
+      await this.getRedis().setex(key, ttl, serialized);
     } catch (error) {
       console.error(`[Cache] Set error for key ${key}:`, error);
     }
@@ -65,10 +77,10 @@ export class CacheService {
     try {
       if (Array.isArray(key)) {
         if (key.length > 0) {
-          await this.redis.del(...key);
+          await this.getRedis().del(...key);
         }
       } else {
-        await this.redis.del(key);
+        await this.getRedis().del(key);
       }
     } catch (error) {
       console.error(`[Cache] Delete error for key(s) ${key}:`, error);
@@ -82,7 +94,7 @@ export class CacheService {
   async delPattern(pattern: string): Promise<void> {
     try {
       const keys: string[] = [];
-      const stream = this.redis.scanStream({
+      const stream = this.getRedis().scanStream({
         match: pattern,
         count: 100,
       });
@@ -101,7 +113,7 @@ export class CacheService {
         const batchSize = 100;
         for (let i = 0; i < keys.length; i += batchSize) {
           const batch = keys.slice(i, i + batchSize);
-          await this.redis.del(...batch);
+          await this.getRedis().del(...batch);
         }
         console.log(`[Cache] Deleted ${keys.length} keys matching pattern: ${pattern}`);
       }
@@ -115,9 +127,9 @@ export class CacheService {
    */
   async incr(key: string, ttl?: number): Promise<number> {
     try {
-      const value = await this.redis.incr(key);
+      const value = await this.getRedis().incr(key);
       if (ttl) {
-        await this.redis.expire(key, ttl);
+        await this.getRedis().expire(key, ttl);
       }
       return value;
     } catch (error) {
@@ -131,7 +143,7 @@ export class CacheService {
    */
   async decr(key: string): Promise<number> {
     try {
-      return await this.redis.decr(key);
+      return await this.getRedis().decr(key);
     } catch (error) {
       console.error(`[Cache] Decr error for key ${key}:`, error);
       return 0;
@@ -143,7 +155,7 @@ export class CacheService {
    */
   async exists(key: string): Promise<boolean> {
     try {
-      const result = await this.redis.exists(key);
+      const result = await this.getRedis().exists(key);
       return result === 1;
     } catch (error) {
       console.error(`[Cache] Exists error for key ${key}:`, error);
@@ -157,7 +169,7 @@ export class CacheService {
    */
   async ttl(key: string): Promise<number> {
     try {
-      return await this.redis.ttl(key);
+      return await this.getRedis().ttl(key);
     } catch (error) {
       console.error(`[Cache] TTL error for key ${key}:`, error);
       return -1;
@@ -169,7 +181,7 @@ export class CacheService {
    */
   async expire(key: string, ttl: number): Promise<boolean> {
     try {
-      const result = await this.redis.expire(key, ttl);
+      const result = await this.getRedis().expire(key, ttl);
       return result === 1;
     } catch (error) {
       console.error(`[Cache] Expire error for key ${key}:`, error);
@@ -184,7 +196,7 @@ export class CacheService {
     try {
       if (keys.length === 0) return [];
 
-      const values = await this.redis.mget(...keys);
+      const values = await this.getRedis().mget(...keys);
       return values.map((value) => {
         if (!value) return null;
         try {
@@ -204,7 +216,7 @@ export class CacheService {
    */
   async mset(entries: Array<{ key: string; value: unknown; ttl?: number }>): Promise<void> {
     try {
-      const pipeline = this.redis.pipeline();
+      const pipeline = this.getRedis().pipeline();
 
       for (const { key, value, ttl } of entries) {
         const serialized = JSON.stringify(value);
@@ -226,7 +238,7 @@ export class CacheService {
    */
   async flushAll(): Promise<void> {
     try {
-      await this.redis.flushall();
+      await this.getRedis().flushall();
       console.log("[Cache] All cache cleared");
     } catch (error) {
       console.error("[Cache] Flush error:", error);
@@ -243,8 +255,8 @@ export class CacheService {
     misses: string;
   }> {
     try {
-      const info = await this.redis.info("stats");
-      const keyspace = await this.redis.info("keyspace");
+      const info = await this.getRedis().info("stats");
+      const keyspace = await this.getRedis().info("keyspace");
 
       // Parser les infos
       const stats = {
@@ -274,5 +286,5 @@ export class CacheService {
   }
 }
 
-// Instance singleton
-export const cache = new CacheService();
+// Note: N'exportez PAS d'instance singleton ici pour éviter l'initialisation pendant le build.
+// Utilisez cache-safe.ts à la place, qui gère l'initialisation lazy de manière sécurisée.
