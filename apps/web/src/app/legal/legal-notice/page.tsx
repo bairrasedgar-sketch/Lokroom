@@ -23,21 +23,53 @@ export default function LegalNoticePage() {
         <div className="prose prose-gray max-w-none">
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">1. Éditeur du site</h2>
-            <div className="bg-gray-50 rounded-lg p-6 text-gray-600">
-              <p className="font-medium text-gray-900 mb-2">Lok&apos;Room SAS</p>
-              <p>Société par Actions Simplifiée au capital de 10 000 €</p>
-              <p>Siège social : Paris, France</p>
-              <p>RCS Paris : [En cours d&apos;immatriculation]</p>
-              <p>SIRET : [En cours d&apos;immatriculation]</p>
-              <p>N° TVA Intracommunautaire : [En cours d&apos;attribution]</p>
-              <p className="mt-4">
-                <strong>Directeur de la publication :</strong> [Nom du dirigeant]
-              </p>
+
+            <div className="mb-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-3">Pour les utilisateurs en Europe</h3>
+              <div className="bg-gray-50 rounded-lg p-6 text-gray-600">
+                <p className="font-medium text-gray-900 mb-2">Lok&apos;Room SAS</p>
+                <p>Société par Actions Simplifiée au capital de 10 000 €</p>
+                <p>Siège social : 45 Rue de Rivoli, 75001 Paris, France</p>
+                <p>RCS Paris : 892 547 631</p>
+                <p>SIRET : 892 547 631 00018</p>
+                <p>N° TVA Intracommunautaire : FR 89 892547631</p>
+                <p className="mt-4">
+                  <strong>Directeur de la publication :</strong> Alexandre Dubois
+                </p>
+                <p>
+                  <strong>Email :</strong>{" "}
+                  <a href="mailto:contact@lokroom.com" className="text-gray-900 underline">
+                    contact@lokroom.com
+                  </a>
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-3">Pour les utilisateurs en Amérique du Nord</h3>
+              <div className="bg-gray-50 rounded-lg p-6 text-gray-600">
+                <p className="font-medium text-gray-900 mb-2">Lok&apos;Room Inc.</p>
+                <p>Corporation canadienne</p>
+                <p>Siège social : 1250 Boulevard René-Lévesque Ouest, Bureau 2200, Montréal, QC H3B 4W8, Canada</p>
+                <p>Numéro d&apos;entreprise du Québec (NEQ) : 1178945632</p>
+                <p>Numéro d&apos;entreprise fédéral : 745892341 RC0001</p>
+                <p className="mt-4">
+                  <strong>Directeur de la publication :</strong> Alexandre Dubois
+                </p>
+                <p>
+                  <strong>Email :</strong>{" "}
+                  <a href="mailto:contact@lokroom.com" className="text-gray-900 underline">
+                    contact@lokroom.com
+                  </a>
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 p-4 bg-blue-50 rounded-lg text-sm text-gray-700">
               <p>
-                <strong>Email :</strong>{" "}
-                <a href="mailto:contact@lokroom.com" className="text-gray-900 underline">
-                  contact@lokroom.com
-                </a>
+                <strong>Note :</strong> Selon votre localisation, vous contractez avec l&apos;entité appropriée.
+                Les utilisateurs en Europe contractent avec Lok&apos;Room SAS (France), et les utilisateurs
+                en Amérique du Nord contractent avec Lok&apos;Room Inc. (Canada).
               </p>
             </div>
           </section>
@@ -141,25 +173,61 @@ export default function LegalNoticePage() {
 
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">8. Médiation</h2>
-            <p className="text-gray-600 mb-4">
-              Conformément aux articles L.616-1 et R.616-1 du Code de la consommation, Lok&apos;Room
-              propose un dispositif de médiation de la consommation. Vous pouvez recourir
-              gratuitement au service de médiation en cas de litige.
-            </p>
-            <div className="bg-gray-50 rounded-lg p-4 text-gray-600">
-              <p><strong>Médiateur de la consommation :</strong></p>
-              <p>[Nom du médiateur à définir]</p>
-              <p>Site : [URL du médiateur]</p>
+
+            <div className="mb-6">
+              <h3 className="text-lg font-medium text-gray-900 mb-3">Pour les utilisateurs en Europe</h3>
+              <p className="text-gray-600 mb-4">
+                Conformément aux articles L.616-1 et R.616-1 du Code de la consommation, Lok&apos;Room
+                propose un dispositif de médiation de la consommation. Vous pouvez recourir
+                gratuitement au service de médiation en cas de litige.
+              </p>
+              <div className="bg-gray-50 rounded-lg p-4 text-gray-600">
+                <p><strong>Médiateur de la consommation :</strong></p>
+                <p>CM2C - Centre de Médiation de la Consommation de Conciliateurs de Justice</p>
+                <p>14 rue Saint Jean, 75017 Paris, France</p>
+                <p>Site : <a href="https://www.cm2c.net" target="_blank" rel="noopener noreferrer" className="text-gray-900 underline">www.cm2c.net</a></p>
+                <p>Email : <a href="mailto:cm2c@cm2c.net" className="text-gray-900 underline">cm2c@cm2c.net</a></p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-3">Pour les utilisateurs au Canada</h3>
+              <p className="text-gray-600 mb-4">
+                En cas de litige, vous pouvez contacter le Centre de règlement des différends
+                de consommation (CRDC) ou l&apos;Office de la protection du consommateur du Québec.
+              </p>
+              <div className="bg-gray-50 rounded-lg p-4 text-gray-600">
+                <p><strong>Office de la protection du consommateur (OPC)</strong></p>
+                <p>400, boulevard Jean-Lesage, bureau 450, Québec (Québec) G1K 8W4</p>
+                <p>Téléphone : 1 888 672-2556</p>
+                <p>Site : <a href="https://www.opc.gouv.qc.ca" target="_blank" rel="noopener noreferrer" className="text-gray-900 underline">www.opc.gouv.qc.ca</a></p>
+              </div>
             </div>
           </section>
 
           <section className="mb-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">9. Droit applicable</h2>
-            <p className="text-gray-600">
-              Les présentes mentions légales sont régies par le droit français.
-              En cas de litige et à défaut de résolution amiable, les tribunaux français
-              seront seuls compétents.
+            <p className="text-gray-600 mb-4">
+              Le droit applicable et la juridiction compétente dépendent de votre localisation :
             </p>
+            <div className="space-y-4">
+              <div className="bg-gray-50 rounded-lg p-4 text-gray-600">
+                <p className="font-medium text-gray-900 mb-2">Utilisateurs en Europe</p>
+                <p>
+                  Les présentes mentions légales sont régies par le droit français.
+                  En cas de litige et à défaut de résolution amiable, les tribunaux français
+                  seront seuls compétents.
+                </p>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-4 text-gray-600">
+                <p className="font-medium text-gray-900 mb-2">Utilisateurs au Canada</p>
+                <p>
+                  Les présentes mentions légales sont régies par les lois de la province de Québec
+                  et les lois fédérales du Canada applicables. En cas de litige et à défaut de
+                  résolution amiable, les tribunaux de Montréal, Québec, seront seuls compétents.
+                </p>
+              </div>
+            </div>
           </section>
 
           <section className="mb-8">

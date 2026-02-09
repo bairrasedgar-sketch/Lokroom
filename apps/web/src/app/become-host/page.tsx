@@ -307,6 +307,38 @@ export default function BecomeHostPage() {
               Tu fixes les règles, on s&apos;occupe du paiement sécurisé.
             </p>
 
+            {/* Calculateur de revenus */}
+            <div className="mx-auto mt-12 max-w-md rounded-2xl border-2 border-purple-200 bg-purple-50 p-6">
+              <h3 className="text-lg font-semibold text-gray-900">💰 Calcule tes revenus potentiels</h3>
+              <div className="mt-4 space-y-3">
+                <div>
+                  <label className="text-sm text-gray-600">Prix par nuit</label>
+                  <input
+                    type="number"
+                    defaultValue="100"
+                    className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2"
+                    id="calc-price"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-600">Jours loués par mois</label>
+                  <input
+                    type="number"
+                    defaultValue="15"
+                    className="mt-1 w-full rounded-lg border border-gray-300 px-4 py-2"
+                    id="calc-days"
+                  />
+                </div>
+                <div className="rounded-lg bg-white p-4 text-center">
+                  <div className="text-sm text-gray-600">Revenus mensuels estimés</div>
+                  <div className="mt-1 text-3xl font-bold text-purple-600">
+                    <span id="calc-result">1 500</span> €
+                  </div>
+                  <div className="mt-1 text-xs text-gray-500">Avant frais de service Lok&apos;Room (5%)</div>
+                </div>
+              </div>
+            </div>
+
             <div className="mt-12 grid gap-6 text-left md:grid-cols-3">
               <div className="rounded-2xl border border-gray-200 p-6">
                 <div className="mb-4 text-3xl">💰</div>
@@ -328,6 +360,120 @@ export default function BecomeHostPage() {
                 <p className="mt-2 text-sm text-gray-600">
                   Tous les utilisateurs sont vérifiés avec leur pièce d&apos;identité.
                 </p>
+              </div>
+            </div>
+
+            {/* Comment ça marche */}
+            <div className="mt-16 text-left">
+              <h2 className="text-center text-2xl font-semibold text-gray-900">Comment ça marche ?</h2>
+              <div className="mt-8 grid gap-6 md:grid-cols-4">
+                <div className="text-center">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-xl font-bold text-purple-600">1</div>
+                  <h3 className="mt-4 font-semibold text-gray-900">Crée ton annonce</h3>
+                  <p className="mt-2 text-sm text-gray-600">Décris ton espace, ajoute des photos et fixe ton prix</p>
+                </div>
+                <div className="text-center">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-xl font-bold text-purple-600">2</div>
+                  <h3 className="mt-4 font-semibold text-gray-900">Reçois des demandes</h3>
+                  <p className="mt-2 text-sm text-gray-600">Les voyageurs découvrent ton espace et réservent</p>
+                </div>
+                <div className="text-center">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-xl font-bold text-purple-600">3</div>
+                  <h3 className="mt-4 font-semibold text-gray-900">Accueille tes invités</h3>
+                  <p className="mt-2 text-sm text-gray-600">Communique facilement et partage ton espace</p>
+                </div>
+                <div className="text-center">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-purple-100 text-xl font-bold text-purple-600">4</div>
+                  <h3 className="mt-4 font-semibold text-gray-900">Reçois tes revenus</h3>
+                  <p className="mt-2 text-sm text-gray-600">Paiement sécurisé directement sur ton compte</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Témoignages */}
+            <div className="mt-16">
+              <h2 className="text-center text-2xl font-semibold text-gray-900">Ce que disent nos hôtes</h2>
+              <div className="mt-8 grid gap-6 md:grid-cols-3">
+                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6">
+                  <div className="flex items-center gap-1 text-yellow-400">
+                    {"★★★★★".split("").map((star, i) => <span key={i}>{star}</span>)}
+                  </div>
+                  <p className="mt-4 text-sm text-gray-700">
+                    &quot;Lok&apos;Room m&apos;a permis de rentabiliser mon studio photo les jours où je ne l&apos;utilise pas. Interface simple et paiements rapides !&quot;
+                  </p>
+                  <div className="mt-4 flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-gray-300"></div>
+                    <div>
+                      <div className="font-semibold text-gray-900">Sophie L.</div>
+                      <div className="text-xs text-gray-500">Photographe à Paris</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6">
+                  <div className="flex items-center gap-1 text-yellow-400">
+                    {"★★★★★".split("").map((star, i) => <span key={i}>{star}</span>)}
+                  </div>
+                  <p className="mt-4 text-sm text-gray-700">
+                    &quot;Je loue mon parking en journée pendant que je suis au travail. 300€ de revenus passifs par mois, c&apos;est génial !&quot;
+                  </p>
+                  <div className="mt-4 flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-gray-300"></div>
+                    <div>
+                      <div className="font-semibold text-gray-900">Marc D.</div>
+                      <div className="text-xs text-gray-500">Consultant à Lyon</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-gray-200 bg-gray-50 p-6">
+                  <div className="flex items-center gap-1 text-yellow-400">
+                    {"★★★★★".split("").map((star, i) => <span key={i}>{star}</span>)}
+                  </div>
+                  <p className="mt-4 text-sm text-gray-700">
+                    &quot;Plateforme sécurisée et support réactif. J&apos;ai loué mon appartement pendant mes vacances sans aucun souci.&quot;
+                  </p>
+                  <div className="mt-4 flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-gray-300"></div>
+                    <div>
+                      <div className="font-semibold text-gray-900">Julie M.</div>
+                      <div className="text-xs text-gray-500">Propriétaire à Bordeaux</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* FAQ */}
+            <div className="mt-16 text-left">
+              <h2 className="text-center text-2xl font-semibold text-gray-900">Questions fréquentes</h2>
+              <div className="mx-auto mt-8 max-w-3xl space-y-4">
+                <details className="rounded-lg border border-gray-200 p-4">
+                  <summary className="cursor-pointer font-semibold text-gray-900">Combien coûte Lok&apos;Room pour les hôtes ?</summary>
+                  <p className="mt-2 text-sm text-gray-600">Lok&apos;Room prélève une commission de 5% sur chaque réservation. Pas de frais d&apos;inscription ni d&apos;abonnement mensuel.</p>
+                </details>
+                <details className="rounded-lg border border-gray-200 p-4">
+                  <summary className="cursor-pointer font-semibold text-gray-900">Quand suis-je payé ?</summary>
+                  <p className="mt-2 text-sm text-gray-600">Le paiement est transféré sur votre compte bancaire 24h après l&apos;arrivée du voyageur, via Stripe Connect.</p>
+                </details>
+                <details className="rounded-lg border border-gray-200 p-4">
+                  <summary className="cursor-pointer font-semibold text-gray-900">Mon espace est-il assuré ?</summary>
+                  <p className="mt-2 text-sm text-gray-600">Oui, chaque réservation inclut une protection contre les dommages jusqu&apos;à 1 000 000€ via notre partenaire d&apos;assurance.</p>
+                </details>
+                <details className="rounded-lg border border-gray-200 p-4">
+                  <summary className="cursor-pointer font-semibold text-gray-900">Puis-je annuler une réservation ?</summary>
+                  <p className="mt-2 text-sm text-gray-600">Oui, mais selon votre politique d&apos;annulation. Nous recommandons une politique flexible pour attirer plus de voyageurs.</p>
+                </details>
+                <details className="rounded-lg border border-gray-200 p-4">
+                  <summary className="cursor-pointer font-semibold text-gray-900">Comment les voyageurs sont-ils vérifiés ?</summary>
+                  <p className="mt-2 text-sm text-gray-600">Tous les voyageurs doivent vérifier leur identité avec une pièce officielle et un selfie via Stripe Identity avant de réserver.</p>
+                </details>
+                <details className="rounded-lg border border-gray-200 p-4">
+                  <summary className="cursor-pointer font-semibold text-gray-900">Puis-je louer plusieurs espaces ?</summary>
+                  <p className="mt-2 text-sm text-gray-600">Absolument ! Vous pouvez créer autant d&apos;annonces que vous le souhaitez et gérer tous vos espaces depuis un seul compte.</p>
+                </details>
+                <details className="rounded-lg border border-gray-200 p-4">
+                  <summary className="cursor-pointer font-semibold text-gray-900">Le support est-il disponible 7j/7 ?</summary>
+                  <p className="mt-2 text-sm text-gray-600">Oui, notre équipe support est disponible 7 jours sur 7 par email, chat et téléphone pour vous accompagner.</p>
+                </details>
               </div>
             </div>
           </div>
@@ -473,6 +619,25 @@ export default function BecomeHostPage() {
           </button>
         </div>
       </footer>
+
+      {/* Script pour le calculateur */}
+      <script dangerouslySetInnerHTML={{__html: `
+        if (typeof document !== 'undefined') {
+          const priceInput = document.getElementById('calc-price');
+          const daysInput = document.getElementById('calc-days');
+          const resultSpan = document.getElementById('calc-result');
+
+          function updateCalc() {
+            const price = parseFloat(priceInput?.value || 100);
+            const days = parseFloat(daysInput?.value || 15);
+            const total = Math.round(price * days);
+            if (resultSpan) resultSpan.textContent = total.toLocaleString('fr-FR');
+          }
+
+          priceInput?.addEventListener('input', updateCalc);
+          daysInput?.addEventListener('input', updateCalc);
+        }
+      `}} />
     </div>
   );
 }

@@ -11,30 +11,22 @@ const footerSections = [
     title: "Assistance",
     links: [
       { label: "Centre d'aide", href: "/help" },
-      { label: "LokCover", href: "/lokcover" },
       { label: "Non-discrimination", href: "/legal/non-discrimination" },
       { label: "Options d'annulation", href: "/legal/cancellation" },
-      { label: "Accessibilité", href: "/accessibility" },
     ],
   },
   {
     title: "Accueil de voyageurs",
     links: [
       { label: "Proposer votre espace sur Lok'Room", href: "/listings/new" },
-      { label: "LokCover pour les hôtes", href: "/lokcover-host" },
-      { label: "Ressources pour les hôtes", href: "/host/resources" },
       { label: "Standards de la communauté", href: "/legal/community-standards" },
-      { label: "Accueil responsable", href: "/responsible-hosting" },
     ],
   },
   {
     title: "Lok'Room",
     links: [
-      { label: "Nouveautés", href: "/whats-new" },
-      { label: "Salle de presse", href: "/press" },
-      { label: "Carrières", href: "/careers" },
-      { label: "Investisseurs", href: "/investors" },
-      { label: "Cartes cadeaux", href: "/gift-cards" },
+      { label: "À propos", href: "/about" },
+      { label: "Contact", href: "/contact" },
     ],
   },
 ];
@@ -189,7 +181,7 @@ export default function Footer() {
 
             {/* Ligne 3: Copyright + Liens légaux */}
             <div className="text-xs text-gray-600 pt-1">
-              <span>&copy; {currentYear} Lok&apos;Room, Inc.</span>
+              <span>&copy; {currentYear} Lok&apos;Room</span>
               <span className="mx-1.5">·</span>
               <Link href="/legal/privacy" className="hover:underline">Confidentialité</Link>
               <span className="mx-1.5">·</span>
@@ -205,7 +197,7 @@ export default function Footer() {
           <div className="hidden md:flex md:items-center md:justify-between">
             {/* Left: Copyright + Legal */}
             <div className="flex items-center text-sm text-gray-600">
-              <span>&copy; {currentYear} Lok&apos;Room, Inc.</span>
+              <span>&copy; {currentYear} Lok&apos;Room</span>
               <span className="mx-2">·</span>
               <Link href="/legal/privacy" className="hover:underline">Confidentialité</Link>
               <span className="mx-2">·</span>

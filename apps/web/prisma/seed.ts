@@ -6,11 +6,11 @@ const prisma = new PrismaClient();
 // Chaque set d'images est utilisé une seule fois
 
 const LISTINGS = [
-  // ============ APARTMENT (4 annonces) ============
+  // ============ APARTMENT (4 annonces professionnelles) ============
   {
     type: "APARTMENT" as const,
-    title: "Appartement haussmannien avec moulures",
-    description: "Superbe appartement de 85m² dans un immeuble haussmannien du 8ème arrondissement. Parquet en point de Hongrie, moulures au plafond, cheminées en marbre. 2 chambres lumineuses, salon traversant avec balcon filant. Cuisine équipée moderne. À 5 min des Champs-Élysées.",
+    title: "Appartement haussmannien lumineux - Champs-Élysées",
+    description: "Magnifique appartement de 85m² au cœur du 8ème arrondissement parisien. Immeuble haussmannien de standing avec parquet en point de Hongrie d'origine, moulures au plafond et cheminées en marbre. Deux chambres spacieuses et lumineuses, salon traversant avec balcon filant donnant sur une rue calme. Cuisine entièrement équipée avec électroménager moderne. Salle de bain avec baignoire et douche. Idéal pour familles ou professionnels. Métro George V à 5 minutes à pied.",
     city: "Paris",
     country: "France",
     regionFR: "IDF",
@@ -32,8 +32,8 @@ const LISTINGS = [
   },
   {
     type: "APARTMENT" as const,
-    title: "Loft contemporain Vieux-Lyon",
-    description: "Loft de caractère de 110m² dans le Vieux-Lyon, classé UNESCO. Poutres apparentes, grandes baies vitrées, décoration design. Espace ouvert avec cuisine américaine haut de gamme. Terrasse privée avec vue sur Fourvière. Parfait pour couple ou voyageurs d'affaires.",
+    title: "Loft design avec terrasse - Vieux-Lyon UNESCO",
+    description: "Superbe loft de caractère de 110m² situé dans le quartier historique du Vieux-Lyon, classé au patrimoine mondial de l'UNESCO. Architecture unique avec poutres apparentes d'époque et grandes baies vitrées offrant une luminosité exceptionnelle. Décoration contemporaine soignée. Grand espace de vie ouvert avec cuisine américaine équipée d'appareils haut de gamme (four, plaque induction, lave-vaisselle). Terrasse privée de 20m² avec vue imprenable sur la basilique de Fourvière. Chambre avec lit king-size. Parfait pour couples, voyageurs d'affaires ou séjours culturels. Parking privé disponible.",
     city: "Lyon",
     country: "France",
     regionFR: "ARA",
@@ -54,8 +54,8 @@ const LISTINGS = [
   },
   {
     type: "APARTMENT" as const,
-    title: "Condo moderne au Vieux-Port",
-    description: "Magnifique condo de 90m² avec vue imprenable sur le Vieux-Port de Montréal. Design contemporain, finitions luxueuses. 2 chambres, 2 salles de bain. Gym et piscine dans l'immeuble. À distance de marche de tous les attraits touristiques.",
+    title: "Condo luxueux vue Vieux-Port - Centre-ville Montréal",
+    description: "Somptueux condo de 90m² offrant une vue panoramique spectaculaire sur le Vieux-Port de Montréal et le fleuve Saint-Laurent. Design contemporain avec finitions haut de gamme : planchers de bois franc, comptoirs de quartz, luminaires design. Deux chambres spacieuses avec grands placards, deux salles de bain complètes (une avec bain thérapeutique). Cuisine moderne entièrement équipée avec îlot central. Grand balcon privé. L'immeuble dispose d'un gym ultramoderne, d'une piscine intérieure chauffée et d'un concierge 24/7. Stationnement intérieur inclus. À 5 minutes à pied du Vieux-Montréal, des restaurants, boutiques et du métro Place-d'Armes.",
     city: "Montréal",
     country: "Canada",
     province: "QC" as const,
@@ -77,8 +77,8 @@ const LISTINGS = [
   },
   {
     type: "APARTMENT" as const,
-    title: "Penthouse avec terrasse Toronto",
-    description: "Penthouse exceptionnel de 120m² au 25ème étage avec terrasse panoramique. Vue à 360° sur Toronto et le lac Ontario. 3 chambres, salon double, cuisine chef. Concierge 24/7, stationnement inclus. Le summum du luxe urbain.",
+    title: "Penthouse de luxe vue 360° - Downtown Toronto",
+    description: "Penthouse d'exception de 120m² situé au 25ème étage d'une tour prestigieuse du centre-ville de Toronto. Vue panoramique à 360° absolument époustouflante sur la skyline de Toronto, la CN Tower et le lac Ontario. Trois chambres luxueuses avec literie haut de gamme, salon double hauteur avec plafond cathédrale, cuisine de chef entièrement équipée (appareils Sub-Zero et Wolf). Immense terrasse privée de 40m² avec mobilier de jardin et BBQ au gaz. Deux salles de bain complètes en marbre. Service de concierge 24/7, salle de sport privée, piscine sur le toit. Deux places de stationnement souterrain incluses. Le summum du luxe urbain pour une expérience inoubliable.",
     city: "Toronto",
     country: "Canada",
     province: "ON" as const,
@@ -98,11 +98,11 @@ const LISTINGS = [
     ],
   },
 
-  // ============ HOUSE (4 annonces) ============
+  // ============ HOUSE (4 annonces professionnelles) ============
   {
     type: "HOUSE" as const,
-    title: "Mas provençal avec piscine",
-    description: "Authentique mas provençal de 180m² sur terrain de 2000m². Piscine chauffée, pool house, oliviers centenaires. 4 chambres climatisées, grande cuisine d'été. Vue dégagée sur le Luberon. Calme absolu, idéal pour se ressourcer en famille.",
+    title: "Mas provençal authentique piscine chauffée - Luberon",
+    description: "Magnifique mas provençal authentique de 180m² entièrement rénové, niché sur un terrain paysager de 2000m² planté d'oliviers centenaires et de lavandes. Piscine chauffée 12x6m avec pool house équipé (douche, WC, réfrigérateur). Quatre chambres spacieuses climatisées avec literie premium, trois salles de bain modernes. Grand salon avec cheminée en pierre, cuisine provençale équipée et cuisine d'été couverte avec plancha et four à pizza. Terrasses ombragées avec vue panoramique dégagée sur le Luberon et les villages perchés. Calme absolu, idéal pour se ressourcer en famille ou entre amis. Wifi fibre, parking privé pour 3 voitures. À 5 minutes du village de Gordes.",
     city: "Gordes",
     country: "France",
     regionFR: "PAC",
@@ -124,8 +124,8 @@ const LISTINGS = [
   },
   {
     type: "HOUSE" as const,
-    title: "Maison de pêcheur rénovée",
-    description: "Charmante maison de pêcheur entièrement rénovée à Saint-Malo intra-muros. 3 chambres avec vue mer, salon avec cheminée, jardin clos. Accès direct à la plage. Décoration marine raffinée. Parfait pour découvrir la Bretagne.",
+    title: "Maison de pêcheur rénovée vue mer - Saint-Malo intra-muros",
+    description: "Charmante maison de pêcheur du 18ème siècle entièrement rénovée avec goût, située dans les remparts de Saint-Malo intra-muros. Trois chambres confortables avec vue sur la mer, salon lumineux avec cheminée en pierre et poutres apparentes, salle à manger avec grande table en bois massif. Cuisine moderne entièrement équipée. Jardin clos de 50m² avec salon de jardin et barbecue. Accès direct à la plage de Bon-Secours à 100 mètres. Décoration marine raffinée mêlant authenticité bretonne et confort moderne. Parfait pour découvrir la Bretagne, ses plages, ses îles et sa gastronomie. Wifi, parking public à proximité.",
     city: "Saint-Malo",
     country: "France",
     regionFR: "BRE",
@@ -146,8 +146,8 @@ const LISTINGS = [
   },
   {
     type: "HOUSE" as const,
-    title: "Chalet de ski Mont-Tremblant",
-    description: "Magnifique chalet en bois rond de 200m² au pied des pistes. Spa extérieur, sauna, foyer au bois. 5 chambres, salle de jeux. Vue spectaculaire sur les montagnes. Ski-in/ski-out. L'hiver canadien dans tout son charme.",
+    title: "Chalet luxe ski-in/ski-out spa - Mont-Tremblant",
+    description: "Magnifique chalet en bois rond de 200m² situé directement au pied des pistes de ski du Mont-Tremblant. Accès ski-in/ski-out exceptionnel. Cinq chambres spacieuses avec literie haut de gamme, trois salles de bain complètes. Grand salon cathédrale avec immense foyer au bois et mur de fenêtres offrant une vue spectaculaire sur les montagnes laurentiennes. Cuisine gastronomique entièrement équipée avec îlot central. Salle de jeux avec table de billard et baby-foot. Spa extérieur 6 places sur terrasse privée, sauna finlandais. Garage chauffé double. L'hiver canadien dans tout son charme et son confort. Parfait pour familles ou groupes d'amis skieurs.",
     city: "Mont-Tremblant",
     country: "Canada",
     province: "QC" as const,
@@ -169,8 +169,8 @@ const LISTINGS = [
   },
   {
     type: "HOUSE" as const,
-    title: "Villa moderne West Vancouver",
-    description: "Villa architecturale de 300m² avec vue océan à West Vancouver. Design minimaliste, matériaux nobles. Infinity pool, terrasses multiples. 4 suites parentales. Smart home intégral. Pour une expérience de luxe inoubliable.",
+    title: "Villa architecturale moderne vue océan - West Vancouver",
+    description: "Villa d'architecte exceptionnelle de 300m² avec vue panoramique époustouflante sur l'océan Pacifique et les montagnes de North Shore. Design minimaliste contemporain avec matériaux nobles : béton ciré, bois de cèdre, verre et acier. Quatre suites parentales avec salles de bain privatives en marbre. Immense espace de vie ouvert avec plafond de 6 mètres, cuisine de chef avec appareils Miele et Sub-Zero. Infinity pool chauffée donnant l'impression de plonger dans l'océan. Multiples terrasses avec mobilier design. Système domotique intégral (éclairage, chauffage, son). Garage triple avec borne de recharge Tesla. Intimité totale dans un quartier résidentiel prestigieux. Pour une expérience de luxe inoubliable.",
     city: "Vancouver",
     country: "Canada",
     province: "BC" as const,
@@ -190,11 +190,11 @@ const LISTINGS = [
     ],
   },
 
-  // ============ ROOM (3 annonces) ============
+  // ============ ROOM (3 annonces professionnelles) ============
   {
     type: "ROOM" as const,
-    title: "Chambre bohème Montmartre",
-    description: "Chambre privée de 16m² dans appartement d'artiste à Montmartre. Lit double confortable, bureau vintage, vue sur les toits de Paris. Salle de bain partagée. Petit-déjeuner français inclus. Hôte passionné d'art.",
+    title: "Chambre bohème chic chez artiste - Montmartre",
+    description: "Chambre privée de 16m² dans un appartement d'artiste authentique situé au cœur du quartier historique de Montmartre. Décoration bohème soignée avec objets chinés et œuvres d'art originales. Lit double confortable avec linge de maison de qualité, bureau vintage en bois massif, fauteuil de lecture. Grande fenêtre avec vue charmante sur les toits de Paris et le Sacré-Cœur. Salle de bain partagée propre et bien entretenue. Petit-déjeuner français inclus (croissants, pain frais, confiture maison, café). Votre hôte est un artiste peintre passionné qui pourra vous conseiller sur les meilleurs endroits du quartier. Ambiance conviviale et authentique. Métro Abbesses à 3 minutes.",
     city: "Paris",
     country: "France",
     regionFR: "IDF",
@@ -215,8 +215,8 @@ const LISTINGS = [
   },
   {
     type: "ROOM" as const,
-    title: "Suite dans maison bourgeoise",
-    description: "Grande chambre de 25m² avec salle de bain privée dans maison bourgeoise bordelaise. Mobilier ancien, linge de maison haut de gamme. Accès jardin et terrasse. Quartier calme près des vignobles. Hôtes œnologues.",
+    title: "Suite privée maison bourgeoise - Vignobles bordelais",
+    description: "Grande chambre de 25m² avec salle de bain privative dans une élégante maison bourgeoise bordelaise du 19ème siècle. Mobilier ancien de caractère, parquet en chêne massif, linge de maison haut de gamme en lin. Lit queen-size très confortable. Salle de bain privée avec douche à l'italienne et produits de toilette bio. Accès libre au jardin paysager de 500m² et à la terrasse ombragée. Quartier résidentiel calme à 15 minutes du centre de Bordeaux et à proximité immédiate des vignobles prestigieux (Pessac-Léognan, Graves). Vos hôtes sont œnologues et pourront vous conseiller sur les meilleures visites de châteaux et dégustations. Petit-déjeuner gastronomique inclus. Parking privé.",
     city: "Bordeaux",
     country: "France",
     regionFR: "NAQ",
@@ -237,8 +237,8 @@ const LISTINGS = [
   },
   {
     type: "ROOM" as const,
-    title: "Chambre zen Plateau Mont-Royal",
-    description: "Chambre paisible dans appartement lumineux du Plateau. Ambiance zen, plantes vertes, matelas mémoire de forme. Salle de bain partagée impeccable. Quartier vibrant avec cafés et restaurants. Hôte voyageur.",
+    title: "Chambre zen design - Plateau Mont-Royal Montréal",
+    description: "Chambre paisible et lumineuse dans un appartement moderne du vibrant quartier du Plateau Mont-Royal. Ambiance zen soigneusement créée avec décoration minimaliste, nombreuses plantes vertes purifiantes et matériaux naturels. Lit queen-size avec matelas mémoire de forme haut de gamme et literie hypoallergénique. Bureau ergonomique avec chaise confortable, parfait pour le télétravail. Salle de bain partagée impeccablement propre avec douche à effet pluie. Cuisine commune entièrement équipée accessible. Le quartier regorge de cafés branchés, restaurants internationaux, boutiques vintage et galeries d'art. Métro Mont-Royal à 5 minutes. Votre hôte est un voyageur passionné qui parle français, anglais et espagnol. Wifi fibre ultra-rapide.",
     city: "Montréal",
     country: "Canada",
     province: "QC" as const,
@@ -258,11 +258,11 @@ const LISTINGS = [
     ],
   },
 
-  // ============ STUDIO (3 annonces) ============
+  // ============ STUDIO (3 annonces professionnelles) ============
   {
     type: "STUDIO" as const,
-    title: "Atelier d'artiste verrière",
-    description: "Authentique atelier d'artiste de 60m² avec verrière nord. Lumière exceptionnelle toute la journée. Chevalet, matériel de base inclus. Idéal peintres, photographes, créatifs. Quartier Bastille dynamique.",
+    title: "Atelier d'artiste verrière nord - Quartier Bastille Paris",
+    description: "Authentique atelier d'artiste de 60m² avec magnifique verrière orientée nord offrant une lumière naturelle exceptionnelle et constante toute la journée, idéale pour la création artistique. Plafond cathédrale de 4 mètres de hauteur. Espace entièrement modulable avec chevalet professionnel, tables de travail, matériel de base inclus (pinceaux, toiles, chevalets supplémentaires). Sol en béton ciré facile à nettoyer. Coin kitchenette et WC. Parfait pour peintres, photographes, créateurs de contenu, workshops créatifs ou shootings photo. Quartier Bastille dynamique avec nombreux cafés et restaurants. Métro Bastille à 5 minutes. Location à l'heure ou à la journée.",
     city: "Paris",
     country: "France",
     regionFR: "IDF",
@@ -282,8 +282,8 @@ const LISTINGS = [
   },
   {
     type: "STUDIO" as const,
-    title: "Studio photo professionnel",
-    description: "Studio photo de 80m² entièrement équipé à Marseille. Cyclorama blanc, fonds colorés, flashs Profoto. Espace maquillage, vestiaire. Location à l'heure ou journée. Assistants disponibles sur demande.",
+    title: "Studio photo professionnel équipé - Centre Marseille",
+    description: "Studio photo professionnel de 80m² entièrement équipé situé dans le centre de Marseille. Cyclorama blanc permanent de 6x4m, fonds colorés interchangeables (noir, gris, vert). Éclairage professionnel complet : 4 flashs Profoto B10 Plus avec softboxes, parapluies et réflecteurs. Rails de suspension au plafond pour fonds et éclairages. Espace maquillage avec miroir éclairé et chaises confortables. Vestiaire privé pour les modèles. Cuisine équipée et WC. Wifi fibre, climatisation. Location à l'heure ou à la journée. Assistants photographes disponibles sur demande (supplément). Parking gratuit à proximité. Idéal pour shootings mode, portraits, produits, vidéos.",
     city: "Marseille",
     country: "France",
     regionFR: "PAC",
@@ -302,8 +302,8 @@ const LISTINGS = [
   },
   {
     type: "STUDIO" as const,
-    title: "Studio créatif Gastown",
-    description: "Espace créatif polyvalent de 70m² dans le quartier historique de Gastown. Briques apparentes, grandes fenêtres industrielles. Parfait pour ateliers, cours, petits événements. Équipement de base fourni.",
+    title: "Studio créatif polyvalent - Gastown historique Vancouver",
+    description: "Espace créatif polyvalent de 70m² dans un bâtiment patrimonial du quartier historique de Gastown à Vancouver. Murs de briques apparentes authentiques, immenses fenêtres industrielles offrant une lumière naturelle abondante, plafonds hauts de 4 mètres avec poutres en bois. Espace modulable parfait pour ateliers créatifs, cours de yoga/pilates, séances photo, tournages vidéo, petits événements privés ou réunions d'équipe. Équipement de base fourni : tables pliantes, chaises empilables, système audio Bluetooth, projecteur HD. Cuisine équipée et salle de bain moderne. Wifi ultra-rapide. Quartier vibrant avec cafés artisanaux et restaurants. Stationnement public à 2 minutes.",
     city: "Vancouver",
     country: "Canada",
     province: "BC" as const,
