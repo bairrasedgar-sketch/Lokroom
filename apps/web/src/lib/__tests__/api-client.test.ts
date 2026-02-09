@@ -96,7 +96,7 @@ describe('API Client', () => {
     });
 
     it('should handle 401 and remove token', async () => {
-      const { TokenManager } = await import('./api-client');
+      const { TokenManager } = await import('../api-client');
       await TokenManager.setToken('test-token');
 
       (global.fetch as jest.Mock).mockResolvedValueOnce({
@@ -203,7 +203,7 @@ describe('API Client', () => {
     });
 
     it('should clear cache', async () => {
-      const { clearCache } = await import('./api-client');
+      const { clearCache } = await import('../api-client');
       const mockData = { id: 1, name: 'Test' };
 
       (global.fetch as jest.Mock).mockResolvedValue({
