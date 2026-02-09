@@ -578,6 +578,8 @@ export default function Navbar() {
                             }
                             setActiveCategory(activeCategory === cat.key ? null : cat.key);
                           }}
+                          aria-label={`Filtrer par catégorie ${cat.label}`}
+                          aria-pressed={activeCategory === cat.key}
                           className={`group flex items-center gap-1.5 px-2 py-1 rounded-full transition-all duration-200 flex-shrink-0 ${
                             activeCategory === cat.key
                               ? "bg-gray-100 text-gray-900"
@@ -663,6 +665,8 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={() => setCategoriesOpen(!categoriesOpen)}
+                  aria-label="Afficher toutes les catégories"
+                  aria-expanded={categoriesOpen}
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-full border bg-white shadow-sm transition-all duration-300 group ${
                     categoriesOpen
                       ? "border-gray-400 shadow-md"
@@ -693,6 +697,7 @@ export default function Navbar() {
                     }
                   }
                 }}
+                aria-label="Ouvrir la recherche d'espaces"
                 className="flex items-center rounded-full border border-gray-300 bg-white shadow-sm hover:shadow-md transition-all duration-200 py-2 px-2"
               >
                 <div className="px-3 border-r border-gray-200 text-left">
@@ -719,6 +724,7 @@ export default function Navbar() {
             {isLoggedIn && (
               <Link
                 href="/wishlists"
+                aria-label="Voir mes listes de favoris"
                 className="hidden lg:flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-full transition-all group"
               >
                 <svg
@@ -739,6 +745,7 @@ export default function Navbar() {
             {/* Bouton unique : texte change selon statut hôte */}
             <Link
               href="/listings/new"
+              aria-label={isHost ? "Créer une nouvelle annonce" : "Devenir hôte Lok'Room"}
               className="hidden lg:block px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-100 rounded-full transition-colors whitespace-nowrap"
             >
               {isHost ? t.createListing : t.becomeHost}
@@ -754,6 +761,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => setAuthModalOpen(true)}
+                aria-label="Ouvrir le menu de connexion"
                 className="flex items-center gap-3 rounded-full border border-gray-300 bg-white pl-3.5 pr-2 py-2 hover:shadow-md transition-shadow"
               >
                 {/* Icône hamburger (3 barres) */}
@@ -775,17 +783,17 @@ export default function Navbar() {
 
       {/* MODAL LANGUE / DEVISE */}
       {localeModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-0 sm:p-4">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-0 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="locale-modal-title">
           <div className="max-h-[90vh] sm:max-h-[85vh] w-full sm:max-w-xl md:max-w-2xl lg:max-w-4xl overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-white p-4 sm:p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg sm:text-xl font-semibold">
+              <h2 id="locale-modal-title" className="text-lg sm:text-xl font-semibold">
                 {t.modalTitle}
               </h2>
               <button
                 type="button"
                 onClick={() => setLocaleModalOpen(false)}
                 className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100"
-                aria-label="Fermer"
+                aria-label="Fermer la fenêtre de sélection de langue et devise"
               >
                 ✕
               </button>
@@ -803,6 +811,8 @@ export default function Navbar() {
                       key={loc.code}
                       type="button"
                       onClick={() => setLocale(loc.code as LocaleCode)}
+                      aria-label={`Changer la langue en ${loc.label}`}
+                      aria-pressed={currentLocale === loc.code}
                       className={`flex flex-col items-start rounded-xl border px-3 py-2 text-left text-sm hover:border-gray-900 hover:bg-gray-50 ${
                         currentLocale === loc.code
                           ? "border-gray-900 bg-gray-50"
@@ -829,6 +839,8 @@ export default function Navbar() {
                       key={cur.code}
                       type="button"
                       onClick={() => setCurrency(cur.code)}
+                      aria-label={`Changer la devise en ${cur.label}`}
+                      aria-pressed={currentCurrency === cur.code}
                       className={`flex flex-col items-start rounded-xl border px-3 py-2 text-left text-sm hover:border-gray-900 hover:bg-gray-50 ${
                         currentCurrency === cur.code
                           ? "border-gray-900 bg-gray-50"
@@ -852,18 +864,18 @@ export default function Navbar() {
 
       {/* MODAL CONNEXION / INSCRIPTION */}
       {authModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-0 sm:p-4">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 p-0 sm:p-4" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
           <div className="flex max-h-[95vh] sm:max-h-[90vh] w-full sm:max-w-md md:max-w-lg flex-col rounded-t-2xl sm:rounded-2xl bg-white shadow-xl">
             <div className="flex items-center justify-between border-b px-4 sm:px-6 py-3 sm:py-4">
               <button
                 type="button"
                 onClick={() => setAuthModalOpen(false)}
                 className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-gray-100"
-                aria-label="Fermer"
+                aria-label="Fermer la fenêtre de connexion"
               >
                 ✕
               </button>
-              <h2 className="text-sm font-semibold">
+              <h2 id="auth-modal-title" className="text-sm font-semibold">
                 {t.authTitle}
               </h2>
               <span className="w-8" />
@@ -876,10 +888,11 @@ export default function Navbar() {
 
               <form onSubmit={handlePhoneSubmit} className="space-y-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-700">
+                  <label htmlFor="phone-country-select" className="text-xs font-semibold text-gray-700">
                     {t.phoneCountryLabel}
                   </label>
                   <select
+                    id="phone-country-select"
                     value={selectedCountry.code}
                     onChange={(e) => {
                       const country = COUNTRIES.find(c => c.code === e.target.value);
@@ -889,6 +902,7 @@ export default function Navbar() {
                         setAuthPhoneNumber(country.dialCode);
                       }
                     }}
+                    aria-label="Sélectionner le pays ou la région"
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-0"
                   >
                     {COUNTRIES.map((country) => (
@@ -900,10 +914,11 @@ export default function Navbar() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-gray-700">
+                  <label htmlFor="phone-number-input" className="text-xs font-semibold text-gray-700">
                     {t.phoneNumberLabel}
                   </label>
                   <input
+                    id="phone-number-input"
                     type="tel"
                     value={authPhoneNumber}
                     onChange={(e) => {
@@ -924,6 +939,8 @@ export default function Navbar() {
                         e.preventDefault();
                       }
                     }}
+                    aria-label="Entrer votre numéro de téléphone"
+                    aria-required="true"
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-gray-900 focus:outline-none focus:ring-0"
                     placeholder={`${selectedCountry.dialCode} ...`}
                   />
@@ -951,6 +968,7 @@ export default function Navbar() {
                 <button
                   type="button"
                   onClick={() => signIn("google", { callbackUrl: "/onboarding" })}
+                  aria-label="Continuer avec Google"
                   className="flex w-full items-center justify-start gap-3 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium hover:bg-gray-50"
                 >
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-white">
@@ -968,6 +986,8 @@ export default function Navbar() {
 
                 <button
                   type="button"
+                  onClick={() => alert("La connexion Apple sera bientôt disponible.")}
+                  aria-label="Continuer avec Apple"
                   className="flex w-full items-center justify-start gap-3 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium hover:bg-gray-50"
                 >
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-black">
@@ -989,6 +1009,7 @@ export default function Navbar() {
                     setAuthModalOpen(false);
                     window.location.href = "/login";
                   }}
+                  aria-label="Continuer avec l'adresse e-mail"
                   className="flex w-full items-center justify-start gap-3 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium hover:bg-gray-50"
                 >
                   <span className="flex h-6 w-6 items-center justify-center rounded-full border border-gray-300 bg-white">
@@ -1006,6 +1027,8 @@ export default function Navbar() {
 
                 <button
                   type="button"
+                  onClick={() => alert("La connexion Facebook sera bientôt disponible.")}
+                  aria-label="Continuer avec Facebook"
                   className="mb-1 flex w-full items-center justify-start gap-3 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium hover:bg-gray-50"
                 >
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-[#1877F2]">
