@@ -83,6 +83,8 @@ model User {
   assignedSupportConversations      SupportConversation[] @relation("SupportAdmin")
   /// Messages de support envoyés
   supportMessagesSent               SupportMessage[]      @relation("SupportMessageSender")
+  /// Webhooks créés par l'utilisateur
+  webhooks                          Webhook[]
 }
 
 /// Secret TOTP pour l'authentification à deux facteurs
