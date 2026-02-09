@@ -1,4 +1,4 @@
-﻿/** @type {import('next').NextConfig} */
+/** @type {import('next').NextConfig} */
 import bundleAnalyzer from '@next/bundle-analyzer';
 
 const withBundleAnalyzer = bundleAnalyzer({
@@ -32,28 +32,46 @@ if (process.env.NEXT_PUBLIC_ASSET_HOST) {
   });
 }
 
+// Configuration pour Capacitor mobile build
+const isCapacitorBuild = process.env.CAPACITOR_BUILD === 'true';
+
 const nextConfig = {
   reactStrictMode: true,
-  // Configuration pour Capacitor - PAS de mode export static
-  // L'app mobile appelle directement le backend Vercel
-  experimental: {
-    instrumentationHook: true,
-  },
-  // Compression activée (Next.js génère automatiquement les fichiers compressés)
-  compress: true,
-  // Build ID unique pour cache busting
-  generateBuildId: async () => {
-    return `build-${Date.now()}`;
-  },
+
+  // Configuration pour Capacitor - Export statique si CAPACITOR_BUILD=true
+  ...(isCapacitorBuild && {
+    output: 'export',
+    images: {
+      unoptimized: true,
+    },
+    trailingSlash: true,
+  }),
+
+  // Configuration normale pour le web
+  ...(!isCapacitorBuild && {
+    experimental: {
+      instrumentationHook: true,
+    },
+    compress: true,
+    generateBuildId: async () => {
+      return `build-${Date.now()}`;
+    },
+  }),
+
   images: {
-    remotePatterns,
-    formats: ['image/avif', 'image/webp'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    minimumCacheTTL: 60,
+    ...(isCapacitorBuild ? { unoptimized: true } : {
+      remotePatterns,
+      formats: ['image/avif', 'image/webp'],
+      deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+      imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+      minimumCacheTTL: 60,
+    }),
   },
+
   // Security Headers (complément au middleware)
   async headers() {
+    if (isCapacitorBuild) return [];
+
     return [
       {
         // Applique les headers à toutes les routes

@@ -2,21 +2,36 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.lokroom.app',
-  appName: 'Lokroom',
+  appName: "Lok'Room",
   webDir: 'out',
   server: {
     androidScheme: 'https',
-    // L'app mobile appelle le backend Vercel pour les APIs
-    url: 'https://www.lokroom.com',
-    cleartext: false,
+    hostname: 'lokroom.com',
+    iosScheme: 'https',
   },
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
-      backgroundColor: "#ffffff",
-      showSpinner: false
-    }
-  }
+      backgroundColor: '#000000',
+      showSpinner: false,
+      androidSplashResourceName: 'splash',
+      androidScaleType: 'CENTER_CROP',
+      splashFullScreen: true,
+      splashImmersive: true,
+    },
+    StatusBar: {
+      style: 'dark',
+      backgroundColor: '#000000',
+    },
+    Keyboard: {
+      resize: 'body',
+      style: 'dark',
+      resizeOnFullScreen: true,
+    },
+    PushNotifications: {
+      presentationOptions: ['badge', 'sound', 'alert'],
+    },
+  },
 };
 
 export default config;

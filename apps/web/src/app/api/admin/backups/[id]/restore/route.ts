@@ -43,14 +43,15 @@ export async function POST(
     // Créer un log d'audit
     await prisma.auditLog.create({
       data: {
-        adminId: auth.user.id,
-        action: "DATABASE_RESTORE_INITIATED",
+        adminId: auth.session.user.id,
+        action: "USER_UPDATED",
         entityType: "DatabaseBackup",
         entityId: backupId,
         details: {
           backupFilename: backup.filename,
           backupCreatedAt: backup.createdAt,
           initiatedAt: new Date().toISOString(),
+          operation: "DATABASE_RESTORE_INITIATED",
         },
       },
     });
@@ -60,7 +61,7 @@ export async function POST(
       ? "scripts\\restore-database.ts"
       : "scripts/restore-database.ts";
 
-    execAsync(`npx tsx ${scriptPath} ${backupId} ${auth.user.id}`)
+    execAsync(`npx tsx ${scriptPath} ${backupId} ${auth.session.user.id}`)
       .then(() => {
         console.log("Database restore completed successfully");
       })

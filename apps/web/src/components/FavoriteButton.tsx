@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import WishlistModal from "./WishlistModal";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { useTracking } from "@/hooks/useTracking";
 
 export default function FavoriteButton({
   listingId,
@@ -23,6 +24,7 @@ export default function FavoriteButton({
   const { status } = useSession();
   const { isFavorited, addFavorite, removeFavorite, openModalForListing, setOpenModalForListing } = useFavorites();
   const { logFavorite } = useAnalytics();
+  const { trackFavorite } = useTracking();
   const [isPending, startTransition] = useTransition();
   const [isAnimating, setIsAnimating] = useState(false);
   const [particles, setParticles] = useState<number[]>([]);
@@ -94,6 +96,8 @@ export default function FavoriteButton({
         } else {
           // Track analytics
           logFavorite({ listingId, action: 'add' });
+          // Track for recommendations
+          trackFavorite(listingId);
           toast.success("Ajouté aux favoris");
         }
       });
@@ -115,6 +119,8 @@ export default function FavoriteButton({
     triggerAnimation();
     // Track analytics
     logFavorite({ listingId, action: 'add' });
+    // Track for recommendations
+    trackFavorite(listingId);
     toast.success("Ajouté aux favoris");
   }
 
