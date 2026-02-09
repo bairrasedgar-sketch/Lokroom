@@ -23,6 +23,26 @@ export async function GET(
 ) {
   return jsonError("Webhook feature temporarily disabled", 503);
 }
+      id: params.id,
+      userId: user.id,
+    },
+  });
+
+  if (!webhook) {
+    return jsonError("webhook_not_found", 404);
+  }
+
+  // Valider les paramètres de recherche
+  const validation = validateSearchParams(
+    req.nextUrl.searchParams,
+    webhookDeliveriesSchema
+  );
+
+  if (!validation.success) {
+    return jsonError(validation.error, 400);
+  }
+
+  const { page, pageSize, status } = validation.data;
 
   // Récupérer les deliveries
   const [deliveries, total] = await Promise.all([

@@ -22,15 +22,4 @@ export async function POST(
 ) {
   return jsonError("Webhook feature temporarily disabled", 503);
 }
-      active: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
 
-  return NextResponse.json({
-    success: true,
-    message: "Secret régénéré avec succès",
-    webhook,
-  });
-}
