@@ -1,4 +1,5 @@
 // apps/web/src/app/api/auth/mobile/me/route.ts
+export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { verifyMobileAuthToken, extractBearerToken } from "@/lib/auth/jwt";

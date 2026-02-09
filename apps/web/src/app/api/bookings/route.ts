@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/api-auth";
 import { jsonError } from "@/lib/api-error";
-import { cache, CacheKeys, CacheTTL } from "@/lib/redis";
+import { cache, CacheKeys, CacheTTL } from "@/lib/redis/cache-safe";
 
 export const dynamic = "force-dynamic";
 

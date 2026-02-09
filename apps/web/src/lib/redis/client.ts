@@ -10,12 +10,24 @@ import Redis from "ioredis";
 let redis: Redis | null = null;
 
 export function getRedisClient(): Redis {
+  // Ne pas initialiser Redis pendant le build
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    throw new Error('Redis not available during build');
+  }
+
   if (!redis) {
-    const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
+    const redisUrl = process.env.REDIS_URL;
+
+    // Si pas de REDIS_URL configuré, ne pas initialiser
+    if (!redisUrl) {
+      throw new Error('REDIS_URL not configured');
+    }
 
     redis = new Redis(redisUrl, {
       maxRetriesPerRequest: 3,
       retryStrategy(times) {
+        // Limiter les tentatives pendant le build
+        if (times > 3) return null;
         const delay = Math.min(times * 50, 2000);
         return delay;
       },
@@ -26,9 +38,9 @@ export function getRedisClient(): Redis {
         }
         return false;
       },
-      lazyConnect: true, // Ne pas se connecter immédiatement
+      lazyConnect: true,
       enableReadyCheck: true,
-      enableOfflineQueue: true,
+      enableOfflineQueue: false, // Désactiver la queue si pas connecté
     });
 
     redis.on("error", (err) => {
@@ -51,10 +63,12 @@ export function getRedisClient(): Redis {
       console.log("[Redis] Reconnecting...");
     });
 
-    // Connecter immédiatement
-    redis.connect().catch((err) => {
-      console.error("[Redis] Initial connection failed:", err.message);
-    });
+    // Connecter seulement en runtime, pas pendant le build
+    if (typeof window === 'undefined' && process.env.NODE_ENV !== 'test') {
+      redis.connect().catch((err) => {
+        console.error("[Redis] Initial connection failed:", err.message);
+      });
+    }
   }
 
   return redis;

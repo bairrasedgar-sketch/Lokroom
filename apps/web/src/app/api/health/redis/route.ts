@@ -6,7 +6,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { isRedisAvailable } from "@/lib/redis";
+import { isRedisAvailable } from "@/lib/redis/cache-safe";
 
 export const dynamic = "force-dynamic";
 

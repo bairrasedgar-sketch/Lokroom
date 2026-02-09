@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { cache, invalidateAllCache } from "@/lib/redis";
+import { cache, invalidateAllCache } from "@/lib/redis/cache-safe";
 
 export const dynamic = "force-dynamic";
 
