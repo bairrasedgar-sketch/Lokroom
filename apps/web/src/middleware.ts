@@ -167,8 +167,8 @@ function addSecurityHeaders(res: NextResponse): void {
   // Empêche le MIME sniffing
   res.headers.set("X-Content-Type-Options", "nosniff");
 
-  // Empêche le clickjacking
-  res.headers.set("X-Frame-Options", "SAMEORIGIN");
+  // Empêche le clickjacking (DENY pour score A+)
+  res.headers.set("X-Frame-Options", "DENY");
 
   // Politique de référent
   res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
@@ -176,7 +176,7 @@ function addSecurityHeaders(res: NextResponse): void {
   // Permissions Policy (anciennes Feature-Policy)
   res.headers.set(
     "Permissions-Policy",
-    "camera=(), microphone=(), geolocation=(self), payment=(self)"
+    "camera=(), microphone=(), geolocation=(self), payment=(self), usb=(), bluetooth=(), magnetometer=(), accelerometer=(), gyroscope=(), ambient-light-sensor=()"
   );
 
   // HSTS - Force HTTPS (2 ans, inclut les sous-domaines)
@@ -208,32 +208,40 @@ function generateCSP(isDev: boolean): string {
     ].join(" ");
   }
 
-  // Production - CSP stricte
+  // Production - CSP stricte pour score A+
   const s3Host = process.env.S3_PUBLIC_BASE
     ? new URL(process.env.S3_PUBLIC_BASE).host
     : "";
 
-  return [
-    "default-src 'self';",
-    // Scripts: Self + Maps + Stripe
-    "script-src 'self' 'unsafe-inline' https://maps.googleapis.com https://maps.gstatic.com https://js.stripe.com;",
-    // Styles
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;",
-    // Images: Self + Maps + Cloudflare R2 + Google (avatars) + Unsplash
-    `img-src 'self' data: blob: https://maps.googleapis.com https://maps.gstatic.com https://lh3.googleusercontent.com https://images.unsplash.com ${s3Host ? `https://${s3Host}` : ""};`,
-    // Connexions API
-    `connect-src 'self' https://maps.googleapis.com https://api.stripe.com ${s3Host ? `https://${s3Host}` : ""};`,
-    // Polices
-    "font-src 'self' https://fonts.gstatic.com;",
+  const cspDirectives = [
+    "default-src 'self'",
+    // Scripts: Self + Maps + Stripe + Google Analytics
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://maps.gstatic.com https://js.stripe.com https://www.googletagmanager.com https://www.google-analytics.com",
+    // Styles: Self + Inline (nécessaire pour Tailwind) + Google Fonts
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    // Images: Self + Data URLs + Blob + CDNs externes
+    `img-src 'self' data: blob: https://maps.googleapis.com https://maps.gstatic.com https://lh3.googleusercontent.com https://images.unsplash.com https://images.pexels.com https://*.r2.dev https://*.r2.cloudflarestorage.com https://*.amazonaws.com ${s3Host ? `https://${s3Host}` : ""}`,
+    // Connexions API: Self + Maps + Stripe + Analytics + S3
+    `connect-src 'self' https://maps.googleapis.com https://api.stripe.com https://www.google-analytics.com https://analytics.google.com https://*.r2.dev https://*.r2.cloudflarestorage.com https://*.amazonaws.com ${s3Host ? `https://${s3Host}` : ""}`,
+    // Polices: Self + Google Fonts + Data URLs
+    "font-src 'self' https://fonts.gstatic.com data:",
     // iframes: Stripe + Google Maps
-    "frame-src 'self' https://www.google.com https://js.stripe.com https://hooks.stripe.com;",
+    "frame-src 'self' https://www.google.com https://js.stripe.com https://hooks.stripe.com",
+    // Media: Self + Blob + CDNs
+    `media-src 'self' blob: https://*.r2.dev https://*.r2.cloudflarestorage.com https://*.amazonaws.com ${s3Host ? `https://${s3Host}` : ""}`,
+    // Workers: Self + Blob
+    "worker-src 'self' blob:",
+    // Manifests: Self
+    "manifest-src 'self'",
     // Sécurité additionnelle
-    "object-src 'none';",
-    "base-uri 'self';",
-    "form-action 'self';",
-    "frame-ancestors 'self';",
-    "upgrade-insecure-requests;",
-  ].join(" ");
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "upgrade-insecure-requests",
+  ];
+
+  return cspDirectives.join("; ") + ";";
 }
 
 export async function middleware(req: NextRequest) {
@@ -411,6 +419,10 @@ export async function middleware(req: NextRequest) {
   // --- Content-Security-Policy ---
   const isDev = process.env.NODE_ENV === "development";
   res.headers.set("Content-Security-Policy", generateCSP(isDev));
+
+  // --- Headers de compression ---
+  // Vary: Accept-Encoding pour indiquer que la réponse varie selon l'encodage accepté
+  res.headers.set("Vary", "Accept-Encoding");
 
   // --- CORS pour App Mobile ---
   if (pathname.startsWith('/api')) {

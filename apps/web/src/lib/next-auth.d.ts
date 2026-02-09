@@ -1,10 +1,2 @@
-// apps/web/src/types/next-auth.d.ts
-import type { DefaultSession } from "next-auth";
-
-declare module "next-auth" {
-  interface Session {
-    user: {
-      id: string;
-    } & DefaultSession["user"];
-  }
-}
+// This file has been moved to src/types/next-auth.d.ts
+// Keeping this file empty to avoid breaking imports

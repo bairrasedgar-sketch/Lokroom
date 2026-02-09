@@ -146,15 +146,21 @@ async function syncData() {
   console.log('Background sync triggered');
 }
 
-// Notifications push (optionnel)
+// Notifications push
 self.addEventListener('push', (event) => {
+  console.log('Push notification received:', event);
+
   const data = event.data ? event.data.json() : {};
 
   const options = {
     body: data.body || 'Nouvelle notification',
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    icon: data.icon || '/android-chrome-192x192.png',
+    badge: data.badge || '/android-chrome-192x192.png',
     data: data.data || {},
+    tag: data.tag || 'notification',
+    requireInteraction: data.requireInteraction || false,
+    vibrate: [200, 100, 200],
+    actions: data.actions || [],
   };
 
   event.waitUntil(
@@ -164,9 +170,29 @@ self.addEventListener('push', (event) => {
 
 // Clic sur notification
 self.addEventListener('notificationclick', (event) => {
+  console.log('Notification clicked:', event);
   event.notification.close();
 
+  const urlToOpen = event.notification.data?.url || '/';
+
   event.waitUntil(
-    clients.openWindow(event.notification.data.url || '/')
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Vérifier si une fenêtre est déjà ouverte
+      for (const client of clientList) {
+        if (client.url === urlToOpen && 'focus' in client) {
+          return client.focus();
+        }
+      }
+
+      // Ouvrir une nouvelle fenêtre
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
   );
+});
+
+// Fermeture de notification
+self.addEventListener('notificationclose', (event) => {
+  console.log('Notification closed:', event);
 });

@@ -74,6 +74,8 @@
     "resend": "^6.5.2",
     "sonner": "^2.0.7",
     "stripe": "^19.2.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-react": "^5.31.0",
     "swr": "^2.4.0",
     "tailwind-merge": "^3.4.0",
     "web-push": "^3.6.7"
@@ -85,6 +87,7 @@
     "@eslint/markdown": "^7.3.0",
     "@next-auth/prisma-adapter": "^1.0.7",
     "@next/bundle-analyzer": "^16.1.6",
+    "@playwright/test": "^1.58.2",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
