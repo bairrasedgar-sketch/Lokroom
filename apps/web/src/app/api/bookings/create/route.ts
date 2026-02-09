@@ -100,6 +100,7 @@ export async function POST(req: NextRequest) {
     where: { id: listingId },
     select: {
       id: true,
+      title: true,
       price: true,
       currency: true,
       ownerId: true,

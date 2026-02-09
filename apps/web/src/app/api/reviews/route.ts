@@ -360,6 +360,30 @@ export async function POST(req: NextRequest) {
     return r;
   });
 
+  // Envoyer un email de notification (asynchrone)
+  const targetUser = await prisma.user.findUnique({
+    where: { id: targetUserId },
+    select: { email: true, name: true },
+  });
+
+  if (targetUser?.email) {
+    // Import dynamique pour éviter les erreurs au build
+    import("@/lib/email/queue").then(({ queueEmail }) => {
+      queueEmail({
+        type: "review-request",
+        to: targetUser.email,
+        data: {
+          guestName: targetUser.name || "Utilisateur",
+          listingTitle: booking.listing.title,
+          hostName: booking.listing.ownerId,
+          bookingId: booking.id,
+        },
+      });
+    }).catch((err) => {
+      console.error("[Review] Erreur envoi email:", err);
+    });
+  }
+
   return NextResponse.json({ review }, { status: 201 });
 }
 
