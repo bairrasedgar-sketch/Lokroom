@@ -1,6 +1,9 @@
 // Wrapper sécurisé pour le cache Redis qui gère l'absence de Redis
 import { CacheService } from "./cache";
 
+// Réexporter les constantes de keys.ts pour la compatibilité
+export { CacheKeys, CacheTTL, CachePatterns } from "./keys";
+
 let cacheInstance: CacheService | null = null;
 
 export function getSafeCache(): CacheService | null {
@@ -70,3 +73,32 @@ export const cache = {
     return c.flushAll();
   }
 };
+
+// Fonctions utilitaires pour l'invalidation du cache
+export async function invalidateAllCache(): Promise<void> {
+  const c = getSafeCache();
+  if (!c) return;
+  return c.flushAll();
+}
+
+export async function invalidateListingCache(listingId: string): Promise<void> {
+  const c = getSafeCache();
+  if (!c) return;
+
+  // Importer CachePatterns pour l'invalidation
+  const { CachePatterns } = await import("./keys");
+  return c.delPattern(CachePatterns.listingRelated(listingId));
+}
+
+export async function isRedisAvailable(): Promise<boolean> {
+  try {
+    const c = getSafeCache();
+    if (!c) return false;
+
+    // Tester la connexion avec une commande simple
+    return await c.exists("__health_check__");
+  } catch (error) {
+    console.error("[Redis] Health check failed:", error);
+    return false;
+  }
+}
