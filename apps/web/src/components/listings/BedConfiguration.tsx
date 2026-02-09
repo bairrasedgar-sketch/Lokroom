@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 
-interface BedConfig {
+export interface BedConfig {
   roomName: string;
   beds: {
     type: "single" | "double" | "queen" | "king" | "sofa" | "bunk";

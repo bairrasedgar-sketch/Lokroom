@@ -11,6 +11,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { getCroppedImage, type PixelCrop } from "@/lib/cropImage";
 import AmenitiesSelector from "@/components/listings/AmenitiesSelector";
 import BedConfiguration from "@/components/listings/BedConfiguration";
+import type { BedConfig } from "@/components/listings/BedConfiguration";
 import { Plus, Minus } from "lucide-react";
 
 // ============================================================================
@@ -2573,8 +2574,8 @@ export default function NewListingPage() {
                     <div className="space-y-2">
                       <label className="text-sm font-medium text-gray-700">Configuration des lits</label>
                       <BedConfiguration
-                        value={formData.bedConfiguration}
-                        onChange={(config) => setFormData((prev) => ({ ...prev, bedConfiguration: config }))}
+                        value={(formData.bedConfiguration as unknown as BedConfig[]) || []}
+                        onChange={(config) => setFormData((prev) => ({ ...prev, bedConfiguration: config as unknown as Record<string, unknown> | null }))}
                         bedrooms={formData.bedrooms || 1}
                       />
                     </div>
