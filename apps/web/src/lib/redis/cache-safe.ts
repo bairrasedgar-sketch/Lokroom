@@ -71,6 +71,47 @@ export const cache = {
     const c = getSafeCache();
     if (!c) return;
     return c.flushAll();
+  },
+
+  async decr(key: string): Promise<number> {
+    const c = getSafeCache();
+    if (!c) return 0;
+    return c.decr(key);
+  },
+
+  async ttl(key: string): Promise<number> {
+    const c = getSafeCache();
+    if (!c) return -1;
+    return c.ttl(key);
+  },
+
+  async expire(key: string, ttl: number): Promise<boolean> {
+    const c = getSafeCache();
+    if (!c) return false;
+    return c.expire(key, ttl);
+  },
+
+  async mget<T>(keys: string[]): Promise<(T | null)[]> {
+    const c = getSafeCache();
+    if (!c) return keys.map(() => null);
+    return c.mget<T>(keys);
+  },
+
+  async mset(entries: Array<{ key: string; value: unknown; ttl?: number }>): Promise<void> {
+    const c = getSafeCache();
+    if (!c) return;
+    return c.mset(entries);
+  },
+
+  async getStats(): Promise<{
+    keys: number;
+    memory: string;
+    hits: string;
+    misses: string;
+  }> {
+    const c = getSafeCache();
+    if (!c) return { keys: 0, memory: "0", hits: "0", misses: "0" };
+    return c.getStats();
   }
 };
 
