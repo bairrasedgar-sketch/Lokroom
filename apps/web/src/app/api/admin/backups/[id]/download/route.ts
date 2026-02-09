@@ -41,13 +41,14 @@ export async function GET(
     // Créer un log d'audit
     await prisma.auditLog.create({
       data: {
-        adminId: auth.user.id,
-        action: "BACKUP_DOWNLOADED",
+        adminId: auth.session.userId,
+        action: "USER_UPDATED",
         entityType: "DatabaseBackup",
         entityId: backupId,
         details: {
           backupFilename: backup.filename,
           downloadedAt: new Date().toISOString(),
+          operation: "BACKUP_DOWNLOADED",
         },
       },
     });
