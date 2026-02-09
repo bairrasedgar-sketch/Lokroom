@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import dynamic from "next/dynamic";
+import dynamicImport from "next/dynamic";
 import {
   ArrowDownTrayIcon,
   ArrowTrendingUpIcon,
@@ -21,23 +21,23 @@ import {
 } from "@heroicons/react/24/outline";
 
 // Lazy load charts - heavy Recharts library
-const HostPerformanceChart = dynamic(
+const HostPerformanceChart = dynamicImport(
   () => import("@/components/host/HostCharts").then((mod) => ({ default: mod.HostPerformanceChart })),
   { loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" />, ssr: false }
 );
-const HostOccupancyChart = dynamic(
+const HostOccupancyChart = dynamicImport(
   () => import("@/components/host/HostCharts").then((mod) => ({ default: mod.HostOccupancyChart })),
   { loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" />, ssr: false }
 );
-const HostBookingStatusChart = dynamic(
+const HostBookingStatusChart = dynamicImport(
   () => import("@/components/host/HostCharts").then((mod) => ({ default: mod.HostBookingStatusChart })),
   { loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" />, ssr: false }
 );
-const HostRatingBreakdown = dynamic(
+const HostRatingBreakdown = dynamicImport(
   () => import("@/components/host/HostCharts").then((mod) => ({ default: mod.HostRatingBreakdown })),
   { loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" />, ssr: false }
 );
-const HostListingsPerformance = dynamic(
+const HostListingsPerformance = dynamicImport(
   () => import("@/components/host/HostCharts").then((mod) => ({ default: mod.HostListingsPerformance })),
   { loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" />, ssr: false }
 );

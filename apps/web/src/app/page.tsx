@@ -1,7 +1,7 @@
 // apps/web/src/app/page.tsx
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import dynamic from "next/dynamic";
+import dynamicImport from "next/dynamic";
 import { prisma } from "@/lib/db";
 import { formatMoneyAsync, type Currency } from "@/lib/currency";
 import { getServerDictionary } from "@/lib/i18n.server";
@@ -11,7 +11,7 @@ import { PageErrorBoundary } from "@/components/PageErrorBoundary";
 import HomeClientSkeleton from "@/components/HomeClientSkeleton";
 
 // Lazy load HomeClient with loading skeleton
-const HomeClient = dynamic(() => import("@/components/HomeClient"), {
+const HomeClient = dynamicImport(() => import("@/components/HomeClient"), {
   loading: () => <HomeClientSkeleton />,
   ssr: true,
 });

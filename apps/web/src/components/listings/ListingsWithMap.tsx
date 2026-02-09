@@ -3,14 +3,14 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import dynamic from "next/dynamic";
+import dynamicImport from "next/dynamic";
 import FavoriteButton from "@/components/FavoriteButton";
 import MobileFiltersModal from "./MobileFiltersModal";
 import { useMobileSheet } from "@/contexts/MobileSheetContext";
 import { type MapMarker } from "@/components/Map";
 
 // Lazy load Map component - heavy Google Maps dependency
-const Map = dynamic(() => import("@/components/Map"), {
+const Map = dynamicImport(() => import("@/components/Map"), {
   loading: () => (
     <div className="h-full w-full bg-gray-200 animate-pulse flex items-center justify-center">
       <p className="text-gray-500">Chargement de la carte...</p>
@@ -20,7 +20,7 @@ const Map = dynamic(() => import("@/components/Map"), {
 });
 
 // Lazy load SearchModal - only when opened
-const SearchModal = dynamic(() => import("@/components/SearchModal"), {
+const SearchModal = dynamicImport(() => import("@/components/SearchModal"), {
   loading: () => null,
   ssr: false,
 });

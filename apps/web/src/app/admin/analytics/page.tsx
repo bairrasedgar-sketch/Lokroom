@@ -4,7 +4,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import dynamic from "next/dynamic";
+import dynamicImport from "next/dynamic";
 import {
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
@@ -17,27 +17,27 @@ import {
 } from "@heroicons/react/24/outline";
 
 // Lazy load Charts - heavy Recharts library
-const RevenueAreaChart = dynamic(
+const RevenueAreaChart = dynamicImport(
   () => import("@/components/admin/Charts").then((mod) => ({ default: mod.RevenueAreaChart })),
   { loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" />, ssr: false }
 );
-const BookingsBarChart = dynamic(
+const BookingsBarChart = dynamicImport(
   () => import("@/components/admin/Charts").then((mod) => ({ default: mod.BookingsBarChart })),
   { loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" />, ssr: false }
 );
-const DistributionPieChart = dynamic(
+const DistributionPieChart = dynamicImport(
   () => import("@/components/admin/Charts").then((mod) => ({ default: mod.DistributionPieChart })),
   { loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" />, ssr: false }
 );
-const TopListingsChart = dynamic(
+const TopListingsChart = dynamicImport(
   () => import("@/components/admin/Charts").then((mod) => ({ default: mod.TopListingsChart })),
   { loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" />, ssr: false }
 );
-const StatusDistributionChart = dynamic(
+const StatusDistributionChart = dynamicImport(
   () => import("@/components/admin/Charts").then((mod) => ({ default: mod.StatusDistributionChart })),
   { loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" />, ssr: false }
 );
-const MultiLineChart = dynamic(
+const MultiLineChart = dynamicImport(
   () => import("@/components/admin/Charts").then((mod) => ({ default: mod.MultiLineChart })),
   { loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" />, ssr: false }
 );

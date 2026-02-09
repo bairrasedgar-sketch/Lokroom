@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import SearchModal from "./SearchModal";
+import dynamicImport from "next/dynamic";
 import { useSearchBar } from "@/contexts/SearchBarContext";
 import { HeroSection } from "./home/HeroSection";
 import { SearchBarSection } from "./home/SearchBarSection";
@@ -11,6 +11,12 @@ import { CategoriesSection } from "./home/CategoriesSection";
 import { ListingsGrid } from "./home/ListingsGrid";
 import { FeaturesSection } from "./home/FeaturesSection";
 import { CTASection } from "./home/CTASection";
+
+// Lazy load SearchModal - only when needed
+const SearchModal = dynamicImport(() => import("./SearchModal"), {
+  loading: () => null,
+  ssr: false,
+});
 
 type ListingCard = {
   id: string;

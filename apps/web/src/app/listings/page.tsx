@@ -3,7 +3,7 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { getServerSession } from "next-auth";
 import { Metadata } from "next";
-import dynamic from "next/dynamic";
+import dynamicImport from "next/dynamic";
 
 import { authOptions } from "@/lib/auth";
 import { formatMoneyAsync, type Currency } from "@/lib/currency";
@@ -16,7 +16,7 @@ import SearchPageJsonLd from "@/components/seo/SearchPageJsonLd";
 import { PageErrorBoundary } from "@/components/PageErrorBoundary";
 
 // Lazy load ListingsWithMap - heavy component with map
-const ListingsWithMap = dynamic(() => import("@/components/listings/ListingsWithMap"), {
+const ListingsWithMap = dynamicImport(() => import("@/components/listings/ListingsWithMap"), {
   loading: () => (
     <div className="flex-1 animate-pulse">
       <div className="h-full bg-gray-200 rounded-lg" />
