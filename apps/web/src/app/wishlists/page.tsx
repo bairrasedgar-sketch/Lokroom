@@ -322,7 +322,7 @@ export default function WishlistsPage() {
                         <div key={idx} className="relative overflow-hidden">
                           <Image
                             src={url}
-                            alt=""
+                            alt={`Aperçu ${idx + 1} de la liste de souhaits ${wishlist.name}`}
                             fill
                             className="object-cover transition duration-300 group-hover:scale-105"
                             sizes="(max-width: 640px) 50vw, 25vw"
@@ -336,7 +336,7 @@ export default function WishlistsPage() {
                       <div className="relative overflow-hidden">
                         <Image
                           src={previewImages[0]}
-                          alt=""
+                          alt={`Aperçu principal de la liste de souhaits ${wishlist.name}`}
                           fill
                           className="object-cover transition duration-300 group-hover:scale-105"
                           sizes="(max-width: 640px) 50vw, 25vw"
@@ -347,7 +347,7 @@ export default function WishlistsPage() {
                           <div key={idx} className="relative overflow-hidden">
                             <Image
                               src={url}
-                              alt=""
+                              alt={`Aperçu ${idx + 2} de la liste de souhaits ${wishlist.name}`}
                               fill
                               className="object-cover transition duration-300 group-hover:scale-105"
                               sizes="(max-width: 640px) 25vw, 12vw"
@@ -363,7 +363,7 @@ export default function WishlistsPage() {
                     // 1 seule image
                     <Image
                       src={previewImages[0]}
-                      alt=""
+                      alt={`Aperçu de la liste de souhaits ${wishlist.name}`}
                       fill
                       className="object-cover transition duration-300 group-hover:scale-105"
                       sizes="(max-width: 640px) 100vw, 50vw"

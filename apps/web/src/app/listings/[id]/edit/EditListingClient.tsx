@@ -134,7 +134,7 @@ type ListingData = {
 
   // === NOUVEAUX CHAMPS ===
   bedrooms?: number | null;
-  bedConfiguration?: any;
+  bedConfiguration?: Record<string, unknown> | null;
   bathroomsFull?: number | null;
   bathroomsHalf?: number | null;
   spaceType?: string | null;

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { getServerDictionary } from "@/lib/i18n.server";
 import HostKitReward from "@/components/host/HostKitReward";
 import HostDashboardStats from "@/components/host/HostDashboardStats";
+import { PageErrorBoundary } from "@/components/PageErrorBoundary";
 
 export const metadata = {
   title: "Tableau de bord | Hote Lok'Room",
@@ -29,7 +30,8 @@ export default async function HostPage() {
   const t = dict.host;
 
   return (
-    <div className="mx-auto max-w-6xl 2xl:max-w-7xl 3xl:max-w-[1600px] px-3 sm:px-4 lg:px-6 xl:px-8 py-6 sm:py-10 space-y-6 sm:space-y-8">
+    <PageErrorBoundary>
+      <div className="mx-auto max-w-6xl 2xl:max-w-7xl 3xl:max-w-[1600px] px-3 sm:px-4 lg:px-6 xl:px-8 py-6 sm:py-10 space-y-6 sm:space-y-8">
       {/* En-tête */}
       <header className="space-y-1 sm:space-y-2">
         <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">{t.title}</h1>
@@ -145,6 +147,7 @@ export default async function HostPage() {
           <p className="text-xs sm:text-sm text-gray-500 mt-0.5 sm:mt-1">Personnalisez votre profil public</p>
         </a>
       </section>
-    </div>
+      </div>
+    </PageErrorBoundary>
   );
 }

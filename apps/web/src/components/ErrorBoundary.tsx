@@ -45,8 +45,29 @@ export class ErrorBoundary extends Component<Props, State> {
       errorInfo,
     });
 
-    // TODO: Envoyer à Sentry ou autre service de monitoring
-    // Sentry.captureException(error, { contexts: { react: { componentStack: errorInfo.componentStack } } });
+    // Envoyer à Sentry si configuré
+    if (typeof window !== 'undefined' && (window as any).Sentry) {
+      (window as any).Sentry.captureException(error, {
+        contexts: {
+          react: {
+            componentStack: errorInfo.componentStack,
+          },
+        },
+      });
+    }
+
+    // Log structuré pour le monitoring
+    if (process.env.NODE_ENV === 'production') {
+      // En production, on pourrait envoyer à un service de logging
+      const errorLog = {
+        message: error.message,
+        stack: error.stack,
+        componentStack: errorInfo.componentStack,
+        timestamp: new Date().toISOString(),
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
+      };
+      console.error('Production Error:', JSON.stringify(errorLog));
+    }
   }
 
   handleReset = () => {

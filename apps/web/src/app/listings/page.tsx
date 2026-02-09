@@ -13,6 +13,7 @@ import ListingsWithMap from "@/components/listings/ListingsWithMap";
 import { getServerDictionary } from "@/lib/i18n.server";
 import { type MapMarker } from "@/components/Map";
 import SearchPageJsonLd from "@/components/seo/SearchPageJsonLd";
+import { PageErrorBoundary } from "@/components/PageErrorBoundary";
 
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
@@ -376,7 +377,7 @@ export default async function ListingsPage({
         : t.resultMany.replace("{count}", String(total));
 
   return (
-    <>
+    <PageErrorBoundary>
       {/* Schema.org JSON-LD pour le SEO de la page de recherche */}
       <SearchPageJsonLd
         searchParams={{
@@ -497,6 +498,6 @@ export default async function ListingsPage({
           />
         </div>
       </main>
-    </>
+    </PageErrorBoundary>
   );
 }

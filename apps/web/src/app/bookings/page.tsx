@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { getDictionaryForLocale, type SupportedLocale } from "@/lib/i18n.client";
+import { PageErrorBoundary } from "@/components/PageErrorBoundary";
 
 type Currency = "EUR" | "CAD";
 type BookingStatus = "PENDING" | "CONFIRMED" | "CANCELLED";
@@ -99,33 +100,35 @@ function formatDateRange(startStr: string, endStr: string, locale: SupportedLoca
 // ✅ Wrapper avec Suspense pour Next
 export default function BookingsPage() {
   return (
-    <Suspense
-      fallback={
-        <main className="mx-auto max-w-5xl 2xl:max-w-6xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
-          <header className="mb-6">
-            <div className="h-6 w-48 rounded bg-gray-100" />
-            <div className="mt-2 h-4 w-64 rounded bg-gray-100" />
-          </header>
-          <div className="space-y-3">
-            {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className="flex animate-pulse gap-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
-              >
-                <div className="h-20 w-24 rounded-xl bg-gray-100" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 w-1/3 rounded bg-gray-100" />
-                  <div className="h-3 w-1/2 rounded bg-gray-100" />
-                  <div className="h-3 w-1/4 rounded bg-gray-100" />
+    <PageErrorBoundary>
+      <Suspense
+        fallback={
+          <main className="mx-auto max-w-5xl 2xl:max-w-6xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+            <header className="mb-6">
+              <div className="h-6 w-48 rounded bg-gray-100" />
+              <div className="mt-2 h-4 w-64 rounded bg-gray-100" />
+            </header>
+            <div className="space-y-3">
+              {[0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="flex animate-pulse gap-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
+                >
+                  <div className="h-20 w-24 rounded-xl bg-gray-100" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-1/3 rounded bg-gray-100" />
+                    <div className="h-3 w-1/2 rounded bg-gray-100" />
+                    <div className="h-3 w-1/4 rounded bg-gray-100" />
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </main>
-      }
-    >
-      <BookingsPageContent />
-    </Suspense>
+              ))}
+            </div>
+          </main>
+        }
+      >
+        <BookingsPageContent />
+      </Suspense>
+    </PageErrorBoundary>
   );
 }
 

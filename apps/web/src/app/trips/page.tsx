@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import useTranslation from "@/hooks/useTranslation";
+import { PageErrorBoundary } from "@/components/PageErrorBoundary";
 
 type BookingListing = {
   id: string;
@@ -40,7 +41,7 @@ function getBookingStartDate(b: Booking): Date {
   return new Date(raw);
 }
 
-export default function TripsPage() {
+function TripsPageContent() {
   const { locale, dict } = useTranslation();
   const t = dict.trips;
 

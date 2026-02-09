@@ -7,6 +7,7 @@ import SkipLink from "@/components/accessibility/SkipLink";
 import { prisma } from "@/lib/db";
 import { MaintenanceRedirect } from "@/components/MaintenanceRedirect";
 import SplashScreen from "@/components/SplashScreen";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const SUPPORTED_LOCALES = ["fr", "en", "es", "de", "it", "pt", "zh"] as const;
 type LocaleCode = (typeof SUPPORTED_LOCALES)[number];
@@ -143,17 +144,19 @@ export default async function RootLayout({
       className="h-full"
     >
       <body className="min-h-screen bg-white text-gray-900 antialiased relative">
-        <Providers>
-          <SplashScreen />
-          <MaintenanceRedirect isMaintenanceMode={isMaintenanceMode} />
-          <SkipLink />
-          <ConditionalNavbar />
-          <main id="main-content" className="flex-1" role="main" tabIndex={-1}>
-            {children}
-          </main>
-          <ConditionalFooter />
-          <ConditionalCookieBanner />
-        </Providers>
+        <ErrorBoundary>
+          <Providers>
+            <SplashScreen />
+            <MaintenanceRedirect isMaintenanceMode={isMaintenanceMode} />
+            <SkipLink />
+            <ConditionalNavbar />
+            <main id="main-content" className="flex-1" role="main" tabIndex={-1}>
+              {children}
+            </main>
+            <ConditionalFooter />
+            <ConditionalCookieBanner />
+          </Providers>
+        </ErrorBoundary>
       </body>
     </html>
   );

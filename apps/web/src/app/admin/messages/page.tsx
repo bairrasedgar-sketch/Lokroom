@@ -811,7 +811,7 @@ export default function AdminMessagesPage() {
                         <div className="flex -space-x-2">
                           {conv.host.profile?.avatarUrl ? (
                             <div className="relative w-8 h-8 rounded-full overflow-hidden border-2 border-white">
-                              <Image src={conv.host.profile.avatarUrl} alt="" fill className="object-cover" sizes="32px" />
+                              <Image src={conv.host.profile.avatarUrl} alt={`Photo de profil de ${conv.host.name || "l'hôte"}`} fill className="object-cover" sizes="32px" />
                             </div>
                           ) : (
                             <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs border-2 border-white">
@@ -820,7 +820,7 @@ export default function AdminMessagesPage() {
                           )}
                           {conv.guest.profile?.avatarUrl ? (
                             <div className="relative w-8 h-8 rounded-full overflow-hidden border-2 border-white">
-                              <Image src={conv.guest.profile.avatarUrl} alt="" fill className="object-cover" sizes="32px" />
+                              <Image src={conv.guest.profile.avatarUrl} alt={`Photo de profil de ${conv.guest.name || "l'invité"}`} fill className="object-cover" sizes="32px" />
                             </div>
                           ) : (
                             <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs border-2 border-white">
@@ -959,7 +959,7 @@ export default function AdminMessagesPage() {
                                 <>
                                   {msg.sender.profile?.avatarUrl ? (
                                     <div className="relative w-6 h-6 rounded-full overflow-hidden">
-                                      <Image src={msg.sender.profile.avatarUrl} alt="" fill className="object-cover" sizes="24px" />
+                                      <Image src={msg.sender.profile.avatarUrl} alt={`Photo de profil de ${msg.sender.name || "l'expéditeur"}`} fill className="object-cover" sizes="24px" />
                                     </div>
                                   ) : (
                                     <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs">
@@ -975,7 +975,7 @@ export default function AdminMessagesPage() {
                                   <span className="text-xs font-medium text-gray-700">{msg.sender.name || msg.sender.email}</span>
                                   {msg.sender.profile?.avatarUrl ? (
                                     <div className="relative w-6 h-6 rounded-full overflow-hidden">
-                                      <Image src={msg.sender.profile.avatarUrl} alt="" fill className="object-cover" sizes="24px" />
+                                      <Image src={msg.sender.profile.avatarUrl} alt={`Photo de profil de ${msg.sender.name || "l'expéditeur"}`} fill className="object-cover" sizes="24px" />
                                     </div>
                                   ) : (
                                     <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs">

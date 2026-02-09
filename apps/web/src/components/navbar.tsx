@@ -477,7 +477,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className={`sticky top-0 z-50 bg-neutral-50 transition-transform duration-300 ${hideNavbar ? '-translate-y-full' : 'translate-y-0'}`}>
+      <header role="banner" className={`sticky top-0 z-50 bg-neutral-50 transition-transform duration-300 ${hideNavbar ? '-translate-y-full' : 'translate-y-0'}`}>
         {/* Barre mobile - Logo + Télécharger l'appli + Utiliser l'appli */}
         {/* Cacher complètement ce banner dans l'app native Capacitor */}
         {!isNativeApp && (
@@ -487,10 +487,10 @@ export default function Navbar() {
             }`}
           >
             {/* Logo Lok'Room */}
-            <Link href="/" className="flex-shrink-0 flex items-center">
+            <Link href="/" className="flex-shrink-0 flex items-center" aria-label="Retour à l'accueil Lok'Room">
               <Image
                 src="/logo.svg"
-                alt="Lok'Room"
+                alt="Logo Lok'Room - Location d'espaces entre particuliers"
                 width={85}
                 height={28}
                 className="h-6 w-auto"
@@ -512,6 +512,7 @@ export default function Navbar() {
                   ? "https://apps.apple.com/app/lokroom/id123456789"
                   : "https://play.google.com/store/apps/details?id=com.lokroom.app"}
                 className="bg-[#0066FF] hover:bg-[#0052CC] active:bg-[#004499] text-white text-[11px] font-semibold px-3 py-1.5 rounded-full transition-colors shadow-sm flex items-center justify-center leading-none"
+                aria-label={`Télécharger l'application Lok'Room sur ${isIOS ? "l'App Store" : "Google Play"}`}
               >
                 Utiliser l'appli
               </a>
@@ -522,10 +523,10 @@ export default function Navbar() {
         {/* Barre desktop - inchangée */}
         <div className="hidden md:flex relative items-center justify-between px-4 sm:px-6 lg:px-8 py-4 sm:py-5 max-w-[1760px] 3xl:max-w-[2200px] 4xl:max-w-[2800px] mx-auto">
           {/* Logo à gauche */}
-          <Link href="/" className="flex-shrink-0">
+          <Link href="/" className="flex-shrink-0" aria-label="Retour à l'accueil Lok'Room">
             <Image
               src="/logo.svg"
-              alt="Lok'Room"
+              alt="Logo Lok'Room - Location d'espaces entre particuliers"
               width={130}
               height={85}
               className="h-7 sm:h-8 lg:h-9 w-auto"

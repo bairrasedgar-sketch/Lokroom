@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { PageErrorBoundary } from "@/components/PageErrorBoundary";
 import {
   ChatBubbleLeftRightIcon,
   PaperAirplaneIcon,
@@ -195,7 +196,7 @@ type SupportHistoryItem = {
   _count: { messages: number };
 };
 
-export default function MessagesPage() {
+function MessagesPageContent() {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -1972,5 +1973,13 @@ Posez-moi vos questions sur :
         </aside>
       </div>
     </main>
+  );
+}
+
+export default function MessagesPage() {
+  return (
+    <PageErrorBoundary>
+      <MessagesPageContent />
+    </PageErrorBoundary>
   );
 }

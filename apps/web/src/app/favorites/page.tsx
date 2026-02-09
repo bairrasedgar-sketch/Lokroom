@@ -411,7 +411,7 @@ export default function FavoritesPage() {
                         <div key={idx} className="relative overflow-hidden">
                           <Image
                             src={url}
-                            alt=""
+                            alt={`Aperçu ${idx + 1} des favoris`}
                             fill
                             className="object-cover transition duration-300 group-hover:scale-105"
                             sizes="25vw"
@@ -422,7 +422,7 @@ export default function FavoritesPage() {
                   ) : previewImages.length >= 1 ? (
                     <Image
                       src={previewImages[0]}
-                      alt=""
+                      alt="Aperçu des favoris"
                       fill
                       className="object-cover transition duration-300 group-hover:scale-105"
                       sizes="50vw"

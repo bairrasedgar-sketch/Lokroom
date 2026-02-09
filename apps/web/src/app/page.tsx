@@ -6,6 +6,7 @@ import { formatMoneyAsync, type Currency } from "@/lib/currency";
 import { getServerDictionary } from "@/lib/i18n.server";
 import HomeClient from "@/components/HomeClient";
 import HomePageJsonLd from "@/components/seo/HomePageJsonLd";
+import { PageErrorBoundary } from "@/components/PageErrorBoundary";
 
 export const dynamic = "force-dynamic";
 
@@ -186,7 +187,7 @@ export default async function Home() {
   ];
 
   return (
-    <>
+    <PageErrorBoundary>
       {/* Schema.org JSON-LD pour le SEO de la page d'accueil */}
       <HomePageJsonLd stats={stats} />
 
@@ -197,6 +198,6 @@ export default async function Home() {
         translations={t}
         displayCurrency={displayCurrency}
       />
-    </>
+    </PageErrorBoundary>
   );
 }
