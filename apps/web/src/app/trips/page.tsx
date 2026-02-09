@@ -422,3 +422,11 @@ function TripCard({
     </div>
   );
 }
+
+export default function TripsPage() {
+  return (
+    <PageErrorBoundary>
+      <TripsPageContent />
+    </PageErrorBoundary>
+  );
+}
