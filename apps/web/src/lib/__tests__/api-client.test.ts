@@ -271,7 +271,12 @@ describe('Logger', () => {
     expect(logs).toHaveLength(1);
     expect(logs[0].level).toBe('error');
     expect(logs[0].context?.error).toBeDefined();
-    expect(logs[0].context?.error.message).toBe('Test error');
+
+    // Type guard pour vérifier que error est un objet avec message
+    const errorContext = logs[0].context?.error;
+    if (errorContext && typeof errorContext === 'object' && 'message' in errorContext) {
+      expect(errorContext.message).toBe('Test error');
+    }
   });
 
   it('should log user actions', () => {

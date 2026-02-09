@@ -6,7 +6,7 @@
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 interface LogContext {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface LogEntry {
@@ -211,11 +211,11 @@ export async function measurePerformance<T>(
 /**
  * Decorator pour logger automatiquement les erreurs d'une fonction
  */
-export function withErrorLogging<T extends (...args: any[]) => any>(
+export function withErrorLogging<T extends (...args: unknown[]) => unknown>(
   fn: T,
   functionName?: string
 ): T {
-  return ((...args: any[]) => {
+  return ((...args: unknown[]) => {
     try {
       const result = fn(...args);
 

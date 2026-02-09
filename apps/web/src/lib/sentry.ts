@@ -93,7 +93,7 @@ export function initSentry(config: SentryConfig) {
 /**
  * Capturer une erreur manuellement
  */
-export function captureError(error: Error, context?: Record<string, any>) {
+export function captureError(error: Error, context?: Record<string, unknown>) {
   logger.error('Error captured', error, context);
 
   // TODO: Décommenter après installation de Sentry
@@ -111,7 +111,7 @@ export function captureError(error: Error, context?: Record<string, any>) {
 /**
  * Capturer un message
  */
-export function captureMessage(message: string, level: 'info' | 'warning' | 'error' = 'info', context?: Record<string, any>) {
+export function captureMessage(message: string, level: 'info' | 'warning' | 'error' = 'info', context?: Record<string, unknown>) {
   logger[level === 'warning' ? 'warn' : level](message, context);
 
   // TODO: Décommenter après installation de Sentry
@@ -162,7 +162,7 @@ export function clearUserContext() {
 /**
  * Ajouter un breadcrumb (fil d'Ariane pour debug)
  */
-export function addBreadcrumb(message: string, category: string, data?: Record<string, any>) {
+export function addBreadcrumb(message: string, category: string, data?: Record<string, unknown>) {
   logger.debug(`Breadcrumb: ${category} - ${message}`, data);
 
   // TODO: Décommenter après installation de Sentry
