@@ -52,7 +52,13 @@ export type Permission =
   | "logs:view"
   // Configuration
   | "config:view"
-  | "config:edit";
+  | "config:edit"
+  // Backups
+  | "backups:view"
+  | "backups:create"
+  | "backups:download"
+  | "backups:restore"
+  | "backups:delete";
 
 // Permissions par rôle
 const ROLE_PERMISSIONS: Record<AdminRole, Permission[]> = {
