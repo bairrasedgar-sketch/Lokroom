@@ -14,8 +14,11 @@ const customFormat = printf(({ level, message, timestamp, ...metadata }) => {
   return msg;
 });
 
-// Transport pour fichiers avec rotation
-const fileRotateTransport = new DailyRotateFile({
+// Détection de l'environnement Vercel (read-only filesystem)
+const isVercel = process.env.VERCEL === '1' || process.env.VERCEL_ENV !== undefined;
+
+// Transport pour fichiers avec rotation (seulement si pas sur Vercel)
+const fileRotateTransport = !isVercel ? new DailyRotateFile({
   filename: "logs/app-%DATE%.log",
   datePattern: "YYYY-MM-DD",
   maxSize: "20m",
@@ -25,10 +28,10 @@ const fileRotateTransport = new DailyRotateFile({
     errors({ stack: true }),
     customFormat
   ),
-});
+}) : null;
 
-// Transport pour erreurs uniquement
-const errorFileTransport = new DailyRotateFile({
+// Transport pour erreurs uniquement (seulement si pas sur Vercel)
+const errorFileTransport = !isVercel ? new DailyRotateFile({
   filename: "logs/error-%DATE%.log",
   datePattern: "YYYY-MM-DD",
   maxSize: "20m",
@@ -39,9 +42,9 @@ const errorFileTransport = new DailyRotateFile({
     errors({ stack: true }),
     customFormat
   ),
-});
+}) : null;
 
-// Transport console (dev uniquement)
+// Transport console (toujours actif)
 const consoleTransport = new winston.transports.Console({
   format: combine(
     colorize(),
@@ -54,10 +57,17 @@ const consoleTransport = new winston.transports.Console({
 export const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || "info",
   transports: [
-    fileRotateTransport,
-    errorFileTransport,
-    ...(process.env.NODE_ENV !== "production" ? [consoleTransport] : []),
-  ],
+    // Sur Vercel, utiliser seulement console
+    // En local, utiliser fichiers + console en dev
+    ...(isVercel
+      ? [consoleTransport]
+      : [
+          fileRotateTransport!,
+          errorFileTransport!,
+          ...(process.env.NODE_ENV !== "production" ? [consoleTransport] : []),
+        ]
+    ),
+  ].filter(Boolean),
   exitOnError: false,
 });
 
@@ -68,14 +78,16 @@ export const httpLogger = winston.createLogger({
     timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
     customFormat
   ),
-  transports: [
-    new DailyRotateFile({
-      filename: "logs/http-%DATE%.log",
-      datePattern: "YYYY-MM-DD",
-      maxSize: "20m",
-      maxFiles: "7d",
-    }),
-  ],
+  transports: isVercel
+    ? [consoleTransport]
+    : [
+        new DailyRotateFile({
+          filename: "logs/http-%DATE%.log",
+          datePattern: "YYYY-MM-DD",
+          maxSize: "20m",
+          maxFiles: "7d",
+        }),
+      ],
 });
 
 // Logger pour les événements métier
@@ -85,12 +97,14 @@ export const businessLogger = winston.createLogger({
     timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
     customFormat
   ),
-  transports: [
-    new DailyRotateFile({
-      filename: "logs/business-%DATE%.log",
-      datePattern: "YYYY-MM-DD",
-      maxSize: "20m",
-      maxFiles: "30d",
-    }),
-  ],
+  transports: isVercel
+    ? [consoleTransport]
+    : [
+        new DailyRotateFile({
+          filename: "logs/business-%DATE%.log",
+          datePattern: "YYYY-MM-DD",
+          maxSize: "20m",
+          maxFiles: "30d",
+        }),
+      ],
 });
