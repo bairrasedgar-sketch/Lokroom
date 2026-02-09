@@ -10,6 +10,9 @@ import SplashScreen from "@/components/SplashScreen";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SentryErrorBoundary } from "@/components/SentryErrorBoundary";
 import Analytics from "@/components/Analytics";
+import ChatWidget from "@/components/chat/ChatWidget";
+import NotificationPermission from "@/components/notifications/NotificationPermission";
+import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 
 const SUPPORTED_LOCALES = ["fr", "en", "es", "de", "it", "pt", "zh"] as const;
 type LocaleCode = (typeof SUPPORTED_LOCALES)[number];
@@ -151,6 +154,7 @@ export default async function RootLayout({
             <Providers>
               <Analytics />
               <SplashScreen />
+              <ServiceWorkerRegistration />
               <MaintenanceRedirect isMaintenanceMode={isMaintenanceMode} />
               <SkipLink />
               <ConditionalNavbar />
@@ -159,6 +163,8 @@ export default async function RootLayout({
               </main>
               <ConditionalFooter />
               <ConditionalCookieBanner />
+              <ChatWidget />
+              <NotificationPermission />
             </Providers>
           </ErrorBoundary>
         </SentryErrorBoundary>
