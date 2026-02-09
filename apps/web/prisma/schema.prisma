@@ -1816,3 +1816,38 @@ enum CheckInMethod {
   DOORMAN           /// Portier
   BUILDING_STAFF    /// Personnel de l'immeuble
 }
+
+/// Webhook pour intégrations tierces
+model Webhook {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  url         String
+  events      String[] /// ["booking.created", "booking.cancelled", etc.]
+  secret      String   /// Pour HMAC signature
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deliveries  WebhookDelivery[]
+
+  @@index([userId])
+  @@index([active])
+}
+
+/// Livraison d'un webhook (historique)
+model WebhookDelivery {
+  id          String   @id @default(cuid())
+  webhookId   String
+  webhook     Webhook  @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+  event       String
+  payload     Json
+  status      String   /// "pending", "success", "failed"
+  attempts    Int      @default(0)
+  lastAttempt DateTime?
+  response    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([webhookId])
+  @@index([status])
+  @@index([createdAt])
+}

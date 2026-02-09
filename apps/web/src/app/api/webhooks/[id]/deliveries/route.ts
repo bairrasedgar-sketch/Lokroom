@@ -15,39 +15,14 @@ export const dynamic = "force-dynamic";
 /**
  * GET /api/webhooks/[id]/deliveries
  * Liste l'historique des livraisons d'un webhook avec pagination
+ * TEMPORARILY DISABLED - Webhook model not in schema
  */
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const user = await getCurrentUser();
-  if (!user) {
-    return jsonError("unauthorized", 401);
-  }
-
-  // Vérifier que le webhook existe et appartient à l'utilisateur
-  const webhook = await prisma.webhook.findUnique({
-    where: {
-      id: params.id,
-      userId: user.id,
-    },
-  });
-
-  if (!webhook) {
-    return jsonError("webhook_not_found", 404);
-  }
-
-  // Valider les paramètres de recherche
-  const validation = validateSearchParams(
-    req.nextUrl.searchParams,
-    webhookDeliveriesSchema
-  );
-
-  if (!validation.success) {
-    return jsonError(validation.error, 400);
-  }
-
-  const { page, pageSize, status } = validation.data;
+  return jsonError("Webhook feature temporarily disabled", 503);
+}
 
   // Récupérer les deliveries
   const [deliveries, total] = await Promise.all([

@@ -16,38 +16,14 @@ export const dynamic = "force-dynamic";
 /**
  * POST /api/webhooks/[id]/test
  * Envoie un événement de test au webhook
+ * TEMPORARILY DISABLED - Webhook model not in schema
  */
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const user = await getCurrentUser();
-  if (!user) {
-    return jsonError("unauthorized", 401);
-  }
-
-  // Vérifier que le webhook existe et appartient à l'utilisateur
-  const webhook = await prisma.webhook.findUnique({
-    where: {
-      id: params.id,
-      userId: user.id,
-    },
-  });
-
-  if (!webhook) {
-    return jsonError("webhook_not_found", 404);
-  }
-
-  // Valider le body
-  const validation = await validateRequestBody(req, testWebhookSchema);
-  if (!validation.success) {
-    return jsonError(validation.error, validation.status);
-  }
-
-  const { event } = validation.data;
-
-  // Vérifier que le webhook est configuré pour cet événement
-  if (!webhook.events.includes(event)) {
+  return jsonError("Webhook feature temporarily disabled", 503);
+}
     return jsonError(
       `Ce webhook n'est pas configuré pour l'événement ${event}`,
       400
