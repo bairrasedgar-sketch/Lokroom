@@ -5,11 +5,11 @@
  * Exporte tous les modules nécessaires.
  */
 
-export { getRedisClient, closeRedis, isRedisAvailable } from "./client";
-export { cache, CacheService } from "./cache";
+export { getRedisClient, closeRedis } from "./client";
+export { CacheService } from "./cache";
+export { cache, isRedisAvailable, invalidateAllCache, invalidateListingCache } from "./cache-safe";
 export { CacheKeys, CacheTTL, CachePatterns } from "./keys";
 export {
-  invalidateListingCache,
   invalidateUserCache,
   invalidateBookingCache,
   invalidateReviewCache,
@@ -18,7 +18,6 @@ export {
   invalidateStatsCache,
   invalidateFavoritesCache,
   invalidateNotificationsCache,
-  invalidateAllCache,
 } from "./invalidation";
 export {
   checkRateLimit,

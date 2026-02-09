@@ -5,7 +5,7 @@
  * Remplace le système Upstash existant par ioredis.
  */
 
-import { cache } from "./cache";
+import { cache } from "./cache-safe";
 import { CacheKeys } from "./keys";
 
 export interface RateLimitResult {

@@ -5,7 +5,7 @@
  * Permet de maintenir la cohérence des données entre la DB et le cache.
  */
 
-import { cache } from "./cache";
+import { cache } from "./cache-safe";
 import { CacheKeys, CachePatterns } from "./keys";
 
 /**

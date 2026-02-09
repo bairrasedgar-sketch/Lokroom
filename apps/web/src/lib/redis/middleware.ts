@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { cache } from "./cache";
+import { cache } from "./cache-safe";
 
 export interface CacheMiddlewareOptions {
   ttl?: number;

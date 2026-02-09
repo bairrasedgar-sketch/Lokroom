@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "node dev.js",
     "build": "prisma generate --schema=./prisma/schema.prisma && next build",
-    "postbuild": "node scripts/compress-assets.js",
+    "postbuild": "node scripts/compress-assets.cjs",
     "build:analyze": "cross-env ANALYZE=true prisma generate --schema=./prisma/schema.prisma && cross-env ANALYZE=true next build",
     "build:mobile": "cross-env CAPACITOR_BUILD=true prisma generate --schema=./prisma/schema.prisma && cross-env CAPACITOR_BUILD=true next build",
     "start": "next start -p 3000",
@@ -22,7 +22,7 @@
     "mobile:build": "npm run build:mobile && npm run cap:sync",
     "migrate:api": "node scripts/migrate-api-calls.cjs",
     "deploy:mobile": "node scripts/deploy-mobile.cjs",
-    "compress": "node scripts/compress-assets.js",
+    "compress": "node scripts/compress-assets.cjs",
     "backup:database": "tsx scripts/backup-database.ts",
     "backup:restore": "tsx scripts/restore-database.ts",
     "backup:list": "tsx scripts/list-backups.ts",
