@@ -170,7 +170,6 @@ export async function POST(req: NextRequest) {
           status: "completed",
           completedAt: new Date(),
           expiresAt,
-          fileSize,
           // En production: fileUrl serait une URL S3 signée
           fileUrl: `data:${contentType};base64,${fileBase64}`,
         },
@@ -180,13 +179,14 @@ export async function POST(req: NextRequest) {
       await prisma.auditLog.create({
         data: {
           adminId: session.user.id,
-          action: "USER_EXPORTED_DATA",
+          action: "USER_UPDATED",
           entityType: "User",
           entityId: session.user.id,
           details: {
             format,
             fileSize,
             exportId: exportRequest.id,
+            operation: "USER_EXPORTED_DATA",
           },
           ipAddress: req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown",
           userAgent: req.headers.get("user-agent") || "unknown",
