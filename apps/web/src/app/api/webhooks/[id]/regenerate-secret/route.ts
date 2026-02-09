@@ -14,49 +14,11 @@ export const dynamic = "force-dynamic";
 /**
  * POST /api/webhooks/[id]/regenerate-secret
  * Régénère le secret d'un webhook
+ * TEMPORARILY DISABLED - Webhook model not in schema
  */
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const user = await getCurrentUser();
-  if (!user) {
-    return jsonError("unauthorized", 401);
-  }
-
-  // Vérifier que le webhook existe et appartient à l'utilisateur
-  const existing = await prisma.webhook.findUnique({
-    where: {
-      id: params.id,
-      userId: user.id,
-    },
-  });
-
-  if (!existing) {
-    return jsonError("webhook_not_found", 404);
-  }
-
-  // Générer un nouveau secret
-  const newSecret = generateWebhookSecret();
-
-  // Mettre à jour le webhook
-  const webhook = await prisma.webhook.update({
-    where: { id: params.id },
-    data: { secret: newSecret },
-    select: {
-      id: true,
-      url: true,
-      events: true,
-      secret: true,
-      active: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  });
-
-  return NextResponse.json({
-    success: true,
-    message: "Secret régénéré avec succès",
-    webhook,
-  });
+  return jsonError("Webhook feature temporarily disabled", 503);
 }
