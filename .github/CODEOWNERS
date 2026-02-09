@@ -1,0 +1,24 @@
+# Code Owners for Lok'Room
+
+# Default owners for everything in the repo
+* @bairrasedgar-sketch
+
+# Frontend components
+/apps/web/src/components/ @bairrasedgar-sketch
+
+# API routes
+/apps/web/src/app/api/ @bairrasedgar-sketch
+
+# Database schema and migrations
+/apps/web/prisma/ @bairrasedgar-sketch
+
+# CI/CD workflows
+/.github/workflows/ @bairrasedgar-sketch
+
+# Security-related files
+/apps/web/src/lib/security/ @bairrasedgar-sketch
+/apps/web/src/middleware.ts @bairrasedgar-sketch
+
+# Configuration files
+*.config.* @bairrasedgar-sketch
+.env.example @bairrasedgar-sketch
