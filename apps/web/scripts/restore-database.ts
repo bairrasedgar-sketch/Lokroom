@@ -213,7 +213,7 @@ async function createAuditLog(backupId: string, adminId: string): Promise<void> 
     await prisma.auditLog.create({
       data: {
         adminId,
-        action: "UPDATE" as const,
+        action: "USER_UPDATED",
         entityType: "DatabaseBackup",
         entityId: backupId,
         details: {

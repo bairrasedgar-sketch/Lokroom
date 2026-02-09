@@ -85,6 +85,10 @@ model User {
   supportMessagesSent               SupportMessage[]      @relation("SupportMessageSender")
   /// Webhooks créés par l'utilisateur
   webhooks                          Webhook[]
+  /// Recommandations personnalisées
+  recommendations                   UserRecommendation[]
+  /// Comportements trackés
+  behaviors                         UserBehavior[]
 }
 
 /// Secret TOTP pour l'authentification à deux facteurs
@@ -1888,4 +1892,40 @@ enum BackupStatus {
   COMPLETED
   FAILED
   DELETED
+}
+
+/// Recommandation personnalisée pour un utilisateur
+model UserRecommendation {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listingId   String
+  listing     Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  /// Score de pertinence (0-1)
+  score       Float
+  /// Raison de la recommandation
+  reason      String
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, listingId])
+  @@index([userId, score])
+  @@index([createdAt])
+}
+
+/// Comportement utilisateur pour le système de recommandations
+model UserBehavior {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Type d'action: view, click, search, favorite, book
+  action      String
+  listingId   String?
+  listing     Listing? @relation(fields: [listingId], references: [id], onDelete: SetNull)
+  /// Métadonnées additionnelles (query, filters, etc.)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([listingId])
+  @@index([action])
 }
