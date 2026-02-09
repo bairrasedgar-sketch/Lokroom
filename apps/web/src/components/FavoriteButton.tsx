@@ -22,6 +22,7 @@ export default function FavoriteButton({
 }) {
   const { status } = useSession();
   const { isFavorited, addFavorite, removeFavorite, openModalForListing, setOpenModalForListing } = useFavorites();
+  const { logFavorite } = useAnalytics();
   const [isPending, startTransition] = useTransition();
   const [isAnimating, setIsAnimating] = useState(false);
   const [particles, setParticles] = useState<number[]>([]);
@@ -65,6 +66,8 @@ export default function FavoriteButton({
           const errorData = await res.json().catch(() => ({}));
           toast.error(errorData.error || "Impossible de retirer le favori");
         } else {
+          // Track analytics
+          logFavorite({ listingId, action: 'remove' });
           toast.success("Retiré des favoris");
         }
       });
@@ -89,6 +92,8 @@ export default function FavoriteButton({
           const errorData = await res.json().catch(() => ({}));
           toast.error(errorData.error || "Impossible d'ajouter aux favoris");
         } else {
+          // Track analytics
+          logFavorite({ listingId, action: 'add' });
           toast.success("Ajouté aux favoris");
         }
       });
@@ -108,6 +113,8 @@ export default function FavoriteButton({
     // Mettre à jour le context
     addFavorite(listingId);
     triggerAnimation();
+    // Track analytics
+    logFavorite({ listingId, action: 'add' });
     toast.success("Ajouté aux favoris");
   }
 

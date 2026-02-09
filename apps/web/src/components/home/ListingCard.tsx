@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import FavoriteButton from "../FavoriteButton";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 type ListingCardType = {
   id: string;
@@ -58,9 +59,21 @@ function getCategoryEmoji(key: string): string {
 export function ListingCard({ card, index }: { card: ListingCardType; index: number }) {
   const [imageIndex, setImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const { logListingClick } = useAnalytics();
 
   const images = card.images || [];
   const hasMultipleImages = images.length > 1;
+
+  const handleCardClick = () => {
+    // Track listing click
+    logListingClick({
+      listingId: card.id,
+      listingTitle: card.title,
+      category: card.type,
+      price: parseFloat(card.priceFormatted.replace(/[^0-9.]/g, '')),
+      position: index,
+    });
+  };
 
   return (
     <div

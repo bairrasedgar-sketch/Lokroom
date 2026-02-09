@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 function useQueryState() {
   const searchParams = useSearchParams();
@@ -28,6 +29,7 @@ function useQueryState() {
 
 export default function ListingFilters() {
   const { searchParams, setParams } = useQueryState();
+  const { logSearch } = useAnalytics();
   const [open, setOpen] = useState(false);
 
   // valeurs initiales depuis l’URL
@@ -60,6 +62,17 @@ export default function ListingFilters() {
       min: minPrice || undefined,
       max: maxPrice || undefined,
     });
+
+    // Track search analytics
+    logSearch({
+      query: `${city || country || 'all'}`,
+      filters: {
+        location: city || country || undefined,
+        priceMin: minPrice ? parseFloat(minPrice) : undefined,
+        priceMax: maxPrice ? parseFloat(maxPrice) : undefined,
+      },
+    });
+
     setOpen(false);
   }
 
