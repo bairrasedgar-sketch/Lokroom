@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { StarIcon, ChevronLeftIcon, CheckIcon, CameraIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { StarIcon, ChevronLeftIcon, CheckIcon } from "@heroicons/react/24/outline";
 import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
+import ReviewPhotoUpload from "@/components/reviews/ReviewPhotoUpload";
 
 // Highlights disponibles pour les voyageurs
 const GUEST_HIGHLIGHTS = [
@@ -88,6 +89,7 @@ export default function ReviewPage() {
   const [comment, setComment] = useState("");
   const [selectedHighlights, setSelectedHighlights] = useState<string[]>([]);
   const [wouldRecommend, setWouldRecommend] = useState<boolean | null>(null);
+  const [photos, setPhotos] = useState<Array<{ id: string; url: string; caption?: string | null }>>([]);
 
   const isGuestReview = booking?.type === "GUEST_TO_HOST";
   const highlights = isGuestReview ? GUEST_HIGHLIGHTS : HOST_HIGHLIGHTS;
@@ -406,6 +408,21 @@ export default function ReviewPage() {
                 {comment.length}/2000
               </p>
             </div>
+
+            {/* Photo upload section */}
+            {booking && (
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Ajouter des photos (optionnel)
+                </label>
+                <ReviewPhotoUpload
+                  reviewId={booking.id}
+                  photos={photos}
+                  onPhotosChange={setPhotos}
+                  maxPhotos={5}
+                />
+              </div>
+            )}
 
             <div className="flex gap-3 mt-8">
               <button

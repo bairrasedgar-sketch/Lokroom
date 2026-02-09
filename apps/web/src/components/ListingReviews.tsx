@@ -6,6 +6,13 @@ import Image from "next/image";
 import { StarIcon, XMarkIcon, ChatBubbleLeftIcon } from "@heroicons/react/24/outline";
 import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
 import { useTranslation } from "@/hooks/useTranslation";
+import ReviewPhotoGallery from "@/components/reviews/ReviewPhotoGallery";
+
+type ReviewPhoto = {
+  id: string;
+  url: string;
+  caption: string | null;
+};
 
 type Review = {
   id: string;
@@ -22,6 +29,7 @@ type Review = {
   highlights: string[];
   wouldRecommend: boolean;
   createdAt: string;
+  photos: ReviewPhoto[];
   author: {
     id: string;
     name: string | null;
@@ -210,6 +218,11 @@ function ReviewCard({
             </button>
           )}
         </div>
+      )}
+
+      {/* Review photos */}
+      {review.photos && review.photos.length > 0 && (
+        <ReviewPhotoGallery photos={review.photos} />
       )}
 
       {/* Host response */}
