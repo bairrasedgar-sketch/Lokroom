@@ -45,15 +45,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }
 
-  const { name } = await req.json();
-
-  if (!name || typeof name !== "string" || name.trim().length === 0) {
-    return NextResponse.json({ error: "Nom requis" }, { status: 400 });
+  // Validation Zod du body
+  const { createWishlistSchema, validateRequestBody } = await import("@/lib/validations/api");
+  const validation = await validateRequestBody(req, createWishlistSchema);
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error }, { status: validation.status });
   }
+
+  const { name } = validation.data;
 
   const wishlist = await prisma.wishlist.create({
     data: {
-      name: name.trim(),
+      name,
       userId: session.user.id,
     },
   });

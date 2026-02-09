@@ -44,10 +44,17 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const body = await req.json();
-    const { destination, startDate, endDate, guests } = body;
+    // Validation Zod du body
+    const { saveSearchSchema, validateRequestBody } = await import("@/lib/validations/api");
+    const validation = await validateRequestBody(req, saveSearchSchema);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: validation.status });
+    }
 
-    if (!destination || typeof destination !== "string") {
+    const { query, city, country, checkIn, checkOut, guests } = validation.data;
+    const destination = query || city || country || "";
+
+    if (!destination) {
       return NextResponse.json({ error: "destination_required" }, { status: 400 });
     }
 
@@ -87,9 +94,9 @@ export async function POST(req: NextRequest) {
       data: {
         userId: session.user.id,
         destination: destination.trim(),
-        startDate: startDate || null,
-        endDate: endDate || null,
-        guests: guests ? parseInt(guests, 10) : null,
+        startDate: checkIn ? new Date(checkIn) : null,
+        endDate: checkOut ? new Date(checkOut) : null,
+        guests: guests || null,
       },
     });
 

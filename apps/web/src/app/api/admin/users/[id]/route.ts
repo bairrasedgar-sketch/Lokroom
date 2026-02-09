@@ -255,8 +255,15 @@ export async function PUT(
 
   try {
     const { id } = await params;
-    const body = await request.json();
-    const { email, name, role, country, emailVerified, identityStatus } = body;
+
+    // Validation Zod du body
+    const { adminUpdateUserSchema, validateRequestBody } = await import("@/lib/validations/api");
+    const validation = await validateRequestBody(request, adminUpdateUserSchema);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: validation.status });
+    }
+
+    const { email, name, role, country, emailVerified, identityStatus } = validation.data;
 
     // Vérifier que l'utilisateur existe
     const existingUser = await prisma.user.findUnique({

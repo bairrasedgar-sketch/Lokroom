@@ -4,6 +4,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import {
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
@@ -14,15 +15,35 @@ import {
   ArrowDownTrayIcon,
   ChartBarIcon,
 } from "@heroicons/react/24/outline";
-import {
-  RevenueAreaChart,
-  BookingsBarChart,
-  DistributionPieChart,
-  TopListingsChart,
-  StatusDistributionChart,
-  MultiLineChart,
-  COLORS,
-} from "@/components/admin/Charts";
+
+// Lazy load Charts - heavy Recharts library
+const RevenueAreaChart = dynamic(
+  () => import("@/components/admin/Charts").then((mod) => ({ default: mod.RevenueAreaChart })),
+  { loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" />, ssr: false }
+);
+const BookingsBarChart = dynamic(
+  () => import("@/components/admin/Charts").then((mod) => ({ default: mod.BookingsBarChart })),
+  { loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" />, ssr: false }
+);
+const DistributionPieChart = dynamic(
+  () => import("@/components/admin/Charts").then((mod) => ({ default: mod.DistributionPieChart })),
+  { loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" />, ssr: false }
+);
+const TopListingsChart = dynamic(
+  () => import("@/components/admin/Charts").then((mod) => ({ default: mod.TopListingsChart })),
+  { loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" />, ssr: false }
+);
+const StatusDistributionChart = dynamic(
+  () => import("@/components/admin/Charts").then((mod) => ({ default: mod.StatusDistributionChart })),
+  { loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" />, ssr: false }
+);
+const MultiLineChart = dynamic(
+  () => import("@/components/admin/Charts").then((mod) => ({ default: mod.MultiLineChart })),
+  { loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" />, ssr: false }
+);
+
+// Import COLORS directly (it's just a constant)
+import { COLORS } from "@/components/admin/Charts";
 
 type Stats = {
   users: { total: number; thisMonth: number; lastMonth: number; growth: number };

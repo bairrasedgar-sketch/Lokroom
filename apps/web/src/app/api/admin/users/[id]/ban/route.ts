@@ -16,15 +16,15 @@ export async function POST(
 
   try {
     const { id } = await params;
-    const body = await request.json();
-    const { reason, expiresAt } = body;
 
-    if (!reason) {
-      return NextResponse.json(
-        { error: "Raison requise" },
-        { status: 400 }
-      );
+    // Validation Zod du body
+    const { adminBanUserSchema, validateRequestBody } = await import("@/lib/validations/api");
+    const validation = await validateRequestBody(request, adminBanUserSchema);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: validation.status });
     }
+
+    const { reason, expiresAt } = validation.data;
 
     // Vérifier que l'utilisateur existe et n'est pas admin
     const user = await prisma.user.findUnique({

@@ -12,22 +12,21 @@ export async function POST(request: Request) {
   if ("error" in auth) return auth.error;
 
   try {
-    const body = await request.json();
-    const { targetType, targetId, content, isPinned } = body;
-
-    if (!targetType || !targetId || !content) {
-      return NextResponse.json(
-        { error: "Champs requis manquants" },
-        { status: 400 }
-      );
+    // Validation Zod du body
+    const { createAdminNoteSchema, validateRequestBody } = await import("@/lib/validations/api");
+    const validation = await validateRequestBody(request, createAdminNoteSchema);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: validation.status });
     }
+
+    const { targetType, targetId, content, isImportant } = validation.data;
 
     const note = await prisma.adminNote.create({
       data: {
         targetType,
         targetId,
         content,
-        isPinned: isPinned || false,
+        isPinned: isImportant || false,
         authorId: auth.session.user.id,
       },
       include: {

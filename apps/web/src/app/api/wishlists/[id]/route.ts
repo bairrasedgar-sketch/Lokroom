@@ -57,11 +57,15 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const { name } = await req.json();
 
-  if (!name || typeof name !== "string" || name.trim().length === 0) {
-    return NextResponse.json({ error: "Nom requis" }, { status: 400 });
+  // Validation Zod du body
+  const { updateWishlistSchema, validateRequestBody } = await import("@/lib/validations/api");
+  const validation = await validateRequestBody(req, updateWishlistSchema);
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error }, { status: validation.status });
   }
+
+  const { name } = validation.data;
 
   // Vérifier que la liste appartient à l'utilisateur
   const existing = await prisma.wishlist.findFirst({
@@ -74,7 +78,7 @@ export async function PATCH(
 
   const wishlist = await prisma.wishlist.update({
     where: { id },
-    data: { name: name.trim() },
+    data: { name },
   });
 
   return NextResponse.json(wishlist);

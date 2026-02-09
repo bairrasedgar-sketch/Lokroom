@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import {
   UsersIcon,
   HomeModernIcon,
@@ -18,12 +19,24 @@ import {
   ArrowPathIcon,
   ChartBarIcon,
 } from "@heroicons/react/24/outline";
-import {
-  RevenueAreaChart,
-  BookingsBarChart,
-  TopListingsChart,
-  StatusDistributionChart,
-} from "@/components/admin";
+
+// Lazy load charts - heavy Recharts library
+const RevenueAreaChart = dynamic(
+  () => import("@/components/admin").then((mod) => ({ default: mod.RevenueAreaChart })),
+  { loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" />, ssr: false }
+);
+const BookingsBarChart = dynamic(
+  () => import("@/components/admin").then((mod) => ({ default: mod.BookingsBarChart })),
+  { loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" />, ssr: false }
+);
+const TopListingsChart = dynamic(
+  () => import("@/components/admin").then((mod) => ({ default: mod.TopListingsChart })),
+  { loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" />, ssr: false }
+);
+const StatusDistributionChart = dynamic(
+  () => import("@/components/admin").then((mod) => ({ default: mod.StatusDistributionChart })),
+  { loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" />, ssr: false }
+);
 
 type DashboardStats = {
   users: {

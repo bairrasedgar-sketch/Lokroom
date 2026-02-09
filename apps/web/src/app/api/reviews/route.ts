@@ -4,22 +4,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { paginationSchema, validateSearchParams } from "@/lib/validations/api";
 
 export const dynamic = "force-dynamic";
 
-// Constantes de validation
-const MAX_COMMENT_LENGTH = 2000;
-const MAX_RESPONSE_LENGTH = 1000;
-const MIN_RATING = 1;
-const MAX_RATING = 5;
 const REVIEW_WINDOW_DAYS = 14; // Délai pour laisser un avis après la réservation
-
-function clampRating(raw: unknown): number | null {
-  const n = Number(raw);
-  if (!Number.isFinite(n)) return null;
-  if (n < MIN_RATING || n > MAX_RATING) return null;
-  return Math.round(n);
-}
 
 // GET /api/reviews?listingId=XXX ou ?userId=XXX ou ?bookingId=XXX
 export async function GET(req: NextRequest) {
@@ -27,8 +16,14 @@ export async function GET(req: NextRequest) {
   const userId = req.nextUrl.searchParams.get("userId");
   const bookingId = req.nextUrl.searchParams.get("bookingId");
   const type = req.nextUrl.searchParams.get("type"); // GUEST_TO_HOST ou HOST_TO_GUEST
-  const page = parseInt(req.nextUrl.searchParams.get("page") || "1");
-  const limit = Math.min(parseInt(req.nextUrl.searchParams.get("limit") || "10"), 50);
+
+  // Validation de la pagination
+  const validation = validateSearchParams(req.nextUrl.searchParams, paginationSchema);
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
+  }
+
+  const { page, limit } = validation.data;
 
   // Construire le filtre
   const where: Record<string, unknown> = {
@@ -174,32 +169,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "User_not_found" }, { status: 404 });
   }
 
-  const body = await req.json().catch(() => null);
-  if (!body?.bookingId) {
-    return NextResponse.json({ error: "bookingId_required" }, { status: 400 });
+  // Validation Zod du body
+  const { createReviewSchema, validateRequestBody } = await import("@/lib/validations/api");
+  const validation = await validateRequestBody(req, createReviewSchema);
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error }, { status: validation.status });
   }
 
-  // Validation de la note globale
-  const rating = clampRating(body.rating);
-  if (!rating) {
-    return NextResponse.json(
-      { error: "rating_must_be_between_1_and_5" },
-      { status: 400 }
-    );
-  }
-
-  // Validation du commentaire
-  let comment: string | null = null;
-  if (typeof body.comment === "string" && body.comment.trim().length > 0) {
-    const trimmed = body.comment.trim();
-    if (trimmed.length > MAX_COMMENT_LENGTH) {
-      return NextResponse.json(
-        { error: `comment_too_long_max_${MAX_COMMENT_LENGTH}_chars` },
-        { status: 400 }
-      );
-    }
-    comment = trimmed;
-  }
+  const {
+    bookingId,
+    rating,
+    comment,
+    ratingCleanliness,
+    ratingAccuracy,
+    ratingCommunication,
+    ratingLocation,
+    ratingCheckin,
+    ratingValue,
+    ratingRespect,
+    ratingTidiness,
+    highlights,
+    wouldRecommend,
+  } = validation.data;
 
   // Récupérer la réservation
   const booking = await prisma.booking.findUnique({
@@ -276,31 +267,23 @@ export async function POST(req: NextRequest) {
   const reviewType = isGuest ? "GUEST_TO_HOST" : "HOST_TO_GUEST";
   const targetUserId = isGuest ? booking.listing.ownerId : booking.guestId;
 
-  // Valider les sous-notes selon le type
+  // Construire les sous-notes selon le type
   const subRatings: Record<string, number | null> = {};
 
   if (isGuest) {
     // Sous-notes pour les voyageurs
-    subRatings.ratingCleanliness = clampRating(body.ratingCleanliness);
-    subRatings.ratingAccuracy = clampRating(body.ratingAccuracy);
-    subRatings.ratingCommunication = clampRating(body.ratingCommunication);
-    subRatings.ratingLocation = clampRating(body.ratingLocation);
-    subRatings.ratingCheckin = clampRating(body.ratingCheckin);
-    subRatings.ratingValue = clampRating(body.ratingValue);
+    subRatings.ratingCleanliness = ratingCleanliness ?? null;
+    subRatings.ratingAccuracy = ratingAccuracy ?? null;
+    subRatings.ratingCommunication = ratingCommunication ?? null;
+    subRatings.ratingLocation = ratingLocation ?? null;
+    subRatings.ratingCheckin = ratingCheckin ?? null;
+    subRatings.ratingValue = ratingValue ?? null;
   } else {
     // Sous-notes pour les hôtes
-    subRatings.ratingRespect = clampRating(body.ratingRespect);
-    subRatings.ratingTidiness = clampRating(body.ratingTidiness);
-    subRatings.ratingCommunication = clampRating(body.ratingCommunication);
+    subRatings.ratingRespect = ratingRespect ?? null;
+    subRatings.ratingTidiness = ratingTidiness ?? null;
+    subRatings.ratingCommunication = ratingCommunication ?? null;
   }
-
-  // Highlights (tags)
-  const highlights: string[] = Array.isArray(body.highlights)
-    ? body.highlights.filter((h: unknown) => typeof h === "string").slice(0, 10)
-    : [];
-
-  // Recommandation
-  const wouldRecommend = body.wouldRecommend !== false;
 
   // Créer l'avis dans une transaction
   const review = await prisma.$transaction(async (tx) => {
@@ -311,11 +294,11 @@ export async function POST(req: NextRequest) {
         authorId: me.id,
         targetUserId,
         rating,
-        comment,
+        comment: comment ?? null,
         type: reviewType,
         status: "PUBLISHED",
-        highlights,
-        wouldRecommend,
+        highlights: highlights ?? [],
+        wouldRecommend: wouldRecommend ?? true,
         ...subRatings,
       },
     });
@@ -395,26 +378,18 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "User_not_found" }, { status: 404 });
   }
 
-  const body = await req.json().catch(() => null);
-  if (!body?.reviewId || !body?.response) {
-    return NextResponse.json(
-      { error: "reviewId and response required" },
-      { status: 400 }
-    );
+  // Validation Zod du body
+  const { respondToReviewSchema, validateRequestBody } = await import("@/lib/validations/api");
+  const validation = await validateRequestBody(req, respondToReviewSchema);
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error }, { status: validation.status });
   }
 
-  // Valider la réponse
-  const response = body.response.trim();
-  if (response.length > MAX_RESPONSE_LENGTH) {
-    return NextResponse.json(
-      { error: `response_too_long_max_${MAX_RESPONSE_LENGTH}_chars` },
-      { status: 400 }
-    );
-  }
+  const { reviewId, response } = validation.data;
 
   // Récupérer l'avis
   const review = await prisma.review.findUnique({
-    where: { id: body.reviewId },
+    where: { id: reviewId },
   });
 
   if (!review) {
@@ -439,7 +414,7 @@ export async function PATCH(req: NextRequest) {
 
   // Mettre à jour l'avis avec la réponse
   const updatedReview = await prisma.review.update({
-    where: { id: body.reviewId },
+    where: { id: reviewId },
     data: {
       response,
       responseAt: new Date(),

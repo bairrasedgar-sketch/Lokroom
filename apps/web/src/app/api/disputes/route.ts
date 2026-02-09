@@ -4,10 +4,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { paginationSchema, validateSearchParams } from "@/lib/validations/api";
 
 export const dynamic = "force-dynamic";
 
-const MAX_DESCRIPTION_LENGTH = 5000;
 const RESPONSE_DEADLINE_DAYS = 3;
 
 // GET /api/disputes - Liste des litiges de l'utilisateur
@@ -25,9 +25,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "User_not_found" }, { status: 404 });
   }
 
+  // Validation des paramètres de pagination
+  const validation = validateSearchParams(req.nextUrl.searchParams, paginationSchema);
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
+  }
+
+  const { page, limit } = validation.data;
   const status = req.nextUrl.searchParams.get("status");
-  const page = parseInt(req.nextUrl.searchParams.get("page") || "1");
-  const limit = Math.min(parseInt(req.nextUrl.searchParams.get("limit") || "10"), 50);
 
   // Construire le filtre
   const where: Record<string, unknown> = {
@@ -172,45 +177,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "User_not_found" }, { status: 404 });
   }
 
-  const body = await req.json().catch(() => null);
-  if (!body?.bookingId || !body?.reason || !body?.description) {
-    return NextResponse.json(
-      { error: "bookingId, reason and description required" },
-      { status: 400 }
-    );
+  // Validation Zod du body
+  const { createDisputeSchema, validateRequestBody } = await import("@/lib/validations/api");
+  const validation = await validateRequestBody(req, createDisputeSchema);
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error }, { status: validation.status });
   }
 
-  // Valider la description
-  const description = body.description.trim();
-  if (description.length > MAX_DESCRIPTION_LENGTH) {
-    return NextResponse.json(
-      { error: `description_too_long_max_${MAX_DESCRIPTION_LENGTH}_chars` },
-      { status: 400 }
-    );
-  }
-
-  // Valider la raison
-  const validReasons = [
-    "PROPERTY_NOT_AS_DESCRIBED",
-    "CLEANLINESS_ISSUE",
-    "AMENITIES_MISSING",
-    "HOST_UNRESPONSIVE",
-    "GUEST_DAMAGE",
-    "GUEST_VIOLATION",
-    "PAYMENT_ISSUE",
-    "CANCELLATION_DISPUTE",
-    "SAFETY_CONCERN",
-    "NOISE_COMPLAINT",
-    "UNAUTHORIZED_GUESTS",
-    "OTHER",
-  ];
-  if (!validReasons.includes(body.reason)) {
-    return NextResponse.json({ error: "invalid_reason" }, { status: 400 });
-  }
+  const { bookingId, reason, description, claimedAmountCents } = validation.data;
 
   // Récupérer la réservation
   const booking = await prisma.booking.findUnique({
-    where: { id: body.bookingId },
+    where: { id: bookingId },
     include: {
       listing: {
         select: {
@@ -286,12 +264,12 @@ export async function POST(req: NextRequest) {
         bookingId: booking.id,
         openedById: me.id,
         againstId,
-        reason: body.reason,
+        reason,
         description,
-        category: categoryMap[body.reason] || "OTHER",
-        claimedAmountCents: body.claimedAmountCents || null,
+        category: categoryMap[reason] || "OTHER",
+        claimedAmountCents: claimedAmountCents || null,
         responseDeadline,
-        priority: body.reason === "SAFETY_CONCERN" ? 1 : 3,
+        priority: reason === "SAFETY_CONCERN" ? 1 : 3,
       },
     });
 
@@ -315,7 +293,7 @@ export async function POST(req: NextRequest) {
         data: {
           disputeId: d.id,
           bookingId: booking.id,
-          reason: body.reason,
+          reason,
         },
         actionUrl: `/disputes/${d.id}`,
       },

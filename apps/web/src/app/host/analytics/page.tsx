@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import {
   ArrowDownTrayIcon,
   ArrowTrendingUpIcon,
@@ -19,14 +20,27 @@ import {
   ArrowPathIcon,
 } from "@heroicons/react/24/outline";
 
-// Import des graphiques Recharts
-import {
-  HostPerformanceChart,
-  HostOccupancyChart,
-  HostBookingStatusChart,
-  HostRatingBreakdown,
-  HostListingsPerformance,
-} from "@/components/host/HostCharts";
+// Lazy load charts - heavy Recharts library
+const HostPerformanceChart = dynamic(
+  () => import("@/components/host/HostCharts").then((mod) => ({ default: mod.HostPerformanceChart })),
+  { loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" />, ssr: false }
+);
+const HostOccupancyChart = dynamic(
+  () => import("@/components/host/HostCharts").then((mod) => ({ default: mod.HostOccupancyChart })),
+  { loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" />, ssr: false }
+);
+const HostBookingStatusChart = dynamic(
+  () => import("@/components/host/HostCharts").then((mod) => ({ default: mod.HostBookingStatusChart })),
+  { loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" />, ssr: false }
+);
+const HostRatingBreakdown = dynamic(
+  () => import("@/components/host/HostCharts").then((mod) => ({ default: mod.HostRatingBreakdown })),
+  { loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" />, ssr: false }
+);
+const HostListingsPerformance = dynamic(
+  () => import("@/components/host/HostCharts").then((mod) => ({ default: mod.HostListingsPerformance })),
+  { loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" />, ssr: false }
+);
 
 type MonthlyData = {
   month: string;

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { cookies } from "next/headers";
 import { Metadata } from "next";
+import dynamicImport from "next/dynamic";
 import {
   Home,
   Users,
@@ -30,14 +31,10 @@ import {
 
 import { authOptions } from "@/lib/auth";
 import DeleteListingButton from "@/components/DeleteListingButton";
-import ListingGallery from "@/components/ListingGallery";
 import FavoriteButton from "@/components/FavoriteButton";
 import BookingForm from "@/components/BookingForm";
 import { getOrigin } from "@/lib/origin";
-import Map from "@/components/Map";
 import MapExpandButton from "@/components/MapExpandButton";
-import MobileBookingModal from "@/components/MobileBookingModal";
-import ListingReviews from "@/components/ListingReviews";
 import { formatMoneyAsync, type Currency } from "@/lib/currency";
 import { getServerDictionary } from "@/lib/i18n.server";
 import ListingJsonLd from "@/components/seo/ListingJsonLd";
@@ -45,6 +42,27 @@ import InstantBookBadge from "@/components/InstantBookBadge";
 import ShareButton from "@/components/ShareButton";
 import AmenitiesModal from "@/components/AmenitiesModal";
 import KycWarning from "@/components/KycWarning";
+
+// Lazy load heavy components
+const ListingGallery = dynamicImport(() => import("@/components/ListingGallery"), {
+  loading: () => <div className="h-[500px] bg-gray-200 animate-pulse rounded-lg" />,
+  ssr: true,
+});
+
+const Map = dynamicImport(() => import("@/components/Map"), {
+  loading: () => <div className="h-[400px] bg-gray-200 animate-pulse rounded-lg" />,
+  ssr: false,
+});
+
+const MobileBookingModal = dynamicImport(() => import("@/components/MobileBookingModal"), {
+  loading: () => null,
+  ssr: false,
+});
+
+const ListingReviews = dynamicImport(() => import("@/components/ListingReviews"), {
+  loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" />,
+  ssr: true,
+});
 
 export const revalidate = 0;
 export const dynamic = "force-dynamic";

@@ -5,28 +5,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
+import { contactSchema, validateRequestBody } from "@/lib/validations/api";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { name, email, message } = body;
-
-    // Validation
-    if (!email || !message) {
-      return NextResponse.json(
-        { error: "Email et message requis" },
-        { status: 400 }
-      );
+    // Validation Zod du body
+    const validation = await validateRequestBody(request, contactSchema);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: validation.status });
     }
 
-    // Validation email basique
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: "Email invalide" },
-        { status: 400 }
-      );
-    }
+    const { name, email, message, subject, category } = validation.data;
 
     // Chercher si l'utilisateur existe
     const existingUser = await prisma.user.findUnique({
@@ -41,10 +30,10 @@ export async function POST(request: Request) {
         data: {
           userId: existingUser.id,
           status: "WAITING_AGENT",
-          subject: `Contact maintenance - ${name || email}`,
+          subject: subject || `Contact maintenance - ${name || email}`,
           messages: {
             create: {
-              content: `**Nom:** ${name || "Non renseigné"}\n**Email:** ${email}\n\n${message}`,
+              content: `**Nom:** ${name}\n**Email:** ${email}\n**Catégorie:** ${category || "GENERAL"}\n\n${message}`,
               type: "USER",
               senderId: existingUser.id,
             },
@@ -70,15 +59,17 @@ export async function POST(request: Request) {
     for (const admin of admins) {
       await sendEmail({
         to: admin.email,
-        subject: `[Lok'Room] Nouveau message de contact - ${name || email}`,
+        subject: `[Lok'Room] Nouveau message de contact - ${name}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #1f2937;">Nouveau message de contact</h2>
             <p style="color: #6b7280;">Un visiteur a envoyé un message depuis la page de maintenance.</p>
 
             <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <p><strong>Nom:</strong> ${name || "Non renseigné"}</p>
+              <p><strong>Nom:</strong> ${name}</p>
               <p><strong>Email:</strong> ${email}</p>
+              <p><strong>Sujet:</strong> ${subject}</p>
+              <p><strong>Catégorie:</strong> ${category || "GENERAL"}</p>
               <p><strong>Utilisateur enregistré:</strong> ${existingUser ? "Oui" : "Non"}</p>
               <p><strong>Message:</strong></p>
               <p style="white-space: pre-wrap;">${message}</p>

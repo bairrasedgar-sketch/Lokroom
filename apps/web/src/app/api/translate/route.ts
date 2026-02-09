@@ -52,64 +52,41 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body = await req.json();
-    const { text, targetLang, sourceLang } = body;
-
-    // Validation
-    if (!text || typeof text !== "string") {
-      return NextResponse.json(
-        { error: "Le texte est requis" },
-        { status: 400 }
-      );
+    // Validation Zod du body
+    const { translateSchema, validateRequestBody } = await import("@/lib/validations/api");
+    const validation = await validateRequestBody(req, translateSchema);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: validation.status });
     }
 
-    if (text.length > 5000) {
-      return NextResponse.json(
-        { error: "Le texte ne peut pas depasser 5000 caracteres" },
-        { status: 400 }
-      );
-    }
-
-    if (!targetLang || !isLanguageSupported(targetLang)) {
-      return NextResponse.json(
-        { error: "Langue cible invalide ou non supportee" },
-        { status: 400 }
-      );
-    }
-
-    if (sourceLang && !isLanguageSupported(sourceLang)) {
-      return NextResponse.json(
-        { error: "Langue source invalide ou non supportee" },
-        { status: 400 }
-      );
-    }
+    const { text, targetLanguage, sourceLanguage } = validation.data;
 
     // Detecter la langue source si non fournie
-    let detectedLang = sourceLang as SupportedLanguage | undefined;
+    let detectedLang = sourceLanguage as SupportedLanguage | undefined;
     if (!detectedLang) {
       const detection = await detectLanguage(text);
       detectedLang = detection.language;
     }
 
     // Si la langue source est la meme que la cible, retourner le texte original
-    if (detectedLang === targetLang) {
+    if (detectedLang === targetLanguage) {
       return NextResponse.json({
         translatedText: text,
         originalText: text,
         sourceLang: detectedLang,
-        targetLang,
+        targetLang: targetLanguage,
         wasTranslated: false,
       });
     }
 
     // Traduire
-    const result = await translateText(text, targetLang, detectedLang);
+    const result = await translateText(text, targetLanguage, detectedLang);
 
     return NextResponse.json({
       translatedText: result.translatedText,
       originalText: text,
       sourceLang: result.detectedSourceLanguage || detectedLang,
-      targetLang,
+      targetLang: targetLanguage,
       wasTranslated: true,
     });
   } catch (error) {

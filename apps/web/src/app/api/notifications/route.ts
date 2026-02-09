@@ -57,15 +57,42 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
+    // Validation Zod du body
+    const { updateNotificationPreferencesSchema, validateRequestBody } = await import("@/lib/validations/api");
     const body = await request.json();
-    const { notificationIds, markAllRead } = body;
 
-    if (markAllRead) {
-      // Mark all notifications as read
+    // Si c'est une mise à jour de préférences, valider avec le schéma approprié
+    if (body.notificationIds || body.markAllRead) {
+      const { notificationIds, markAllRead } = body;
+
+      if (markAllRead) {
+        // Mark all notifications as read
+        await prisma.notification.updateMany({
+          where: {
+            userId: session.user.id,
+            read: false,
+          },
+          data: {
+            read: true,
+            readAt: new Date(),
+          },
+        });
+
+        return NextResponse.json({ success: true, message: "Toutes les notifications marquées comme lues" });
+      }
+
+      if (!notificationIds || !Array.isArray(notificationIds)) {
+        return NextResponse.json(
+          { error: "notificationIds requis" },
+          { status: 400 }
+        );
+      }
+
+      // Mark specific notifications as read
       await prisma.notification.updateMany({
         where: {
+          id: { in: notificationIds },
           userId: session.user.id,
-          read: false,
         },
         data: {
           read: true,
@@ -73,29 +100,10 @@ export async function PUT(request: Request) {
         },
       });
 
-      return NextResponse.json({ success: true, message: "Toutes les notifications marquées comme lues" });
+      return NextResponse.json({ success: true });
     }
 
-    if (!notificationIds || !Array.isArray(notificationIds)) {
-      return NextResponse.json(
-        { error: "notificationIds requis" },
-        { status: 400 }
-      );
-    }
-
-    // Mark specific notifications as read
-    await prisma.notification.updateMany({
-      where: {
-        id: { in: notificationIds },
-        userId: session.user.id,
-      },
-      data: {
-        read: true,
-        readAt: new Date(),
-      },
-    });
-
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   } catch (error) {
     console.error("Error updating notifications:", error);
     return NextResponse.json(

@@ -5,8 +5,18 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import HostCalendar from "@/components/calendar/HostCalendar";
+import dynamic from "next/dynamic";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
+
+// Lazy load HostCalendar - heavy component with calendar logic
+const HostCalendar = dynamic(() => import("@/components/calendar/HostCalendar"), {
+  loading: () => (
+    <div className="h-[600px] bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
+      <p className="text-gray-500">Chargement du calendrier...</p>
+    </div>
+  ),
+  ssr: false,
+});
 
 type Listing = {
   id: string;

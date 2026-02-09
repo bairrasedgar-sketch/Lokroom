@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { validatePromoSchema, validateRequestBody } from "@/lib/validations/api";
 
 // POST /api/promo/validate - Valider un code promo
 export async function POST(request: Request) {
@@ -11,19 +12,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { code, listingId, bookingAmountCents } = body;
-
-    if (!code) {
-      return NextResponse.json(
-        { error: "Code promo requis" },
-        { status: 400 }
-      );
+    // Validation Zod du body
+    const validation = await validateRequestBody(request, validatePromoSchema);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: validation.status });
     }
+
+    const { code, bookingId, totalAmountCents } = validation.data;
 
     // Chercher le code promo
     const promoCode = await prisma.promoCode.findUnique({
-      where: { code: code.toUpperCase().trim() },
+      where: { code },
     });
 
     if (!promoCode) {
@@ -105,8 +104,8 @@ export async function POST(request: Request) {
     }
 
     // Vérifier le montant minimum
-    if (promoCode.minBookingAmountCents && bookingAmountCents) {
-      if (bookingAmountCents < promoCode.minBookingAmountCents) {
+    if (promoCode.minBookingAmountCents && totalAmountCents) {
+      if (totalAmountCents < promoCode.minBookingAmountCents) {
         const minAmount = (promoCode.minBookingAmountCents / 100).toFixed(2);
         return NextResponse.json(
           { error: `Montant minimum requis : ${minAmount}€`, valid: false },
@@ -116,13 +115,13 @@ export async function POST(request: Request) {
     }
 
     // Vérifier le type de listing si spécifié
-    if (promoCode.applicableListingTypes.length > 0 && listingId) {
-      const listing = await prisma.listing.findUnique({
-        where: { id: listingId },
-        select: { type: true },
+    if (promoCode.applicableListingTypes.length > 0 && bookingId) {
+      const booking = await prisma.booking.findUnique({
+        where: { id: bookingId },
+        select: { listing: { select: { type: true } } },
       });
 
-      if (listing && !promoCode.applicableListingTypes.includes(listing.type)) {
+      if (booking && !promoCode.applicableListingTypes.includes(booking.listing.type)) {
         return NextResponse.json(
           { error: "Ce code promo n'est pas applicable à ce type d'espace", valid: false },
           { status: 400 }
@@ -131,13 +130,13 @@ export async function POST(request: Request) {
     }
 
     // Vérifier le pays si spécifié
-    if (promoCode.applicableCountries.length > 0 && listingId) {
-      const listing = await prisma.listing.findUnique({
-        where: { id: listingId },
-        select: { country: true },
+    if (promoCode.applicableCountries.length > 0 && bookingId) {
+      const booking = await prisma.booking.findUnique({
+        where: { id: bookingId },
+        select: { listing: { select: { country: true } } },
       });
 
-      if (listing && !promoCode.applicableCountries.includes(listing.country)) {
+      if (booking && !promoCode.applicableCountries.includes(booking.listing.country)) {
         return NextResponse.json(
           { error: "Ce code promo n'est pas applicable dans ce pays", valid: false },
           { status: 400 }
@@ -150,8 +149,8 @@ export async function POST(request: Request) {
     let discountLabel = "";
 
     if (promoCode.type === "PERCENTAGE") {
-      discountAmountCents = bookingAmountCents
-        ? Math.round((bookingAmountCents * promoCode.value) / 100)
+      discountAmountCents = totalAmountCents
+        ? Math.round((totalAmountCents * promoCode.value) / 100)
         : 0;
       discountLabel = `-${promoCode.value}%`;
     } else if (promoCode.type === "FIXED_AMOUNT") {

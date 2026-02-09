@@ -3,17 +3,27 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { getServerSession } from "next-auth";
 import { Metadata } from "next";
+import dynamic from "next/dynamic";
 
 import { authOptions } from "@/lib/auth";
 import { formatMoneyAsync, type Currency } from "@/lib/currency";
 import { getOrigin } from "@/lib/origin";
 import FiltersBar from "@/components/listings/FiltersBar";
 import ActiveFilters from "@/components/listings/ActiveFilters";
-import ListingsWithMap from "@/components/listings/ListingsWithMap";
 import { getServerDictionary } from "@/lib/i18n.server";
 import { type MapMarker } from "@/components/Map";
 import SearchPageJsonLd from "@/components/seo/SearchPageJsonLd";
 import { PageErrorBoundary } from "@/components/PageErrorBoundary";
+
+// Lazy load ListingsWithMap - heavy component with map
+const ListingsWithMap = dynamic(() => import("@/components/listings/ListingsWithMap"), {
+  loading: () => (
+    <div className="flex-1 animate-pulse">
+      <div className="h-full bg-gray-200 rounded-lg" />
+    </div>
+  ),
+  ssr: false,
+});
 
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
