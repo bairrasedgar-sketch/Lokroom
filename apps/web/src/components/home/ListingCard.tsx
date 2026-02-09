@@ -84,7 +84,7 @@ export function ListingCard({ card, index }: { card: ListingCardType; index: num
     >
       {/* Image Container - séparé du Link pour le bouton favori */}
       <div className="relative aspect-[4/3] overflow-hidden rounded-3xl sm:rounded-xl bg-gray-100">
-        <Link href={`/listings/${card.id}`} className="block absolute inset-0">
+        <Link href={`/listings/${card.id}`} onClick={handleCardClick} className="block absolute inset-0">
           {images.length > 0 ? (
             <div
               className="flex h-full transition-transform duration-300 ease-out"
@@ -177,7 +177,7 @@ export function ListingCard({ card, index }: { card: ListingCardType; index: num
       </div>
 
       {/* Card Content */}
-      <Link href={`/listings/${card.id}`} className="block mt-3 space-y-1">
+      <Link href={`/listings/${card.id}`} onClick={handleCardClick} className="block mt-3 space-y-1">
         {/* Category Badge */}
         <div className="flex items-center gap-1.5 mb-1">
           <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">

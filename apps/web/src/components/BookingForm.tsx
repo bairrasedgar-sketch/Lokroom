@@ -9,6 +9,7 @@ import { BoltIcon, StarIcon, XMarkIcon, ChevronDownIcon, MinusIcon, PlusIcon } f
 import type { Currency } from "@/lib/currency";
 import { useTranslation } from "@/hooks/useTranslation";
 import { InstantBookIndicator } from "@/components/InstantBookBadge";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 type BookingFormProps = {
   listingId: string;
@@ -67,6 +68,7 @@ export default function BookingForm({
   const router = useRouter();
   const { status } = useSession();
   const { t } = useTranslation();
+  const { logBeginCheckout, logBookingCompleted } = useAnalytics();
   const isLoggedIn = status === "authenticated";
 
   const [startDate, setStartDate] = useState<string>("");
@@ -301,6 +303,19 @@ export default function BookingForm({
 
     setSubmitting(true);
 
+    // Track begin checkout
+    const totalPrice = preview?.lines.find(l => l.code === 'total')?.amountCents || 0;
+    const totalGuests = guests.adults + guests.children;
+
+    logBeginCheckout({
+      listingId,
+      listingTitle: '',
+      startDate,
+      endDate,
+      totalPrice: totalPrice / 100,
+      guests: totalGuests,
+    });
+
     try {
       const useInstantBook = isInstantBook && instantBookEligible === true;
       const endpoint = useInstantBook ? "/api/bookings/instant" : "/api/bookings/create";
@@ -330,6 +345,20 @@ export default function BookingForm({
 
       const bookingId = data?.booking?.id;
       const isConfirmed = data?.booking?.status === "CONFIRMED";
+
+      // Track booking completed (conversion)
+      if (bookingId) {
+        logBookingCompleted({
+          bookingId,
+          listingId,
+          listingTitle: '',
+          startDate,
+          endDate,
+          totalPrice: totalPrice / 100,
+          guests: totalGuests,
+          paymentMethod: useInstantBook ? 'instant_book' : 'standard',
+        });
+      }
 
       if (useInstantBook && isConfirmed) {
         toast.success(bf.instantBookConfirmed || "Réservation confirmée instantanément");
