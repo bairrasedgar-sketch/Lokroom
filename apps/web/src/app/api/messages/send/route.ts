@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { conversationId: convIdInput, listingId, bookingId, recipientId, content } = validation.data;
+    const { conversationId: convIdInput, listingId, bookingId, recipientId: recipientIdInput, content } = validation.data;
     const text = content.trim();
 
     if (!text) {
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     // 1️⃣ Si pas de conversationId, on crée / retrouve une conversation
     if (!conversationId) {
       // Pour créer une nouvelle conversation, on a besoin d'un recipientId
-      if (!recipientId) {
+      if (!recipientIdInput) {
         return NextResponse.json(
           { error: "recipientId requis pour créer une nouvelle conversation" },
           { status: 400 },
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
       // Déterminer qui est host et qui est guest
       // On regarde si le recipient est un host (a un hostProfile)
       const recipientUser = await prisma.user.findUnique({
-        where: { id: recipientId },
+        where: { id: recipientIdInput },
         select: { id: true, hostProfile: { select: { id: true } } },
       });
 
@@ -65,8 +65,8 @@ export async function POST(req: NextRequest) {
       // Si le recipient a un hostProfile, il est le host
       // Sinon, l'expéditeur est considéré comme host
       const isRecipientHost = !!recipientUser.hostProfile;
-      const hostId = isRecipientHost ? recipientId : userId;
-      const guestId = isRecipientHost ? userId : recipientId;
+      const hostId = isRecipientHost ? recipientIdInput : userId;
+      const guestId = isRecipientHost ? userId : recipientIdInput;
 
       // L'utilisateur doit être l'un des deux
       if (userId !== hostId && userId !== guestId) {

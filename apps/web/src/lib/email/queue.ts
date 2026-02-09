@@ -15,7 +15,7 @@ interface EmailJob {
 
 // Queue en mémoire (pour dev/test)
 // En production, utiliser Redis ou un service de queue comme BullMQ
-const emailQueue: EmailJob[] = [];
+const inMemoryEmailQueue: EmailJob[] = [];
 let isProcessing = false;
 
 const MAX_RETRIES = 3;
@@ -25,7 +25,7 @@ const RETRY_DELAY = 5000; // 5 secondes
  * Ajoute un email à la queue
  */
 export async function queueEmail(job: EmailJob): Promise<void> {
-  emailQueue.push({ ...job, retries: 0 });
+  inMemoryEmailQueue.push({ ...job, retries: 0 });
 
   // Démarrer le traitement si pas déjà en cours
   if (!isProcessing) {
@@ -41,8 +41,8 @@ async function processQueue(): Promise<void> {
 
   isProcessing = true;
 
-  while (emailQueue.length > 0) {
-    const job = emailQueue.shift();
+  while (inMemoryEmailQueue.length > 0) {
+    const job = inMemoryEmailQueue.shift();
     if (!job) continue;
 
     try {
