@@ -9,6 +9,7 @@ import { MaintenanceRedirect } from "@/components/MaintenanceRedirect";
 import SplashScreen from "@/components/SplashScreen";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SentryErrorBoundary } from "@/components/SentryErrorBoundary";
+import Analytics from "@/components/Analytics";
 
 const SUPPORTED_LOCALES = ["fr", "en", "es", "de", "it", "pt", "zh"] as const;
 type LocaleCode = (typeof SUPPORTED_LOCALES)[number];
@@ -148,6 +149,7 @@ export default async function RootLayout({
         <SentryErrorBoundary>
           <ErrorBoundary>
             <Providers>
+              <Analytics />
               <SplashScreen />
               <MaintenanceRedirect isMaintenanceMode={isMaintenanceMode} />
               <SkipLink />

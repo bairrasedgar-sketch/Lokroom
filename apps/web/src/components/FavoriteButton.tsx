@@ -5,6 +5,7 @@ import { useSession, signIn } from "next-auth/react";
 import { toast } from "sonner";
 import WishlistModal from "./WishlistModal";
 import { useFavorites } from "@/contexts/FavoritesContext";
+import { useAnalytics } from "@/hooks/useAnalytics";
 
 export default function FavoriteButton({
   listingId,

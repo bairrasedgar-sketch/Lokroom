@@ -2,7 +2,7 @@
 "use client";
 
 import { StarIcon } from "@heroicons/react/24/solid";
-import { TrendingUpIcon, TrendingDownIcon, MinusIcon } from "@heroicons/react/24/outline";
+import { ArrowTrendingUpIcon, ArrowTrendingDownIcon, MinusIcon } from "@heroicons/react/24/outline";
 
 interface ReviewStats {
   totalReviews: number;
@@ -80,9 +80,9 @@ function CategoryStat({
             }`}
           >
             {change > 0 ? (
-              <TrendingUpIcon className="w-3 h-3" />
+              <ArrowTrendingUpIcon className="w-3 h-3" />
             ) : change < 0 ? (
-              <TrendingDownIcon className="w-3 h-3" />
+              <ArrowTrendingDownIcon className="w-3 h-3" />
             ) : (
               <MinusIcon className="w-3 h-3" />
             )}
