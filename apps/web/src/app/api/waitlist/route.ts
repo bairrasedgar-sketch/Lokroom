@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
+import { sendWaitlistConfirmation } from "@/lib/email";
 
 const waitlistSchema = z.object({
   email: z.string().email("Adresse email invalide"),
@@ -41,6 +42,14 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Send confirmation email
+    try {
+      await sendWaitlistConfirmation(email);
+    } catch (emailError) {
+      console.error("Failed to send confirmation email:", emailError);
+      // Don't fail the request if email fails
+    }
+
     return NextResponse.json(
       { success: true, message: "Inscription réussie" },
       { status: 201 }
@@ -49,6 +58,44 @@ export async function POST(request: NextRequest) {
     console.error("Waitlist error:", error);
     return NextResponse.json(
       { error: "Une erreur est survenue. Veuillez réessayer." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    // Get all waitlist entries (admin only - add auth check in production)
+    const entries = await prisma.waitlist.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+
+    const total = entries.length;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const todayCount = entries.filter(
+      (entry) => entry.createdAt >= today
+    ).length;
+
+    const lastWeek = new Date();
+    lastWeek.setDate(lastWeek.getDate() - 7);
+    const weekCount = entries.filter(
+      (entry) => entry.createdAt >= lastWeek
+    ).length;
+
+    return NextResponse.json({
+      entries,
+      stats: {
+        total,
+        today: todayCount,
+        week: weekCount,
+      },
+    });
+  } catch (error) {
+    console.error("Waitlist GET error:", error);
+    return NextResponse.json(
+      { error: "Une erreur est survenue" },
       { status: 500 }
     );
   }

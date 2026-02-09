@@ -86,13 +86,8 @@ export function emailLayout(content: string): string {
  */
 function emailHeader(): string {
   return `
-    <div style="background:#111111;padding:24px 32px;text-align:center;">
-      <div style="display:inline-flex;align-items:center;gap:8px;">
-        <div style="width:36px;height:36px;border-radius:999px;background:#ffffff;display:inline-flex;align-items:center;justify-content:center;">
-          <span style="color:#111111;font-weight:700;font-size:18px;">L</span>
-        </div>
-        <span style="color:#ffffff;font-size:20px;font-weight:600;">Lok'Room</span>
-      </div>
+    <div style="background:#111111;padding:32px;text-align:center;">
+      <img src="${APP_URL}/email-logo.png" alt="Lok'Room" style="height:48px;width:auto;display:inline-block;" />
     </div>
   `;
 }
@@ -732,4 +727,145 @@ export async function sendSupportMessage(data: {
     actionUrl: data.actionUrl,
   });
   return sendEmail({ to: data.to, subject, html, text, replyTo: "support@lokroom.com" });
+}
+
+/**
+ * Email de confirmation d'inscription à la liste d'attente
+ */
+export function waitlistConfirmationEmail(): { html: string; text: string; subject: string } {
+  const html = emailLayout(`
+    ${emailHeader()}
+    <div style="padding:32px;">
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="display:inline-flex;width:56px;height:56px;border-radius:999px;background:#0066FF;align-items:center;justify-content:center;">
+          <span style="color:#ffffff;font-size:28px;">✓</span>
+        </div>
+      </div>
+
+      <h1 style="margin:0 0 8px;font-size:22px;font-weight:600;color:#111111;text-align:center;">
+        Vous êtes sur la liste !
+      </h1>
+      <p style="margin:0 0 24px;font-size:14px;color:#666666;text-align:center;">
+        Merci de votre intérêt pour l'application mobile Lok'Room
+      </p>
+
+      <div style="background:#f9f9f9;border-radius:16px;padding:24px;margin:24px 0;">
+        <h2 style="margin:0 0 12px;font-size:16px;font-weight:600;color:#111111;">
+          Ce qui vous attend
+        </h2>
+        <ul style="margin:0;padding:0 0 0 20px;font-size:14px;line-height:1.8;color:#555555;">
+          <li>Réservation instantanée en quelques secondes</li>
+          <li>Notifications en temps réel pour vos réservations</li>
+          <li>Interface mobile optimisée et intuitive</li>
+          <li>Paiement sécurisé avec Apple Pay et Google Pay</li>
+        </ul>
+      </div>
+
+      <p style="margin:24px 0 0;font-size:14px;line-height:1.6;color:#444444;text-align:center;">
+        Nous vous contacterons dès que l'application sera disponible sur l'App Store et Google Play.
+      </p>
+
+      ${emailButton("Découvrir Lok'Room", APP_URL)}
+
+      <p style="margin-top:24px;font-size:13px;color:#666666;text-align:center;">
+        Des questions ? Répondez directement à cet e-mail.
+      </p>
+    </div>
+  `);
+
+  const text = `Vous êtes sur la liste !\n\nMerci de votre intérêt pour l'application mobile Lok'Room.\n\nCe qui vous attend :\n- Réservation instantanée\n- Notifications en temps réel\n- Interface mobile optimisée\n- Paiement sécurisé\n\nNous vous contacterons dès que l'application sera disponible.\n\nDécouvrir Lok'Room : ${APP_URL}`;
+
+  return {
+    html,
+    text,
+    subject: "Bienvenue sur la liste d'attente Lok'Room 🎉",
+  };
+}
+
+/**
+ * Envoie un email de confirmation d'inscription à la liste d'attente
+ */
+export async function sendWaitlistConfirmation(to: string): Promise<EmailResult> {
+  const { html, text, subject } = waitlistConfirmationEmail();
+  return sendEmail({ to, subject, html, text, replyTo: "support@lokroom.com" });
+}
+
+/**
+ * Email de notification de lancement de l'application mobile
+ */
+export function appLaunchEmail(data: {
+  appStoreUrl: string;
+  playStoreUrl: string;
+}): { html: string; text: string; subject: string } {
+  const html = emailLayout(`
+    ${emailHeader()}
+    <div style="padding:32px;">
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="display:inline-flex;width:56px;height:56px;border-radius:999px;background:#10b981;align-items:center;justify-content:center;">
+          <span style="color:#ffffff;font-size:28px;">🚀</span>
+        </div>
+      </div>
+
+      <h1 style="margin:0 0 8px;font-size:24px;font-weight:600;color:#111111;text-align:center;">
+        L'application Lok'Room est disponible !
+      </h1>
+      <p style="margin:0 0 24px;font-size:15px;color:#666666;text-align:center;">
+        Vous avez été parmi les premiers à vous inscrire, téléchargez l'app maintenant
+      </p>
+
+      <div style="background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);border-radius:16px;padding:24px;margin:24px 0;text-align:center;">
+        <p style="margin:0 0 16px;font-size:14px;color:#ffffff;opacity:0.9;">
+          Téléchargez l'application sur votre appareil
+        </p>
+        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+          <a href="${data.appStoreUrl}" style="display:inline-block;background:#000000;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;">
+            📱 App Store
+          </a>
+          <a href="${data.playStoreUrl}" style="display:inline-block;background:#000000;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;">
+            🤖 Google Play
+          </a>
+        </div>
+      </div>
+
+      <div style="background:#f9f9f9;border-radius:16px;padding:20px;margin:24px 0;">
+        <h2 style="margin:0 0 12px;font-size:16px;font-weight:600;color:#111111;">
+          Fonctionnalités disponibles
+        </h2>
+        <ul style="margin:0;padding:0 0 0 20px;font-size:14px;line-height:1.8;color:#555555;">
+          <li>Recherche et réservation d'espaces en quelques secondes</li>
+          <li>Notifications push pour vos réservations et messages</li>
+          <li>Gestion de vos annonces en déplacement</li>
+          <li>Paiement sécurisé avec Apple Pay et Google Pay</li>
+          <li>Mode hors ligne pour consulter vos réservations</li>
+        </ul>
+      </div>
+
+      <p style="margin:24px 0 0;font-size:14px;line-height:1.6;color:#444444;text-align:center;">
+        Merci d'avoir attendu patiemment. Nous avons hâte de voir ce que vous allez découvrir !
+      </p>
+
+      <p style="margin-top:24px;font-size:13px;color:#666666;text-align:center;">
+        Des questions ? Notre équipe support est là pour vous aider.
+      </p>
+    </div>
+  `);
+
+  const text = `L'application Lok'Room est disponible !\n\nVous avez été parmi les premiers à vous inscrire. Téléchargez l'app maintenant :\n\nApp Store : ${data.appStoreUrl}\nGoogle Play : ${data.playStoreUrl}\n\nFonctionnalités :\n- Recherche et réservation instantanée\n- Notifications push\n- Gestion d'annonces mobile\n- Paiement sécurisé\n- Mode hors ligne\n\nMerci d'avoir attendu patiemment !`;
+
+  return {
+    html,
+    text,
+    subject: "🚀 L'app Lok'Room est enfin là !",
+  };
+}
+
+/**
+ * Envoie un email de notification de lancement de l'app
+ */
+export async function sendAppLaunchNotification(
+  to: string,
+  data: Parameters<typeof appLaunchEmail>[0]
+): Promise<EmailResult> {
+  const { html, text, subject } = appLaunchEmail(data);
+  return sendEmail({ to, subject, html, text, replyTo: "support@lokroom.com" });
 }
