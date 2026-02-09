@@ -90,7 +90,6 @@ export async function POST(req: NextRequest) {
         where: { id: exportRequest.id },
         data: {
           status: "failed",
-          errorMessage: "Utilisateur introuvable",
         },
       });
 
@@ -212,7 +211,6 @@ export async function POST(req: NextRequest) {
         where: { id: exportRequest.id },
         data: {
           status: "failed",
-          errorMessage: error instanceof Error ? error.message : "Erreur inconnue",
         },
       });
 
@@ -250,26 +248,20 @@ export async function GET() {
       take: 10,
       select: {
         id: true,
-        format: true,
         status: true,
-        fileSize: true,
         createdAt: true,
         completedAt: true,
         expiresAt: true,
-        errorMessage: true,
       },
     });
 
     return NextResponse.json({
       exports: exports.map((exp) => ({
         id: exp.id,
-        format: exp.format,
         status: exp.status,
-        fileSize: exp.fileSize,
         createdAt: exp.createdAt,
         completedAt: exp.completedAt,
         expiresAt: exp.expiresAt,
-        errorMessage: exp.errorMessage,
         downloadUrl:
           exp.status === "completed" &&
           exp.expiresAt &&
