@@ -396,7 +396,21 @@ export default function ListingGallery({ images, title }: ListingGalleryProps) {
 
       {/* Desktop Grid - Airbnb style - visible on medium screens and up */}
       <div className="hidden md:block">
-        <div className="grid grid-cols-2 gap-2 rounded-xl overflow-hidden">
+        <div className="grid grid-cols-2 gap-2 rounded-xl overflow-hidden relative">
+          {/* Show all photos button - top left overlay */}
+          {total > 1 && (
+            <button
+              type="button"
+              onClick={() => openModal(0)}
+              className="absolute top-4 left-4 z-10 px-4 py-2 bg-gray-900/70 backdrop-blur-sm text-white text-sm font-medium rounded-lg hover:bg-gray-900/80 transition-colors flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              {gallery.showAllPhotos}
+            </button>
+          )}
+
           {/* Large image on left - 50% width */}
           <button
             type="button"
@@ -462,17 +476,6 @@ export default function ListingGallery({ images, title }: ListingGalleryProps) {
             })}
           </div>
         </div>
-
-        {/* Show all photos button */}
-        {total > 1 && (
-          <button
-            type="button"
-            onClick={() => openModal(0)}
-            className="mt-3 px-4 py-2 bg-white border border-gray-900 text-gray-900 text-sm font-medium rounded-lg hover:bg-gray-100 transition-colors"
-          >
-            {gallery.showAllPhotos}
-          </button>
-        )}
       </div>
 
       {/* Modal Gallery */}
