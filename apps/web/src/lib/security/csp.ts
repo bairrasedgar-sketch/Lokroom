@@ -91,7 +91,7 @@ const MEDIA_SOURCES = {
  * Génère la directive script-src
  */
 function generateScriptSrc(config: CspConfig): string {
-  const sources = [
+  const sources: string[] = [
     SCRIPT_SOURCES.self,
     SCRIPT_SOURCES.maps,
     SCRIPT_SOURCES.stripe,
