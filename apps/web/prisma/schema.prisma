@@ -1853,3 +1853,39 @@ model WebhookDelivery {
   @@index([status])
   @@index([createdAt])
 }
+
+/// Backup de la base de données
+model DatabaseBackup {
+  id          String   @id @default(cuid())
+  filename    String   @unique
+  fileUrl     String   /// URL S3/R2
+  fileSize    Int      /// Taille en bytes
+  type        BackupType /// "daily", "weekly", "monthly"
+  status      BackupStatus /// "pending", "completed", "failed"
+  startedAt   DateTime
+  completedAt DateTime?
+  error       String?
+  checksum    String?  /// SHA256 checksum pour vérification d'intégrité
+  createdAt   DateTime @default(now())
+
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+}
+
+/// Type de backup
+enum BackupType {
+  DAILY
+  WEEKLY
+  MONTHLY
+  MANUAL
+}
+
+/// Statut du backup
+enum BackupStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  DELETED
+}

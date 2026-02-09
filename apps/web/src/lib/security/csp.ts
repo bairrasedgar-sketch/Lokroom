@@ -115,7 +115,7 @@ function generateScriptSrc(config: CspConfig): string {
  * Génère la directive style-src
  */
 function generateStyleSrc(config: CspConfig): string {
-  const sources = [
+  const sources: string[] = [
     STYLE_SOURCES.self,
     STYLE_SOURCES.inline,
     STYLE_SOURCES.fonts,
@@ -132,7 +132,7 @@ function generateStyleSrc(config: CspConfig): string {
  * Génère la directive img-src
  */
 function generateImgSrc(config: CspConfig): string {
-  const sources = [
+  const sources: string[] = [
     IMAGE_SOURCES.self,
     IMAGE_SOURCES.data,
     IMAGE_SOURCES.blob,
@@ -160,7 +160,7 @@ function generateImgSrc(config: CspConfig): string {
  * Génère la directive connect-src
  */
 function generateConnectSrc(config: CspConfig): string {
-  const sources = [
+  const sources: string[] = [
     CONNECT_SOURCES.self,
     CONNECT_SOURCES.maps,
     CONNECT_SOURCES.stripe,
@@ -199,7 +199,7 @@ function generateFrameSrc(): string {
  * Génère la directive media-src
  */
 function generateMediaSrc(config: CspConfig): string {
-  const sources = [
+  const sources: string[] = [
     MEDIA_SOURCES.self,
     MEDIA_SOURCES.blob,
     MEDIA_SOURCES.r2,
