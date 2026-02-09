@@ -1,0 +1,9 @@
+// apps/web/vercel.json
+{
+  "crons": [
+    {
+      "path": "/api/cron/recommendations",
+      "schedule": "0 2 * * *"
+    }
+  ]
+}

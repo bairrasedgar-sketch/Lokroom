@@ -46,7 +46,6 @@ export async function GET(
         {
           error: "Export non disponible",
           status: exportRequest.status,
-          errorMessage: exportRequest.errorMessage,
         },
         { status: 400 }
       );
@@ -96,12 +95,12 @@ export async function GET(
       await prisma.auditLog.create({
         data: {
           adminId: session.user.id,
-          action: "USER_DOWNLOADED_EXPORT",
+          action: "USER_UPDATED",
           entityType: "DataExportRequest",
           entityId: exportRequest.id,
           details: {
-            format: exportRequest.format,
-            fileSize: exportRequest.fileSize,
+            operation: "USER_DOWNLOADED_EXPORT",
+            exportId: exportRequest.id,
           },
           ipAddress: req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown",
           userAgent: req.headers.get("user-agent") || "unknown",

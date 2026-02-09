@@ -42,6 +42,7 @@ import InstantBookBadge from "@/components/InstantBookBadge";
 import ShareButton from "@/components/ShareButton";
 import AmenitiesModal from "@/components/AmenitiesModal";
 import KycWarning from "@/components/KycWarning";
+import { ListingViewTracker } from "@/components/listings/ListingViewTracker";
 
 // Lazy load heavy components
 const ListingGallery = dynamicImport(() => import("@/components/ListingGallery"), {
@@ -387,6 +388,9 @@ export default async function ListingDetailPage({
           createdAt: listing.createdAt,
         }}
       />
+
+      {/* Track listing view for recommendations */}
+      <ListingViewTracker listingId={listing.id} />
 
       {/* ========== VERSION MOBILE ========== */}
       <div className="lg:hidden min-h-screen bg-white pb-24">

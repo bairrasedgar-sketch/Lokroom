@@ -78,7 +78,6 @@ export async function POST(req: NextRequest) {
     const exportRequest = await prisma.dataExportRequest.create({
       data: {
         userId: session.user.id,
-        format,
         status: "processing",
       },
     });

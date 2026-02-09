@@ -75,8 +75,8 @@ export async function DELETE(
     // Créer un log d'audit
     await prisma.auditLog.create({
       data: {
-        adminId: auth.user.id,
-        action: "BACKUP_DELETED",
+        adminId: auth.session.user.id,
+        action: "USER_DELETED",
         entityType: "DatabaseBackup",
         entityId: backupId,
         details: {

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { cache, CacheKeys, CacheTTL, invalidateListingCache } from "@/lib/redis";
 
 export const dynamic = "force-dynamic";
 
@@ -52,58 +53,77 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const listing = await prisma.listing.findUnique({
-      where: { id: params.id },
-      include: {
-        images: {
-          orderBy: { position: "asc" },
-        },
-        owner: { select: { id: true, name: true, email: true } },
-        amenities: {
+    // Essayer de récupérer depuis le cache
+    const cached = await cache.get(
+      CacheKeys.listing(params.id),
+      async () => {
+        // Fallback: récupérer depuis la DB
+        const listing = await prisma.listing.findUnique({
+          where: { id: params.id },
           include: {
-            amenity: {
-              select: {
-                slug: true,
-                label: true,
+            images: {
+              orderBy: { position: "asc" },
+            },
+            owner: { select: { id: true, name: true, email: true } },
+            amenities: {
+              include: {
+                amenity: {
+                  select: {
+                    slug: true,
+                    label: true,
+                  },
+                },
               },
             },
           },
-        },
+        });
+
+        if (!listing) {
+          return null;
+        }
+
+        // Calculate review stats for SEO
+        const reviewStats = await prisma.review.aggregate({
+          where: { listingId: params.id },
+          _count: { id: true },
+          _avg: { rating: true },
+        });
+
+        const reviewCount = reviewStats._count.id;
+        const avgRating = reviewStats._avg.rating;
+
+        // Transform amenities to simple array
+        const amenitiesFormatted = listing.amenities.map((a) => ({
+          key: a.amenity.slug,
+          label: a.amenity.label,
+        }));
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { amenities, ...listingData } = listing;
+        return {
+          ...listingData,
+          amenities: amenitiesFormatted,
+          reviewSummary: {
+            count: reviewCount,
+            avgRating: avgRating ? Math.round(avgRating * 10) / 10 : null,
+          },
+        };
       },
-    });
-    if (!listing) {
+      CacheTTL.MEDIUM
+    );
+
+    if (!cached) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    // Calculate review stats for SEO
-    const reviewStats = await prisma.review.aggregate({
-      where: { listingId: params.id },
-      _count: { id: true },
-      _avg: { rating: true },
-    });
-
-    const reviewCount = reviewStats._count.id;
-    const avgRating = reviewStats._avg.rating;
-
-    // Transform amenities to simple array
-    const amenitiesFormatted = listing.amenities.map((a) => ({
-      key: a.amenity.slug,
-      label: a.amenity.label,
-    }));
-
-    // Return listing with review summary
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { amenities, ...listingData } = listing;
-    return NextResponse.json({
-      listing: {
-        ...listingData,
-        amenities: amenitiesFormatted,
-        reviewSummary: {
-          count: reviewCount,
-          avgRating: avgRating ? Math.round(avgRating * 10) / 10 : null,
+    return NextResponse.json(
+      { listing: cached },
+      {
+        headers: {
+          "Cache-Control": "public, max-age=300, stale-while-revalidate=600",
         },
-      },
-    });
+      }
+    );
   } catch (e) {
     console.error("GET /api/listings/[id] error:", e);
     return NextResponse.json({ error: "server_error" }, { status: 500 });
@@ -339,6 +359,9 @@ export async function PUT(
       },
     });
 
+    // Invalider le cache
+    await invalidateListingCache(params.id);
+
     return NextResponse.json({ listing: updated });
   } catch (e) {
     console.error("PUT /api/listings/[id] error:", e);
@@ -390,6 +413,10 @@ export async function DELETE(
     }
 
     await prisma.listing.delete({ where: { id: params.id } });
+
+    // Invalider le cache
+    await invalidateListingCache(params.id);
+
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("DELETE /api/listings/[id] error:", e);

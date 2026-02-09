@@ -10,6 +10,7 @@ import type { Currency } from "@/lib/currency";
 import { useTranslation } from "@/hooks/useTranslation";
 import { InstantBookIndicator } from "@/components/InstantBookBadge";
 import { useAnalytics } from "@/hooks/useAnalytics";
+import { useTracking } from "@/hooks/useTracking";
 
 type BookingFormProps = {
   listingId: string;
@@ -69,6 +70,7 @@ export default function BookingForm({
   const { status } = useSession();
   const { t } = useTranslation();
   const { logBeginCheckout, logBookingCompleted } = useAnalytics();
+  const { trackBooking } = useTracking();
   const isLoggedIn = status === "authenticated";
 
   const [startDate, setStartDate] = useState<string>("");
@@ -358,6 +360,8 @@ export default function BookingForm({
           guests: totalGuests,
           paymentMethod: useInstantBook ? 'instant_book' : 'standard',
         });
+        // Track for recommendations
+        trackBooking(listingId, bookingId);
       }
 
       if (useInstantBook && isConfirmed) {

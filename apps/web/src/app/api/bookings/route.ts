@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/api-auth";
 import { jsonError } from "@/lib/api-error";
+import { cache, CacheKeys, CacheTTL } from "@/lib/redis";
 
 export const dynamic = "force-dynamic";
 
@@ -23,32 +24,43 @@ export async function GET(req: NextRequest) {
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
   const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get("pageSize") || "20", 10)));
 
-  const [bookings, total] = await Promise.all([
-    prisma.booking.findMany({
-      where: { guestId: me.id },
-      orderBy: { createdAt: "desc" },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-      include: {
-        listing: {
-          select: {
-            id: true,
-            title: true,
-            price: true,
-            currency: true,
-            images: { select: { id: true, url: true }, take: 1 },
-          },
-        },
-      },
-    }),
-    prisma.booking.count({ where: { guestId: me.id } }),
-  ]);
+  // Clé de cache incluant la pagination
+  const cacheKey = `${CacheKeys.bookingsByUser(me.id)}:page:${page}:size:${pageSize}`;
 
-  return NextResponse.json({
-    bookings,
-    page,
-    pageSize,
-    total,
-    pageCount: total === 0 ? 0 : Math.ceil(total / pageSize),
-  });
+  const cached = await cache.get(
+    cacheKey,
+    async () => {
+      const [bookings, total] = await Promise.all([
+        prisma.booking.findMany({
+          where: { guestId: me.id },
+          orderBy: { createdAt: "desc" },
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+          include: {
+            listing: {
+              select: {
+                id: true,
+                title: true,
+                price: true,
+                currency: true,
+                images: { select: { id: true, url: true }, take: 1 },
+              },
+            },
+          },
+        }),
+        prisma.booking.count({ where: { guestId: me.id } }),
+      ]);
+
+      return {
+        bookings,
+        page,
+        pageSize,
+        total,
+        pageCount: total === 0 ? 0 : Math.ceil(total / pageSize),
+      };
+    },
+    CacheTTL.SHORT // Les bookings changent fréquemment
+  );
+
+  return NextResponse.json(cached);
 }

@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: lokroom-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-lokroom_redis_dev}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  redis-data:
+    driver: local
