@@ -302,6 +302,7 @@ const zh = {
     bookingCancelled: "此预订已取消。",
     pendingPayment: "待支付",
     datesUnavailable: "日期不可用",
+    searchListing: "搜索房源",
   },
 
   // ============================================

@@ -305,6 +305,7 @@ const fr = {
     bookingCancelled: "Cette réservation a été annulée.",
     pendingPayment: "En attente de paiement",
     datesUnavailable: "Dates indisponibles",
+    searchListing: "Rechercher une annonce",
   },
 
   // ============================================

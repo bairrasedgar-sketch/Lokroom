@@ -302,6 +302,7 @@ const es = {
     bookingCancelled: "Esta reserva ha sido cancelada.",
     pendingPayment: "Pendiente de pago",
     datesUnavailable: "Fechas no disponibles",
+    searchListing: "Buscar anuncios",
   },
 
   // ============================================

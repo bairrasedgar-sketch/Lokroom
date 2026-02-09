@@ -302,6 +302,7 @@ const de = {
     bookingCancelled: "Diese Buchung wurde storniert.",
     pendingPayment: "Zahlung ausstehend",
     datesUnavailable: "Termine nicht verfügbar",
+    searchListing: "Angebote suchen",
   },
 
   // ============================================

@@ -305,6 +305,7 @@ const en = {
     bookingCancelled: "This booking has been cancelled.",
     pendingPayment: "Pending payment",
     datesUnavailable: "Dates unavailable",
+    searchListing: "Search listings",
   },
 
   // ============================================
