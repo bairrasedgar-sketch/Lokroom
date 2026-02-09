@@ -13,7 +13,7 @@ export const test = base.extend<{
   adminPage: any;
 }>({
   // Page authentifiée avec un utilisateur quelconque
-  authenticatedPage: async ({ page }, use, testInfo) => {
+  authenticatedPage: async ({ page }: any, use: any, testInfo: any) => {
     const user = testUsers.guest;
     await page.goto('/login');
     await page.fill('input[name="email"]', user.email);
@@ -24,7 +24,7 @@ export const test = base.extend<{
   },
 
   // Page authentifiée en tant que guest
-  guestPage: async ({ page }, use) => {
+  guestPage: async ({ page }: any, use: any) => {
     const user = testUsers.guest;
     await page.goto('/login');
     await page.fill('input[name="email"]', user.email);
@@ -35,7 +35,7 @@ export const test = base.extend<{
   },
 
   // Page authentifiée en tant qu'hôte
-  hostPage: async ({ page }, use) => {
+  hostPage: async ({ page }: any, use: any) => {
     const user = testUsers.host;
     await page.goto('/login');
     await page.fill('input[name="email"]', user.email);
@@ -46,7 +46,7 @@ export const test = base.extend<{
   },
 
   // Page authentifiée en tant qu'admin
-  adminPage: async ({ page }, use) => {
+  adminPage: async ({ page }: any, use: any) => {
     const user = testUsers.admin;
     await page.goto('/login');
     await page.fill('input[name="email"]', user.email);

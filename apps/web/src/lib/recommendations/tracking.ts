@@ -17,7 +17,7 @@ export async function trackUserBehavior(
         userId,
         action,
         listingId: listingId || null,
-        metadata: metadata || null,
+        metadata: metadata || undefined,
       },
     });
 
