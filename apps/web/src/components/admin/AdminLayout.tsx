@@ -25,6 +25,7 @@ import {
   StarIcon,
   ChatBubbleLeftRightIcon,
   LifebuoyIcon,
+  EnvelopeIcon,
 } from "@heroicons/react/24/outline";
 import { signOut } from "next-auth/react";
 
@@ -61,6 +62,7 @@ const navigation: NavItem[] = [
   { name: "Avis", href: "/admin/reviews", icon: StarIcon, roles: ["ADMIN", "MODERATOR"] },
   { name: "Litiges", href: "/admin/disputes", icon: ExclamationTriangleIcon, roles: ["ADMIN", "MODERATOR", "SUPPORT"] },
   { name: "Support utilisateurs", href: "/admin/support", icon: LifebuoyIcon, roles: ["ADMIN", "MODERATOR", "SUPPORT"] },
+  { name: "Liste d'attente", href: "/admin/waitlist", icon: EnvelopeIcon, roles: ["ADMIN"] },
   { name: "Paiements", href: "/admin/payments", icon: BanknotesIcon, roles: ["ADMIN"] },
   { name: "Messages", href: "/admin/messages", icon: ChatBubbleLeftRightIcon, roles: ["ADMIN", "MODERATOR"] },
   { name: "Analytiques", href: "/admin/analytics", icon: ChartBarIcon, roles: ["ADMIN", "ANALYST"] },
