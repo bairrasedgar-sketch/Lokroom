@@ -110,10 +110,11 @@ export async function expectToast(page: any, message: string | RegExp) {
   const toast = page.locator('[data-testid="toast"], [role="alert"]');
   await toast.waitFor({ state: 'visible', timeout: 5000 });
 
+  const text = await toast.textContent();
   if (typeof message === 'string') {
-    await expect(toast).toContainText(message);
+    expect(text).toContain(message);
   } else {
-    await expect(toast).toContainText(message);
+    expect(text).toMatch(message);
   }
 }
 
@@ -150,7 +151,7 @@ export async function cleanupTestData(page: any) {
  * Helper pour simuler un délai réseau
  */
 export async function simulateSlowNetwork(page: any) {
-  await page.route('**/*', async (route) => {
+  await page.route('**/*', async (route: any) => {
     await new Promise(resolve => setTimeout(resolve, 1000));
     await route.continue();
   });
@@ -160,7 +161,7 @@ export async function simulateSlowNetwork(page: any) {
  * Helper pour intercepter les requêtes API
  */
 export async function mockApiResponse(page: any, url: string, response: any) {
-  await page.route(url, async (route) => {
+  await page.route(url, async (route: any) => {
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -174,7 +175,7 @@ export async function mockApiResponse(page: any, url: string, response: any) {
  */
 export async function waitForApiCall(page: any, urlPattern: string | RegExp) {
   await page.waitForResponse(
-    (response) => {
+    (response: any) => {
       const url = response.url();
       if (typeof urlPattern === 'string') {
         return url.includes(urlPattern);
