@@ -360,7 +360,7 @@ export async function PUT(
         action: "USER_UPDATED",
         targetType: "User",
         targetId: id,
-        details: body,
+        details: updateData,
         request,
       });
     }
