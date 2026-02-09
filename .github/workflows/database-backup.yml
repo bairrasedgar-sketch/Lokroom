@@ -2,44 +2,74 @@ name: Database Backup
 
 on:
   schedule:
-    - cron: '0 2 * * *' # Daily at 2 AM UTC
+    - cron: '0 3 * * *' # Daily at 3 AM UTC (4h Paris winter, 5h Paris summer)
   workflow_dispatch: # Manual trigger
 
 jobs:
   backup:
     name: Backup Database
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: apps/web/package-lock.json
 
       - name: Setup PostgreSQL Client
         run: |
           sudo apt-get update
           sudo apt-get install -y postgresql-client
 
-      - name: Create backup
+      - name: Install dependencies
+        working-directory: apps/web
+        run: npm ci
+
+      - name: Generate Prisma Client
+        working-directory: apps/web
+        run: npx prisma generate --schema=./prisma/schema.prisma
+
+      - name: Run backup script
+        working-directory: apps/web
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: |
-          BACKUP_FILE="backup-$(date +%Y%m%d-%H%M%S).sql"
-          pg_dump "$DATABASE_URL" > "$BACKUP_FILE"
-          echo "BACKUP_FILE=$BACKUP_FILE" >> $GITHUB_ENV
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_BACKUP_BUCKET: ${{ secrets.AWS_BACKUP_BUCKET }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_S3_ENDPOINT: ${{ secrets.AWS_S3_ENDPOINT }}
+          BACKUP_NOTIFICATION_EMAIL: ${{ secrets.BACKUP_NOTIFICATION_EMAIL }}
+        run: npx tsx scripts/backup-database.ts
 
-      - name: Upload backup artifact
-        uses: actions/upload-artifact@v4
+      - name: Notify on success
+        if: success()
+        run: |
+          echo "✅ Database backup completed successfully"
+          echo "Backup uploaded to S3 and recorded in database"
+
+      - name: Notify on failure
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
         with:
-          name: database-backup-${{ github.run_number }}
-          path: ${{ env.BACKUP_FILE }}
-          retention-days: 30
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: '❌ Database Backup Failed - Lok''Room'
+          to: ${{ secrets.BACKUP_NOTIFICATION_EMAIL }}
+          from: 'Lok''Room CI/CD <noreply@lokroom.com>'
+          body: |
+            Database backup failed on ${{ github.repository }}
 
-      - name: Notify backup status
-        if: always()
-        run: |
-          if [ $? -eq 0 ]; then
-            echo "✅ Database backup completed successfully"
-          else
-            echo "❌ Database backup failed"
-            exit 1
-          fi
+            Workflow: ${{ github.workflow }}
+            Run: ${{ github.run_number }}
+            Time: ${{ github.event.head_commit.timestamp }}
+
+            Please check the logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        continue-on-error: true
