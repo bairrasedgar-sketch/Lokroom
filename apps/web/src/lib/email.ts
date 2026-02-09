@@ -86,8 +86,8 @@ export function emailLayout(content: string): string {
  */
 function emailHeader(): string {
   return `
-    <div style="background:#111111;padding:24px 32px;">
-      <img src="${APP_URL}/email-logo.png" alt="Lok'Room" style="height:72px;width:auto;display:block;" />
+    <div style="background:#111111;padding:20px 32px;">
+      <img src="${APP_URL}/email-logo.png" alt="Lok'Room" style="height:100px;width:auto;display:block;margin:0;" />
     </div>
   `;
 }
