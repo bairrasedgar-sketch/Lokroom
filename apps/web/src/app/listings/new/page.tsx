@@ -570,7 +570,7 @@ export default function NewListingPage() {
           await updateSession();
         } else {
           toast.error("Tu dois être hôte pour créer une annonce");
-          router.push("/become-host");
+          router.push("/login");
         }
       } catch {
         // En cas d'erreur, utiliser la vérification locale
@@ -578,7 +578,7 @@ export default function NewListingPage() {
           setHasPermission(true);
         } else {
           toast.error("Tu dois être hôte pour créer une annonce");
-          router.push("/become-host");
+          router.push("/login");
         }
         setPermissionChecked(true);
       }

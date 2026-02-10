@@ -68,7 +68,7 @@ export function BecomeHostButton() {
 // ---------------------------------------------------------
 // 2) Élément de topbar / menu : Créer une annonce
 //    - Si hôte  → /listings/new
-//    - Si pas hôte → propose de devenir hôte (Stripe)
+//    - Si pas hôte → /listings/new (activation hôte automatique)
 // ---------------------------------------------------------
 export function CreateListingMenuItem() {
   const router = useRouter();
@@ -79,7 +79,8 @@ export function CreateListingMenuItem() {
   const sessionUser = session?.user as { isHost?: boolean; role?: string } | undefined;
   const isHost =
     sessionUser?.isHost === true ||
-    sessionUser?.role === "HOST";
+    sessionUser?.role === "HOST" ||
+    sessionUser?.role === "BOTH";
 
   async function handleClick() {
     if (status === "loading" || loading) return;
@@ -90,54 +91,12 @@ export function CreateListingMenuItem() {
       return;
     }
 
-    // connecté mais pas hôte → proposer d'activer le compte hôte
-    if (!isHost) {
-      const ok = window.confirm(
-        "Pour créer une annonce, vous devez d'abord devenir hôte Lok'Room et activer les paiements. Lancer l'activation maintenant ?",
-      );
-      if (!ok) return;
-      await startHostOnboarding(setLoading);
-      return;
-    }
-
-    // ✅ déjà hôte → on va sur /listings/new
+    // ✅ Toujours rediriger vers /listings/new (activation hôte se fera là-bas si nécessaire)
     router.push("/listings/new");
   }
 
-  return (
-    <button
-      type="button"
-      onClick={handleClick}
-      className="flex w-full items-center justify-between px-4 py-2 text-left text-sm hover:bg-gray-50"
-    >
-      <span>Créer une annonce</span>
-      {loading && <span className="text-xs text-gray-400">…</span>}
-    </button>
-  );
-}
-
-// ---------------------------------------------------------
-// 3) Élément de topbar / menu : Devenir hôte (optionnel)
-//    - S'affiche seulement si l'utilisateur n'est pas encore hôte
-// ---------------------------------------------------------
-export function BecomeHostMenuItem() {
-  const { data: session, status } = useSession();
-  const [loading, setLoading] = useState(false);
-
-  const sessionUser = session?.user as { isHost?: boolean; role?: string } | undefined;
-  const isHost =
-    sessionUser?.isHost === true ||
-    sessionUser?.role === "HOST";
-
-  // Si on ne sait pas encore ou si déjà hôte → ne rien afficher
-  if (status === "loading" || isHost) {
-    return null;
-  }
-
-  async function handleClick() {
-    if (loading) return;
-    await startHostOnboarding(setLoading);
-  }
+  // Afficher "Devenir hôte" si pas encore hôte, sinon "Créer une annonce"
+  const buttonText = isHost ? "Créer une annonce" : "Devenir hôte";
 
   return (
     <button
@@ -145,8 +104,14 @@ export function BecomeHostMenuItem() {
       onClick={handleClick}
       className="flex w-full items-center justify-between px-4 py-2 text-left text-sm hover:bg-gray-50"
     >
-      <span>Devenir hôte</span>
+      <span>{buttonText}</span>
       {loading && <span className="text-xs text-gray-400">…</span>}
     </button>
   );
 }
+
+// ---------------------------------------------------------
+// 3) Élément de topbar / menu : Devenir hôte (SUPPRIMÉ)
+//    - Maintenant géré par CreateListingMenuItem
+// ---------------------------------------------------------
+// export function BecomeHostMenuItem() - REMOVED

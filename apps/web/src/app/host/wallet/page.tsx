@@ -41,7 +41,7 @@ export default function WalletPage() {
       if (!res.ok) {
         const data = await res.json();
         if (data.error === "forbidden") {
-          router.push("/become-host");
+          router.push("/listings/new");
           return;
         }
         throw new Error(data.error || "Erreur de chargement");

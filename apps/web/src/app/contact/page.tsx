@@ -352,7 +352,7 @@ export default function ContactPage() {
               </h3>
               <p className="text-gray-600">
                 Visitez notre page{" "}
-                <Link href="/become-host" className="underline">
+                <Link href="/listings/new" className="underline">
                   Devenir hôte
                 </Link>{" "}
                 pour commencer à proposer votre espace.

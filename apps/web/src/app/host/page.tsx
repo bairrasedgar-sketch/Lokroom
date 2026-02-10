@@ -21,9 +21,9 @@ export default async function HostPage() {
 
   const user = session.user as { isHost?: boolean; email?: string | null };
 
-  // Connecté mais pas hôte → on renvoie vers /become-host
+  // Connecté mais pas hôte → on renvoie vers /listings/new
   if (!user.isHost) {
-    redirect("/become-host");
+    redirect("/listings/new");
   }
 
   const { dict } = getServerDictionary();

@@ -32,7 +32,7 @@ export default function AboutPage() {
             </p>
             <div className="mt-10 flex justify-center gap-4">
               <Link
-                href="/become-host"
+                href="/listings/new"
                 className="rounded-lg bg-white px-8 py-3 text-base font-semibold text-gray-900 shadow-sm hover:bg-gray-100 transition"
               >
                 Devenir hôte
@@ -313,7 +313,7 @@ export default function AboutPage() {
           </p>
           <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:justify-center">
             <Link
-              href="/become-host"
+              href="/listings/new"
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-8 py-4 text-base font-semibold text-gray-900 shadow-lg hover:bg-gray-100 transition"
             >
               Devenir hôte

@@ -17,7 +17,7 @@ export function CTASection({ isLoggedIn }: CTASectionProps) {
           </p>
           <div className="mt-6 sm:mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
             <Link
-              href={isLoggedIn ? "/host/listings/new" : "/become-host"}
+              href="/listings/new"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-white px-6 py-3 font-medium text-gray-900 transition-all hover:bg-gray-100"
             >
               {isLoggedIn ? "Créer une annonce" : "Devenir hôte"}
