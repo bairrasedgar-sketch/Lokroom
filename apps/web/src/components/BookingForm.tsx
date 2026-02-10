@@ -584,6 +584,62 @@ export default function BookingForm({
             {bf.noChargeYet || "Aucun montant ne sera débité pour le moment"}
           </p>
 
+          {/* Legal Notice - BEFORE payment */}
+          {preview && (
+            <div className="border-t border-gray-200 pt-4 mt-4">
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">Conditions importantes</h3>
+              <div className="space-y-2 text-xs text-gray-600">
+                <div className="flex items-start gap-2">
+                  <svg className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>
+                    <strong>Annulation :</strong> Gratuite jusqu'à 72h avant l'arrivée (remboursement à 100%)
+                  </span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <svg className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>
+                    <strong>Paiement :</strong> Sécurisé via Stripe. Vous serez débité en {displayCurrency || currency}
+                  </span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <svg className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>
+                    <strong>Litige :</strong> En cas de problème, contactez support@lokroom.com sous 48h
+                  </span>
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    required
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                  />
+                  <span className="text-xs text-gray-600">
+                    J'accepte les{" "}
+                    <a href="/legal/terms" target="_blank" className="underline hover:text-gray-900">
+                      Conditions Générales
+                    </a>
+                    , la{" "}
+                    <a href="/legal/cancellation" target="_blank" className="underline hover:text-gray-900">
+                      Politique d'annulation
+                    </a>
+                    {" "}et la{" "}
+                    <a href="/legal/privacy" target="_blank" className="underline hover:text-gray-900">
+                      Politique de confidentialité
+                    </a>
+                  </span>
+                </label>
+              </div>
+            </div>
+          )}
+
           {/* Price Breakdown */}
           {preview && (
             <div className="pt-4 space-y-3">
