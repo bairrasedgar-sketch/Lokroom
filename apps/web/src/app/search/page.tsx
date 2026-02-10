@@ -7,6 +7,7 @@ import { AdvancedFilters, type FilterValues } from "@/components/search/Advanced
 import { ListingCard } from "@/components/home/ListingCard";
 import { Loader2, MapPin, SlidersHorizontal } from "lucide-react";
 import type { Currency } from "@/lib/currency";
+import { formatMoneyAsync } from "@/lib/currency.client";
 
 interface Listing {
   id: string;
@@ -65,6 +66,7 @@ export default function SearchPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [listings, setListings] = useState<Listing[]>([]);
+  const [formattedCards, setFormattedCards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -86,6 +88,55 @@ export default function SearchPage() {
   useEffect(() => {
     fetchListings();
   }, [searchParams]);
+
+  // Format cards when listings or userCurrency changes
+  useEffect(() => {
+    const formatCards = async () => {
+      if (listings.length === 0) {
+        setFormattedCards([]);
+        return;
+      }
+
+      const formatted = await Promise.all(
+        listings.map(async (listing) => {
+          const priceFormatted = await formatMoneyAsync(
+            listing.price,
+            listing.currency as Currency,
+            userCurrency
+          );
+
+          let hourlyPriceFormatted: string | undefined;
+          if (listing.hourlyPrice) {
+            hourlyPriceFormatted = await formatMoneyAsync(
+              listing.hourlyPrice,
+              listing.currency as Currency,
+              userCurrency
+            );
+          }
+
+          return {
+            id: listing.id,
+            title: listing.title,
+            city: listing.city,
+            country: listing.country,
+            type: listing.type,
+            createdAt: new Date(),
+            images: listing.images,
+            priceFormatted,
+            ownerName: listing.owner.name,
+            maxGuests: listing.maxGuests,
+            beds: listing.bedrooms,
+            isInstantBook: listing.isInstantBook,
+            hourlyPrice: hourlyPriceFormatted,
+          };
+        })
+      );
+
+      setFormattedCards(formatted);
+    };
+
+    formatCards();
+  }, [listings, userCurrency]);
 
   const fetchListings = async () => {
     setLoading(true);
@@ -159,18 +210,23 @@ export default function SearchPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const formatListingCard = (listing: Listing) => {
-    // Format price with currency symbol
-    const currencySymbols: Record<Currency, string> = {
-      EUR: "€",
-      USD: "$",
-      CAD: "CAD$",
-      GBP: "£",
-      CNY: "¥",
-    };
+  const formatListingCard = async (listing: Listing) => {
+    // This function is no longer used - formatting is done in useEffect
+    // Kept for backwards compatibility if needed
+    const priceFormatted = await formatMoneyAsync(
+      listing.price,
+      listing.currency as Currency,
+      userCurrency
+    );
 
-    const symbol = currencySymbols[userCurrency] || "€";
-    const priceFormatted = `${listing.price}${symbol}`;
+    let hourlyPriceFormatted: string | undefined;
+    if (listing.hourlyPrice) {
+      hourlyPriceFormatted = await formatMoneyAsync(
+        listing.hourlyPrice,
+        listing.currency as Currency,
+        userCurrency
+      );
+    }
 
     return {
       id: listing.id,
@@ -185,7 +241,7 @@ export default function SearchPage() {
       maxGuests: listing.maxGuests,
       beds: listing.bedrooms,
       isInstantBook: listing.isInstantBook,
-      hourlyPrice: listing.hourlyPrice,
+      hourlyPrice: hourlyPriceFormatted,
     };
   };
 
@@ -355,13 +411,13 @@ export default function SearchPage() {
             )}
 
             {/* Grille de résultats */}
-            {!loading && listings.length > 0 && (
+            {!loading && formattedCards.length > 0 && (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  {listings.map((listing, index) => (
+                  {formattedCards.map((card, index) => (
                     <ListingCard
-                      key={listing.id}
-                      card={formatListingCard(listing)}
+                      key={card.id}
+                      card={card}
                       index={index}
                     />
                   ))}

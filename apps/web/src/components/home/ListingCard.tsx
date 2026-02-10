@@ -206,7 +206,7 @@ export function ListingCard({ card, index }: { card: ListingCardType; index: num
           <span className="text-gray-500"> / nuit</span>
           {card.hourlyPrice && (
             <span className="ml-2 text-sm text-blue-600 font-medium">
-              • {card.hourlyPrice}€/h
+              • {card.hourlyPrice}/h
             </span>
           )}
         </p>
