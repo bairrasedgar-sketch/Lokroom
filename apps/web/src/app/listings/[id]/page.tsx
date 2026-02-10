@@ -400,12 +400,12 @@ export default async function ListingDetailPage({
           <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4 pt-4 pb-8 bg-gradient-to-b from-black/40 to-transparent">
             <Link
               href="/listings"
-              className="flex items-center justify-center px-4 py-2 rounded-full bg-gray-900/70 backdrop-blur-sm shadow-lg"
+              className="flex items-center justify-center px-5 py-3 rounded-full bg-gray-800/60 backdrop-blur-sm shadow-lg"
             >
               <svg className="h-5 w-5 text-white mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
               </svg>
-              <span className="text-white text-sm font-medium">Retour aux annonces</span>
+              <span className="text-white text-base font-medium">Retour aux annonces</span>
             </Link>
             <div className="flex items-center gap-2">
               <ShareButton variant="mobile" />
