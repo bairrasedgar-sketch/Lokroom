@@ -391,7 +391,7 @@ export default function BookingForm({
         <div className="flex items-baseline justify-between mb-6">
           <div>
             <span className="text-2xl font-semibold text-gray-900">
-              {priceFormatted || `${Math.round(price)} ${currency === "CAD" ? "CAD" : "€"}`}
+              {priceFormatted || `${Math.round(price)} ${currency}`}
             </span>
             <span className="text-base text-gray-600 ml-1">{t.common.perNight}</span>
           </div>
@@ -403,6 +403,15 @@ export default function BookingForm({
             </div>
           )}
         </div>
+
+        {/* Currency notice */}
+        {displayCurrency && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-900">
+              💳 Vous serez débité en <strong>{displayCurrency}</strong>
+            </p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Date Picker - Airbnb style */}
