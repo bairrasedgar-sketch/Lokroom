@@ -960,8 +960,14 @@ export default async function ListingDetailPage({
       {/* ========== VERSION DESKTOP (inchangée) ========== */}
       <main className="hidden lg:flex mx-auto max-w-6xl 2xl:max-w-7xl 3xl:max-w-[1600px] flex-col gap-4 sm:gap-6 px-3 sm:px-4 lg:px-6 xl:px-8 pb-8 sm:pb-12 pt-4 sm:pt-6">
       {/* Ligne retour + date */}
-      <div className="flex items-center justify-between text-xs text-gray-600">
-        <Link href="/listings" className="hover:underline">
+      <div className="flex items-center justify-between text-xs text-gray-600 mb-4">
+        <Link
+          href="/listings"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-800/60 backdrop-blur-sm text-white hover:bg-gray-800/70 transition-colors"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
           {t.listingDetail.backToListings}
         </Link>
         <span>

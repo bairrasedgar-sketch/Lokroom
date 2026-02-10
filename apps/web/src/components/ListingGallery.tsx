@@ -402,7 +402,7 @@ export default function ListingGallery({ images, title }: ListingGalleryProps) {
             <button
               type="button"
               onClick={() => openModal(0)}
-              className="absolute top-4 left-4 z-10 px-5 py-2.5 bg-gray-800/60 backdrop-blur-sm text-white text-sm font-medium rounded-lg hover:bg-gray-800/70 transition-colors flex items-center gap-2"
+              className="absolute top-4 left-4 z-10 px-5 py-2.5 bg-white/90 backdrop-blur-sm text-gray-900 text-sm font-semibold rounded-lg hover:bg-white transition-colors flex items-center gap-2 shadow-md border border-gray-200"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
