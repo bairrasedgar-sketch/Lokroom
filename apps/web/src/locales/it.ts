@@ -1074,7 +1074,7 @@ const it = {
   // PAGINA DETTAGLIO ANNUNCIO (listings/[id])
   // ============================================
   listingDetail: {
-    backToListings: "← Torna agli annunci",
+    backToListings: "Torna agli annunci",
     publishedOn: "Pubblicato il",
     protectedByLokroom: "Protetto dalla piattaforma Lok'Room.",
     share: "Condividi",

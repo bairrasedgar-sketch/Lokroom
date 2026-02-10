@@ -1074,7 +1074,7 @@ const zh = {
   // 房源详情页面 (listings/[id])
   // ============================================
   listingDetail: {
-    backToListings: "← 返回房源列表",
+    backToListings: "返回房源列表",
     publishedOn: "发布于",
     protectedByLokroom: "受Lok'Room平台保护。",
     share: "分享",

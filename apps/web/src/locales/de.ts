@@ -1074,7 +1074,7 @@ const de = {
   // INSERAT DETAIL SEITE (listings/[id])
   // ============================================
   listingDetail: {
-    backToListings: "← Zurück zu Inseraten",
+    backToListings: "Zurück zu Inseraten",
     publishedOn: "Veröffentlicht am",
     protectedByLokroom: "Geschützt durch die Lok'Room Plattform.",
     share: "Teilen",

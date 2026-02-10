@@ -1093,7 +1093,7 @@ const fr = {
   // PAGE DÉTAIL ANNONCE (listings/[id])
   // ============================================
   listingDetail: {
-    backToListings: "← Retour aux annonces",
+    backToListings: "Retour aux annonces",
     publishedOn: "Publiée le",
     protectedByLokroom: "Protégé par la plate-forme Lok'Room.",
     share: "Partager",

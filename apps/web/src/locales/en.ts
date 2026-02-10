@@ -1099,7 +1099,7 @@ const en = {
   // LISTING DETAIL PAGE (listings/[id])
   // ============================================
   listingDetail: {
-    backToListings: "← Back to listings",
+    backToListings: "Back to listings",
     publishedOn: "Published on",
     protectedByLokroom: "Protected by the Lok'Room platform.",
     share: "Share",
