@@ -56,6 +56,12 @@ const nextConfig = {
     generateBuildId: async () => {
       return `build-${Date.now()}`;
     },
+    compiler: {
+      // Supprimer console.log en production
+      removeConsole: process.env.NODE_ENV === 'production' ? {
+        exclude: ['error', 'warn'],
+      } : false,
+    },
   }),
 
   images: {

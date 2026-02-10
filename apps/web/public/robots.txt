@@ -1,0 +1,23 @@
+# robots.txt for Lok'Room
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://www.lokroom.com/sitemap.xml
+
+# Disallow admin and API routes
+Disallow: /admin
+Disallow: /api/
+Disallow: /account/security
+
+# Allow important pages
+Allow: /
+Allow: /search
+Allow: /listings/
+Allow: /legal/
+Allow: /about
+Allow: /contact
+Allow: /help
+
+# Crawl delay (optional, helps prevent server overload)
+Crawl-delay: 1
