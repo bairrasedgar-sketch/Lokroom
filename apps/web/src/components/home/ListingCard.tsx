@@ -138,7 +138,7 @@ export function ListingCard({ card, index }: { card: ListingCardType; index: num
                 e.stopPropagation();
                 setImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
               }}
-              aria-label="Image precedente"
+              aria-label="Image précédente"
               className="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 h-7 w-7 items-center justify-center rounded-full bg-white/90 shadow-sm border border-gray-200/50 transition-all hover:bg-white hover:scale-105 hover:shadow-md z-10"
             >
               <svg className="h-3 w-3 text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>

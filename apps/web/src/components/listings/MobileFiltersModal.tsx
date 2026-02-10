@@ -176,7 +176,7 @@ export default function MobileFiltersModal({
                   type="number"
                   value={minPrice}
                   onChange={(e) => setMinPrice(e.target.value)}
-                  placeholder="Min"
+                  placeholder="Minimum"
                   className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:border-gray-900 focus:bg-white transition-all"
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">€</span>
@@ -189,7 +189,7 @@ export default function MobileFiltersModal({
                   type="number"
                   value={maxPrice}
                   onChange={(e) => setMaxPrice(e.target.value)}
-                  placeholder="Max"
+                  placeholder="Maximum"
                   className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:border-gray-900 focus:bg-white transition-all"
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">€</span>

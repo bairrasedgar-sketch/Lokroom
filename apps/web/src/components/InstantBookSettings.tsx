@@ -255,7 +255,7 @@ export default function InstantBookSettings({
                     onChange={(e) =>
                       updateSetting("minNights", e.target.value ? parseInt(e.target.value) : null)
                     }
-                    placeholder="Min"
+                    placeholder="Minimum"
                     className="w-16 rounded-lg border border-gray-300 px-2 py-2 text-center text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                   />
                   <span className="text-gray-400">-</span>
@@ -266,7 +266,7 @@ export default function InstantBookSettings({
                     onChange={(e) =>
                       updateSetting("maxNights", e.target.value ? parseInt(e.target.value) : null)
                     }
-                    placeholder="Max"
+                    placeholder="Maximum"
                     className="w-16 rounded-lg border border-gray-300 px-2 py-2 text-center text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
                   />
                   <span className="text-sm text-gray-500">nuits</span>

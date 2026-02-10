@@ -159,7 +159,7 @@ export default function MapExpandButton({ marker, locationLabel, fullScreen = fa
                         window.dispatchEvent(event);
                       }}
                       className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg font-medium text-gray-700 shadow-lg border border-gray-200 transition-all hover:bg-gray-50 hover:shadow-xl active:scale-95"
-                      aria-label="Zoom in"
+                      aria-label="Zoom avant"
                     >
                       +
                     </button>
@@ -170,7 +170,7 @@ export default function MapExpandButton({ marker, locationLabel, fullScreen = fa
                         window.dispatchEvent(event);
                       }}
                       className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-lg font-medium text-gray-700 shadow-lg border border-gray-200 transition-all hover:bg-gray-50 hover:shadow-xl active:scale-95"
-                      aria-label="Zoom out"
+                      aria-label="Zoom arrière"
                     >
                       −
                     </button>
