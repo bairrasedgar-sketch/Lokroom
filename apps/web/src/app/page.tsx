@@ -166,6 +166,15 @@ export default async function Home() {
         displayCurrency
       );
 
+      let hourlyPriceFormatted: string | undefined;
+      if (l.hourlyPrice) {
+        hourlyPriceFormatted = await formatMoneyAsync(
+          l.hourlyPrice,
+          l.currency as Currency,
+          displayCurrency
+        );
+      }
+
       return {
         id: l.id,
         title: l.title,
@@ -179,6 +188,8 @@ export default async function Home() {
         maxGuests: l.maxGuests,
         beds: l.beds,
         isInstantBook: l.isInstantBook,
+        hourlyPrice: hourlyPriceFormatted,
+        pricingMode: l.pricingMode,
       };
     })
   );

@@ -19,7 +19,8 @@ type ListingCardType = {
   maxGuests: number | null;
   beds: number | null;
   isInstantBook: boolean;
-  hourlyPrice?: number | null;
+  hourlyPrice?: string | null;
+  pricingMode?: string | null;
 };
 
 const LISTING_TYPE_LABELS: Record<string, string> = {
@@ -179,12 +180,20 @@ export function ListingCard({ card, index }: { card: ListingCardType; index: num
 
       {/* Card Content */}
       <Link href={`/listings/${card.id}`} onClick={handleCardClick} className="block mt-3 space-y-1">
-        {/* Category Badge */}
+        {/* Category Badge + Hourly Badge */}
         <div className="flex items-center gap-1.5 mb-1">
           <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
             <span>{getCategoryEmoji(card.type)}</span>
             {LISTING_TYPE_LABELS[card.type] || card.type}
           </span>
+          {(card.pricingMode === "HOURLY" || card.pricingMode === "BOTH") && card.hourlyPrice && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
+              <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Réservation horaire
+            </span>
+          )}
         </div>
         <div className="flex items-start justify-between gap-2">
           <h3 className="line-clamp-1 font-medium text-gray-900">
@@ -202,12 +211,20 @@ export function ListingCard({ card, index }: { card: ListingCardType; index: num
           </p>
         )}
         <p className="pt-1">
-          <span className="font-semibold text-gray-900">{card.priceFormatted}</span>
-          <span className="text-gray-500"> / nuit</span>
-          {card.hourlyPrice && (
-            <span className="ml-2 text-sm text-blue-600 font-medium">
-              • {card.hourlyPrice}/h
-            </span>
+          {card.hourlyPrice && (card.pricingMode === "HOURLY" || card.pricingMode === "BOTH") ? (
+            <>
+              <span className="font-semibold text-blue-600">{card.hourlyPrice}/h</span>
+              {card.pricingMode === "BOTH" && (
+                <span className="ml-2 text-sm text-gray-500">
+                  • {card.priceFormatted}/nuit
+                </span>
+              )}
+            </>
+          ) : (
+            <>
+              <span className="font-semibold text-gray-900">{card.priceFormatted}</span>
+              <span className="text-gray-500"> / nuit</span>
+            </>
           )}
         </p>
       </Link>

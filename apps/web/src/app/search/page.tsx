@@ -128,6 +128,7 @@ export default function SearchPage() {
             beds: listing.bedrooms,
             isInstantBook: listing.isInstantBook,
             hourlyPrice: hourlyPriceFormatted,
+            pricingMode: listing.pricingMode,
           };
         })
       );
