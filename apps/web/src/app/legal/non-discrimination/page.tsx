@@ -217,7 +217,7 @@ export default function NonDiscriminationPage() {
                   </a>
                 </li>
                 <li>
-                  <strong>En cas d&apos;urgence :</strong> Contactez notre support 24h/24
+                  <strong>En cas d&apos;urgence :</strong> Contactez notre support IA (24h/24) ou notre support humain (9h-17h tous les jours)
                 </li>
               </ol>
             </div>

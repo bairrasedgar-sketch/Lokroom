@@ -993,7 +993,7 @@ Posez-moi vos questions sur :
                       <span className="text-xs text-emerald-600">En ligne</span>
                     </div>
                     <p className="mt-0.5 text-sm text-gray-500">
-                      FAQ, aide et support 24/7
+                      Support IA disponible 24h/24 7j/7
                     </p>
                   </div>
                 </button>
@@ -1100,7 +1100,7 @@ Posez-moi vos questions sur :
                       <span className="text-[10px] lg:text-xs text-emerald-600 font-medium">En ligne</span>
                     </div>
                     <p className="text-xs lg:text-sm text-gray-500 truncate">
-                      FAQ, aide et support 24/7
+                      Support IA disponible 24h/24 7j/7
                     </p>
                   </div>
                 </button>

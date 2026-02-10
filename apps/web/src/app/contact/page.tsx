@@ -143,7 +143,10 @@ export default function ContactPage() {
                         +33 1 23 45 67 89
                       </a>
                       <p className="text-sm text-gray-500 mt-1">
-                        Lun-Ven, 9h-18h
+                        Support humain : 9h-17h (tous les jours)
+                      </p>
+                      <p className="text-sm text-blue-600 mt-1 font-medium">
+                        Support IA : 24h/24 7j/7
                       </p>
                     </div>
                   </div>

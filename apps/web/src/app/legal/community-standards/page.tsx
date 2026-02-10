@@ -210,7 +210,7 @@ export default function CommunityStandardsPage() {
             </p>
             <ol className="list-decimal pl-6 text-gray-600 mb-4 space-y-2">
               <li>
-                <strong>Pendant le séjour :</strong> Contactez notre support d&apos;urgence disponible 24h/24
+                <strong>Pendant le séjour :</strong> Contactez notre support IA (disponible 24h/24) ou notre support humain (9h-17h tous les jours)
               </li>
               <li>
                 <strong>Après le séjour :</strong> Utilisez le formulaire de signalement dans l&apos;application

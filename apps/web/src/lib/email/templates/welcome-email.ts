@@ -60,7 +60,9 @@ export function welcomeEmailTemplate(data: {
       <div style="background:#f0f9ff;border-radius:12px;padding:20px;margin:32px 0;">
         <p style="margin:0;font-size:14px;color:#1e40af;line-height:1.6;">
           <strong>Besoin d'aide ?</strong><br>
-          Notre équipe support est disponible 7j/7 pour répondre à toutes vos questions. N'hésitez pas à nous contacter !
+          Support humain : 9h-17h (tous les jours)<br>
+          Support IA : 24h/24 7j/7<br>
+          N'hésitez pas à nous contacter !
         </p>
       </div>
 
@@ -91,7 +93,9 @@ Prochaines étapes :
 Découvrir Lok'Room : ${APP_URL}
 
 Besoin d'aide ?
-Notre équipe support est disponible 7j/7 pour répondre à toutes vos questions. N'hésitez pas à nous contacter !
+Support humain : 9h-17h (tous les jours)
+Support IA : 24h/24 7j/7
+N'hésitez pas à nous contacter !
 
 Merci de nous faire confiance pour vos réservations d'espaces.
   `.trim();

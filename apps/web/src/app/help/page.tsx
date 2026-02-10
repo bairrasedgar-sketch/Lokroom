@@ -585,8 +585,11 @@ export default function HelpCenterPage() {
             </div>
             <div className="mt-4 sm:ml-4 sm:mt-0">
               <h3 className="text-lg font-semibold">Vous n&apos;avez pas trouvé votre réponse ?</h3>
-              <p className="mt-1 text-gray-400">
-                Notre équipe support est disponible 7j/7 pour vous aider
+              <p className="mt-1 text-gray-300">
+                Support humain : 9h-17h (tous les jours)
+              </p>
+              <p className="mt-1 text-blue-300 font-medium">
+                Support IA : 24h/24 7j/7
               </p>
             </div>
             <div className="mt-4 sm:ml-auto sm:mt-0">
