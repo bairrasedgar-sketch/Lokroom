@@ -313,6 +313,132 @@ export default function ContactPage() {
         </div>
       </section>
 
+      {/* SLA Section */}
+      <section className="py-16 bg-gradient-to-br from-blue-50 to-indigo-50">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-gray-900">
+              Délais de Réponse Garantis
+            </h2>
+            <p className="mt-4 text-lg text-gray-600">
+              Nous nous engageons à vous répondre dans les meilleurs délais
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {/* Support Standard */}
+            <div className="bg-white rounded-xl shadow-sm p-6 border-2 border-gray-200">
+              <div className="flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 text-blue-600 mx-auto mb-4">
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
+                Support Standard
+              </h3>
+              <p className="text-3xl font-bold text-blue-600 text-center mb-3">
+                24h
+              </p>
+              <p className="text-sm text-gray-600 text-center mb-4">
+                Questions générales, informations, assistance non urgente
+              </p>
+              <ul className="text-xs text-gray-500 space-y-1">
+                <li>• Réponse sous 24h ouvrées</li>
+                <li>• Email : support@lokroom.com</li>
+                <li>• Formulaire de contact</li>
+              </ul>
+            </div>
+
+            {/* Support Urgent */}
+            <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-orange-500 relative">
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                <span className="bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                  PRIORITAIRE
+                </span>
+              </div>
+              <div className="flex items-center justify-center h-12 w-12 rounded-full bg-orange-100 text-orange-600 mx-auto mb-4">
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
+                Support Urgent
+              </h3>
+              <p className="text-3xl font-bold text-orange-600 text-center mb-3">
+                2h
+              </p>
+              <p className="text-sm text-gray-600 text-center mb-4">
+                Problème pendant une réservation en cours
+              </p>
+              <ul className="text-xs text-gray-500 space-y-1">
+                <li>• Réponse sous 2h (7j/7)</li>
+                <li>• Mentionnez "URGENT" dans l'objet</li>
+                <li>• Téléphone : +33 1 23 45 67 89</li>
+              </ul>
+            </div>
+
+            {/* Support IA */}
+            <div className="bg-white rounded-xl shadow-sm p-6 border-2 border-green-200">
+              <div className="flex items-center justify-center h-12 w-12 rounded-full bg-green-100 text-green-600 mx-auto mb-4">
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 text-center mb-2">
+                Support IA
+              </h3>
+              <p className="text-3xl font-bold text-green-600 text-center mb-3">
+                Instantané
+              </p>
+              <p className="text-sm text-gray-600 text-center mb-4">
+                Réponses automatiques 24h/24 7j/7
+              </p>
+              <ul className="text-xs text-gray-500 space-y-1">
+                <li>• Disponible 24h/24 7j/7</li>
+                <li>• Réponse immédiate</li>
+                <li>• Questions fréquentes</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Escalade Urgence */}
+          <div className="mt-8 max-w-3xl mx-auto">
+            <div className="bg-red-50 border-2 border-red-200 rounded-xl p-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <svg className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-red-900 mb-2">
+                    Urgence pendant une réservation ?
+                  </h3>
+                  <p className="text-sm text-red-800 mb-3">
+                    Si vous rencontrez un problème urgent pendant une réservation en cours (accès impossible,
+                    problème de sécurité, litige avec l'hôte/voyageur), suivez cette procédure :
+                  </p>
+                  <ol className="text-sm text-red-800 space-y-2 list-decimal pl-5">
+                    <li>
+                      <strong>Contactez l'hôte/voyageur</strong> via la messagerie Lok'Room
+                    </li>
+                    <li>
+                      <strong>Si pas de réponse sous 2h</strong>, envoyez un email à support@lokroom.com avec <strong>"URGENT"</strong> dans l'objet
+                    </li>
+                    <li>
+                      <strong>Pour les urgences critiques</strong> (sécurité, accès bloqué), appelez le +33 1 23 45 67 89
+                    </li>
+                  </ol>
+                  <p className="text-xs text-red-700 mt-3">
+                    💡 Astuce : Prenez des photos datées pour documenter tout problème
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* FAQ Section */}
       <section className="py-16 bg-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -328,11 +454,11 @@ export default function ContactPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             <div className="bg-gray-50 rounded-xl p-6">
               <h3 className="font-semibold text-gray-900 mb-2">
-                Quel est le délai de réponse ?
+                Que faire si je n'ai pas de réponse ?
               </h3>
               <p className="text-gray-600">
-                Notre équipe répond généralement sous 24h ouvrées. Pour les urgences,
-                contactez-nous par téléphone.
+                Si vous n'avez pas reçu de réponse dans les délais indiqués, vérifiez vos spams
+                ou renvoyez votre message en mentionnant votre demande précédente.
               </p>
             </div>
 
