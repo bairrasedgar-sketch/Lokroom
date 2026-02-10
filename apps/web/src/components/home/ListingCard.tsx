@@ -19,6 +19,7 @@ type ListingCardType = {
   maxGuests: number | null;
   beds: number | null;
   isInstantBook: boolean;
+  hourlyPrice?: number | null;
 };
 
 const LISTING_TYPE_LABELS: Record<string, string> = {
@@ -203,6 +204,11 @@ export function ListingCard({ card, index }: { card: ListingCardType; index: num
         <p className="pt-1">
           <span className="font-semibold text-gray-900">{card.priceFormatted}</span>
           <span className="text-gray-500"> / nuit</span>
+          {card.hourlyPrice && (
+            <span className="ml-2 text-sm text-blue-600 font-medium">
+              • {card.hourlyPrice}€/h
+            </span>
+          )}
         </p>
       </Link>
     </div>

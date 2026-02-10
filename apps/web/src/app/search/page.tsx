@@ -185,6 +185,7 @@ export default function SearchPage() {
       maxGuests: listing.maxGuests,
       beds: listing.bedrooms,
       isInstantBook: listing.isInstantBook,
+      hourlyPrice: listing.hourlyPrice,
     };
   };
 

@@ -1260,6 +1260,77 @@ export default async function ListingDetailPage({
             )}
           </div>
 
+          {/* Comment ça marche - Trust signals */}
+          <div className="space-y-3 border-b pb-4 bg-blue-50 rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-blue-900 flex items-center gap-2">
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+              </svg>
+              Comment ça marche
+            </h3>
+            <div className="space-y-2 text-sm text-gray-700">
+              <div className="flex items-start gap-2">
+                <svg className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span><strong>Paiement sécurisé :</strong> Vos paiements sont protégés via Stripe. L'hôte reçoit l'argent 24h après votre arrivée.</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <svg className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span><strong>Protection en cas de litige :</strong> Si un problème survient, notre équipe intervient pour trouver une solution équitable.</span>
+              </div>
+              <div className="flex items-start gap-2">
+                <svg className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span><strong>Annulation flexible :</strong> Annulez jusqu'à 72h avant pour un remboursement complet (voir politique ci-dessous).</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Politique d'annulation */}
+          <div className="space-y-2 border-b pb-4">
+            <h3 className="text-sm font-semibold">Politique d'annulation</h3>
+            <div className="bg-gray-50 rounded-lg p-4 space-y-3 text-sm">
+              <div>
+                <h4 className="font-medium text-gray-900 mb-2">Réservations ≥ 24h (journée/nuitée)</h4>
+                <ul className="space-y-1 text-gray-700">
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-600 font-bold">✓</span>
+                    <span><strong>≥ 72h avant :</strong> Remboursement à 100% (frais de service 5% retenus, max 2,50€)</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-600 font-bold">⚠</span>
+                    <span><strong>24h-72h avant :</strong> Remboursement à 50% (hors frais de service)</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-red-600 font-bold">✗</span>
+                    <span><strong>&lt; 24h avant :</strong> Aucun remboursement</span>
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-medium text-gray-900 mb-2">Réservations &lt; 24h (horaire)</h4>
+                <ul className="space-y-1 text-gray-700">
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-600 font-bold">✓</span>
+                    <span><strong>≥ 24h avant :</strong> Remboursement à 100% (frais de service 5% retenus, max 2,50€)</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-amber-600 font-bold">⚠</span>
+                    <span><strong>6h-24h avant :</strong> Remboursement à 50% (hors frais de service)</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-red-600 font-bold">✗</span>
+                    <span><strong>&lt; 6h avant :</strong> Aucun remboursement</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
           {/* Tarification */}
           {(listing.hourlyPrice || listing.cleaningFee || listing.extraGuestFee) && (
             <div className="space-y-2 border-b pb-4">
