@@ -16,6 +16,8 @@ type BookingFormProps = {
   listingId: string;
   price: number;
   currency: Currency;
+  displayCurrency?: Currency;
+  priceFormatted?: string;
   isInstantBook?: boolean;
   rating?: number | null;
   reviewCount?: number;
@@ -62,6 +64,8 @@ export default function BookingForm({
   listingId,
   price,
   currency,
+  displayCurrency,
+  priceFormatted,
   isInstantBook = false,
   rating,
   reviewCount = 0,
@@ -387,7 +391,7 @@ export default function BookingForm({
         <div className="flex items-baseline justify-between mb-6">
           <div>
             <span className="text-2xl font-semibold text-gray-900">
-              {Math.round(price)} {currency === "CAD" ? "CAD" : "€"}
+              {priceFormatted || `${Math.round(price)} ${currency === "CAD" ? "CAD" : "€"}`}
             </span>
             <span className="text-base text-gray-600 ml-1">{t.common.perNight}</span>
           </div>

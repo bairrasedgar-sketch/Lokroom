@@ -1406,6 +1406,8 @@ export default async function ListingDetailPage({
                 listingId={listing.id}
                 price={listing.price}
                 currency={listing.currency}
+                displayCurrency={displayCurrency}
+                priceFormatted={priceFormatted}
                 isInstantBook={listing.isInstantBook ?? false}
               />
             </>
