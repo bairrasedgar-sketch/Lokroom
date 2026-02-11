@@ -22,12 +22,14 @@ const PASSWORD_HISTORY_LIMIT = 5;
  * POST /api/auth/forgot-password
  * Envoyer un code de réinitialisation par email
  */
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     // Rate limiting avec Upstash
     const rateLimitResult = await withRateLimit(req, authRateLimiter);
-    if ('success' in rateLimitResult && rateLimitResult.success !== true) {
-      return rateLimitResult;
+    if (rateLimitResult !== null && typeof rateLimitResult === 'object' && 'success' in rateLimitResult) {
+      if (rateLimitResult.success !== true) {
+        return rateLimitResult as NextResponse;
+      }
     }
 
     // Rate limiting legacy (double protection)
