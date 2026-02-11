@@ -4,6 +4,9 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { createListingSchema, validateRequestBody } from "@/lib/validations";
 import type { ProvinceCA } from "@prisma/client";
+import { logger } from "@/lib/logger";
+import { apiRateLimiter, publicRateLimiter, withRateLimit } from "@/lib/security/rate-limit";
+import { sanitizeText, sanitizeRichText } from "@/lib/security/sanitize";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +57,12 @@ function assertValidCoordinates(options: {
 // GET /api/listings  → liste toutes les annonces avec pagination
 export async function GET(req: NextRequest) {
   try {
+    // Rate limiting pour routes publiques
+    const rateLimitResult = await withRateLimit(req, publicRateLimiter);
+    if (rateLimitResult.success !== true) {
+      return rateLimitResult;
+    }
+
     const searchParams = req.nextUrl.searchParams;
     const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
     const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get("pageSize") || "20", 10)));
@@ -110,7 +119,7 @@ export async function GET(req: NextRequest) {
       pageCount: total === 0 ? 0 : Math.ceil(total / pageSize),
     });
   } catch (err) {
-    console.error("GET /api/listings error", err);
+    logger.error("GET /api/listings error", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -121,6 +130,12 @@ export async function GET(req: NextRequest) {
 // POST /api/listings → créer une annonce
 export async function POST(req: NextRequest) {
   try {
+    // Rate limiting pour création d'annonce
+    const rateLimitResult = await withRateLimit(req, apiRateLimiter);
+    if (rateLimitResult.success !== true) {
+      return rateLimitResult;
+    }
+
     const session = await getServerSession(authOptions);
 
     const email = session?.user?.email;
@@ -382,7 +397,7 @@ export async function POST(req: NextRequest) {
         : undefined,
     }, { status: 201 });
   } catch (err) {
-    console.error("POST /api/listings error", err);
+    logger.error("POST /api/listings error", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

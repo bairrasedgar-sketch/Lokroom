@@ -5,11 +5,19 @@ import { prisma } from "@/lib/db";
 import { sendMessageSchema, validateRequestBody } from "@/lib/validations";
 import { broadcastMessage } from "@/lib/sse-broadcast";
 import { detectLanguage } from "@/lib/translation";
+import { apiRateLimiter, withRateLimit } from "@/lib/security/rate-limit";
+import { sanitizeText } from "@/lib/security/sanitize";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate limiting
+    const rateLimitResult = await withRateLimit(req, apiRateLimiter);
+    if (rateLimitResult.success !== true) {
+      return rateLimitResult;
+    }
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
@@ -27,7 +35,9 @@ export async function POST(req: NextRequest) {
     }
 
     const { conversationId: convIdInput, listingId, bookingId, recipientId: recipientIdInput, content } = validation.data;
-    const text = content.trim();
+
+    // Sanitize message content
+    const text = sanitizeText(content);
 
     if (!text) {
       return NextResponse.json(

@@ -99,6 +99,29 @@ apps/web/
 
 Créer un fichier `.env.local` avec les variables suivantes:
 
+```bash
+# Base de données
+DATABASE_URL="postgresql://..."
+
+# NextAuth
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="..."
+
+# Stripe
+STRIPE_SECRET_KEY="sk_test_..."
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_..."
+
+# Sentry (Monitoring)
+NEXT_PUBLIC_SENTRY_DSN="https://xxx@xxx.ingest.sentry.io/xxx"
+SENTRY_ORG="lokroom"
+SENTRY_PROJECT="lokroom-web"
+SENTRY_AUTH_TOKEN="..."
+
+# Voir .env.example pour la liste complète
+```
+
+Voir [SENTRY.md](./apps/web/SENTRY.md) pour la configuration complète du monitoring.
+
 ```env
 # Database
 DATABASE_URL="postgresql://..."

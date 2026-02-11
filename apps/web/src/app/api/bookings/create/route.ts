@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { applyFeesToBooking } from "@/lib/bookingFees";
 import { createBookingSchema, validateRequestBody } from "@/lib/validations";
+import { apiRateLimiter, withRateLimit } from "@/lib/security/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +41,12 @@ function daysDiff(d1: Date, d2: Date): number {
  * - Retourne booking + fees + hostUserId + nights
  */
 export async function POST(req: NextRequest) {
+  // Rate limiting
+  const rateLimitResult = await withRateLimit(req, apiRateLimiter);
+  if (rateLimitResult.success !== true) {
+    return rateLimitResult;
+  }
+
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return NextResponse.json({ error: "UNAUTHENTICATED" }, { status: 401 });

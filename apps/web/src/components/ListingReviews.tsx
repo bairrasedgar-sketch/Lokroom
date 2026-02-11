@@ -428,20 +428,7 @@ export default function ListingReviews({ listingId }: ListingReviewsProps) {
     distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
   } : null;
   const error = swrError;
-    } catch (e) {
-      if (e instanceof Error && e.name === "AbortError") {
-        setError(translations.requestTimeout);
-        return;
-      }
-      setError(e instanceof Error ? e.message : translations.loadErrorMessage);
-    } finally {
-      clearTimeout(timeoutId);
-      setLoading(false);
-    }
-  }, [listingId, translations.loadError, translations.loadErrorMessage]);
 
-  useEffect(() => {
-    loadReviews(1);
   const handleLoadMore = () => {
     const nextPage = page + 1;
     setPage(nextPage);
@@ -494,12 +481,6 @@ export default function ListingReviews({ listingId }: ListingReviewsProps) {
       {error && (
         <div className="py-8 text-center">
           <p className="text-red-600">{error}</p>
-          <button
-            onClick={() => loadReviews(1)}
-            className="mt-4 text-gray-900 font-medium underline hover:text-gray-700"
-          >
-            {translations.retry}
-          </button>
         </div>
       )}
 

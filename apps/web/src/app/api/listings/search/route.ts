@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import type { Prisma, ProvinceCA } from "@prisma/client";
 import { rateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -319,7 +320,7 @@ export async function GET(req: NextRequest) {
       items: enriched,
     });
   } catch (e) {
-    console.error("Error in /api/listings/search:", e);
+    logger.error("Error in /api/listings/search", e);
     return NextResponse.json(
       { error: "An error occurred while searching" },
       { status: 500 },

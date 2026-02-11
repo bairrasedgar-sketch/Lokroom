@@ -7,6 +7,7 @@ import { Prisma } from "@prisma/client";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { s3, S3_BUCKET, S3_PUBLIC_BASE } from "@/lib/s3";
+import { logger } from "@/lib/logger";
 
 type ImageBody = {
   url?: string;
@@ -298,7 +299,7 @@ export async function DELETE(
   // 2) Tentative de suppression dans R2 (best effort)
   try {
     if (!S3_PUBLIC_BASE) {
-      console.warn(
+      logger.warn(
         "[images DELETE] S3_PUBLIC_BASE non défini, suppression R2 ignorée."
       );
     } else {
@@ -320,14 +321,14 @@ export async function DELETE(
           })
         );
       } else {
-        console.warn(
-          "[images DELETE] Impossible de déduire la key R2 depuis l'URL :",
-          url
+        logger.warn(
+          "[images DELETE] Impossible de déduire la key R2 depuis l'URL",
+          { url }
         );
       }
     }
   } catch (err) {
-    console.error("[images DELETE] Erreur suppression R2:", err);
+    logger.error("[images DELETE] Erreur suppression R2", err);
   }
 
   return new NextResponse(null, { status: 204 });

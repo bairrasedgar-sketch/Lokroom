@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -101,7 +102,7 @@ export async function POST(
       amenities: updatedAmenities.map((la) => la.amenity),
     });
   } catch (err) {
-    console.error("POST /api/listings/[id]/amenities error", err);
+    logger.error("POST /api/listings/[id]/amenities error", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -172,7 +173,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    console.error("DELETE /api/listings/[id]/amenities error", err);
+    logger.error("DELETE /api/listings/[id]/amenities error", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { cache, CacheKeys, CacheTTL, invalidateListingCache } from "@/lib/redis/cache-safe";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -125,7 +126,7 @@ export async function GET(
       }
     );
   } catch (e) {
-    console.error("GET /api/listings/[id] error:", e);
+    logger.error("GET /api/listings/[id] error", e);
     return NextResponse.json({ error: "server_error" }, { status: 500 });
   }
 }
@@ -364,7 +365,7 @@ export async function PUT(
 
     return NextResponse.json({ listing: updated });
   } catch (e) {
-    console.error("PUT /api/listings/[id] error:", e);
+    logger.error("PUT /api/listings/[id] error", e);
     return NextResponse.json({ error: "server_error" }, { status: 500 });
   }
 }
@@ -419,7 +420,7 @@ export async function DELETE(
 
     return NextResponse.json({ ok: true });
   } catch (e) {
-    console.error("DELETE /api/listings/[id] error:", e);
+    logger.error("DELETE /api/listings/[id] error", e);
     return NextResponse.json({ error: "server_error" }, { status: 500 });
   }
 }

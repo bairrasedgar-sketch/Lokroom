@@ -12,6 +12,8 @@ import { generateVerificationCode } from "@/lib/password";
 import { sendEmailVerificationCode } from "@/lib/email";
 import { rateLimit } from "@/lib/rate-limit";
 import { SignJWT } from "jose";
+import { authRateLimiter, withRateLimit } from "@/lib/security/rate-limit";
+import { sanitizeEmail } from "@/lib/security/sanitize";
 
 export const dynamic = "force-dynamic";
 
@@ -48,7 +50,13 @@ async function generateEmailVerificationToken(userId: string, email: string): Pr
  */
 export async function POST(req: NextRequest) {
   try {
-    // Rate limiting par IP
+    // Rate limiting avec Upstash
+    const rateLimitResult = await withRateLimit(req, authRateLimiter);
+    if (rateLimitResult.success !== true) {
+      return rateLimitResult;
+    }
+
+    // Rate limiting legacy (double protection)
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
                req.headers.get("x-real-ip") ||
                "unknown";
@@ -68,11 +76,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email requis" }, { status: 400 });
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
-
-    // Valider le format de l'email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(normalizedEmail)) {
+    // Sanitize email input
+    const normalizedEmail = sanitizeEmail(email);
+    if (!normalizedEmail) {
       return NextResponse.json({ error: "Format d'email invalide" }, { status: 400 });
     }
 
@@ -147,7 +153,13 @@ export async function POST(req: NextRequest) {
  */
 export async function PUT(req: NextRequest) {
   try {
-    // Rate limiting par IP
+    // Rate limiting avec Upstash
+    const rateLimitResult = await withRateLimit(req, authRateLimiter);
+    if (rateLimitResult.success !== true) {
+      return rateLimitResult;
+    }
+
+    // Rate limiting legacy (double protection)
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
                req.headers.get("x-real-ip") ||
                "unknown";
@@ -169,7 +181,13 @@ export async function PUT(req: NextRequest) {
       }, { status: 400 });
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
+    // Sanitize inputs
+    const normalizedEmail = sanitizeEmail(email);
+    if (!normalizedEmail) {
+      return NextResponse.json({
+        error: "Format d'email invalide",
+      }, { status: 400 });
+    }
     const normalizedCode = code.trim();
 
     // Récupérer l'utilisateur

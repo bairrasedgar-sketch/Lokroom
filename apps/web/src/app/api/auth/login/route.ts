@@ -5,6 +5,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { verifyPassword } from "@/lib/password";
 import { rateLimit } from "@/lib/rate-limit";
+import { authRateLimiter, withRateLimit } from "@/lib/security/rate-limit";
+import { sanitizeEmail } from "@/lib/security/sanitize";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +21,13 @@ const LOGIN_WINDOW_MS = 60_000;
  */
 export async function POST(req: NextRequest) {
   try {
-    // Rate limiting par IP
+    // Rate limiting avec Upstash
+    const rateLimitResult = await withRateLimit(req, authRateLimiter);
+    if (rateLimitResult.success !== true) {
+      return rateLimitResult;
+    }
+
+    // Rate limiting legacy (double protection)
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
                req.headers.get("x-real-ip") ||
                "unknown";
@@ -41,7 +49,13 @@ export async function POST(req: NextRequest) {
       }, { status: 400 });
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
+    // Sanitize email input
+    const normalizedEmail = sanitizeEmail(email);
+    if (!normalizedEmail) {
+      return NextResponse.json({
+        error: "Format d'email invalide",
+      }, { status: 400 });
+    }
 
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
