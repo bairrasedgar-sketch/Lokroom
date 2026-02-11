@@ -134,3 +134,31 @@ export function useBookingPreview(
     mutate,
   };
 }
+
+/**
+ * Hook to check instant book eligibility
+ */
+export function useInstantBookEligibility(
+  listingId: string | null,
+  config?: SWRConfiguration
+) {
+  const url = listingId ? `/api/bookings/instant/eligibility?listingId=${listingId}` : null;
+
+  const { data, error, isLoading, mutate } = useSWR(
+    url,
+    fetcher,
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 30000, // 30s cache
+      ...config,
+    }
+  );
+
+  return {
+    eligible: data?.eligible || false,
+    reasons: data?.reasons || [],
+    loading: isLoading,
+    error: error?.message || null,
+    mutate,
+  };
+}

@@ -1,18 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-type DashboardStats = {
-  totalListings: number;
-  activeListings: number;
-  totalBookings: number;
-  upcoming: number;
-  thisMonth: number;
-  cancelled: number;
-  totalRevenue: number;
-  thisMonthRevenue: number;
-  currency: string;
-};
+import { useHostDashboard } from "@/hooks/useHost";
 
 type Props = {
   labels: {
@@ -27,30 +15,7 @@ type Props = {
 };
 
 export default function HostDashboardStats({ labels }: Props) {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const controller = new AbortController();
-
-    async function fetchStats() {
-      try {
-        const res = await fetch("/api/host/dashboard", { signal: controller.signal });
-        if (res.ok) {
-          const data = await res.json();
-          setStats(data.stats);
-        }
-      } catch (err) {
-        if (err instanceof Error && err.name === "AbortError") return;
-        console.error("Failed to fetch dashboard stats:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchStats();
-    return () => controller.abort();
-  }, []);
+  const { stats, loading } = useHostDashboard();
 
   function formatCurrency(amount: number, currency: string = "EUR") {
     return new Intl.NumberFormat("fr-FR", {
