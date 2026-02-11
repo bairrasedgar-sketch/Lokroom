@@ -68,7 +68,7 @@ export async function POST(req: Request) {
       accountNumber?: string;
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    
     let external_account: any;
 
     if (iban && /^[A-Z]{2}/i.test(iban)) {

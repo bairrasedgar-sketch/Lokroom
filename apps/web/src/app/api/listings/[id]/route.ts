@@ -99,7 +99,7 @@ export async function GET(
           label: a.amenity.label,
         }));
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        
         const { amenities, ...listingData } = listing;
         return {
           ...listingData,

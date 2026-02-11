@@ -25,7 +25,7 @@ export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 type LocaleDictionary = typeof fr;
 
 // On utilise Partial pour permettre des traductions manquantes dans les autres locales
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 const DICTS: Record<SupportedLocale, LocaleDictionary> = {
   fr,
   en: en as LocaleDictionary,

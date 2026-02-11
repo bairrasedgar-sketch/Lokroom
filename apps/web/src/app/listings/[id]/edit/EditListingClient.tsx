@@ -435,7 +435,7 @@ export default function EditListingClient({ listing }: { listing: ListingData })
 
   // Drag index for reordering
   const [dragExistingIndex, setDragExistingIndex] = useState<number | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  
   const [dragNewIndex, setDragNewIndex] = useState<number | null>(null);
 
   // Crop modal

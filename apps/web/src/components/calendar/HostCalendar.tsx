@@ -324,7 +324,7 @@ export default function HostCalendar({ listingId, initialData }: HostCalendarPro
   }
 
   // Format currency helper (available for custom price display)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  
   function formatCurrency(cents: number, currency: string) {
     return new Intl.NumberFormat("fr-FR", {
       style: "currency",

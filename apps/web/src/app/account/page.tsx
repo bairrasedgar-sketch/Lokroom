@@ -153,7 +153,7 @@ function maskName(name: string): string {
 // ---------- Carte "Connexion & sécurité" AMÉLIORÉE ----------
 function SecurityTabContent({ t, router }: { t: AccountTranslations; router: ReturnType<typeof useRouter> }) {
   const secT = t.securitySection;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  
   const extT = t.securityExtended || {} as any;
   const [status, setStatus] = useState<IdentityStatus | null>(null);
   const [lastVerifiedAt, setLastVerifiedAt] = useState<string | null>(null);
@@ -788,7 +788,7 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
 // ---------- Contenu Données personnelles AMÉLIORÉ ----------
 function PersonalTabContent({ t }: { t: AccountTranslations }) {
   const pT = t.personal;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  
   const extT = t.personalExtended || {} as any;
 
   // Données réelles chargées depuis l'API
@@ -1590,7 +1590,7 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
 
 // ---------- Contenu Confidentialité ----------
 function PrivacyTabContent({ t }: { t: AccountTranslations }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  
   const privT = (t as any).privacySection || {};
   const [saved, setSaved] = useState(false);
 
@@ -1796,7 +1796,7 @@ function PrivacyTabContent({ t }: { t: AccountTranslations }) {
 
 // ---------- Contenu Notifications style Airbnb ----------
 function NotificationsTabContent({ t }: { t: AccountTranslations }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  
   const nT = t.notificationsSection || {} as any;
   const [saved, setSaved] = useState(false);
 

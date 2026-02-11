@@ -281,7 +281,7 @@ export function DistributionPieChart({
   showLegend?: boolean;
 }) {
   const RADIAN = Math.PI / 180;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  
   const renderCustomLabel = (props: any) => {
     const { cx, cy, midAngle, innerRadius, outerRadius, percent } = props;
     if (cx == null || cy == null || midAngle == null || innerRadius == null || outerRadius == null || percent == null) return null;

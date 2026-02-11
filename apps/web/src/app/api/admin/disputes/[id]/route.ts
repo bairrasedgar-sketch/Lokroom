@@ -134,7 +134,7 @@ export async function GET(
     });
 
     // Construire la timeline (typage simplifié)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    
     const timeline: any[] = [
       {
         id: `opened-${dispute.id}`,
