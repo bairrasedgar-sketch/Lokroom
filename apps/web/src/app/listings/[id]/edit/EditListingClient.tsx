@@ -508,7 +508,7 @@ export default function EditListingClient({ listing }: { listing: ListingData })
     (container as MapElementWithGmap).__gmap = map;
 
     const customIcon = {
-      url: "/map-marker-lokroom-creation.png",
+      url: "/map-marker-lokroom-creation.webp",
       scaledSize: new g.maps.Size(40, 40),
       anchor: new g.maps.Point(20, 40), // Anchor at bottom center (like default pin)
     };

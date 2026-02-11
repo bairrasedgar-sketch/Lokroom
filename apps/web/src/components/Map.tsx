@@ -509,8 +509,8 @@ export default function Map({
 
         // Créer un overlay custom pour le marqueur
         // Deux images superposées:
-        // - Extérieur (map-marker-lokroom-2.png): grandit/rétréci au zoom
-        // - Intérieur (map-marker-lokroom interieur-2.png): taille FIXE, ne bouge jamais
+        // - Extérieur (map-marker-lokroom-2.webp): grandit/rétréci au zoom
+        // - Intérieur (map-marker-lokroom interieur-2.webp): taille FIXE, ne bouge jamais
         const markerOverlay = new g.maps.OverlayView();
         const BASE_ZOOM = initialZoom;
         const BASE_SIZE = isMobile ? 150 : 250;
@@ -524,7 +524,7 @@ export default function Map({
 
           // Image extérieure - grandit/rétréci au zoom
           const imgOuter = document.createElement("img");
-          imgOuter.src = "/map-marker-lokroom-2.png";
+          imgOuter.src = "/map-marker-lokroom-2.webp";
           imgOuter.style.position = "absolute";
           imgOuter.style.width = "100%";
           imgOuter.style.height = "100%";
@@ -536,7 +536,7 @@ export default function Map({
 
           // Image intérieure - FIXE, ne change jamais de taille
           const imgInner = document.createElement("img");
-          imgInner.src = "/map-marker-lokroom interieur-2.png";
+          imgInner.src = "/map-marker-lokroom interieur-2.webp";
           imgInner.style.position = "absolute";
           imgInner.style.width = "100%";
           imgInner.style.height = "100%";

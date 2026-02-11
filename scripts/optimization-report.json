@@ -1,0 +1,237 @@
+{
+  "optimized": [
+    {
+      "original": "email-logo.png",
+      "output": "email-logo.webp",
+      "originalSize": 103.1943359375,
+      "newSize": 11.5546875,
+      "savings": "88.80"
+    },
+    {
+      "original": "exemple airbnb style.jpeg",
+      "output": "exemple airbnb style.webp",
+      "originalSize": 51.5810546875,
+      "newSize": 18.328125,
+      "savings": "64.47"
+    },
+    {
+      "original": "exemple taille et emplacement point blanc.png",
+      "output": "exemple taille et emplacement point blanc.webp",
+      "originalSize": 177.6064453125,
+      "newSize": 26.927734375,
+      "savings": "84.84"
+    },
+    {
+      "original": "illustration final 2.png",
+      "output": "illustration final 2.webp",
+      "originalSize": 629.17578125,
+      "newSize": 102.48828125,
+      "savings": "83.71"
+    },
+    {
+      "original": "illustration final.png",
+      "output": "illustration final.webp",
+      "originalSize": 516.1865234375,
+      "newSize": 90.689453125,
+      "savings": "82.43"
+    },
+    {
+      "original": "interface admin support utilsateurs.png",
+      "output": "interface admin support utilsateurs.webp",
+      "originalSize": 162.962890625,
+      "newSize": 71.74609375,
+      "savings": "55.97"
+    },
+    {
+      "original": "location-pin.png",
+      "output": "location-pin.webp",
+      "originalSize": 3.5576171875,
+      "newSize": 1.068359375,
+      "savings": "69.97"
+    },
+    {
+      "original": "Logo LokRoom application.png",
+      "output": "Logo LokRoom application.webp",
+      "originalSize": 135.6484375,
+      "newSize": 8.80078125,
+      "savings": "93.51"
+    },
+    {
+      "original": "map-marker-lokroom interieur-2.png",
+      "output": "map-marker-lokroom interieur-2.webp",
+      "originalSize": 161.296875,
+      "newSize": 65.640625,
+      "savings": "59.30"
+    },
+    {
+      "original": "map-marker-lokroom-2.png",
+      "output": "map-marker-lokroom-2.webp",
+      "originalSize": 248.447265625,
+      "newSize": 115.66796875,
+      "savings": "53.44"
+    },
+    {
+      "original": "map-marker-lokroom-creation.png",
+      "output": "map-marker-lokroom-creation.webp",
+      "originalSize": 115.099609375,
+      "newSize": 16.15234375,
+      "savings": "85.97"
+    },
+    {
+      "original": "map-marker-lokroom.png",
+      "output": "map-marker-lokroom.webp",
+      "originalSize": 115.099609375,
+      "newSize": 16.15234375,
+      "savings": "85.97"
+    },
+    {
+      "original": "toggle-switch-buttons-icon-on-260nw-2181295197.png",
+      "output": "toggle-switch-buttons-icon-on-260nw-2181295197.webp",
+      "originalSize": 15.1025390625,
+      "newSize": 2.607421875,
+      "savings": "82.74"
+    },
+    {
+      "original": "images/lyon.jpg",
+      "output": "images\\lyon.webp",
+      "originalSize": 59.1416015625,
+      "newSize": 27.525390625,
+      "savings": "53.46"
+    },
+    {
+      "original": "images/lyon_new.jpg",
+      "output": "images\\lyon_new.webp",
+      "originalSize": 59.1416015625,
+      "newSize": 27.525390625,
+      "savings": "53.46"
+    },
+    {
+      "original": "images/marseille.jpg",
+      "output": "images\\marseille.webp",
+      "originalSize": 87.7177734375,
+      "newSize": 50.43359375,
+      "savings": "42.50"
+    },
+    {
+      "original": "images/marseille_new.jpg",
+      "output": "images\\marseille_new.webp",
+      "originalSize": 224.666015625,
+      "newSize": 191.419921875,
+      "savings": "14.80"
+    }
+  ],
+  "skipped": [
+    {
+      "file": "android-chrome-192x192.png",
+      "reason": "excluded-file"
+    },
+    {
+      "file": "android-chrome-512x512.png",
+      "reason": "excluded-file"
+    },
+    {
+      "file": "apple-touch-icon.png",
+      "reason": "excluded-file"
+    },
+    {
+      "file": "exemple airbnb style.webp",
+      "reason": "already-webp",
+      "size": 18.328125
+    },
+    {
+      "file": "exemple taille et emplacement point blanc.webp",
+      "reason": "already-webp",
+      "size": 26.927734375
+    },
+    {
+      "file": "favicon-16x16.png",
+      "reason": "excluded-file"
+    },
+    {
+      "file": "favicon-32x32.png",
+      "reason": "excluded-file"
+    },
+    {
+      "file": "icon.png",
+      "reason": "excluded-file"
+    },
+    {
+      "file": "icon.webp",
+      "reason": "already-webp",
+      "size": 8.599609375
+    },
+    {
+      "file": "illustration final 2.webp",
+      "reason": "already-webp",
+      "size": 102.48828125
+    },
+    {
+      "file": "illustration final.webp",
+      "reason": "already-webp",
+      "size": 90.689453125
+    },
+    {
+      "file": "interface admin support utilsateurs.webp",
+      "reason": "already-webp",
+      "size": 71.74609375
+    },
+    {
+      "file": "location-pin.webp",
+      "reason": "already-webp",
+      "size": 1.068359375
+    },
+    {
+      "file": "Logo LokRoom application.webp",
+      "reason": "already-webp",
+      "size": 8.80078125
+    },
+    {
+      "file": "map-marker-lokroom interieur-2.webp",
+      "reason": "already-webp",
+      "size": 65.640625
+    },
+    {
+      "file": "map-marker-lokroom-2.webp",
+      "reason": "already-webp",
+      "size": 115.66796875
+    },
+    {
+      "file": "map-marker-lokroom-creation.webp",
+      "reason": "already-webp",
+      "size": 16.15234375
+    },
+    {
+      "file": "map-marker-lokroom.webp",
+      "reason": "already-webp",
+      "size": 16.15234375
+    },
+    {
+      "file": "images/bordeaux.webp",
+      "reason": "already-webp",
+      "size": 360.880859375
+    },
+    {
+      "file": "images/lyon.webp",
+      "reason": "already-webp",
+      "size": 27.525390625
+    },
+    {
+      "file": "images/lyon_new.webp",
+      "reason": "already-webp",
+      "size": 27.525390625
+    },
+    {
+      "file": "images/marseille.webp",
+      "reason": "already-webp",
+      "size": 50.43359375
+    },
+    {
+      "file": "images/marseille_new.webp",
+      "reason": "already-webp",
+      "size": 191.419921875
+    }
+  ],
+  "errors": [],
+  "totalOriginalSize": 2865.6259765625,
+  "totalNewSize": 844.728515625
+}

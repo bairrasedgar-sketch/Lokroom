@@ -1320,7 +1320,7 @@ export default function NewListingPage() {
 
     // Custom marker icon - like the default red marker but with custom image
     const customIcon = {
-      url: "/map-marker-lokroom-creation.png",
+      url: "/map-marker-lokroom-creation.webp",
       scaledSize: new g.maps.Size(40, 40),
       anchor: new g.maps.Point(20, 40), // Anchor at bottom center (like default pin)
     };
