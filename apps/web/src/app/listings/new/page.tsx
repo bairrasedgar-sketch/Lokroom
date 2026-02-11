@@ -17,7 +17,6 @@ import { Plus, Minus } from "lucide-react";
 // ============================================================================
 // GOOGLE MAPS TYPES (simplified for TypeScript compatibility)
 // ============================================================================
-/* eslint-disable @typescript-eslint/no-explicit-any */
 type GoogleGeocoderResult = {
   formatted_address?: string;
   address_components?: Array<{ types: string[]; long_name: string }>;

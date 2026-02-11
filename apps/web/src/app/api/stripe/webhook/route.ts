@@ -689,7 +689,6 @@ export async function POST(req: Request) {
     //    - identity.verification_session.canceled
     //    - identity.verification_session.redacted
     // ==========================================================
-    /* eslint-disable @typescript-eslint/no-explicit-any */
     const identityEvents = [
       "identity.verification_session.created",
       "identity.verification_session.processing",

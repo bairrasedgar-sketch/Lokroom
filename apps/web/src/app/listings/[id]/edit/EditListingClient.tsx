@@ -16,7 +16,6 @@ import { Plus, Minus } from "lucide-react";
 // ============================================================================
 // GOOGLE MAPS TYPES (simplified for TypeScript compatibility)
 // ============================================================================
-/* eslint-disable @typescript-eslint/no-explicit-any */
 type GoogleMapsAPI = {
   maps: {
     Map: new (container: HTMLElement, options: Record<string, unknown>) => GoogleMap;
