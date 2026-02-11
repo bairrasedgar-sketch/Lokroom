@@ -108,7 +108,10 @@ export function useNotifications(config?: SWRConfiguration) {
   );
 
   return {
-    notifications: data || [],
+    notifications: data?.notifications || [],
+    total: data?.total || 0,
+    unreadCount: data?.unreadCount || 0,
+    hasMore: data?.hasMore || false,
     loading: isLoading,
     error: error?.message || null,
     mutate,
