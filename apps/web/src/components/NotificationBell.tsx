@@ -210,7 +210,7 @@ export default function NotificationBell() {
               </div>
             ) : (
               <div>
-                {notifications.map((notification) => (
+                {notifications.map((notification: any) => (
                   <div
                     key={notification.id}
                     className={`relative ${!notification.read ? "bg-blue-50/50" : ""}`}

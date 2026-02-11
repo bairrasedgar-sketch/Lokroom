@@ -9,6 +9,7 @@ import { stripe } from "@/lib/stripe";
 import { computeFees, inferRegion } from "@/lib/fees";
 import type { Currency as PrismaCurrency } from "@prisma/client";
 import { fromPrismaCurrency } from "@/lib/currency";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -214,7 +215,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (err) {
-    console.error("create-intent error", err);
+    logger.error("create-intent error", err, { endpoint: "/api/payments/create-intent" });
     return NextResponse.json(
       { error: "stripe_error" },
       { status: 500 },

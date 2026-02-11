@@ -7,6 +7,7 @@ import { verifyPassword } from "@/lib/password";
 import { rateLimit } from "@/lib/rate-limit";
 import { authRateLimiter, withRateLimit } from "@/lib/security/rate-limit";
 import { sanitizeEmail } from "@/lib/security/sanitize";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -125,7 +126,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       },
     });
   } catch (error) {
-    console.error("POST /api/auth/login error:", error);
+    logger.error("POST /api/auth/login error", error, { endpoint: "/api/auth/login" });
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
@@ -177,7 +178,7 @@ export async function GET(req: NextRequest) {
       hasPassword: !!user.passwordHash,
     });
   } catch (error) {
-    console.error("GET /api/auth/login error:", error);
+    logger.error("GET /api/auth/login error", error, { endpoint: "/api/auth/login" });
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

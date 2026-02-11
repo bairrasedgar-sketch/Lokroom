@@ -150,7 +150,7 @@ export function withRateLimitHandler(
   return async (req: NextRequest): Promise<NextResponse> => {
     const rateLimitResult = await withRateLimit(req, limiter);
 
-    if (rateLimitResult.success !== true) {
+    if (rateLimitResult instanceof NextResponse) {
       return rateLimitResult;
     }
 

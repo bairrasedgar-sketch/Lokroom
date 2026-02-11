@@ -1,66 +1,102 @@
-import { NextResponse } from "next/server";
+// apps/web/src/app/api/test-sentry/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Route de test pour Sentry
+ * Route de test pour vérifier que Sentry capture bien les erreurs
  * GET /api/test-sentry?type=error|warning|info
  */
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const type = searchParams.get("type") || "error";
+export async function GET(req: NextRequest) {
+  const type = req.nextUrl.searchParams.get("type") || "error";
 
   try {
-    if (type === "error") {
-      // Test d'erreur
-      throw new Error("Test Sentry Error - This is a test error from Lok'Room");
-    } else if (type === "warning") {
-      // Test de warning
-      logger.warn("Test Sentry Warning", {
-        source: "test-sentry-route",
-        timestamp: new Date().toISOString(),
-      });
-      return NextResponse.json({
-        success: true,
-        message: "Warning logged to Sentry",
-      });
-    } else if (type === "info") {
-      // Test d'info
-      logger.info("Test Sentry Info", {
-        source: "test-sentry-route",
-        timestamp: new Date().toISOString(),
-      });
-      return NextResponse.json({
-        success: true,
-        message: "Info logged to Sentry",
-      });
-    } else if (type === "performance") {
-      // Test de performance lente
-      const start = performance.now();
-      await new Promise((resolve) => setTimeout(resolve, 1500)); // 1.5s
-      const duration = performance.now() - start;
-      logger.logPerformance("test-slow-operation", duration, {
-        source: "test-sentry-route",
-      });
-      return NextResponse.json({
-        success: true,
-        message: "Slow operation logged to Sentry",
-        duration,
-      });
-    }
+    switch (type) {
+      case "error":
+        // Test 1: Erreur capturée par logger (qui envoie à Sentry)
+        logger.error("Test error from logger", new Error("This is a test error"), {
+          testType: "logger",
+          timestamp: new Date().toISOString(),
+        });
 
-    return NextResponse.json({
-      error: "Invalid type. Use ?type=error|warning|info|performance",
-    });
+        // Test 2: Erreur capturée directement par Sentry
+        Sentry.captureException(new Error("Direct Sentry test error"), {
+          tags: {
+            testType: "direct",
+            environment: process.env.NODE_ENV,
+          },
+        });
+
+        // Test 3: Lancer une vraie erreur
+        throw new Error("Uncaught test error - should be captured by Sentry");
+
+      case "warning":
+        logger.warn("Test warning from logger", {
+          testType: "warning",
+          timestamp: new Date().toISOString(),
+        });
+
+        Sentry.captureMessage("Test warning message", {
+          level: "warning",
+          tags: { testType: "warning" },
+        });
+
+        return NextResponse.json({
+          success: true,
+          message: "Warning sent to Sentry",
+        });
+
+      case "info":
+        logger.info("Test info from logger", {
+          testType: "info",
+          timestamp: new Date().toISOString(),
+        });
+
+        Sentry.captureMessage("Test info message", {
+          level: "info",
+          tags: { testType: "info" },
+        });
+
+        return NextResponse.json({
+          success: true,
+          message: "Info sent to Sentry",
+        });
+
+      case "performance":
+        // Test de performance lente (> 1s)
+        const start = Date.now();
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        const duration = Date.now() - start;
+
+        logger.logPerformance("Test slow operation", duration, {
+          testType: "performance",
+        });
+
+        return NextResponse.json({
+          success: true,
+          message: "Slow performance logged",
+          duration,
+        });
+
+      default:
+        return NextResponse.json(
+          { error: "Invalid type. Use: error, warning, info, or performance" },
+          { status: 400 }
+        );
+    }
   } catch (error) {
-    logger.error("Test Sentry Error caught", error);
+    // Cette erreur sera capturée par Sentry automatiquement
+    logger.error("Test error caught in catch block", error);
+
     return NextResponse.json(
       {
-        error: "Error thrown and logged to Sentry",
-        message: error instanceof Error ? error.message : "Unknown error",
+        success: true,
+        message: "Error thrown and captured by Sentry",
+        error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      { status: 200 } // 200 car c'est un test volontaire
     );
   }
 }

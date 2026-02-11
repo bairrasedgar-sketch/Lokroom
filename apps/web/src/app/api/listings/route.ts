@@ -55,14 +55,14 @@ function assertValidCoordinates(options: {
 }
 
 // GET /api/listings  → liste toutes les annonces avec pagination
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
     // Rate limiting pour routes publiques
     const rateLimitResult = await withRateLimit(req, publicRateLimiter);
     if ('success' in rateLimitResult && rateLimitResult.success === true) {
       // Continue - rate limit OK
     } else {
-      return rateLimitResult;
+      return rateLimitResult as NextResponse;
     }
 
     const searchParams = req.nextUrl.searchParams;

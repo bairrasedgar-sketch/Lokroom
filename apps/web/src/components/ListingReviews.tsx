@@ -492,7 +492,7 @@ export default function ListingReviews({ listingId }: ListingReviewsProps) {
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-10">
             {displayedReviews.map((review) => (
-              <ReviewCard key={review.id} review={review} translations={translations} />
+              <ReviewCard key={review.id} review={review as any} translations={translations} />
             ))}
           </div>
 
@@ -514,7 +514,7 @@ export default function ListingReviews({ listingId }: ListingReviewsProps) {
       <ReviewsModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        reviews={reviews}
+        reviews={reviews as any}
         stats={stats}
         onLoadMore={handleLoadMore}
         hasMore={hasMore}

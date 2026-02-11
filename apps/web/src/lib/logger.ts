@@ -72,20 +72,35 @@ class Logger {
    */
   private sendToSentry(error: Error | unknown, message: string, context?: LogContext) {
     try {
-      // @ts-ignore - Sentry est chargé dynamiquement
-      if (typeof window !== 'undefined' && window.Sentry) {
+      // Client-side: utiliser window.Sentry
+      if (typeof window !== 'undefined' && (window as any).Sentry) {
         if (error instanceof Error) {
-          // @ts-ignore
-          window.Sentry.captureException(error, {
+          (window as any).Sentry.captureException(error, {
             contexts: { custom: { message, ...context } },
           });
         } else {
-          // @ts-ignore
-          window.Sentry.captureMessage(message, {
+          (window as any).Sentry.captureMessage(message, {
             level: 'error',
             contexts: { custom: { error, ...context } },
           });
         }
+      }
+      // Server-side: utiliser import dynamique
+      else if (typeof window === 'undefined') {
+        import('@sentry/nextjs').then((Sentry) => {
+          if (error instanceof Error) {
+            Sentry.captureException(error, {
+              contexts: { custom: { message, ...context } },
+            });
+          } else {
+            Sentry.captureMessage(message, {
+              level: 'error',
+              contexts: { custom: { error, ...context } },
+            });
+          }
+        }).catch(() => {
+          // Sentry non disponible
+        });
       }
     } catch (err) {
       // Ignorer les erreurs Sentry pour éviter les boucles
@@ -114,14 +129,21 @@ class Logger {
     });
 
     // Envoyer à Sentry si lent (> 1s)
-    if (!this.isDevelopment && duration > 1000 && typeof window !== 'undefined') {
+    if (!this.isDevelopment && duration > 1000) {
       try {
-        // @ts-ignore
-        if (window.Sentry) {
-          // @ts-ignore
-          window.Sentry.captureMessage(`Slow operation: ${metric}`, {
+        if (typeof window !== 'undefined' && (window as any).Sentry) {
+          (window as any).Sentry.captureMessage(`Slow operation: ${metric}`, {
             level: 'warning',
             contexts: { performance: { duration, ...context } },
+          });
+        } else if (typeof window === 'undefined') {
+          import('@sentry/nextjs').then((Sentry) => {
+            Sentry.captureMessage(`Slow operation: ${metric}`, {
+              level: 'warning',
+              contexts: { performance: { duration, ...context } },
+            });
+          }).catch(() => {
+            // Sentry non disponible
           });
         }
       } catch (err) {

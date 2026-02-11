@@ -101,7 +101,7 @@ export function withCsrfProtection(
   return async (req: NextRequest): Promise<NextResponse> => {
     const csrfResult = await validateCsrfToken(req);
 
-    if (csrfResult.valid !== true) {
+    if (csrfResult instanceof NextResponse) {
       return csrfResult;
     }
 

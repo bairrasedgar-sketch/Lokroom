@@ -7,6 +7,7 @@ import { broadcastMessage } from "@/lib/sse-broadcast";
 import { detectLanguage } from "@/lib/translation";
 import { apiRateLimiter, withRateLimit } from "@/lib/security/rate-limit";
 import { sanitizeText } from "@/lib/security/sanitize";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -137,7 +138,7 @@ export async function POST(req: NextRequest) {
         detectedLanguage = detection.language;
       }
     } catch (e) {
-      console.error("Erreur detection langue:", e);
+      logger.error("Erreur detection langue", e, { conversationId: conv.id });
     }
 
     // 4. Creer le message avec la langue detectee
@@ -200,13 +201,13 @@ export async function POST(req: NextRequest) {
           },
         });
       }).catch((err) => {
-        console.error("[Message] Erreur envoi email:", err);
+        logger.error("[Message] Erreur envoi email", err, { conversationId: conv.id });
       });
     }
 
     return NextResponse.json({ message: msg }, { status: 201 });
   } catch (e) {
-    console.error("Erreur /api/messages/send:", e);
+    logger.error("Erreur /api/messages/send", e, { endpoint: "/api/messages/send" });
     return NextResponse.json(
       { error: "Erreur interne" },
       { status: 500 },
