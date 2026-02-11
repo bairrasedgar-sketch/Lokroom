@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 import bundleAnalyzer from '@next/bundle-analyzer';
+import { withSentryConfig } from '@sentry/nextjs';
 
 const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
@@ -178,4 +179,26 @@ const nextConfig = {
   },
 };
 
-export default withBundleAnalyzer(nextConfig);
+// Sentry configuration
+const sentryWebpackPluginOptions = {
+  // Supprime les logs Sentry pendant le build
+  silent: true,
+
+  // Organisation et projet Sentry
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+
+  // Auth token pour upload des source maps
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+
+  // Upload des source maps uniquement en production
+  widenClientFileUpload: true,
+  hideSourceMaps: true,
+  disableLogger: true,
+};
+
+// Export avec Sentry wrapper
+export default withSentryConfig(
+  withBundleAnalyzer(nextConfig),
+  sentryWebpackPluginOptions
+);

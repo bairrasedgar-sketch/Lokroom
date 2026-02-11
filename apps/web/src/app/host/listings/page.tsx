@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useHostListings } from "@/hooks/useListings";
 
 // Types d'espaces avec leurs labels
 const SPACE_TYPE_LABELS: Record<string, string> = {
@@ -84,50 +85,34 @@ type Tab = "published" | "drafts";
 export default function HostListingsPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
-  const [listings, setListings] = useState<Listing[]>([]);
+  // Use SWR hook for listings
+  const { listings: swrListings, loading: swrLoading, error: swrError, mutate: refreshListings } = useHostListings();
+
   const [stats, setStats] = useState<Stats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("published");
   const [drafts, setDrafts] = useState<Draft[]>([]);
+
+  // Use SWR data or fallback to local state
+  const listings = swrListings.length > 0 ? swrListings : [];
+  const loading = swrLoading;
+  const error = swrError;
 
   // Clé unique par utilisateur pour isoler les brouillons
   const userEmail = session?.user?.email || "";
   const DRAFTS_KEY = userEmail ? `lokroom_listing_drafts_${userEmail}` : "";
   const DRAFT_EXPIRY_DAYS = 90;
 
-  const fetchListings = useCallback(async (signal?: AbortSignal) => {
+  // Fetch stats separately (not in SWR yet)
+  const fetchStats = useCallback(async (signal?: AbortSignal) => {
     try {
-      const res = await fetch("/api/host/listings", { signal });
-      if (!res.ok) {
+      const res = await fetch("/api/host/listings/stats", { signal });
+      if (res.ok) {
         const data = await res.json();
-
-        // Si acces refuse, tenter d'activer le mode hote et reessayer
-        if (res.status === 403) {
-          const activateRes = await fetch("/api/host/activate", { method: "POST", signal });
-          if (activateRes.ok) {
-            // Reessayer de charger les annonces
-            const retryRes = await fetch("/api/host/listings", { signal });
-            if (retryRes.ok) {
-              const retryData = await retryRes.json();
-              setListings(retryData.listings);
-              setStats(retryData.stats);
-              setLoading(false);
-              return;
-            }
-          }
-        }
-
-        throw new Error(data.error || "Erreur de chargement");
+        setStats(data.stats);
       }
-      const data = await res.json();
-      setListings(data.listings);
-      setStats(data.stats);
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") return;
-      setError(err instanceof Error ? err.message : "Erreur inconnue");
-    } finally {
-      setLoading(false);
+      console.error("Error fetching stats:", err);
     }
   }, []);
 
@@ -170,11 +155,11 @@ export default function HostListingsPage() {
 
     if (status === "authenticated") {
       const controller = new AbortController();
-      fetchListings(controller.signal);
+      fetchStats(controller.signal);
       loadDrafts();
       return () => controller.abort();
     }
-  }, [status, router, fetchListings, loadDrafts]);
+  }, [status, router, fetchStats, loadDrafts]);
 
   function deleteDraft(draftId: string) {
     if (typeof window !== "undefined") {

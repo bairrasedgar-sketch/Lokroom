@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
+import { useNotifications } from "@/hooks/useUser";
 
 type NotificationType =
   | "BOOKING_REQUEST"
@@ -73,13 +74,16 @@ function getNotificationIcon(type: NotificationType): string {
 
 export default function NotificationBell() {
   const { status } = useSession();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const isLoggedIn = status === "authenticated";
+
+  // Use SWR hook for notifications
+  const { notifications: swrNotifications, loading: isLoading, mutate: refreshNotifications } = useNotifications();
+
+  const notifications = swrNotifications || [];
+  const unreadCount = notifications.filter((n: any) => !n.read).length;
 
   // Fermer le dropdown quand on clique en dehors
   useEffect(() => {
@@ -93,38 +97,6 @@ export default function NotificationBell() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Charger les notifications
-  const fetchNotifications = useCallback(async (signal?: AbortSignal) => {
-    if (!isLoggedIn) return;
-
-    try {
-      setIsLoading(true);
-      const res = await fetch("/api/notifications?limit=10", { signal });
-      if (res.ok) {
-        const data = await res.json();
-        setNotifications(data.notifications || []);
-        setUnreadCount(data.unreadCount || 0);
-      }
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') return;
-      console.error("Error fetching notifications:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isLoggedIn]);
-
-  // Charger au montage et toutes les 30 secondes
-  useEffect(() => {
-    const controller = new AbortController();
-    fetchNotifications(controller.signal);
-
-    const interval = setInterval(() => fetchNotifications(), 30000);
-    return () => {
-      controller.abort();
-      clearInterval(interval);
-    };
-  }, [fetchNotifications]);
-
   // Marquer une notification comme lue
   async function markAsRead(notificationId: string) {
     try {
@@ -134,10 +106,8 @@ export default function NotificationBell() {
         body: JSON.stringify({ notificationIds: [notificationId] }),
       });
 
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
-      );
-      setUnreadCount((prev) => Math.max(0, prev - 1));
+      // Refresh notifications
+      refreshNotifications();
     } catch (error) {
       console.error("Error marking notification as read:", error);
     }
@@ -146,14 +116,17 @@ export default function NotificationBell() {
   // Marquer toutes comme lues
   async function markAllAsRead() {
     try {
+      const unreadIds = notifications.filter((n: any) => !n.read).map((n: any) => n.id);
+      if (unreadIds.length === 0) return;
+
       await fetch("/api/notifications", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ markAllRead: true }),
+        body: JSON.stringify({ notificationIds: unreadIds }),
       });
 
-      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-      setUnreadCount(0);
+      // Refresh notifications
+      refreshNotifications();
     } catch (error) {
       console.error("Error marking all notifications as read:", error);
     }

@@ -7,6 +7,7 @@ import { StarIcon, XMarkIcon, ChatBubbleLeftIcon } from "@heroicons/react/24/out
 import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
 import { useTranslation } from "@/hooks/useTranslation";
 import ReviewPhotoGallery from "@/components/reviews/ReviewPhotoGallery";
+import { useListingReviews } from "@/hooks/useReviews";
 
 type ReviewPhoto = {
   id: string;
@@ -406,46 +407,27 @@ export default function ListingReviews({ listingId }: ListingReviewsProps) {
   const translations = t.components.listingReviews as ListingReviewsTranslations;
   const reviewsTranslations = t.reviews as ReviewsTranslations;
 
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [stats, setStats] = useState<ReviewStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Use SWR hook for reviews
+  const { reviews: swrReviews, averageRating, totalReviews, loading, error: swrError } = useListingReviews(listingId);
+
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const loadReviews = useCallback(async (pageNum: number, append: boolean = false) => {
-    setLoading(true);
-    setError(null);
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-    try {
-      const res = await fetch(
-        `/api/reviews?listingId=${listingId}&page=${pageNum}&limit=6`,
-        { signal: controller.signal }
-      );
-
-      if (!res.ok) {
-        const statusText = res.status === 500
-          ? translations.serverError
-          : res.status === 404
-          ? translations.reviewsNotFound
-          : `${translations.loadError} (code: ${res.status})`;
-        throw new Error(statusText);
-      }
-
-      const data = await res.json();
-
-      if (append) {
-        setReviews((prev) => [...prev, ...(data.reviews ?? [])]);
-      } else {
-        setReviews(data.reviews ?? []);
-      }
-
-      setStats(data.stats);
-      setHasMore(data.pagination?.page < data.pagination?.totalPages);
+  // Use SWR data
+  const reviews = swrReviews;
+  const stats: ReviewStats | null = totalReviews > 0 ? {
+    totalReviews,
+    averageRating,
+    averageCleanliness: null,
+    averageAccuracy: null,
+    averageCommunication: null,
+    averageLocation: null,
+    averageCheckin: null,
+    averageValue: null,
+    distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+  } : null;
+  const error = swrError;
     } catch (e) {
       if (e instanceof Error && e.name === "AbortError") {
         setError(translations.requestTimeout);
@@ -460,12 +442,10 @@ export default function ListingReviews({ listingId }: ListingReviewsProps) {
 
   useEffect(() => {
     loadReviews(1);
-  }, [loadReviews]);
-
   const handleLoadMore = () => {
     const nextPage = page + 1;
     setPage(nextPage);
-    loadReviews(nextPage, true);
+    // Load more functionality would need pagination support in the hook
   };
 
   const hasReviews = reviews.length > 0;

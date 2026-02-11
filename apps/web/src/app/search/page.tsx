@@ -8,6 +8,7 @@ import { ListingCard } from "@/components/home/ListingCard";
 import { Loader2, MapPin, SlidersHorizontal } from "lucide-react";
 import type { Currency } from "@/lib/currency";
 import { formatMoneyAsync } from "@/lib/currency.client";
+import { useSearch } from "@/hooks/useSearch";
 
 interface Listing {
   id: string;

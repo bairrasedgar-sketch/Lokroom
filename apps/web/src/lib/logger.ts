@@ -61,10 +61,36 @@ class Logger {
 
     this.log('error', message, errorContext);
 
-    // TODO: Envoyer à Sentry en production
-    // if (!this.isDevelopment) {
-    //   Sentry.captureException(error, { contexts: { custom: context } });
-    // }
+    // Envoyer à Sentry en production
+    if (!this.isDevelopment && typeof window !== 'undefined') {
+      this.sendToSentry(error, message, context);
+    }
+  }
+
+  /**
+   * Envoyer une erreur à Sentry
+   */
+  private sendToSentry(error: Error | unknown, message: string, context?: LogContext) {
+    try {
+      // @ts-ignore - Sentry est chargé dynamiquement
+      if (typeof window !== 'undefined' && window.Sentry) {
+        if (error instanceof Error) {
+          // @ts-ignore
+          window.Sentry.captureException(error, {
+            contexts: { custom: { message, ...context } },
+          });
+        } else {
+          // @ts-ignore
+          window.Sentry.captureMessage(message, {
+            level: 'error',
+            contexts: { custom: { error, ...context } },
+          });
+        }
+      }
+    } catch (err) {
+      // Ignorer les erreurs Sentry pour éviter les boucles
+      console.error('Failed to send to Sentry:', err);
+    }
   }
 
   /**
@@ -87,13 +113,21 @@ class Logger {
       durationMs: `${duration}ms`,
     });
 
-    // TODO: Envoyer à monitoring (Sentry, DataDog, etc.)
-    // if (duration > 1000) {
-    //   Sentry.captureMessage(`Slow operation: ${metric}`, {
-    //     level: 'warning',
-    //     contexts: { performance: { duration, ...context } },
-    //   });
-    // }
+    // Envoyer à Sentry si lent (> 1s)
+    if (!this.isDevelopment && duration > 1000 && typeof window !== 'undefined') {
+      try {
+        // @ts-ignore
+        if (window.Sentry) {
+          // @ts-ignore
+          window.Sentry.captureMessage(`Slow operation: ${metric}`, {
+            level: 'warning',
+            contexts: { performance: { duration, ...context } },
+          });
+        }
+      } catch (err) {
+        console.error('Failed to send performance to Sentry:', err);
+      }
+    }
   }
 
   /**
