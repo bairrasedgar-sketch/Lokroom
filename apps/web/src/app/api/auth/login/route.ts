@@ -19,12 +19,12 @@ const LOGIN_WINDOW_MS = 60_000;
  * Vérifier les credentials email + mot de passe
  * (utilisé par NextAuth Credentials provider)
  */
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     // Rate limiting avec Upstash
     const rateLimitResult = await withRateLimit(req, authRateLimiter);
-    if (rateLimitResult.success !== true) {
-      return rateLimitResult;
+    if ('success' in rateLimitResult && rateLimitResult.success !== true) {
+      return rateLimitResult as NextResponse;
     }
 
     // Rate limiting legacy (double protection)

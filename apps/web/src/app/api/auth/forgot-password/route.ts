@@ -6,6 +6,8 @@ import { prisma } from "@/lib/db";
 import { generateVerificationCode, validatePassword, hashPassword, verifyPassword } from "@/lib/password";
 import { sendPasswordResetEmail } from "@/lib/email";
 import { rateLimit } from "@/lib/rate-limit";
+import { authRateLimiter, withRateLimit } from "@/lib/security/rate-limit";
+import { sanitizeEmail } from "@/lib/security/sanitize";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +24,13 @@ const PASSWORD_HISTORY_LIMIT = 5;
  */
 export async function POST(req: NextRequest) {
   try {
-    // Rate limiting par IP
+    // Rate limiting avec Upstash
+    const rateLimitResult = await withRateLimit(req, authRateLimiter);
+    if ('success' in rateLimitResult && rateLimitResult.success !== true) {
+      return rateLimitResult;
+    }
+
+    // Rate limiting legacy (double protection)
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
                req.headers.get("x-real-ip") ||
                "unknown";
@@ -42,7 +50,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email requis" }, { status: 400 });
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
+    // Sanitize email input
+    const normalizedEmail = sanitizeEmail(email);
+    if (!normalizedEmail) {
+      return NextResponse.json({ error: "Format d'email invalide" }, { status: 400 });
+    }
 
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },
@@ -91,9 +103,15 @@ export async function POST(req: NextRequest) {
  * PUT /api/auth/forgot-password
  * Vérifier le code et réinitialiser le mot de passe
  */
-export async function PUT(req: NextRequest) {
+export async function PUT(req: NextRequest): Promise<NextResponse> {
   try {
-    // Rate limiting par IP
+    // Rate limiting avec Upstash
+    const rateLimitResult = await withRateLimit(req, authRateLimiter);
+    if ('success' in rateLimitResult && rateLimitResult.success !== true) {
+      return rateLimitResult as NextResponse;
+    }
+
+    // Rate limiting legacy (double protection)
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
                req.headers.get("x-real-ip") ||
                "unknown";
@@ -115,6 +133,12 @@ export async function PUT(req: NextRequest) {
       }, { status: 400 });
     }
 
+    // Sanitize email input
+    const normalizedEmail = sanitizeEmail(email);
+    if (!normalizedEmail) {
+      return NextResponse.json({ error: "Format d'email invalide" }, { status: 400 });
+    }
+
     // Valider le nouveau mot de passe
     const validation = validatePassword(newPassword);
     if (!validation.valid) {
@@ -123,8 +147,6 @@ export async function PUT(req: NextRequest) {
         details: validation.errors,
       }, { status: 400 });
     }
-
-    const normalizedEmail = email.trim().toLowerCase();
 
     const user = await prisma.user.findUnique({
       where: { email: normalizedEmail },

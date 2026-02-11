@@ -93,7 +93,7 @@ export async function withRateLimit(
   req: NextRequest,
   limiter: Ratelimit,
   identifier?: string
-): Promise<{ success: true } | NextResponse> {
+): Promise<NextResponse | { success: true }> {
   // Si Redis n'est pas configuré, skip le rate limiting en dev
   if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
     if (process.env.NODE_ENV === "development") {

@@ -24,3 +24,39 @@ export {
   mergeCSP,
   type CspConfig,
 } from "./csp";
+
+// Rate Limiting
+export {
+  authRateLimiter,
+  apiRateLimiter,
+  publicRateLimiter,
+  strictRateLimiter,
+  getIdentifier,
+  withRateLimit,
+  withRateLimitHandler,
+} from "./rate-limit";
+
+// CSRF Protection
+export {
+  generateCsrfToken,
+  hashCsrfToken,
+  verifyCsrfToken,
+  validateCsrfToken,
+  addCsrfToken,
+  withCsrfProtection,
+  getCsrfTokenFromCookie,
+  addCsrfHeader,
+} from "./csrf";
+
+// Input Sanitization
+export {
+  sanitizeText,
+  sanitizeRichText,
+  sanitizeUrl,
+  sanitizeEmail,
+  sanitizePhone,
+  sanitizeObject,
+  sanitizeQueryParams,
+  containsMaliciousCode,
+  validateNoMaliciousCode,
+} from "./sanitize";

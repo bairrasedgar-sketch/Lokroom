@@ -59,8 +59,8 @@ export async function GET(req: NextRequest) {
   try {
     // Rate limiting pour routes publiques
     const rateLimitResult = await withRateLimit(req, publicRateLimiter);
-    if (rateLimitResult.success !== true) {
-      return rateLimitResult;
+    if ('success' in rateLimitResult && rateLimitResult.success !== true) {
+      return rateLimitResult as NextResponse;
     }
 
     const searchParams = req.nextUrl.searchParams;
@@ -128,12 +128,12 @@ export async function GET(req: NextRequest) {
 }
 
 // POST /api/listings → créer une annonce
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     // Rate limiting pour création d'annonce
     const rateLimitResult = await withRateLimit(req, apiRateLimiter);
-    if (rateLimitResult.success !== true) {
-      return rateLimitResult;
+    if ('success' in rateLimitResult && rateLimitResult.success !== true) {
+      return rateLimitResult as NextResponse;
     }
 
     const session = await getServerSession(authOptions);

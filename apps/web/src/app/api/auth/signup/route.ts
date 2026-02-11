@@ -48,12 +48,12 @@ async function generateEmailVerificationToken(userId: string, email: string): Pr
  * POST /api/auth/signup
  * Envoyer un code de vérification par email pour l'inscription
  */
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     // Rate limiting avec Upstash
     const rateLimitResult = await withRateLimit(req, authRateLimiter);
-    if (rateLimitResult.success !== true) {
-      return rateLimitResult;
+    if ('success' in rateLimitResult && rateLimitResult.success !== true) {
+      return rateLimitResult as NextResponse;
     }
 
     // Rate limiting legacy (double protection)
@@ -151,12 +151,12 @@ export async function POST(req: NextRequest) {
  * PUT /api/auth/signup
  * Vérifier le code et finaliser l'inscription
  */
-export async function PUT(req: NextRequest) {
+export async function PUT(req: NextRequest): Promise<NextResponse> {
   try {
     // Rate limiting avec Upstash
     const rateLimitResult = await withRateLimit(req, authRateLimiter);
-    if (rateLimitResult.success !== true) {
-      return rateLimitResult;
+    if ('success' in rateLimitResult && rateLimitResult.success !== true) {
+      return rateLimitResult as NextResponse;
     }
 
     // Rate limiting legacy (double protection)
