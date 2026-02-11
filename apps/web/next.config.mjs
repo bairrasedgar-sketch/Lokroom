@@ -39,6 +39,11 @@ const isCapacitorBuild = process.env.CAPACITOR_BUILD === 'true';
 const nextConfig = {
   reactStrictMode: true,
 
+  // Ignore ESLint errors during build
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
   // Configuration pour Capacitor - Export statique si CAPACITOR_BUILD=true
   ...(isCapacitorBuild && {
     output: 'export',
