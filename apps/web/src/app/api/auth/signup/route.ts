@@ -157,8 +157,10 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
   try {
     // Rate limiting avec Upstash
     const rateLimitResult = await withRateLimit(req, authRateLimiter);
-    if ('success' in rateLimitResult && rateLimitResult.success !== true) {
-      return rateLimitResult as NextResponse;
+    if (rateLimitResult !== null && typeof rateLimitResult === 'object' && 'success' in rateLimitResult) {
+      if (rateLimitResult.success !== true) {
+        return rateLimitResult as NextResponse;
+      }
     }
 
     // Rate limiting legacy (double protection)
