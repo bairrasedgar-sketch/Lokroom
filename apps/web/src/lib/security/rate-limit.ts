@@ -87,7 +87,7 @@ export function getIdentifier(req: NextRequest): string {
 
 /**
  * Middleware de rate limiting
- * Retourne une réponse 429 si la limite est dépassée
+ * Retourne NextResponse si rate limit dépassé, sinon { success: true }
  */
 export async function withRateLimit(
   req: NextRequest,

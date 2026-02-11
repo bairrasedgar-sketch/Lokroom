@@ -23,10 +23,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
     // Rate limiting avec Upstash
     const rateLimitResult = await withRateLimit(req, authRateLimiter);
-    if (rateLimitResult !== null && typeof rateLimitResult === 'object' && 'success' in rateLimitResult) {
-      if (rateLimitResult.success !== true) {
-        return rateLimitResult as NextResponse;
-      }
+    if (rateLimitResult instanceof NextResponse) {
+      return rateLimitResult;
     }
 
     // Rate limiting legacy (double protection)

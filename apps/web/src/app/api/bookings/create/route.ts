@@ -43,8 +43,8 @@ function daysDiff(d1: Date, d2: Date): number {
 export async function POST(req: NextRequest) {
   // Rate limiting
   const rateLimitResult = await withRateLimit(req, apiRateLimiter);
-  if ('success' in rateLimitResult && rateLimitResult.success !== true) {
-    return rateLimitResult as NextResponse;
+  if (rateLimitResult instanceof NextResponse) {
+    return rateLimitResult;
   }
 
   const session = await getServerSession(authOptions);

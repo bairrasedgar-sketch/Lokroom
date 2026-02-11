@@ -14,8 +14,8 @@ export async function POST(req: NextRequest) {
   try {
     // Rate limiting
     const rateLimitResult = await withRateLimit(req, apiRateLimiter);
-    if ('success' in rateLimitResult && rateLimitResult.success !== true) {
-      return rateLimitResult as NextResponse;
+    if (rateLimitResult instanceof NextResponse) {
+      return rateLimitResult;
     }
 
     const session = await getServerSession(authOptions);
