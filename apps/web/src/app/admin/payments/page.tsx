@@ -18,6 +18,8 @@ import {
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 import { RevenueAreaChart } from "@/components/admin/Charts";
+import { logger } from "@/lib/logger";
+
 
 type Payment = {
   id: string;
@@ -128,7 +130,7 @@ export default function AdminPaymentsPage() {
       setPagination(data.pagination);
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') return;
-      console.error("Error fetching payments:", error);
+      logger.error("Error fetching payments:", error);
     } finally {
       setLoading(false);
     }

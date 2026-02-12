@@ -7,6 +7,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
+
 
 export async function GET(
   req: NextRequest,
@@ -122,7 +124,7 @@ export async function GET(
     // Si c'est une URL S3, rediriger
     return NextResponse.redirect(exportRequest.fileUrl);
   } catch (error) {
-    console.error("Erreur téléchargement export:", error);
+    logger.error("Erreur téléchargement export:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

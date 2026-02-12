@@ -7,6 +7,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdminPermission } from "@/lib/admin-auth";
+import { logger } from "@/lib/logger";
+
 
 export async function GET(request: Request) {
   const auth = await requireAdminPermission("dashboard:view");
@@ -229,7 +231,7 @@ export async function GET(request: Request) {
       period: days,
     });
   } catch (error) {
-    console.error("Erreur API charts:", error);
+    logger.error("Erreur API charts:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

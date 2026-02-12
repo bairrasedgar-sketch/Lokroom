@@ -2,6 +2,8 @@
 // Supprime les conversations support fermées de plus de 7 jours
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +43,7 @@ export async function GET(req: Request) {
       deletedConversations: deletedConversations.count,
     });
   } catch (error) {
-    console.error("Error cleaning up support conversations:", error);
+    logger.error("Error cleaning up support conversations:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

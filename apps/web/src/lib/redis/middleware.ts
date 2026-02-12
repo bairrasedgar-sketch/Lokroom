@@ -7,6 +7,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { cache } from "./cache-safe";
+import { logger } from "@/lib/logger";
+
 
 export interface CacheMiddlewareOptions {
   ttl?: number;
@@ -63,7 +65,7 @@ export async function cacheMiddleware(
         },
       });
     } catch (error) {
-      console.error("[CacheMiddleware] Error caching response:", error);
+      logger.error("[CacheMiddleware] Error caching response:", error);
       return response;
     }
   }
@@ -142,7 +144,7 @@ export async function cacheMiddlewareWithETag(
         },
       });
     } catch (error) {
-      console.error("[CacheMiddleware] Error caching response with ETag:", error);
+      logger.error("[CacheMiddleware] Error caching response with ETag:", error);
       return response;
     }
   }

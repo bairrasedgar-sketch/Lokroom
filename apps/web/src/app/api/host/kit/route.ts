@@ -15,6 +15,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
+
 
 // Constantes du programme Kit Lok'Room
 const KIT_CONFIG = {
@@ -205,7 +207,7 @@ export async function GET() {
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error("Erreur API host/kit GET:", error);
+    logger.error("Erreur API host/kit GET:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }
@@ -365,7 +367,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Erreur API host/kit POST:", error);
+    logger.error("Erreur API host/kit POST:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

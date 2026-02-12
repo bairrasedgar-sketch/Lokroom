@@ -7,6 +7,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
+
 
 export async function POST(request: Request) {
   try {
@@ -106,7 +108,7 @@ export async function POST(request: Request) {
       cancellableUntil: scheduledAt,
     });
   } catch (error) {
-    console.error("Erreur suppression compte:", error);
+    logger.error("Erreur suppression compte:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
@@ -146,7 +148,7 @@ export async function DELETE() {
       message: "Demande de suppression annulée",
     });
   } catch (error) {
-    console.error("Erreur annulation suppression:", error);
+    logger.error("Erreur annulation suppression:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
@@ -179,7 +181,7 @@ export async function GET() {
       reason: pendingRequest.reason,
     });
   } catch (error) {
-    console.error("Erreur statut suppression:", error);
+    logger.error("Erreur statut suppression:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

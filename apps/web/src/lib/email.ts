@@ -10,6 +10,8 @@
  */
 
 import { Resend } from "resend";
+import { logger } from "@/lib/logger";
+
 
 // Client Resend (lazy initialization pour éviter les erreurs au build)
 let resendClient: Resend | null = null;
@@ -429,7 +431,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<EmailResult>
 
   // Vérifier que la clé API est configurée
   if (!process.env.RESEND_API_KEY) {
-    console.error("[Email] RESEND_API_KEY non configurée");
+    logger.error("[Email] RESEND_API_KEY non configurée");
     return {
       success: false,
       error: "RESEND_API_KEY non configurée. Ajoutez votre clé API Resend dans .env",
@@ -448,13 +450,13 @@ export async function sendEmail(options: SendEmailOptions): Promise<EmailResult>
     });
 
     if (result.error) {
-      console.error("[Email] Resend error:", result.error);
+      logger.error("[Email] Resend error:", result.error);
       return { success: false, error: result.error.message };
     }
 
     return { success: true, messageId: result.data?.id };
   } catch (error) {
-    console.error("[Email] Resend exception:", error);
+    logger.error("[Email] Resend exception:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",

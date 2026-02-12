@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { broadcastMessage } from "@/lib/sse-broadcast";
+import { logger } from "@/lib/logger";
+
 
 // POST /api/messages/typing - Envoyer un événement "en train d'écrire"
 export async function POST(request: Request) {
@@ -47,7 +49,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error in typing endpoint:", error);
+    logger.error("Error in typing endpoint:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

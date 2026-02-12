@@ -4,6 +4,8 @@
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -59,7 +61,7 @@ export async function GET(req: Request) {
             waitingTime: Math.round((Date.now() - new Date(conversation.createdAt).getTime()) / 60000),
           });
         } catch (e) {
-          console.error("Erreur envoi email rappel:", e);
+          logger.error("Erreur envoi email rappel:", e);
         }
       }
 
@@ -77,7 +79,7 @@ export async function GET(req: Request) {
       count: remindersSent,
     });
   } catch (error) {
-    console.error("Error in support reminder cron:", error);
+    logger.error("Error in support reminder cron:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
@@ -93,7 +95,7 @@ async function sendReminderEmail(
   }
 ) {
   if (!process.env.RESEND_API_KEY) {
-    console.log("Resend non configuré, email non envoyé");
+    logger.debug("Resend non configuré, email non envoyé");
     return;
   }
 

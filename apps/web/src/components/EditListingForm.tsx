@@ -7,6 +7,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Script from "next/script";
+import { logger } from "@/lib/logger";
+
 
 const schema = z.object({
 title: z.string().min(3).max(120),
@@ -261,7 +263,7 @@ src={`https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`}
 strategy="afterInteractive"
 onLoad={() => setMapsReady(true)}
 onError={(e) => {
-console.error(
+logger.error(
 "Erreur chargement Google Maps (edit listing)",
 e
 );

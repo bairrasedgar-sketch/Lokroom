@@ -6,6 +6,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { emailService } from "@/lib/email/service";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -154,7 +156,7 @@ export async function POST(req: NextRequest) {
       );
     }
   } catch (error) {
-    console.error("[TestEmails] Erreur:", error);
+    logger.error("[TestEmails] Erreur:", error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Erreur inconnue" },
       { status: 500 }

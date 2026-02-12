@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { generateAvailabilityId } from "@/lib/crypto/random";
+import { logger } from "@/lib/logger";
+
 
 // GET /api/host/calendar - Récupérer le calendrier d'une annonce
 export async function GET(request: Request) {
@@ -286,7 +288,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Action non reconnue" }, { status: 400 });
     }
   } catch (error) {
-    console.error("Calendar API error:", error);
+    logger.error("Calendar API error:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

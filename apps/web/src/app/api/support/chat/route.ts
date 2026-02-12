@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth";
 import { getGeminiResponse } from "@/lib/gemini";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -63,7 +65,7 @@ export async function POST(req: NextRequest) {
   try {
     // Vérifier que la clé API est configurée
     if (!process.env.GEMINI_API_KEY) {
-      console.error("[Support Chat] GEMINI_API_KEY not configured");
+      logger.error("[Support Chat] GEMINI_API_KEY not configured");
       return NextResponse.json(
         { error: "Service non configuré", debug: "GEMINI_API_KEY missing" },
         { status: 500 }
@@ -245,7 +247,7 @@ export async function POST(req: NextRequest) {
       suggestAgent: true,
     });
   } catch (error) {
-    console.error("[Support Chat] Error:", error);
+    logger.error("[Support Chat] Error:", error);
     return NextResponse.json(
       { error: "Erreur interne du serveur", debug: String(error) },
       { status: 500 }
@@ -294,11 +296,11 @@ async function notifyAdmins(conversationId: string, userId: string, subject: str
             `,
           });
         } catch (emailError) {
-          console.error("[Support Chat] Email error:", emailError);
+          logger.error("[Support Chat] Email error:", emailError);
         }
       }
     }
   } catch (error) {
-    console.error("[Support Chat] Notify admins error:", error);
+    logger.error("[Support Chat] Notify admins error:", error);
   }
 }

@@ -5,6 +5,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { paginationSchema, validateSearchParams } from "@/lib/validations/api";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -380,7 +382,7 @@ export async function POST(req: NextRequest) {
         },
       });
     }).catch((err) => {
-      console.error("[Review] Erreur envoi email:", err);
+      logger.error("[Review] Erreur envoi email:", err);
     });
   }
 

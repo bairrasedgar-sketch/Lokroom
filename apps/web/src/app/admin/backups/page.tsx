@@ -8,6 +8,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
+import { logger } from "@/lib/logger";
+
   Database,
   Download,
   RefreshCw,
@@ -80,7 +82,7 @@ export default function BackupsPage() {
       setStats(data.stats);
       setTotalPages(data.pagination.totalPages);
     } catch (error) {
-      console.error("Error fetching backups:", error);
+      logger.error("Error fetching backups:", error);
       alert("Erreur lors du chargement des backups");
     } finally {
       setLoading(false);
@@ -104,7 +106,7 @@ export default function BackupsPage() {
       alert("Backup manuel démarré avec succès");
       fetchBackups();
     } catch (error: any) {
-      console.error("Error creating backup:", error);
+      logger.error("Error creating backup:", error);
       alert(error.message || "Erreur lors de la création du backup");
     } finally {
       setActionLoading(null);
@@ -123,7 +125,7 @@ export default function BackupsPage() {
       // Ouvrir l'URL signée dans un nouvel onglet
       window.open(data.downloadUrl, "_blank");
     } catch (error) {
-      console.error("Error downloading backup:", error);
+      logger.error("Error downloading backup:", error);
       alert("Erreur lors du téléchargement du backup");
     } finally {
       setActionLoading(null);
@@ -161,7 +163,7 @@ export default function BackupsPage() {
       alert("Restauration démarrée. La base de données sera restaurée dans quelques minutes.");
       fetchBackups();
     } catch (error) {
-      console.error("Error restoring backup:", error);
+      logger.error("Error restoring backup:", error);
       alert("Erreur lors de la restauration du backup");
     } finally {
       setActionLoading(null);
@@ -182,7 +184,7 @@ export default function BackupsPage() {
       alert("Backup supprimé avec succès");
       fetchBackups();
     } catch (error) {
-      console.error("Error deleting backup:", error);
+      logger.error("Error deleting backup:", error);
       alert("Erreur lors de la suppression du backup");
     } finally {
       setActionLoading(null);

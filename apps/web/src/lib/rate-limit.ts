@@ -7,6 +7,8 @@
 
 import { Redis } from "@upstash/redis";
 import { generateRateLimitToken } from "@/lib/crypto/random";
+import { logger } from "@/lib/logger";
+
 
 const WINDOW_MS = 60_000; // 1 minute
 const MAX_REQUESTS = 20;
@@ -80,7 +82,7 @@ async function rateLimitRedis(
       remaining: maxRequests - count - 1,
     };
   } catch (error) {
-    console.error("[Rate Limit] Redis error, falling back to memory:", error);
+    logger.error("[Rate Limit] Redis error, falling back to memory:", error);
     return rateLimitMemory(key, maxRequests, windowMs);
   }
 }

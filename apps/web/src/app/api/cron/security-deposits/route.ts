@@ -18,6 +18,8 @@ import { NextResponse } from "next/server";
 import { checkExpiredDeposits } from "@/lib/security-deposit";
 import { prisma } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
+import { logger } from "@/lib/logger";
+
 
 // Clé secrète pour sécuriser l'endpoint
 const CRON_SECRET = process.env.CRON_SECRET;
@@ -30,7 +32,7 @@ export async function GET(req: Request) {
     // En production, vérifier le secret
     if (process.env.NODE_ENV === "production") {
       if (!CRON_SECRET) {
-        console.error("[Cron] CRON_SECRET non configuré");
+        logger.error("[Cron] CRON_SECRET non configuré");
         return NextResponse.json({ error: "Configuration manquante" }, { status: 500 });
       }
 
@@ -39,7 +41,7 @@ export async function GET(req: Request) {
       }
     }
 
-    console.log("[Cron] Démarrage vérification des dépôts expirés...");
+    logger.debug("[Cron] Démarrage vérification des dépôts expirés...");
 
     // Vérifier et libérer les dépôts expirés
     const result = await checkExpiredDeposits();
@@ -85,7 +87,7 @@ export async function GET(req: Request) {
       }
     }
 
-    console.log(`[Cron] Terminé: ${result.processed} traités, ${result.released} libérés, ${result.errors} erreurs`);
+    logger.debug(`[Cron] Terminé: ${result.processed} traités, ${result.released} libérés, ${result.errors} erreurs`);
 
     return NextResponse.json({
       success: true,
@@ -93,7 +95,7 @@ export async function GET(req: Request) {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("[Cron] Erreur:", error);
+    logger.error("[Cron] Erreur:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

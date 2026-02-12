@@ -3,6 +3,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -197,7 +199,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!response.ok) {
-      console.error("[Dispute Assistant] API error:", response.status);
+      logger.error("[Dispute Assistant] API error:", response.status);
       throw new Error(`API error: ${response.status}`);
     }
 
@@ -256,7 +258,7 @@ export async function POST(req: NextRequest) {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("[Dispute Assistant] Error:", error);
+    logger.error("[Dispute Assistant] Error:", error);
     return NextResponse.json(
       { error: "Erreur lors du traitement de votre demande" },
       { status: 500 }

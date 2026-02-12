@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 // apps/web/src/lib/paypal.ts
 /**
  * Configuration et utilitaires PayPal pour Lok'Room
@@ -149,7 +150,7 @@ export async function getAccessToken(): Promise<string> {
 
   if (!response.ok) {
     const error = await response.text();
-    console.error("[PayPal] Failed to get access token:", error);
+    logger.error("[PayPal] Failed to get access token:", error);
     throw new Error(`PayPal authentication failed: ${response.status}`);
   }
 
@@ -232,13 +233,13 @@ export async function createOrder(params: {
 
   if (!response.ok) {
     const error = await response.text();
-    console.error("[PayPal] Failed to create order:", error);
+    logger.error("[PayPal] Failed to create order:", error);
     throw new Error(`PayPal order creation failed: ${response.status}`);
   }
 
   const order = await response.json() as PayPalOrder;
 
-  console.log("[PayPal] Order created:", {
+  logger.debug("[PayPal] Order created:", {
     orderId: order.id,
     status: order.status,
     bookingId,
@@ -270,7 +271,7 @@ export async function captureOrder(orderId: string): Promise<{
 
   if (!response.ok) {
     const error = await response.text();
-    console.error("[PayPal] Failed to capture order:", error);
+    logger.error("[PayPal] Failed to capture order:", error);
     throw new Error(`PayPal capture failed: ${response.status}`);
   }
 
@@ -284,7 +285,7 @@ export async function captureOrder(orderId: string): Promise<{
 
   const capture = order.purchase_units?.[0]?.payments?.captures?.[0] || null;
 
-  console.log("[PayPal] Order captured:", {
+  logger.debug("[PayPal] Order captured:", {
     orderId: order.id,
     status: order.status,
     captureId: capture?.id,
@@ -312,7 +313,7 @@ export async function getOrderDetails(orderId: string): Promise<PayPalOrder> {
 
   if (!response.ok) {
     const error = await response.text();
-    console.error("[PayPal] Failed to get order details:", error);
+    logger.error("[PayPal] Failed to get order details:", error);
     throw new Error(`PayPal get order failed: ${response.status}`);
   }
 
@@ -363,13 +364,13 @@ export async function refundCapture(params: {
 
   if (!response.ok) {
     const error = await response.text();
-    console.error("[PayPal] Failed to refund capture:", error);
+    logger.error("[PayPal] Failed to refund capture:", error);
     throw new Error(`PayPal refund failed: ${response.status}`);
   }
 
   const refund = await response.json() as PayPalRefund;
 
-  console.log("[PayPal] Capture refunded:", {
+  logger.debug("[PayPal] Capture refunded:", {
     captureId,
     refundId: refund.id,
     status: refund.status,
@@ -416,7 +417,7 @@ export async function verifyWebhookSignature(params: {
   });
 
   if (!response.ok) {
-    console.error("[PayPal] Webhook signature verification failed");
+    logger.error("[PayPal] Webhook signature verification failed");
     return false;
   }
 
@@ -471,7 +472,7 @@ export async function getCaptureDetails(captureId: string): Promise<PayPalCaptur
 
   if (!response.ok) {
     const error = await response.text();
-    console.error("[PayPal] Failed to get capture details:", error);
+    logger.error("[PayPal] Failed to get capture details:", error);
     throw new Error(`PayPal get capture failed: ${response.status}`);
   }
 

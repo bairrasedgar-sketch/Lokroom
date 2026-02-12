@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +33,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ searches });
   } catch (err) {
-    console.error("GET /api/search/saved error", err);
+    logger.error("GET /api/search/saved error", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -82,7 +84,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ savedSearch }, { status: 201 });
   } catch (err) {
-    console.error("POST /api/search/saved error", err);
+    logger.error("POST /api/search/saved error", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

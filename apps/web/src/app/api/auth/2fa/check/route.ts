@@ -5,6 +5,8 @@ import { prisma } from "@/lib/db";
 import { rateLimit } from "@/lib/rate-limit";
 import { verifyPassword } from "@/lib/password";
 import { generateTwoFactorPendingToken } from "@/lib/2fa-token";
+import { logger } from "@/lib/logger";
+
 
 export async function POST(req: NextRequest) {
   try {
@@ -62,7 +64,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ requires2FA: false });
   } catch (error) {
-    console.error("[2FA Check] Erreur:", error);
+    logger.error("[2FA Check] Erreur:", error);
     return NextResponse.json(
       { error: "Erreur lors de la verification" },
       { status: 500 }

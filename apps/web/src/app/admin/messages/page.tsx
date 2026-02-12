@@ -8,6 +8,8 @@
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import {
+import { logger } from "@/lib/logger";
+
   PaperAirplaneIcon,
   UserGroupIcon,
   UserCircleIcon,
@@ -203,7 +205,7 @@ export default function AdminMessagesPage() {
       setBroadcasts(data.broadcasts || []);
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') return;
-      console.error("Error fetching messages:", error);
+      logger.error("Error fetching messages:", error);
     } finally {
       setLoading(false);
     }
@@ -222,7 +224,7 @@ export default function AdminMessagesPage() {
       setConversations(data.conversations || []);
       setConversationPagination(data.pagination || { total: 0, totalPages: 1 });
     } catch (error) {
-      console.error("Error fetching conversations:", error);
+      logger.error("Error fetching conversations:", error);
     } finally {
       setConversationsLoading(false);
     }
@@ -236,7 +238,7 @@ export default function AdminMessagesPage() {
       const data = await res.json();
       setSelectedConversation(data.conversation || null);
     } catch (error) {
-      console.error("Error fetching conversation detail:", error);
+      logger.error("Error fetching conversation detail:", error);
     } finally {
       setConversationDetailLoading(false);
     }
@@ -270,7 +272,7 @@ export default function AdminMessagesPage() {
         setDeleteModal(null);
       }
     } catch (error) {
-      console.error("Error deleting:", error);
+      logger.error("Error deleting:", error);
     } finally {
       setDeleting(false);
     }

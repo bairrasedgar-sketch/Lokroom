@@ -11,6 +11,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { captureDeposit, canCaptureDeposit } from "@/lib/security-deposit";
 import { createNotification } from "@/lib/notifications";
+import { logger } from "@/lib/logger";
+
 
 export async function POST(
   req: Request,
@@ -106,7 +108,7 @@ export async function POST(
       message: "Dépôt capturé avec succès",
     });
   } catch (error) {
-    console.error("[API] Erreur capture dépôt:", error);
+    logger.error("[API] Erreur capture dépôt:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

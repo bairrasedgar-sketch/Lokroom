@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 /**
  * Service de traduction automatique pour Lok'Room
  * Utilise Google Cloud Translation API (gratuit jusqu'a 500k caracteres/mois)
@@ -110,7 +111,7 @@ export async function detectLanguage(text: string): Promise<{ language: Supporte
     );
 
     if (!response.ok) {
-      console.error("Google Translate detect error:", await response.text());
+      logger.error("Google Translate detect error:", await response.text());
       return detectLanguageBasic(text);
     }
 
@@ -128,7 +129,7 @@ export async function detectLanguage(text: string): Promise<{ language: Supporte
 
     return detectLanguageBasic(text);
   } catch (error) {
-    console.error("Error detecting language:", error);
+    logger.error("Error detecting language:", error);
     return detectLanguageBasic(text);
   }
 }
@@ -219,7 +220,7 @@ export async function translateText(
       setInCache(cacheKey, result);
       return result;
     } catch (error) {
-      console.error("Google Translate error:", error);
+      logger.error("Google Translate error:", error);
     }
   }
 
@@ -230,7 +231,7 @@ export async function translateText(
       setInCache(cacheKey, result);
       return result;
     } catch (error) {
-      console.error("DeepL error:", error);
+      logger.error("DeepL error:", error);
     }
   }
 
@@ -241,12 +242,12 @@ export async function translateText(
       setInCache(cacheKey, result);
       return result;
     } catch (error) {
-      console.error("LibreTranslate error:", error);
+      logger.error("LibreTranslate error:", error);
     }
   }
 
   // Aucun service de traduction disponible
-  console.warn("No translation service available");
+  logger.warn("No translation service available");
   return { translatedText: text, detectedSourceLanguage: sourceLang };
 }
 

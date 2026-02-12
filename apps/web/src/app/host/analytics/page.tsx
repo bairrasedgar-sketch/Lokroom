@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamicImport from "next/dynamic";
 import {
+import { logger } from "@/lib/logger";
+
   ArrowDownTrayIcon,
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
@@ -249,7 +251,7 @@ export default function HostAnalyticsPage() {
         a.click();
       }
     } catch (err) {
-      console.error(err);
+      logger.error(err);
     }
   }
 

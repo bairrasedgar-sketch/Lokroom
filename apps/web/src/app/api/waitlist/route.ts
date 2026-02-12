@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
 import { sendWaitlistConfirmation } from "@/lib/email";
+import { logger } from "@/lib/logger";
+
 
 const waitlistSchema = z.object({
   email: z.string().email("Adresse email invalide"),
@@ -46,7 +48,7 @@ export async function POST(request: NextRequest) {
     try {
       await sendWaitlistConfirmation(email);
     } catch (emailError) {
-      console.error("Failed to send confirmation email:", emailError);
+      logger.error("Failed to send confirmation email:", emailError);
       // Don't fail the request if email fails
     }
 
@@ -55,7 +57,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error("Waitlist error:", error);
+    logger.error("Waitlist error:", error);
     return NextResponse.json(
       { error: "Une erreur est survenue. Veuillez réessayer." },
       { status: 500 }
@@ -93,7 +95,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Waitlist GET error:", error);
+    logger.error("Waitlist GET error:", error);
     return NextResponse.json(
       { error: "Une erreur est survenue" },
       { status: 500 }

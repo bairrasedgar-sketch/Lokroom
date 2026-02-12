@@ -8,6 +8,8 @@ import { prisma } from "@/lib/db";
 import { sendEmail, magicLinkEmail } from "@/lib/email";
 import { verifyPassword } from "@/lib/password";
 import { jwtVerify } from "jose";
+import { logger } from "@/lib/logger";
+
 
 // 🔒 SÉCURITÉ : Clé pour les tokens temporaires 2FA et verification email
 // CRITICAL: Fail fast si la variable d'environnement n'est pas définie
@@ -102,7 +104,7 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!result.success) {
-          console.error("[Auth] Erreur envoi magic link:", result.error);
+          logger.error("[Auth] Erreur envoi magic link:", result.error);
           throw new Error("Impossible d'envoyer l'e-mail de vérification");
         }
       },

@@ -9,6 +9,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { createDepositHold } from "@/lib/security-deposit";
+import { logger } from "@/lib/logger";
+
 
 export async function POST(
   req: Request,
@@ -80,7 +82,7 @@ export async function POST(
       currency: policy.currency,
     });
   } catch (error) {
-    console.error("[API] Erreur création dépôt:", error);
+    logger.error("[API] Erreur création dépôt:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

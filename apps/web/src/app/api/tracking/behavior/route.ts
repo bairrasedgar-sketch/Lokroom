@@ -5,6 +5,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { trackUserBehavior } from "@/lib/recommendations/tracking";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +52,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("[API] Error tracking behavior:", error);
+    logger.error("[API] Error tracking behavior:", error);
     return NextResponse.json(
       { error: "Failed to track behavior" },
       { status: 500 }

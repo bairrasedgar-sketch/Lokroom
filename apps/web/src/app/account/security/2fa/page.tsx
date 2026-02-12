@@ -5,6 +5,8 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
+import { logger } from "@/lib/logger";
+
   ShieldCheckIcon,
   ShieldExclamationIcon,
   KeyIcon,
@@ -69,7 +71,7 @@ export default function TwoFactorSettingsPage() {
         setTwoFactorStatus(data);
       }
     } catch (err) {
-      console.error("Erreur chargement statut 2FA:", err);
+      logger.error("Erreur chargement statut 2FA:", err);
     } finally {
       setLoading(false);
     }

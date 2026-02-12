@@ -6,6 +6,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
 import { contactSchema, validateRequestBody } from "@/lib/validations/api";
+import { logger } from "@/lib/logger";
+
 
 export async function POST(request: Request) {
   try {
@@ -109,7 +111,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Erreur API contact:", error);
+    logger.error("Erreur API contact:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

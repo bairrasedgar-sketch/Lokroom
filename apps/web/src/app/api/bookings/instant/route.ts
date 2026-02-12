@@ -6,6 +6,7 @@ import Stripe from "stripe";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { applyFeesToBooking } from "@/lib/bookingFees";
+import { logger } from "@/lib/logger";
 import {
   checkInstantBookEligibility,
   processInstantBooking,
@@ -345,7 +346,7 @@ export async function POST(req: NextRequest) {
         data: { stripePaymentIntentId: paymentIntent.id },
       });
     } catch (stripeError) {
-      console.error("[InstantBook] Stripe error:", stripeError);
+      logger.error("[InstantBook] Stripe error:", stripeError);
       // Annuler la réservation si le paiement échoue
       await prisma.booking.update({
         where: { id: booking.id },
@@ -375,14 +376,14 @@ export async function POST(req: NextRequest) {
     processResult = await processInstantBooking(booking.id);
 
     if (!processResult.success) {
-      console.error("[InstantBook] Process error:", processResult.error);
+      logger.error("[InstantBook] Process error:", processResult.error);
     }
 
     // Envoyer les notifications SEULEMENT après paiement réussi
     try {
       await sendInstantBookNotifications(booking.id);
     } catch (notifError) {
-      console.error("[InstantBook] Notification error:", notifError);
+      logger.error("[InstantBook] Notification error:", notifError);
     }
   }
 

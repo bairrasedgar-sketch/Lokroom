@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { verifyPassword } from "@/lib/password";
 import { generateMobileAuthToken } from "@/lib/auth/jwt";
+import { logger } from "@/lib/logger";
+
 
 /**
  * POST /api/auth/mobile/login
@@ -106,7 +108,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("[Mobile Auth] Login error:", error);
+    logger.error("[Mobile Auth] Login error:", error);
     return NextResponse.json(
       { error: "Erreur lors de la connexion" },
       { status: 500 }

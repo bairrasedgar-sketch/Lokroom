@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -166,7 +168,7 @@ async function notifyAdminsConversationAssigned(
         conversationId,
       });
     } catch (e) {
-      console.error("Erreur envoi email assignation:", e);
+      logger.error("Erreur envoi email assignation:", e);
     }
   }
 }

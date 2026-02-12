@@ -4,6 +4,8 @@
 import { useState, useEffect } from "react";
 import { isCapacitor } from "@/lib/capacitor";
 import {
+import { logger } from "@/lib/logger";
+
   mobileLogin,
   mobileLogout,
   getAuthUser,
@@ -50,7 +52,7 @@ export function useMobileAuth(): UseMobileAuthReturn {
         setUser(storedUser);
       }
     } catch (error) {
-      console.error("[useMobileAuth] Load error:", error);
+      logger.error("[useMobileAuth] Load error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -67,7 +69,7 @@ export function useMobileAuth(): UseMobileAuthReturn {
 
       return result;
     } catch (error) {
-      console.error("[useMobileAuth] Login error:", error);
+      logger.error("[useMobileAuth] Login error:", error);
       return { success: false, error: "Erreur de connexion" };
     }
   }
@@ -78,7 +80,7 @@ export function useMobileAuth(): UseMobileAuthReturn {
       setUser(null);
       setAuthenticated(false);
     } catch (error) {
-      console.error("[useMobileAuth] Logout error:", error);
+      logger.error("[useMobileAuth] Logout error:", error);
     }
   }
 
@@ -96,7 +98,7 @@ export function useMobileAuth(): UseMobileAuthReturn {
         setAuthenticated(false);
       }
     } catch (error) {
-      console.error("[useMobileAuth] Refresh error:", error);
+      logger.error("[useMobileAuth] Refresh error:", error);
     }
   }
 

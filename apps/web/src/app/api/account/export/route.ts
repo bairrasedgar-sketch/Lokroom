@@ -7,6 +7,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
+
 
 export async function POST() {
   try {
@@ -97,7 +99,7 @@ export async function POST() {
       data: userData, // Return inline for now
     });
   } catch (error) {
-    console.error("Erreur export données:", error);
+    logger.error("Erreur export données:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
@@ -131,7 +133,7 @@ export async function GET() {
       })),
     });
   } catch (error) {
-    console.error("Erreur statut export:", error);
+    logger.error("Erreur statut export:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

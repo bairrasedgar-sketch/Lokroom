@@ -7,6 +7,8 @@ import {
   verifyTwoFactorCode,
 } from "@/lib/2fa";
 import { verifyTwoFactorPendingToken } from "@/lib/2fa-token";
+import { logger } from "@/lib/logger";
+
 
 export async function POST(req: NextRequest) {
   try {
@@ -108,7 +110,7 @@ export async function POST(req: NextRequest) {
         : undefined,
     });
   } catch (error) {
-    console.error("[2FA Verify] Erreur:", error);
+    logger.error("[2FA Verify] Erreur:", error);
     return NextResponse.json(
       { error: "Erreur lors de la verification" },
       { status: 500 }

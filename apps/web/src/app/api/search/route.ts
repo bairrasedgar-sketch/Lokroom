@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -238,7 +240,7 @@ export async function GET(req: NextRequest) {
       sortBy,
     });
   } catch (err) {
-    console.error("GET /api/search error", err);
+    logger.error("GET /api/search error", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

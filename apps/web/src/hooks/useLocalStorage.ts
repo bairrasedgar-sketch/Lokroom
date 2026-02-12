@@ -6,6 +6,8 @@
  */
 
 import { useState, useEffect } from "react";
+import { logger } from "@/lib/logger";
+
 
 /**
  * Hook sécurisé pour utiliser localStorage avec Next.js SSR
@@ -37,7 +39,7 @@ export function useLocalStorage<T>(
         setStoredValue(JSON.parse(item));
       }
     } catch (error) {
-      console.error(`Error loading localStorage key "${key}":`, error);
+      logger.error(`Error loading localStorage key "${key}":`, error);
     }
   }, [key, isClient]);
 
@@ -55,7 +57,7 @@ export function useLocalStorage<T>(
         window.localStorage.setItem(key, JSON.stringify(valueToStore));
       }
     } catch (error) {
-      console.error(`Error saving localStorage key "${key}":`, error);
+      logger.error(`Error saving localStorage key "${key}":`, error);
     }
   };
 
@@ -67,7 +69,7 @@ export function useLocalStorage<T>(
         window.localStorage.removeItem(key);
       }
     } catch (error) {
-      console.error(`Error removing localStorage key "${key}":`, error);
+      logger.error(`Error removing localStorage key "${key}":`, error);
     }
   };
 
@@ -103,7 +105,7 @@ export function getLocalStorageItem<T>(key: string, defaultValue: T): T {
     const item = window.localStorage.getItem(key);
     return item ? JSON.parse(item) : defaultValue;
   } catch (error) {
-    console.error(`Error reading localStorage key "${key}":`, error);
+    logger.error(`Error reading localStorage key "${key}":`, error);
     return defaultValue;
   }
 }
@@ -121,7 +123,7 @@ export function setLocalStorageItem<T>(key: string, value: T): void {
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
-    console.error(`Error writing localStorage key "${key}":`, error);
+    logger.error(`Error writing localStorage key "${key}":`, error);
   }
 }
 
@@ -137,6 +139,6 @@ export function removeLocalStorageItem(key: string): void {
   try {
     window.localStorage.removeItem(key);
   } catch (error) {
-    console.error(`Error removing localStorage key "${key}":`, error);
+    logger.error(`Error removing localStorage key "${key}":`, error);
   }
 }

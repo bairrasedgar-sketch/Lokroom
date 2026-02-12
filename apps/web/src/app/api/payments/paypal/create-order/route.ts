@@ -15,6 +15,8 @@ import { prisma } from "@/lib/db";
 import { createOrder, mapCurrencyToPayPal, isPayPalConfigured } from "@/lib/paypal";
 import { computeFees, inferRegion } from "@/lib/fees";
 import { fromPrismaCurrency } from "@/lib/currency";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -193,7 +195,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    console.log("[PayPal] Order created for booking:", {
+    logger.debug("[PayPal] Order created for booking:", {
       bookingId: booking.id,
       orderId: order.id,
       amountCents: totalChargeCents,
@@ -215,7 +217,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("[PayPal] Create order error:", error);
+    logger.error("[PayPal] Create order error:", error);
     return NextResponse.json(
       { error: "paypal_create_order_failed" },
       { status: 500 }

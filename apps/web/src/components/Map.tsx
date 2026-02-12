@@ -7,6 +7,8 @@ import Image from "next/image";
 import { useGoogleMaps } from "./GoogleMapsLoader";
 import FavoriteButton from "@/components/FavoriteButton";
 import { useTranslation } from "@/hooks/useTranslation";
+import { logger } from "@/lib/logger";
+
 
 // Types pour Google Maps
 type GoogleMap = google.maps.Map;
@@ -384,7 +386,7 @@ export default function Map({
 
     const g = (window as WindowWithGoogle).google;
     if (!g || !g.maps || typeof g.maps.Map !== "function") {
-      console.error(mapT.googleMapsNotReady);
+      logger.error(mapT.googleMapsNotReady);
       return;
     }
 

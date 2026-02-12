@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { regenerateRecommendations } from "@/lib/recommendations/engine";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +25,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    console.log("[Cron] Starting recommendations regeneration...");
+    logger.debug("[Cron] Starting recommendations regeneration...");
 
     // Récupérer tous les utilisateurs actifs (avec au moins 1 favori ou 1 réservation)
     const users = await prisma.user.findMany({
@@ -40,7 +42,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    console.log(`[Cron] Found ${users.length} users to process`);
+    logger.debug(`[Cron] Found ${users.length} users to process`);
 
     let successCount = 0;
     let errorCount = 0;
@@ -57,7 +59,7 @@ export async function POST(req: NextRequest) {
             successCount++;
           } catch (error) {
             errorCount++;
-            console.error(`[Cron] Error for user ${user.email}:`, error);
+            logger.error(`[Cron] Error for user ${user.email}:`, error);
           }
         })
       );
@@ -66,10 +68,10 @@ export async function POST(req: NextRequest) {
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
-    console.log("[Cron] Recommendations regeneration complete!");
-    console.log(`  - Success: ${successCount}`);
-    console.log(`  - Errors: ${errorCount}`);
-    console.log(`  - Total: ${users.length}`);
+    logger.debug("[Cron] Recommendations regeneration complete!");
+    logger.debug(`  - Success: ${successCount}`);
+    logger.debug(`  - Errors: ${errorCount}`);
+    logger.debug(`  - Total: ${users.length}`);
 
     return NextResponse.json({
       success: true,
@@ -78,7 +80,7 @@ export async function POST(req: NextRequest) {
       errorCount,
     });
   } catch (error) {
-    console.error("[Cron] Fatal error:", error);
+    logger.error("[Cron] Fatal error:", error);
     return NextResponse.json(
       { error: "Failed to regenerate recommendations" },
       { status: 500 }

@@ -6,6 +6,8 @@
 
 import { Resend } from "resend";
 import {
+import { logger } from "@/lib/logger";
+
   bookingConfirmationTemplate,
   bookingRequestTemplate,
   paymentReceiptTemplate,
@@ -86,13 +88,13 @@ export class EmailService {
       });
 
       if (result.error) {
-        console.error("[EmailService] Booking confirmation error:", result.error);
+        logger.error("[EmailService] Booking confirmation error:", result.error);
         return { success: false, error: result.error.message };
       }
 
       return { success: true, messageId: result.data?.id };
     } catch (error) {
-      console.error("[EmailService] Booking confirmation exception:", error);
+      logger.error("[EmailService] Booking confirmation exception:", error);
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
@@ -130,13 +132,13 @@ export class EmailService {
       });
 
       if (result.error) {
-        console.error("[EmailService] Booking request error:", result.error);
+        logger.error("[EmailService] Booking request error:", result.error);
         return { success: false, error: result.error.message };
       }
 
       return { success: true, messageId: result.data?.id };
     } catch (error) {
-      console.error("[EmailService] Booking request exception:", error);
+      logger.error("[EmailService] Booking request exception:", error);
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
@@ -173,13 +175,13 @@ export class EmailService {
       });
 
       if (result.error) {
-        console.error("[EmailService] Booking cancelled error:", result.error);
+        logger.error("[EmailService] Booking cancelled error:", result.error);
         return { success: false, error: result.error.message };
       }
 
       return { success: true, messageId: result.data?.id };
     } catch (error) {
-      console.error("[EmailService] Booking cancelled exception:", error);
+      logger.error("[EmailService] Booking cancelled exception:", error);
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
@@ -215,13 +217,13 @@ export class EmailService {
       });
 
       if (result.error) {
-        console.error("[EmailService] Payment receipt error:", result.error);
+        logger.error("[EmailService] Payment receipt error:", result.error);
         return { success: false, error: result.error.message };
       }
 
       return { success: true, messageId: result.data?.id };
     } catch (error) {
-      console.error("[EmailService] Payment receipt exception:", error);
+      logger.error("[EmailService] Payment receipt exception:", error);
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
@@ -254,13 +256,13 @@ export class EmailService {
       });
 
       if (result.error) {
-        console.error("[EmailService] Message notification error:", result.error);
+        logger.error("[EmailService] Message notification error:", result.error);
         return { success: false, error: result.error.message };
       }
 
       return { success: true, messageId: result.data?.id };
     } catch (error) {
-      console.error("[EmailService] Message notification exception:", error);
+      logger.error("[EmailService] Message notification exception:", error);
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
@@ -293,13 +295,13 @@ export class EmailService {
       });
 
       if (result.error) {
-        console.error("[EmailService] Review request error:", result.error);
+        logger.error("[EmailService] Review request error:", result.error);
         return { success: false, error: result.error.message };
       }
 
       return { success: true, messageId: result.data?.id };
     } catch (error) {
-      console.error("[EmailService] Review request exception:", error);
+      logger.error("[EmailService] Review request exception:", error);
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
@@ -330,13 +332,13 @@ export class EmailService {
       });
 
       if (result.error) {
-        console.error("[EmailService] Welcome email error:", result.error);
+        logger.error("[EmailService] Welcome email error:", result.error);
         return { success: false, error: result.error.message };
       }
 
       return { success: true, messageId: result.data?.id };
     } catch (error) {
-      console.error("[EmailService] Welcome email exception:", error);
+      logger.error("[EmailService] Welcome email exception:", error);
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
@@ -367,13 +369,13 @@ export class EmailService {
       });
 
       if (result.error) {
-        console.error("[EmailService] Password reset error:", result.error);
+        logger.error("[EmailService] Password reset error:", result.error);
         return { success: false, error: result.error.message };
       }
 
       return { success: true, messageId: result.data?.id };
     } catch (error) {
-      console.error("[EmailService] Password reset exception:", error);
+      logger.error("[EmailService] Password reset exception:", error);
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
@@ -405,13 +407,13 @@ export class EmailService {
       });
 
       if (result.error) {
-        console.error("[EmailService] Listing approved error:", result.error);
+        logger.error("[EmailService] Listing approved error:", result.error);
         return { success: false, error: result.error.message };
       }
 
       return { success: true, messageId: result.data?.id };
     } catch (error) {
-      console.error("[EmailService] Listing approved exception:", error);
+      logger.error("[EmailService] Listing approved exception:", error);
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
@@ -446,13 +448,13 @@ export class EmailService {
       });
 
       if (result.error) {
-        console.error("[EmailService] Payout notification error:", result.error);
+        logger.error("[EmailService] Payout notification error:", result.error);
         return { success: false, error: result.error.message };
       }
 
       return { success: true, messageId: result.data?.id };
     } catch (error) {
-      console.error("[EmailService] Payout notification exception:", error);
+      logger.error("[EmailService] Payout notification exception:", error);
       return {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",

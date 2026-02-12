@@ -6,6 +6,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ClockIcon, UserCircleIcon } from "@heroicons/react/24/outline";
+import { logger } from "@/lib/logger";
+
 
 type AuditLog = {
   id: string;
@@ -61,7 +63,7 @@ export default function AdminLogsPage() {
       if (data.logs) setLogs(data.logs);
       if (data.pagination) setPagination(data.pagination);
     } catch (error) {
-      console.error("Erreur chargement logs:", error);
+      logger.error("Erreur chargement logs:", error);
     } finally {
       setLoading(false);
     }

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -71,7 +73,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ messages: messagesWithTranslation });
   } catch (e) {
-    console.error("Erreur /api/messages/list:", e);
+    logger.error("Erreur /api/messages/list:", e);
     return NextResponse.json(
       { error: "Erreur interne" },
       { status: 500 },

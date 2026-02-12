@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { Session } from "next-auth";
+import { logger } from "@/lib/logger";
+
 
 /**
  * Verify that the authenticated user owns the resource
@@ -113,7 +115,7 @@ export async function verifyOwnership(
   } catch (error) {
     // Note: Utiliser un logger approprié en production (Sentry, Winston, etc.)
     if (process.env.NODE_ENV === "development") {
-      console.error(`Error verifying ownership for ${resourceType}:`, error);
+      logger.error(`Error verifying ownership for ${resourceType}:`, error);
     }
     return {
       session,

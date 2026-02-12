@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 /**
  * Logger centralisé pour l'application
  * Gestion professionnelle des logs avec niveaux et contexte
@@ -104,7 +105,7 @@ class Logger {
       }
     } catch (err) {
       // Ignorer les erreurs Sentry pour éviter les boucles
-      console.error('Failed to send to Sentry:', err);
+      logger.error('Failed to send to Sentry:', err);
     }
   }
 
@@ -147,7 +148,7 @@ class Logger {
           });
         }
       } catch (err) {
-        console.error('Failed to send performance to Sentry:', err);
+        logger.error('Failed to send performance to Sentry:', err);
       }
     }
   }

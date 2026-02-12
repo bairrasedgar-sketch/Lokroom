@@ -1,6 +1,8 @@
 // apps/web/src/lib/recommendations/engine.ts
 import { prisma } from "@/lib/db";
 import type { Listing, User, Favorite, Booking, Review, ListingImage } from "@prisma/client";
+import { logger } from "@/lib/logger";
+
 
 type ListingWithRelations = Listing & {
   images: ListingImage[];
@@ -326,7 +328,7 @@ export async function regenerateRecommendations(userId: string): Promise<void> {
       });
     }
   } catch (error) {
-    console.error(`[Recommendations] Error regenerating for user ${userId}:`, error);
+    logger.error(`[Recommendations] Error regenerating for user ${userId}:`, error);
     throw error;
   }
 }

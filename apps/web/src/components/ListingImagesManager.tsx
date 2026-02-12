@@ -4,6 +4,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
+
 
 type Props = {
   listingId: string;
@@ -79,7 +81,7 @@ export default function ListingImagesManager({
       toast.success("Images ajoutées ✅");
     } catch (e) {
       toast.error("Erreur pendant l'upload");
-      console.error(e);
+      logger.error(e);
     } finally {
       setBusy(false);
     }

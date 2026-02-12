@@ -8,6 +8,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import {
+import { logger } from "@/lib/logger";
+
   MagnifyingGlassIcon,
   CalendarDaysIcon,
   ExclamationTriangleIcon,
@@ -68,7 +70,7 @@ export default function AdminBookingsPage() {
       if (data.pagination) setPagination(data.pagination);
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') return;
-      console.error("Erreur chargement bookings:", error);
+      logger.error("Erreur chargement bookings:", error);
     } finally {
       setLoading(false);
     }

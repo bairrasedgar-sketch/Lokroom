@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
+import { logger } from "@/lib/logger";
+
 
 export default function ServiceWorkerRegistration() {
   useEffect(() => {
@@ -9,7 +11,7 @@ export default function ServiceWorkerRegistration() {
       navigator.serviceWorker
         .register("/sw.js")
         .then((registration) => {
-          console.log("Service Worker registered:", registration);
+          logger.debug("Service Worker registered:", registration);
 
           // Vérifier les mises à jour toutes les heures
           setInterval(() => {
@@ -17,14 +19,14 @@ export default function ServiceWorkerRegistration() {
           }, 60 * 60 * 1000);
         })
         .catch((error) => {
-          console.error("Service Worker registration failed:", error);
+          logger.error("Service Worker registration failed:", error);
         });
 
       // Écouter les messages du Service Worker
       navigator.serviceWorker.addEventListener("message", (event) => {
         if (event.data && event.data.type === "NOTIFICATION_CLICKED") {
           // Gérer le clic sur notification
-          console.log("Notification clicked:", event.data);
+          logger.debug("Notification clicked:", event.data);
         }
       });
     }

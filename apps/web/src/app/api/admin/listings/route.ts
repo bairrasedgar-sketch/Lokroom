@@ -9,6 +9,8 @@ import { prisma } from "@/lib/db";
 import { requireAdminPermission } from "@/lib/admin-auth";
 import { parsePageParam, parseLimitParam } from "@/lib/validation/params";
 import type { Prisma, ListingStatus } from "@prisma/client";
+import { logger } from "@/lib/logger";
+
 
 export async function GET(request: Request) {
   const auth = await requireAdminPermission("listings:view");
@@ -148,7 +150,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Erreur API admin listings:", error);
+    logger.error("Erreur API admin listings:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

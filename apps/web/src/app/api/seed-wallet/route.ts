@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
+
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -137,7 +139,7 @@ export async function POST() {
         "OK : booking terminée (200 €) + wallet crédité (200 €). Lance POST /api/host/release.",
     });
   } catch (e) {
-    console.error("seed-wallet error:", e);
+    logger.error("seed-wallet error:", e);
     return NextResponse.json({ error: "Operation failed" }, { status: 500 });
   }
 }

@@ -1,6 +1,8 @@
 // apps/web/src/lib/swr-config.ts
 import { SWRConfiguration } from 'swr';
 import { authenticatedFetch } from '@/lib/auth/api-client';
+import { logger } from "@/lib/logger";
+
 
 /**
  * Global fetcher function for SWR
@@ -51,14 +53,14 @@ export const swrConfig: SWRConfiguration = {
 
   // Error handler
   onError: (error, key) => {
-    console.error(`SWR Error for ${key}:`, error);
+    logger.error(`SWR Error for ${key}:`, error);
   },
 
   // Success handler
   onSuccess: (data, key, config) => {
     // Optional: log successful fetches in development
     if (process.env.NODE_ENV === 'development') {
-      console.log(`SWR Success for ${key}`);
+      logger.debug(`SWR Success for ${key}`);
     }
   },
 };

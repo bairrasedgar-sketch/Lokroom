@@ -2,6 +2,8 @@
 // Alternative gratuite: on utilise Server-Sent Events (SSE) natif
 
 import { useEffect, useState, useCallback } from "react";
+import { logger } from "@/lib/logger";
+
 
 // Types pour les événements temps réel
 export type RealtimeEvent =
@@ -99,7 +101,7 @@ export function useRealtimeMessages(conversationId: string | null) {
               break;
           }
         } catch (error) {
-          console.error("Error parsing SSE event:", error);
+          logger.error("Error parsing SSE event:", error);
         }
       };
 
@@ -136,7 +138,7 @@ export function useRealtimeMessages(conversationId: string | null) {
           body: JSON.stringify({ conversationId, isTyping }),
         });
       } catch (error) {
-        console.error("Error sending typing event:", error);
+        logger.error("Error sending typing event:", error);
       }
     },
     [conversationId]
@@ -154,7 +156,7 @@ export function useRealtimeMessages(conversationId: string | null) {
           body: JSON.stringify({ conversationId, messageId }),
         });
       } catch (error) {
-        console.error("Error marking as read:", error);
+        logger.error("Error marking as read:", error);
       }
     },
     [conversationId]

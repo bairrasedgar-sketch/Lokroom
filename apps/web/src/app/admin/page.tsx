@@ -5,6 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import dynamicImport from "next/dynamic";
 import {
+import { logger } from "@/lib/logger";
+
   UsersIcon,
   HomeModernIcon,
   CalendarDaysIcon,
@@ -135,7 +137,7 @@ export default function AdminDashboard() {
       if (data.pendingItems) setPendingItems(data.pendingItems);
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') return;
-      console.error("Error fetching dashboard:", error);
+      logger.error("Error fetching dashboard:", error);
     } finally {
       setLoading(false);
     }
@@ -151,7 +153,7 @@ export default function AdminDashboard() {
       if (data.statusData) setStatusData(data.statusData);
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') return;
-      console.error("Error fetching charts:", error);
+      logger.error("Error fetching charts:", error);
     } finally {
       setChartLoading(false);
     }

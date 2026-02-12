@@ -7,6 +7,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdminPermission, logAdminAction } from "@/lib/admin-auth";
 import type { ListingStatus } from "@prisma/client";
+import { logger } from "@/lib/logger";
+
 
 export async function GET(
   request: Request,
@@ -149,7 +151,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("Erreur API admin listing detail:", error);
+    logger.error("Erreur API admin listing detail:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }
@@ -332,7 +334,7 @@ export async function PUT(
 
     return NextResponse.json({ success: true, status: newStatus });
   } catch (error) {
-    console.error("Erreur modération annonce:", error);
+    logger.error("Erreur modération annonce:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

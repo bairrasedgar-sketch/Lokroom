@@ -4,6 +4,8 @@
 import { useEffect, useState } from "react";
 import { ListingCard } from "@/components/home/ListingCard";
 import { Sparkles, TrendingUp, Heart, MapPin, DollarSign, Star } from "lucide-react";
+import { logger } from "@/lib/logger";
+
 
 interface RecommendedListing {
   id: string;
@@ -93,7 +95,7 @@ export function RecommendedListings() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Error fetching recommendations:", err);
+        logger.error("Error fetching recommendations:", err);
         setError(err.message);
         setLoading(false);
       });

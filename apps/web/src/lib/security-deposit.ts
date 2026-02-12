@@ -13,6 +13,8 @@
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/db";
 import type { SecurityDepositStatus } from "@prisma/client";
+import { logger } from "@/lib/logger";
+
 
 // Durée maximale d'un hold Stripe (7 jours)
 const STRIPE_HOLD_DAYS = 7;
@@ -116,7 +118,7 @@ export async function createDepositHold(
       clientSecret: paymentIntent.client_secret || undefined,
     };
   } catch (error) {
-    console.error("[SecurityDeposit] Erreur création hold:", error);
+    logger.error("[SecurityDeposit] Erreur création hold:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Erreur inconnue",
@@ -172,7 +174,7 @@ export async function authorizeDeposit(
 
     return { success: true };
   } catch (error) {
-    console.error("[SecurityDeposit] Erreur autorisation:", error);
+    logger.error("[SecurityDeposit] Erreur autorisation:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Erreur inconnue",
@@ -248,7 +250,7 @@ export async function captureDeposit(
       capturedAmount: amountCents,
     };
   } catch (error) {
-    console.error("[SecurityDeposit] Erreur capture:", error);
+    logger.error("[SecurityDeposit] Erreur capture:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Erreur inconnue",
@@ -294,7 +296,7 @@ export async function releaseDeposit(
 
     return { success: true };
   } catch (error) {
-    console.error("[SecurityDeposit] Erreur libération:", error);
+    logger.error("[SecurityDeposit] Erreur libération:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Erreur inconnue",
@@ -343,14 +345,14 @@ export async function checkExpiredDeposits(): Promise<{
 
       if (result.success) {
         released++;
-        console.log(`[SecurityDeposit] Dépôt ${deposit.id} libéré automatiquement`);
+        logger.debug(`[SecurityDeposit] Dépôt ${deposit.id} libéré automatiquement`);
       } else {
         errors++;
-        console.error(`[SecurityDeposit] Erreur libération ${deposit.id}:`, result.error);
+        logger.error(`[SecurityDeposit] Erreur libération ${deposit.id}:`, result.error);
       }
     }
   } catch (error) {
-    console.error("[SecurityDeposit] Erreur vérification dépôts expirés:", error);
+    logger.error("[SecurityDeposit] Erreur vérification dépôts expirés:", error);
   }
 
   return { processed, released, errors };
@@ -385,7 +387,7 @@ export async function getDepositStatus(
       createdAt: deposit.createdAt,
     };
   } catch (error) {
-    console.error("[SecurityDeposit] Erreur récupération statut:", error);
+    logger.error("[SecurityDeposit] Erreur récupération statut:", error);
     return null;
   }
 }
@@ -401,7 +403,7 @@ export async function getDepositPolicy(listingId: string) {
 
     return policy;
   } catch (error) {
-    console.error("[SecurityDeposit] Erreur récupération politique:", error);
+    logger.error("[SecurityDeposit] Erreur récupération politique:", error);
     return null;
   }
 }
@@ -441,7 +443,7 @@ export async function upsertDepositPolicy(
 
     return { success: true, policy };
   } catch (error) {
-    console.error("[SecurityDeposit] Erreur mise à jour politique:", error);
+    logger.error("[SecurityDeposit] Erreur mise à jour politique:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Erreur inconnue",
@@ -492,7 +494,7 @@ export async function canCaptureDeposit(
 
     return user?.role === "ADMIN";
   } catch (error) {
-    console.error("[SecurityDeposit] Erreur vérification permissions:", error);
+    logger.error("[SecurityDeposit] Erreur vérification permissions:", error);
     return false;
   }
 }

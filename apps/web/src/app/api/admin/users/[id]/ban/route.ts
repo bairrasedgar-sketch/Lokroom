@@ -6,6 +6,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdminPermission, logAdminAction } from "@/lib/admin-auth";
+import { logger } from "@/lib/logger";
+
 
 export async function POST(
   request: Request,
@@ -74,7 +76,7 @@ export async function POST(
 
     return NextResponse.json({ success: true, ban });
   } catch (error) {
-    console.error("Erreur bannissement:", error);
+    logger.error("Erreur bannissement:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }
@@ -115,7 +117,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Erreur débannissement:", error);
+    logger.error("Erreur débannissement:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

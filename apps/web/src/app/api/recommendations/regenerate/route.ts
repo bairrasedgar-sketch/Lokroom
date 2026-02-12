@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { regenerateRecommendations } from "@/lib/recommendations/engine";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +33,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, message: "Recommendations regenerated" });
   } catch (error) {
-    console.error("[API] Error regenerating recommendations:", error);
+    logger.error("[API] Error regenerating recommendations:", error);
     return NextResponse.json(
       { error: "Failed to regenerate recommendations" },
       { status: 500 }

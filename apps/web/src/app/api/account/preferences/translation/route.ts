@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { isLanguageSupported } from "@/lib/translation";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +40,7 @@ export async function GET() {
       autoTranslate: profile.autoTranslate,
     });
   } catch (error) {
-    console.error("Erreur GET /api/account/preferences/translation:", error);
+    logger.error("Erreur GET /api/account/preferences/translation:", error);
     return NextResponse.json(
       { error: "Erreur lors de la recuperation des preferences" },
       { status: 500 }
@@ -106,7 +108,7 @@ export async function PUT(req: NextRequest) {
       message: "Preferences mises a jour avec succes",
     });
   } catch (error) {
-    console.error("Erreur PUT /api/account/preferences/translation:", error);
+    logger.error("Erreur PUT /api/account/preferences/translation:", error);
     return NextResponse.json(
       { error: "Erreur lors de la mise a jour des preferences" },
       { status: 500 }

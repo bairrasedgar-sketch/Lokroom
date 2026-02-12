@@ -26,6 +26,8 @@ import {
   SparklesIcon,
 } from "@heroicons/react/24/outline";
 import DisputeAssistant from "@/components/DisputeAssistant";
+import { logger } from "@/lib/logger";
+
 
 // Types de problèmes disponibles
 const ISSUE_CATEGORIES = [
@@ -140,7 +142,7 @@ export default function ReportIssuePage() {
           }
         }
       } catch (error) {
-        console.error("Erreur chargement réservations:", error);
+        logger.error("Erreur chargement réservations:", error);
       } finally {
         setLoading(false);
       }

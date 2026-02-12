@@ -5,6 +5,8 @@ import { readFile } from "fs/promises";
 import { join } from "path";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { logger } from "@/lib/logger";
+
 
 // 🔒 SÉCURITÉ : Whitelist stricte des types de logs autorisés
 const ALLOWED_LOG_TYPES = ["all", "error", "http", "business"] as const;
@@ -55,7 +57,7 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     // Note: Utiliser un logger approprié en production (Sentry, Winston, etc.)
     if (process.env.NODE_ENV === "development") {
-      console.error("Error reading logs:", error);
+      logger.error("Error reading logs:", error);
     }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }

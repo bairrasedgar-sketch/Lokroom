@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { logger } from "@/lib/logger";
+
 
 type ProfileRes = {
   user?: {
@@ -48,7 +50,7 @@ export default function UserAvatar() {
         // Ignorer les erreurs d'abort
         if (err instanceof Error && err.name === "AbortError") return;
         if (process.env.NODE_ENV !== "production") {
-          console.debug("UserAvatar: échec fetch /api/profile:", err);
+          logger.debug("UserAvatar: échec fetch /api/profile:", err);
         }
       }
     }

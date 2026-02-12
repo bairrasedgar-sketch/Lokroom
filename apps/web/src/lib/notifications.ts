@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/db";
 import type { NotificationType } from "@prisma/client";
+import { logger } from "@/lib/logger";
+
 
 type CreateNotificationParams = {
   userId: string;
@@ -35,7 +37,7 @@ export async function createNotification({
 
     return notification;
   } catch (error) {
-    console.error("Error creating notification:", error);
+    logger.error("Error creating notification:", error);
     return null;
   }
 }

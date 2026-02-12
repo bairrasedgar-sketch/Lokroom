@@ -5,6 +5,8 @@ import { authenticator } from "otplib";
 import QRCode from "qrcode";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import { logger } from "@/lib/logger";
+
 
 // Configuration TOTP
 authenticator.options = {
@@ -46,7 +48,7 @@ export function encryptSecret(secret: string): string {
     // Format: enc2:{iv}:{authTag}:{ciphertext}
     return `enc2:${iv.toString("base64")}:${authTag.toString("base64")}:${encrypted}`;
   } catch (error) {
-    console.error("[2FA] Erreur chiffrement:", error);
+    logger.error("[2FA] Erreur chiffrement:", error);
     throw new Error("Impossible de chiffrer le secret");
   }
 }
@@ -77,7 +79,7 @@ export function decryptSecret(encryptedSecret: string): string {
 
       return decrypted;
     } catch (error) {
-      console.error("[2FA] Erreur dechiffrement:", error);
+      logger.error("[2FA] Erreur dechiffrement:", error);
       throw new Error("Impossible de dechiffrer le secret");
     }
   }
@@ -132,7 +134,7 @@ export async function generateQRCode(secret: string, email: string): Promise<str
 
     return qrCodeDataUrl;
   } catch (error) {
-    console.error("[2FA] Erreur generation QR code:", error);
+    logger.error("[2FA] Erreur generation QR code:", error);
     throw new Error("Impossible de generer le QR code");
   }
 }
@@ -152,7 +154,7 @@ export function verifyToken(secret: string, token: string): boolean {
 
     return authenticator.verify({ token: cleanToken, secret });
   } catch (error) {
-    console.error("[2FA] Erreur verification token:", error);
+    logger.error("[2FA] Erreur verification token:", error);
     return false;
   }
 }

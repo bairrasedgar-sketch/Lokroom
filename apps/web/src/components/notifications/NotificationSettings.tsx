@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Bell, BellOff, Smartphone, Mail, MessageSquare, Calendar, CreditCard, Star, AlertCircle, Check, X } from "lucide-react";
+import { logger } from "@/lib/logger";
+
 
 interface NotificationSettings {
   pushEnabled: boolean;
@@ -73,7 +75,7 @@ export default function NotificationSettings() {
         }
       }
     } catch (error) {
-      console.error("Error loading notification settings:", error);
+      logger.error("Error loading notification settings:", error);
     } finally {
       setIsLoading(false);
     }
@@ -90,7 +92,7 @@ export default function NotificationSettings() {
           const subscription = await registration.pushManager.getSubscription();
           setHasSubscription(!!subscription);
         } catch (error) {
-          console.error("Error checking push subscription:", error);
+          logger.error("Error checking push subscription:", error);
         }
       }
     }
@@ -116,7 +118,7 @@ export default function NotificationSettings() {
         throw new Error("Failed to save settings");
       }
     } catch (error) {
-      console.error("Error saving notification settings:", error);
+      logger.error("Error saving notification settings:", error);
       setSaveMessage({ type: "error", text: "Erreur lors de l'enregistrement" });
     } finally {
       setIsSaving(false);
@@ -154,7 +156,7 @@ export default function NotificationSettings() {
 
       const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
       if (!vapidPublicKey) {
-        console.error("VAPID public key not configured");
+        logger.error("VAPID public key not configured");
         return;
       }
 
@@ -181,7 +183,7 @@ export default function NotificationSettings() {
 
       setHasSubscription(true);
     } catch (error) {
-      console.error("Error creating push subscription:", error);
+      logger.error("Error creating push subscription:", error);
     }
   };
 

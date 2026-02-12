@@ -687,12 +687,10 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => {
-                  if (typeof window !== "undefined") {
-                    if (window.location.pathname === "/") {
-                      window.dispatchEvent(new CustomEvent("openSearchModal"));
-                    } else {
-                      router.push("/?search=open");
-                    }
+                  if (pathname === "/") {
+                    window.dispatchEvent(new CustomEvent("openSearchModal"));
+                  } else {
+                    router.push("/?search=open");
                   }
                 }}
                 aria-label="Ouvrir la recherche d'espaces"

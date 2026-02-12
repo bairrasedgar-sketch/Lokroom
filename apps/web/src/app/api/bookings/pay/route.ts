@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
+import { logger } from "@/lib/logger";
+
 
 // SÉCURITÉ: Pas de GET - ne pas exposer la structure de l'API
 // Les routes non autorisées renvoient automatiquement 405 Method Not Allowed
@@ -56,7 +58,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ clientSecret: intent.client_secret });
   } catch (e) {
-    console.error("pay route error:", e);
+    logger.error("pay route error:", e);
     return NextResponse.json({ error: "pay_failed" }, { status: 500 });
   }
 }

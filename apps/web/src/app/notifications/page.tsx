@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { formatDistanceToNow, format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { logger } from "@/lib/logger";
+
 
 type NotificationType =
   | "BOOKING_REQUEST"
@@ -347,7 +349,7 @@ export default function NotificationsPage() {
         }
       } catch (error) {
         if (error instanceof Error && error.name === 'AbortError') return;
-        console.error("Error fetching notifications:", error);
+        logger.error("Error fetching notifications:", error);
       } finally {
         setIsLoading(false);
       }
@@ -379,7 +381,7 @@ export default function NotificationsPage() {
       );
       setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch (error) {
-      console.error("Error marking notification as read:", error);
+      logger.error("Error marking notification as read:", error);
     }
   }
 
@@ -395,7 +397,7 @@ export default function NotificationsPage() {
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       setUnreadCount(0);
     } catch (error) {
-      console.error("Error marking all notifications as read:", error);
+      logger.error("Error marking all notifications as read:", error);
     }
   }
 
@@ -409,7 +411,7 @@ export default function NotificationsPage() {
       setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
       setTotal((prev) => prev - 1);
     } catch (error) {
-      console.error("Error deleting notification:", error);
+      logger.error("Error deleting notification:", error);
     }
   }
 
@@ -426,7 +428,7 @@ export default function NotificationsPage() {
       setTotal(0);
       setUnreadCount(0);
     } catch (error) {
-      console.error("Error deleting all notifications:", error);
+      logger.error("Error deleting all notifications:", error);
     }
   }
 

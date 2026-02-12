@@ -6,6 +6,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { validatePassword, hashPassword, verifyPassword } from "@/lib/password";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -79,7 +81,7 @@ export async function POST(req: NextRequest) {
         : "Mot de passe créé avec succès",
     });
   } catch (error) {
-    console.error("POST /api/auth/password error:", error);
+    logger.error("POST /api/auth/password error:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

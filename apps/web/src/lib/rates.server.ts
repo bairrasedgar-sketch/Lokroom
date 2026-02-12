@@ -4,6 +4,8 @@ import "server-only";
 import { promises as fs } from "fs";
 import path from "path";
 import type { Currency } from "./currency"; // ✅ vient maintenant de currency.ts
+import { logger } from "@/lib/logger";
+
 
 // ✅ toutes les devises supportées
 const CURRENCIES: Currency[] = ["EUR", "CAD", "USD", "GBP", "CNY"];
@@ -115,7 +117,7 @@ async function fetchRatesFresh(): Promise<RatesPayload> {
     await writeCache(payload);
     return payload;
   } catch (err) {
-    console.error("fetchRatesFresh error, using fallback", err);
+    logger.error("fetchRatesFresh error, using fallback", err);
 
     // 🔁 fallback “en dur” si l’API externe tombe
     // (valeurs approximatives, c’est juste pour ne pas crasher)

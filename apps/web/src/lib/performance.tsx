@@ -5,6 +5,8 @@
 
 import dynamic from 'next/dynamic';
 import React, { ComponentType } from 'react';
+import { logger } from "@/lib/logger";
+
 
 /**
  * Lazy load un composant avec loading state
@@ -271,7 +273,7 @@ export function useRenderPerformance(componentName: string) {
       const duration = endTime - startTime;
 
       if (duration > 16) { // Plus de 16ms = moins de 60fps
-        console.warn(`Slow render: ${componentName} took ${duration.toFixed(2)}ms`);
+        logger.warn(`Slow render: ${componentName} took ${duration.toFixed(2)}ms`);
       }
     };
   });

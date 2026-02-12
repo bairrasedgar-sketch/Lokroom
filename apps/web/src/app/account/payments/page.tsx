@@ -6,6 +6,8 @@ import Link from "next/link";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import {
+import { logger } from "@/lib/logger";
+
   CreditCardIcon,
   BanknotesIcon,
   ArrowUpIcon,
@@ -255,7 +257,7 @@ function PaymentsHistory() {
           setPayments(data.payments || []);
         }
       } catch (error) {
-        console.error("Failed to load payments:", error);
+        logger.error("Failed to load payments:", error);
       } finally {
         setLoading(false);
       }
@@ -507,7 +509,7 @@ function PayoutStripeCard() {
           setStatus(data);
         }
       } catch (error) {
-        console.error("Failed to load Stripe status:", error);
+        logger.error("Failed to load Stripe status:", error);
       } finally {
         setStatusLoading(false);
       }
@@ -530,9 +532,10 @@ function PayoutStripeCard() {
         );
       }
 
+      // Redirection vers Stripe
       window.location.href = json.url;
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       toast.error(
         err instanceof Error
           ? err.message

@@ -5,6 +5,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
+
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,7 +15,7 @@ export async function POST(req: NextRequest) {
     const cronSecret = process.env.CRON_SECRET;
 
     if (!cronSecret) {
-      console.error("[Cron] CRON_SECRET is not defined in environment variables");
+      logger.error("[Cron] CRON_SECRET is not defined in environment variables");
       return NextResponse.json(
         { error: "Configuration error" },
         { status: 500 }
@@ -38,7 +40,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Logger l'opération
-    console.log(`[Cron] Nettoyage exports expirés: ${result.count} supprimés`);
+    logger.debug(`[Cron] Nettoyage exports expirés: ${result.count} supprimés`);
 
     // Supprimer aussi les exports en échec de plus de 7 jours
     const failedResult = await prisma.dataExportRequest.deleteMany({
@@ -50,7 +52,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    console.log(`[Cron] Nettoyage exports échoués: ${failedResult.count} supprimés`);
+    logger.debug(`[Cron] Nettoyage exports échoués: ${failedResult.count} supprimés`);
 
     return NextResponse.json({
       success: true,
@@ -61,7 +63,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("[Cron] Erreur nettoyage exports:", error);
+    logger.error("[Cron] Erreur nettoyage exports:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

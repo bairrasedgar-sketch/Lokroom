@@ -8,6 +8,8 @@ import { prisma } from "@/lib/db";
 import { requireAdminPermission, logAdminAction } from "@/lib/admin-auth";
 import { parsePageParam, parseLimitParam } from "@/lib/validation/params";
 import type { Prisma, PromoType } from "@prisma/client";
+import { logger } from "@/lib/logger";
+
 
 export async function GET(request: Request) {
   const auth = await requireAdminPermission("promos:view");
@@ -85,7 +87,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Erreur API admin promos:", error);
+    logger.error("Erreur API admin promos:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
@@ -161,7 +163,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ promo });
   } catch (error) {
-    console.error("Erreur création promo:", error);
+    logger.error("Erreur création promo:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

@@ -6,6 +6,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdminPermission, logAdminAction } from "@/lib/admin-auth";
+import { logger } from "@/lib/logger";
+
 
 export async function GET(
   request: Request,
@@ -80,7 +82,7 @@ export async function GET(
 
     return NextResponse.json({ conversation });
   } catch (error) {
-    console.error("Erreur API admin conversation detail:", error);
+    logger.error("Erreur API admin conversation detail:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }
@@ -131,7 +133,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Erreur suppression conversation:", error);
+    logger.error("Erreur suppression conversation:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

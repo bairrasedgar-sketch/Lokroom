@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { logger } from "@/lib/logger";
+
 
 type Badge = {
   id: string;
@@ -41,7 +43,7 @@ export default function UserBadges({
           setBadges(data.badges || []);
         }
       } catch (error) {
-        console.error("Error fetching badges:", error);
+        logger.error("Error fetching badges:", error);
       } finally {
         setLoading(false);
       }

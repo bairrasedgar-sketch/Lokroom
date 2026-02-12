@@ -6,6 +6,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
+import { logger } from "@/lib/logger";
+
 
 /**
  * GET /api/host/stripe/status
@@ -98,7 +100,7 @@ export async function GET() {
       },
     });
   } catch (err) {
-    console.error("Erreur récupération statut Stripe:", err);
+    logger.error("Erreur récupération statut Stripe:", err);
     return NextResponse.json(
       { error: "Erreur lors de la récupération du statut Stripe." },
       { status: 500 }

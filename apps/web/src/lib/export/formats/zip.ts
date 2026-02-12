@@ -7,6 +7,8 @@ import JSZip from "jszip";
 import type { UserDataExport } from "../user-data";
 import { generateJSON } from "./json";
 import { generateCSV } from "./csv";
+import { logger } from "@/lib/logger";
+
 
 /**
  * Génère un fichier ZIP contenant tous les formats et les photos
@@ -95,7 +97,7 @@ Lok'Room - Plateforme de location d'espaces
             photoCount++;
           }
         } catch (error) {
-          console.error(`Erreur téléchargement photo ${image.url}:`, error);
+          logger.error(`Erreur téléchargement photo ${image.url}:`, error);
           // Continuer même si une photo échoue
         }
       }

@@ -4,6 +4,8 @@
  */
 import { prisma } from "@/lib/db";
 import {
+import { logger } from "@/lib/logger";
+
   secureJsonResponse,
   secureErrorResponse,
   requireAuth,
@@ -140,7 +142,7 @@ export async function POST(req: Request) {
 
     return secureJsonResponse({ success: true, user });
   } catch (error) {
-    console.error("Erreur mise à jour avatar:", error);
+    logger.error("Erreur mise à jour avatar:", error);
     return secureErrorResponse("Erreur lors de la mise à jour", 500);
   }
 }
@@ -160,7 +162,7 @@ export async function DELETE() {
 
     return secureJsonResponse({ success: true });
   } catch (error) {
-    console.error("Erreur suppression avatar:", error);
+    logger.error("Erreur suppression avatar:", error);
     return secureErrorResponse("Erreur lors de la suppression", 500);
   }
 }

@@ -38,6 +38,8 @@ import {
   ChatBubbleLeftRightIcon,
 } from "@heroicons/react/24/outline";
 import { CheckBadgeIcon } from "@heroicons/react/24/solid";
+import { logger } from "@/lib/logger";
+
 
 const ONE_YEAR = 60 * 60 * 24 * 365;
 
@@ -221,7 +223,7 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
             }
           } catch (e) {
             if ((e as Error).name !== 'AbortError') {
-              console.error("Erreur sync status:", e);
+              logger.error("Erreur sync status:", e);
             }
           } finally {
             setSyncing(false);
@@ -229,7 +231,7 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
         }
       } catch (e) {
         if ((e as Error).name !== 'AbortError') {
-          console.error("Erreur chargement statut identité:", e);
+          logger.error("Erreur chargement statut identité:", e);
         }
       } finally {
         setLoadingStatus(false);
@@ -248,7 +250,7 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
       });
 
       if (!res.ok) {
-        console.error("Erreur création session Identity:", await res.text());
+        logger.error("Erreur création session Identity:", await res.text());
         setStartingIdentity(false);
         return;
       }
@@ -260,7 +262,7 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
         setStartingIdentity(false);
       }
     } catch (e) {
-      console.error("Erreur Identity:", e);
+      logger.error("Erreur Identity:", e);
       setStartingIdentity(false);
     }
   }, [router]);
@@ -305,7 +307,7 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
         setPasswordError(data.error || "Erreur lors de l'envoi du code");
       }
     } catch (e) {
-      console.error("Erreur envoi code:", e);
+      logger.error("Erreur envoi code:", e);
       setPasswordError("Erreur réseau");
     } finally {
       setUpdatingPassword(false);
@@ -350,7 +352,7 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
         setPasswordError(data.error || "Erreur lors de la mise à jour");
       }
     } catch (e) {
-      console.error("Erreur mise à jour mot de passe:", e);
+      logger.error("Erreur mise à jour mot de passe:", e);
       setPasswordError("Erreur réseau");
     } finally {
       setUpdatingPassword(false);
@@ -560,7 +562,7 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
                       }
                     }
                   } catch (e) {
-                    console.error("Erreur sync:", e);
+                    logger.error("Erreur sync:", e);
                   } finally {
                     setSyncing(false);
                   }
@@ -882,7 +884,7 @@ function PersonalTabContent({ t, router }: { t: AccountTranslations; router: Ret
         });
       } catch (e) {
         if ((e as Error).name !== 'AbortError') {
-          console.error("Erreur chargement profil:", e);
+          logger.error("Erreur chargement profil:", e);
         }
       } finally {
         setLoading(false);
@@ -992,7 +994,7 @@ function PersonalTabContent({ t, router }: { t: AccountTranslations; router: Ret
         setEditValues({});
       }
     } catch (e) {
-      console.error("Erreur sauvegarde:", e);
+      logger.error("Erreur sauvegarde:", e);
     } finally {
       setSaving(false);
     }
@@ -2276,7 +2278,7 @@ function TranslationTabContent() {
           setAutoTranslate(data.autoTranslate ?? true);
         }
       } catch (e) {
-        console.error("Erreur chargement preferences:", e);
+        logger.error("Erreur chargement preferences:", e);
       } finally {
         setLoading(false);
       }
@@ -2304,7 +2306,7 @@ function TranslationTabContent() {
         setTimeout(() => setSaved(false), 2000);
       }
     } catch (e) {
-      console.error("Erreur sauvegarde:", e);
+      logger.error("Erreur sauvegarde:", e);
     } finally {
       setSaving(false);
     }
@@ -2727,7 +2729,7 @@ function MobileAccountView({
         }
       } catch (e) {
         if ((e as Error).name !== "AbortError") {
-          console.error("Erreur chargement profil:", e);
+          logger.error("Erreur chargement profil:", e);
         }
       } finally {
         setLoading(false);
@@ -2747,7 +2749,7 @@ function MobileAccountView({
         redirect: true
       });
     } catch (e) {
-      console.error("Erreur deconnexion:", e);
+      logger.error("Erreur deconnexion:", e);
       toast.error("Erreur lors de la déconnexion");
       setLoggingOut(false);
     }
@@ -3114,7 +3116,7 @@ export default function AccountSettingsPage() {
 
   const handleChangeTab = (id: TabId) => {
     setActiveTab(id);
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(searchParams.toString());
     params.set("tab", id);
     router.push(`/account?${params.toString()}`, { scroll: true });
     // Scroll en haut de la page

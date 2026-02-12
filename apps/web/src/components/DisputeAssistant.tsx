@@ -4,6 +4,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import {
+import { logger } from "@/lib/logger";
+
   ChatBubbleLeftRightIcon,
   PaperAirplaneIcon,
   XMarkIcon,
@@ -159,7 +161,7 @@ Pouvez-vous me décrire en quelques mots ce qui s'est passé ?`,
         }
       }
     } catch (error) {
-      console.error("Erreur assistant:", error);
+      logger.error("Erreur assistant:", error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",

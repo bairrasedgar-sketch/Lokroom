@@ -5,6 +5,8 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
+import { logger } from "@/lib/logger";
+
   ChatBubbleLeftRightIcon,
   ClockIcon,
   CheckCircleIcon,
@@ -50,7 +52,7 @@ export default function AdminSupportPage() {
         setConversations(data.conversations || []);
       }
     } catch (error) {
-      console.error("Error fetching support conversations:", error);
+      logger.error("Error fetching support conversations:", error);
     } finally {
       setLoading(false);
     }

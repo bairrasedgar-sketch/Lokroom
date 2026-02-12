@@ -6,6 +6,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdminPermission, logAdminAction } from "@/lib/admin-auth";
+import { logger } from "@/lib/logger";
+
 
 export async function GET(
   request: Request,
@@ -191,7 +193,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("Erreur API admin dispute detail:", error);
+    logger.error("Erreur API admin dispute detail:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }
@@ -444,7 +446,7 @@ export async function PUT(
         );
     }
   } catch (error) {
-    console.error("Erreur action dispute:", error);
+    logger.error("Erreur action dispute:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

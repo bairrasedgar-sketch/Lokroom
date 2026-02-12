@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import type { Currency } from "@/lib/currency";
+import { logger } from "@/lib/logger";
+
 
 const ALLOWED: Currency[] = ["EUR", "CAD", "USD", "GBP", "CNY"];
 
@@ -33,7 +35,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ value });
   } catch (e) {
-    console.error("Convert API error:", e);
+    logger.error("Convert API error:", e);
     return NextResponse.json({ error: "Convert failed" }, { status: 500 });
   }
 }

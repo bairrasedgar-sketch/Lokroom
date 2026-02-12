@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
 import {
+import { logger } from "@/lib/logger";
+
   sendPushNotificationToMultiple,
   createNotificationPayload,
   type PushSubscriptionData,
@@ -158,7 +160,7 @@ export async function POST(request: Request) {
       invalidSubscriptions: result.invalidSubscriptions.length,
     });
   } catch (error) {
-    console.error("Error sending push notifications:", error);
+    logger.error("Error sending push notifications:", error);
     return NextResponse.json(
       { error: "Erreur lors de l'envoi des notifications" },
       { status: 500 }

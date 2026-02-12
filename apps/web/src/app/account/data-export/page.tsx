@@ -7,6 +7,8 @@
 
 import { useState, useEffect } from "react";
 import { Download, FileJson, FileText, FileArchive, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { logger } from "@/lib/logger";
+
 
 interface ExportRequest {
   id: string;
@@ -42,7 +44,7 @@ export default function DataExportPage() {
       const data = await response.json();
       setExports(data.exports || []);
     } catch (err) {
-      console.error("Erreur chargement exports:", err);
+      logger.error("Erreur chargement exports:", err);
       setError("Impossible de charger l'historique des exports");
     } finally {
       setLoading(false);
@@ -76,7 +78,7 @@ export default function DataExportPage() {
       setSuccess("Export créé avec succès ! Vous pouvez le télécharger ci-dessous.");
       await loadExports();
     } catch (err) {
-      console.error("Erreur création export:", err);
+      logger.error("Erreur création export:", err);
       setError("Erreur lors de la création de l'export");
     } finally {
       setCreating(false);
@@ -86,9 +88,15 @@ export default function DataExportPage() {
   // Télécharger un export
   const downloadExport = async (exportId: string) => {
     try {
-      window.location.href = `/api/users/me/export/${exportId}/download`;
+      // Utiliser un lien temporaire pour télécharger
+      const link = document.createElement('a');
+      link.href = `/api/users/me/export/${exportId}/download`;
+      link.download = '';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     } catch (err) {
-      console.error("Erreur téléchargement:", err);
+      logger.error("Erreur téléchargement:", err);
       setError("Erreur lors du téléchargement");
     }
   };

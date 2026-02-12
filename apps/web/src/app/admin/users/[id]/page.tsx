@@ -29,6 +29,8 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
+import { logger } from "@/lib/logger";
+
 
 type UserProfile = {
   avatarUrl: string | null;
@@ -222,7 +224,7 @@ export default function AdminUserDetailPage() {
       const data = await res.json();
       if (data.user) setUser(data.user);
     } catch (error) {
-      console.error("Error fetching user:", error);
+      logger.error("Error fetching user:", error);
     } finally {
       setLoading(false);
     }
@@ -252,7 +254,7 @@ export default function AdminUserDetailPage() {
         setBanReason("");
       }
     } catch (error) {
-      console.error("Error banning user:", error);
+      logger.error("Error banning user:", error);
     } finally {
       setSaving(false);
     }
@@ -269,7 +271,7 @@ export default function AdminUserDetailPage() {
         fetchUser();
       }
     } catch (error) {
-      console.error("Error unbanning user:", error);
+      logger.error("Error unbanning user:", error);
     } finally {
       setSaving(false);
     }
@@ -295,7 +297,7 @@ export default function AdminUserDetailPage() {
         setNoteContent("");
       }
     } catch (error) {
-      console.error("Error adding note:", error);
+      logger.error("Error adding note:", error);
     } finally {
       setSaving(false);
     }
@@ -335,7 +337,7 @@ export default function AdminUserDetailPage() {
         alert(data.error || "Erreur lors de la mise à jour");
       }
     } catch (error) {
-      console.error("Error updating user:", error);
+      logger.error("Error updating user:", error);
     } finally {
       setSaving(false);
     }

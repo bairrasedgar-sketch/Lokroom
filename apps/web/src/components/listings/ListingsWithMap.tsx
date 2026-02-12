@@ -8,6 +8,8 @@ import FavoriteButton from "@/components/FavoriteButton";
 import MobileFiltersModal from "./MobileFiltersModal";
 import { useMobileSheet } from "@/contexts/MobileSheetContext";
 import { type MapMarker } from "@/components/Map";
+import { logger } from "@/lib/logger";
+
 
 // Lazy load Map component - heavy Google Maps dependency
 const Map = dynamicImport(() => import("@/components/Map"), {
@@ -834,7 +836,7 @@ export default function ListingsWithMap({
         setSkipFitBounds(true); // Ne pas re-centrer la map
       } catch (error) {
         if ((error as Error).name !== "AbortError") {
-          console.error("Error fetching listings:", error);
+          logger.error("Error fetching listings:", error);
         }
       } finally {
         setIsLoadingMap(false);

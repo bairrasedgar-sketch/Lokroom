@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/db";
 import { requireHost } from "@/lib/auth-helpers";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -352,7 +354,7 @@ export async function GET() {
       );
     }
 
-    console.error("host/analytics error:", e);
+    logger.error("host/analytics error:", e);
     return NextResponse.json(
       { error: "internal_error" },
       { status: 500 },

@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useState, useCallback, ReactNode, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { logger } from "@/lib/logger";
+
 
 type WishlistFavorite = {
   id: string;
@@ -104,7 +106,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') return;
-      console.error("Error refreshing favorites:", error);
+      logger.error("Error refreshing favorites:", error);
     } finally {
       setIsLoading(false);
     }
@@ -133,7 +135,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
       }
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') return;
-      console.error("Error refreshing wishlists:", error);
+      logger.error("Error refreshing wishlists:", error);
     } finally {
       setWishlistsLoading(false);
     }
@@ -161,7 +163,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
       }
       return false;
     } catch (error) {
-      console.error("Error deleting wishlist:", error);
+      logger.error("Error deleting wishlist:", error);
       return false;
     }
   }, [wishlists]);
@@ -181,7 +183,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
       }
       return false;
     } catch (error) {
-      console.error("Error updating wishlist name:", error);
+      logger.error("Error updating wishlist name:", error);
       return false;
     }
   }, []);
@@ -195,7 +197,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
       }
       return false;
     } catch (error) {
-      console.error("Error removing favorite:", error);
+      logger.error("Error removing favorite:", error);
       return false;
     }
   }, [removeFavorite]);

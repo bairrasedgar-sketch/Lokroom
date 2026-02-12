@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { verifyMobileAuthToken, generateMobileAuthToken, extractBearerToken } from "@/lib/auth/jwt";
+import { logger } from "@/lib/logger";
+
 
 /**
  * POST /api/auth/mobile/refresh
@@ -79,7 +81,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("[Mobile Auth] Refresh error:", error);
+    logger.error("[Mobile Auth] Refresh error:", error);
     return NextResponse.json(
       { error: "Erreur lors du rafraîchissement" },
       { status: 500 }

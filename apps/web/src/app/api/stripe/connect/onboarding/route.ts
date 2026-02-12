@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -129,7 +131,7 @@ export async function POST() {
       accountId: stripeAccountId,
     });
   } catch (error) {
-    console.error("[Stripe Connect] Erreur création onboarding:", error);
+    logger.error("[Stripe Connect] Erreur création onboarding:", error);
     return NextResponse.json(
       { error: "Erreur lors de la création du lien d'onboarding" },
       { status: 500 }

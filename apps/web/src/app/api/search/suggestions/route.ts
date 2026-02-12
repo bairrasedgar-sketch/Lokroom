@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -80,7 +82,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(suggestions);
   } catch (err) {
-    console.error("GET /api/search/suggestions error", err);
+    logger.error("GET /api/search/suggestions error", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

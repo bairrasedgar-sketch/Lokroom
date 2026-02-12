@@ -5,6 +5,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
+
 
 /**
  * Construit l'origin (http(s)://host) à partir de la requête.
@@ -79,7 +81,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ url: verificationSession.url });
   } catch (err) {
-    console.error("Erreur création session Stripe Identity:", err);
+    logger.error("Erreur création session Stripe Identity:", err);
     return NextResponse.json(
       { error: "Erreur lors de la création de la vérification d'identité." },
       { status: 500 }

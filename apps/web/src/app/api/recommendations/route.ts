@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { regenerateRecommendations } from "@/lib/recommendations/engine";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -76,7 +78,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ recommendations });
   } catch (error) {
-    console.error("[API] Error fetching recommendations:", error);
+    logger.error("[API] Error fetching recommendations:", error);
     return NextResponse.json(
       { error: "Failed to fetch recommendations" },
       { status: 500 }

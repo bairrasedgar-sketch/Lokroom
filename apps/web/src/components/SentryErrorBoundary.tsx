@@ -1,6 +1,8 @@
 "use client";
 
 import { Component, ErrorInfo, ReactNode } from "react";
+import { logger } from "@/lib/logger";
+
 
 interface Props {
   children: ReactNode;
@@ -36,7 +38,7 @@ export class SentryErrorBoundary extends Component<Props, State> {
 
     // Log to console in development
     if (process.env.NODE_ENV === "development") {
-      console.error("Error caught by boundary:", error, errorInfo);
+      logger.error("Error caught by boundary:", error, errorInfo);
     }
   }
 

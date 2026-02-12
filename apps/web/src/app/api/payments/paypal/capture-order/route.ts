@@ -15,6 +15,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { captureOrder, isPayPalConfigured } from "@/lib/paypal";
 import { notifyBookingConfirmed } from "@/lib/notifications";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -188,7 +190,7 @@ export async function POST(req: NextRequest) {
           },
         });
 
-        console.log("[PayPal] Host wallet credited:", {
+        logger.debug("[PayPal] Host wallet credited:", {
           hostUserId,
           bookingId: booking.id,
           amountCents: payoutToHostCents,
@@ -200,11 +202,11 @@ export async function POST(req: NextRequest) {
     try {
       await notifyBookingConfirmed(transaction.bookingId);
     } catch (notifError) {
-      console.error("[PayPal] Failed to send notifications:", notifError);
+      logger.error("[PayPal] Failed to send notifications:", notifError);
       // Ne pas faire échouer la capture pour une erreur de notification
     }
 
-    console.log("[PayPal] Order captured successfully:", {
+    logger.debug("[PayPal] Order captured successfully:", {
       orderId: body.orderId,
       captureId: capture.id,
       bookingId: transaction.bookingId,
@@ -217,7 +219,7 @@ export async function POST(req: NextRequest) {
       status: "CONFIRMED",
     });
   } catch (error) {
-    console.error("[PayPal] Capture order error:", error);
+    logger.error("[PayPal] Capture order error:", error);
     return NextResponse.json(
       { error: "paypal_capture_failed" },
       { status: 500 }

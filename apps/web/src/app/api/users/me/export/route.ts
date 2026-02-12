@@ -14,6 +14,8 @@ import { generateCSV } from "@/lib/export/formats/csv";
 import { generatePDF } from "@/lib/export/formats/pdf";
 import { generateZIP, generateZIPWithoutPhotos } from "@/lib/export/formats/zip";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
+
 
 // Schéma de validation pour la requête d'export
 const exportRequestSchema = z.object({
@@ -205,7 +207,7 @@ export async function POST(req: NextRequest) {
         },
       });
     } catch (error) {
-      console.error("Erreur génération export:", error);
+      logger.error("Erreur génération export:", error);
 
       await prisma.dataExportRequest.update({
         where: { id: exportRequest.id },
@@ -220,7 +222,7 @@ export async function POST(req: NextRequest) {
       );
     }
   } catch (error) {
-    console.error("Erreur export données:", error);
+    logger.error("Erreur export données:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }
@@ -272,7 +274,7 @@ export async function GET() {
       })),
     });
   } catch (error) {
-    console.error("Erreur récupération exports:", error);
+    logger.error("Erreur récupération exports:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

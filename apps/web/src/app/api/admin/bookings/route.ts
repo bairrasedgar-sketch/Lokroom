@@ -7,6 +7,8 @@ import { prisma } from "@/lib/db";
 import { requireAdminPermission } from "@/lib/admin-auth";
 import { parsePageParam, parseLimitParam } from "@/lib/validation/params";
 import type { Prisma } from "@prisma/client";
+import { logger } from "@/lib/logger";
+
 
 export async function GET(request: Request) {
   const auth = await requireAdminPermission("bookings:view");
@@ -134,7 +136,7 @@ export async function GET(request: Request) {
       stats,
     });
   } catch (error) {
-    console.error("Erreur API admin bookings:", error);
+    logger.error("Erreur API admin bookings:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

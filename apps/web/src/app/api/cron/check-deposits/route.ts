@@ -16,6 +16,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkExpiredDeposits } from "@/lib/security-deposit";
 import { createNotification } from "@/lib/notifications";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
+
 
 // Cle secrete pour securiser le cron job
 const CRON_SECRET = process.env.CRON_SECRET;
@@ -39,12 +41,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log("[Cron] Demarrage verification des depots expires...");
+    logger.debug("[Cron] Demarrage verification des depots expires...");
 
     // Executer la verification
     const result = await checkExpiredDeposits();
 
-    console.log(`[Cron] Termine: ${result.processed} traites, ${result.released} liberes, ${result.errors} erreurs`);
+    logger.debug(`[Cron] Termine: ${result.processed} traites, ${result.released} liberes, ${result.errors} erreurs`);
 
     // Notifier les admins si des erreurs
     if (result.errors > 0) {
@@ -70,7 +72,7 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("[Cron] Erreur verification depots:", error);
+    logger.error("[Cron] Erreur verification depots:", error);
     return NextResponse.json(
       {
         error: "Erreur serveur",

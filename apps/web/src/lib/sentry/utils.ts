@@ -1,11 +1,13 @@
 import * as Sentry from "@sentry/nextjs";
+import { logger } from "@/lib/logger";
+
 
 /**
  * Capture an exception and send it to Sentry
  */
 export function captureException(error: Error, context?: Record<string, any>) {
   if (process.env.NODE_ENV === "development") {
-    console.error("Sentry (dev):", error, context);
+    logger.error("Sentry (dev):", error, context);
     return;
   }
 
@@ -23,7 +25,7 @@ export function captureMessage(
   context?: Record<string, any>
 ) {
   if (process.env.NODE_ENV === "development") {
-    console.log(`Sentry (dev) [${level}]:`, message, context);
+    logger.debug(`Sentry (dev) [${level}]:`, message, context);
     return;
   }
 
@@ -42,7 +44,7 @@ export function setUser(user: {
   username?: string;
 }) {
   if (process.env.NODE_ENV === "development") {
-    console.log("Sentry (dev) - Set user:", user);
+    logger.debug("Sentry (dev) - Set user:", user);
     return;
   }
 
@@ -54,7 +56,7 @@ export function setUser(user: {
  */
 export function clearUser() {
   if (process.env.NODE_ENV === "development") {
-    console.log("Sentry (dev) - Clear user");
+    logger.debug("Sentry (dev) - Clear user");
     return;
   }
 
@@ -70,7 +72,7 @@ export function addBreadcrumb(
   data?: Record<string, any>
 ) {
   if (process.env.NODE_ENV === "development") {
-    console.log(`Sentry (dev) - Breadcrumb [${category}]:`, message, data);
+    logger.debug(`Sentry (dev) - Breadcrumb [${category}]:`, message, data);
     return;
   }
 
@@ -87,11 +89,11 @@ export function addBreadcrumb(
  */
 export function startTransaction(name: string, op: string) {
   if (process.env.NODE_ENV === "development") {
-    console.log(`Sentry (dev) - Start transaction: ${name} (${op})`);
+    logger.debug(`Sentry (dev) - Start transaction: ${name} (${op})`);
     return {
-      finish: () => console.log(`Sentry (dev) - Finish transaction: ${name}`),
+      finish: () => logger.debug(`Sentry (dev) - Finish transaction: ${name}`),
       setStatus: (status: string) =>
-        console.log(`Sentry (dev) - Transaction status: ${status}`),
+        logger.debug(`Sentry (dev) - Transaction status: ${status}`),
     };
   }
 
@@ -128,7 +130,7 @@ export function withSentry<T extends (...args: any[]) => Promise<any>>(
  */
 export function setTag(key: string, value: string) {
   if (process.env.NODE_ENV === "development") {
-    console.log(`Sentry (dev) - Set tag: ${key} = ${value}`);
+    logger.debug(`Sentry (dev) - Set tag: ${key} = ${value}`);
     return;
   }
 
@@ -140,7 +142,7 @@ export function setTag(key: string, value: string) {
  */
 export function setContext(name: string, context: Record<string, any>) {
   if (process.env.NODE_ENV === "development") {
-    console.log(`Sentry (dev) - Set context: ${name}`, context);
+    logger.debug(`Sentry (dev) - Set context: ${name}`, context);
     return;
   }
 

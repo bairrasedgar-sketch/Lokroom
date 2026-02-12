@@ -10,6 +10,8 @@ import { requireAdminPermission } from "@/lib/admin-auth";
 import { parsePageParam, parseLimitParam } from "@/lib/validation/params";
 import { exec } from "child_process";
 import { promisify } from "util";
+import { logger } from "@/lib/logger";
+
 
 const execAsync = promisify(exec);
 
@@ -89,7 +91,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error fetching backups:", error);
+    logger.error("Error fetching backups:", error);
     return NextResponse.json(
       { error: "Failed to fetch backups" },
       { status: 500 }
@@ -139,10 +141,10 @@ export async function POST(request: NextRequest) {
 
     execAsync(`npx tsx ${scriptPath}`)
       .then(() => {
-        console.log("Manual backup completed successfully");
+        logger.debug("Manual backup completed successfully");
       })
       .catch((error) => {
-        console.error("Manual backup failed:", error);
+        logger.error("Manual backup failed:", error);
       });
 
     return NextResponse.json({
@@ -154,7 +156,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error starting backup:", error);
+    logger.error("Error starting backup:", error);
     return NextResponse.json(
       { error: "Failed to start backup" },
       { status: 500 }

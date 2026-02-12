@@ -28,6 +28,9 @@ import {
   EnvelopeIcon,
 } from "@heroicons/react/24/outline";
 import { signOut } from "next-auth/react";
+import { logger } from "@/lib/logger";
+import { logger } from "@/lib/logger";
+
 
 type AdminRole = "ADMIN" | "MODERATOR" | "SUPPORT" | "ANALYST";
 
@@ -116,7 +119,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           if (data.alerts) setAlerts(data.alerts);
           if (data.stats) setStats(data.stats);
         })
-        .catch(console.error);
+        .catch((error) => {
+          logger.error("Failed to load admin alerts", { error: error.message });
+        });
     }
   }, [isAdmin]);
 
@@ -146,7 +151,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           setShowSearchResults(true);
         }
       } catch (error) {
-        console.error("Search error:", error);
+        logger.error("Search error:", error);
       } finally {
         setSearchLoading(false);
       }

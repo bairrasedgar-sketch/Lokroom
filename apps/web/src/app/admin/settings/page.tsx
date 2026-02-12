@@ -18,6 +18,7 @@ import {
   BanknotesIcon,
   ShieldExclamationIcon,
 } from "@heroicons/react/24/outline";
+import { logger } from "@/lib/logger";
 
 type Config = {
   hostFeePercent: number;
@@ -136,7 +137,9 @@ export default function AdminSettingsPage() {
           setConfig({ ...DEFAULT_CONFIG, ...data.config });
         }
       })
-      .catch(console.error)
+      .catch((error) => {
+        logger.error("Failed to load admin settings", { error: error.message });
+      })
       .finally(() => setLoading(false));
   }, []);
 

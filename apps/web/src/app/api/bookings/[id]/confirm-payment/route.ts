@@ -5,6 +5,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 import { sendBookingConfirmation, sendNewBookingToHost } from "@/lib/email";
+import { logger } from "@/lib/logger";
+
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -116,10 +118,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
           currency: booking.currency,
           bookingId: booking.id,
         });
-        console.log("[confirm-payment] Email sent to guest:", booking.guest.email);
+        logger.debug("[confirm-payment] Email sent to guest:", booking.guest.email);
       }
     } catch (emailError) {
-      console.error("[confirm-payment] Guest email error:", emailError);
+      logger.error("[confirm-payment] Guest email error:", emailError);
     }
 
     // Envoyer une notification à l'hôte
@@ -138,10 +140,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
           currency: booking.currency,
           bookingId: booking.id,
         });
-        console.log("[confirm-payment] Email sent to host:", booking.listing.owner.email);
+        logger.debug("[confirm-payment] Email sent to host:", booking.listing.owner.email);
       }
     } catch (hostEmailError) {
-      console.error("[confirm-payment] Host email error:", hostEmailError);
+      logger.error("[confirm-payment] Host email error:", hostEmailError);
     }
 
     return NextResponse.json({
@@ -150,7 +152,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       bookingId: updatedBooking.id,
     });
   } catch (e) {
-    console.error("[confirm-payment] Error:", e);
+    logger.error("[confirm-payment] Error:", e);
     return NextResponse.json(
       { error: "internal_error" },
       { status: 500 }

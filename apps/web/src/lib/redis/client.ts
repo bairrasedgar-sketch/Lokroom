@@ -6,6 +6,8 @@
  */
 
 import Redis from "ioredis";
+import { logger } from "@/lib/logger";
+
 
 let redis: Redis | null = null;
 
@@ -68,7 +70,7 @@ export async function closeRedis(): Promise<void> {
   if (redis) {
     await redis.quit();
     redis = null;
-    console.log("[Redis] Connection closed gracefully");
+    logger.debug("[Redis] Connection closed gracefully");
   }
 }
 
@@ -79,7 +81,7 @@ export async function isRedisAvailable(): Promise<boolean> {
     await client.ping();
     return true;
   } catch (error) {
-    console.error("[Redis] Health check failed:", error);
+    logger.error("[Redis] Health check failed:", error);
     return false;
   }
 }

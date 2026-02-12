@@ -7,6 +7,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
+import { logger } from "@/lib/logger";
+
   PlusIcon,
   MagnifyingGlassIcon,
   TicketIcon,
@@ -85,7 +87,7 @@ export default function AdminPromosPage() {
       if (data.promos) setPromos(data.promos);
       if (data.pagination) setPagination(data.pagination);
     } catch (error) {
-      console.error("Erreur chargement promos:", error);
+      logger.error("Erreur chargement promos:", error);
     } finally {
       setLoading(false);
     }

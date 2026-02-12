@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { rateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 import {
   generateSecret,
   generateQRCode,
@@ -87,7 +88,7 @@ export async function POST(req: NextRequest) {
       message: "Scannez le QR code avec votre application d'authentification",
     });
   } catch (error) {
-    console.error("[2FA Setup] Erreur:", error);
+    logger.error("[2FA Setup] Erreur:", error);
     return NextResponse.json(
       { error: "Erreur lors de l'initialisation du 2FA" },
       { status: 500 }

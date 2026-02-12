@@ -23,6 +23,8 @@ import {
   ChevronDownIcon,
 } from "@heroicons/react/24/outline";
 import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
+import { logger } from "@/lib/logger";
+
 
 type Review = {
   id: string;
@@ -122,7 +124,7 @@ export default function AdminReviewsPage() {
       setPagination(data.pagination);
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') return;
-      console.error("Error fetching reviews:", error);
+      logger.error("Error fetching reviews:", error);
     } finally {
       setLoading(false);
     }

@@ -9,6 +9,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { cache, invalidateAllCache } from "@/lib/redis/cache-safe";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -54,7 +56,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     // Note: Utiliser un logger approprié en production (Sentry, Winston, etc.)
     if (process.env.NODE_ENV === "development") {
-      console.error("[Cache Clear] Error:", error);
+      logger.error("[Cache Clear] Error:", error);
     }
     return NextResponse.json(
       { error: "Failed to clear cache" },

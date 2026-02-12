@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -190,7 +192,7 @@ async function notifyAdminsNewSupportRequest(
         conversationId,
       });
     } catch (e) {
-      console.error("Erreur envoi email support:", e);
+      logger.error("Erreur envoi email support:", e);
     }
   }
 }
@@ -207,7 +209,7 @@ async function sendSupportNotificationEmail(
 ) {
   // Vérifier si Resend est configuré
   if (!process.env.RESEND_API_KEY) {
-    console.log("Resend non configuré, email non envoyé");
+    logger.debug("Resend non configuré, email non envoyé");
     return;
   }
 

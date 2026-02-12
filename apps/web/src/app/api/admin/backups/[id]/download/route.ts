@@ -8,6 +8,8 @@ import { prisma } from "@/lib/db";
 import { requireAdminPermission } from "@/lib/admin-auth";
 import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { logger } from "@/lib/logger";
+
 
 export async function GET(
   request: NextRequest,
@@ -84,7 +86,7 @@ export async function GET(
       expiresIn: 3600, // 1 heure
     });
   } catch (error) {
-    console.error("Error generating download URL:", error);
+    logger.error("Error generating download URL:", error);
     return NextResponse.json(
       { error: "Failed to generate download URL" },
       { status: 500 }

@@ -8,6 +8,8 @@
 import { cache } from "./cache-safe";
 import { CacheKeys } from "./keys";
 import { generateRateLimitToken } from "@/lib/crypto/random";
+import { logger } from "@/lib/logger";
+
 
 export interface RateLimitResult {
   allowed: boolean;
@@ -37,7 +39,7 @@ export async function checkRateLimit(
       resetAt: Date.now() + ttl * 1000,
     };
   } catch (error) {
-    console.error("[RateLimit] Error checking rate limit:", error);
+    logger.error("[RateLimit] Error checking rate limit:", error);
     // En cas d'erreur, autoriser la requête pour ne pas bloquer le service
     return {
       allowed: true,
@@ -98,7 +100,7 @@ export async function checkRateLimitSlidingWindow(
       resetAt: now + windowMs,
     };
   } catch (error) {
-    console.error("[RateLimit] Error in sliding window:", error);
+    logger.error("[RateLimit] Error in sliding window:", error);
     // Fallback sur le rate limit simple
     return checkRateLimit(ip, endpoint, limit, Math.ceil(windowMs / 1000));
   }
@@ -133,7 +135,7 @@ export async function getRateLimitInfo(
       resetAt: Date.now() + ttl * 1000,
     };
   } catch (error) {
-    console.error("[RateLimit] Error getting rate limit info:", error);
+    logger.error("[RateLimit] Error getting rate limit info:", error);
     return {
       allowed: true,
       remaining: limit,

@@ -8,6 +8,8 @@ import { prisma } from "@/lib/db";
 import { requireAdminPermission } from "@/lib/admin-auth";
 import { exec } from "child_process";
 import { promisify } from "util";
+import { logger } from "@/lib/logger";
+
 
 const execAsync = promisify(exec);
 
@@ -63,10 +65,10 @@ export async function POST(
 
     execAsync(`npx tsx ${scriptPath} ${backupId} ${auth.session.user.id}`)
       .then(() => {
-        console.log("Database restore completed successfully");
+        logger.debug("Database restore completed successfully");
       })
       .catch((error) => {
-        console.error("Database restore failed:", error);
+        logger.error("Database restore failed:", error);
       });
 
     return NextResponse.json({
@@ -80,7 +82,7 @@ export async function POST(
       warning: "This operation will overwrite the current database. The restore process has been started in the background.",
     });
   } catch (error) {
-    console.error("Error initiating restore:", error);
+    logger.error("Error initiating restore:", error);
     return NextResponse.json(
       { error: "Failed to initiate restore" },
       { status: 500 }

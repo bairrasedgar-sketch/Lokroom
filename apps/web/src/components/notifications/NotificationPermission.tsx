@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Bell, BellOff, Check, X } from "lucide-react";
+import { logger } from "@/lib/logger";
+
 
 interface NotificationPermissionProps {
   onPermissionGranted?: () => void;
@@ -56,7 +58,7 @@ export default function NotificationPermission({
         onPermissionDenied?.();
       }
     } catch (error) {
-      console.error("Error requesting notification permission:", error);
+      logger.error("Error requesting notification permission:", error);
     } finally {
       setIsLoading(false);
     }
@@ -71,7 +73,7 @@ export default function NotificationPermission({
       // Obtenir la clé publique VAPID
       const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
       if (!vapidPublicKey) {
-        console.error("VAPID public key not configured");
+        logger.error("VAPID public key not configured");
         return;
       }
 
@@ -102,9 +104,9 @@ export default function NotificationPermission({
         throw new Error("Failed to subscribe to push notifications");
       }
 
-      console.log("Successfully subscribed to push notifications");
+      logger.debug("Successfully subscribed to push notifications");
     } catch (error) {
-      console.error("Error subscribing to push notifications:", error);
+      logger.error("Error subscribing to push notifications:", error);
     }
   };
 

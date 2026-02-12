@@ -27,6 +27,8 @@ import { CheckIcon, SparklesIcon } from "@heroicons/react/24/solid";
 import TypingIndicator from "@/components/messages/TypingIndicator";
 import { ReadStatus } from "@/components/messages/ReadReceipt";
 import { useRealtimeMessages, useTypingIndicator } from "@/lib/realtime";
+import { logger } from "@/lib/logger";
+
 
 // Support bot ID
 const SUPPORT_BOT_ID = "lokroom-support";
@@ -322,7 +324,7 @@ function MessagesPageContent() {
 
             setBotMessages((prev) => [...prev, botReply]);
           } catch (error) {
-            console.error("Error calling support API:", error);
+            logger.error("Error calling support API:", error);
           } finally {
             setBotTyping(false);
           }
@@ -341,7 +343,7 @@ function MessagesPageContent() {
       }
     } catch (error) {
       if ((error as Error).name !== 'AbortError') {
-        console.error("Error fetching conversations:", error);
+        logger.error("Error fetching conversations:", error);
       }
     } finally {
       setLoading(false);
@@ -357,7 +359,7 @@ function MessagesPageContent() {
         setSupportHistory(data.conversations || []);
       }
     } catch (error) {
-      console.error("Error fetching support history:", error);
+      logger.error("Error fetching support history:", error);
     }
   }, []);
 
@@ -372,7 +374,7 @@ function MessagesPageContent() {
       }
     } catch (error) {
       if ((error as Error).name !== 'AbortError') {
-        console.error("Error fetching messages:", error);
+        logger.error("Error fetching messages:", error);
       }
     } finally {
       setLoadingMessages(false);
@@ -460,7 +462,7 @@ Posez-moi vos questions sur :
             ]);
           }
         } catch (error) {
-          console.error("Error loading support messages:", error);
+          logger.error("Error loading support messages:", error);
           // En cas d'erreur, afficher le message de bienvenue
           setBotMessages([
             {
@@ -526,7 +528,7 @@ Posez-moi vos questions sur :
           }
         }
       } catch (error) {
-        console.error("Error polling support messages:", error);
+        logger.error("Error polling support messages:", error);
       }
     };
 
@@ -621,7 +623,7 @@ Posez-moi vos questions sur :
         fetchSupportHistory();
       }
     } catch (error) {
-      console.error("Error resetting conversation:", error);
+      logger.error("Error resetting conversation:", error);
     }
   };
 
@@ -649,7 +651,7 @@ Posez-moi vos questions sur :
         }
       }
     } catch (error) {
-      console.error("Error loading history conversation:", error);
+      logger.error("Error loading history conversation:", error);
     }
   };
 
@@ -711,7 +713,7 @@ Posez-moi vos questions sur :
           }
         }
       } catch (error) {
-        console.error("Error calling support API:", error);
+        logger.error("Error calling support API:", error);
         const errorReply: BotMessage = {
           id: `bot-${Date.now()}`,
           content: "Désolé, une erreur s'est produite. Veuillez réessayer ou consulter notre centre d'aide.",
@@ -755,7 +757,7 @@ Posez-moi vos questions sur :
         fetchConversations(); // Refresh conversation list
       }
     } catch (error) {
-      console.error("Error sending message:", error);
+      logger.error("Error sending message:", error);
     } finally {
       setSending(false);
     }
@@ -1694,7 +1696,7 @@ Posez-moi vos questions sur :
 
                           setBotMessages((prev) => [...prev, botReply]);
                         } catch (error) {
-                          console.error("Error requesting agent:", error);
+                          logger.error("Error requesting agent:", error);
                           setAgentRequested(false);
                         } finally {
                           setBotTyping(false);

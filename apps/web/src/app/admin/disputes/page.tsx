@@ -7,6 +7,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
+import { logger } from "@/lib/logger";
+
   ExclamationTriangleIcon,
   ClockIcon,
   CheckCircleIcon,
@@ -97,7 +99,7 @@ export default function AdminDisputesPage() {
       if (data.pagination) setPagination(data.pagination);
       if (data.stats) setStats(data.stats);
     } catch (error) {
-      console.error("Erreur chargement disputes:", error);
+      logger.error("Erreur chargement disputes:", error);
     } finally {
       setLoading(false);
     }

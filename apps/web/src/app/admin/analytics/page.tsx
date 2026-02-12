@@ -15,6 +15,7 @@ import {
   ArrowDownTrayIcon,
   ChartBarIcon,
 } from "@heroicons/react/24/outline";
+import { logger } from "@/lib/logger";
 
 // Lazy load Charts - heavy Recharts library
 const RevenueAreaChart = dynamicImport(
@@ -121,7 +122,9 @@ export default function AdminAnalyticsPage() {
         setStats(statsData);
         setChartsData(charts);
       })
-      .catch(console.error)
+      .catch((error) => {
+        logger.error("Failed to load analytics data", { error: error.message });
+      })
       .finally(() => setLoading(false));
   }, [period]);
 

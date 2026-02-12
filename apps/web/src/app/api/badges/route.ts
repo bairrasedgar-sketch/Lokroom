@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { badgeInfo, BADGE_TYPES } from "@/lib/badges";
 import { generateBadgeId } from "@/lib/crypto/random";
+import { logger } from "@/lib/logger";
+
 
 // GET /api/badges - Récupérer les badges d'un utilisateur
 export async function GET(request: Request) {
@@ -89,7 +91,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, badge });
   } catch (error) {
-    console.error("Error creating badge:", error);
+    logger.error("Error creating badge:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

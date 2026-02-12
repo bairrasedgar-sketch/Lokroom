@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
+
 
 const subscribeSchema = z.object({
   endpoint: z.string().url(),
@@ -75,7 +77,7 @@ export async function POST(request: Request) {
       subscription,
     });
   } catch (error) {
-    console.error("Error subscribing to push notifications:", error);
+    logger.error("Error subscribing to push notifications:", error);
     return NextResponse.json(
       { error: "Erreur lors de l'abonnement aux notifications" },
       { status: 500 }
@@ -114,7 +116,7 @@ export async function DELETE(request: Request) {
       message: "Abonnement supprimé",
     });
   } catch (error) {
-    console.error("Error unsubscribing from push notifications:", error);
+    logger.error("Error unsubscribing from push notifications:", error);
     return NextResponse.json(
       { error: "Erreur lors de la désinscription" },
       { status: 500 }
@@ -145,7 +147,7 @@ export async function GET(request: Request) {
       subscriptions,
     });
   } catch (error) {
-    console.error("Error fetching push subscriptions:", error);
+    logger.error("Error fetching push subscriptions:", error);
     return NextResponse.json(
       { error: "Erreur lors de la récupération des abonnements" },
       { status: 500 }

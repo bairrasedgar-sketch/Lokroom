@@ -9,6 +9,8 @@ import { getDictionaryForLocale, type SupportedLocale } from "@/lib/i18n.client"
 import { PageErrorBoundary } from "@/components/PageErrorBoundary";
 import { useSWRFetch } from "@/hooks/useSWRFetch";
 import { mutate } from "swr";
+import { logger } from "@/lib/logger";
+
 
 type Currency = "EUR" | "CAD";
 type BookingStatus = "PENDING" | "CONFIRMED" | "CANCELLED";
@@ -272,7 +274,7 @@ function BookingsPageContent() {
       // Revalidate cache
       mutate('/api/bookings');
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       toast.error(
         currentLocale === "en"
           ? "Unexpected error."
@@ -300,7 +302,7 @@ function BookingsPageContent() {
       const preview = (await res.json()) as CancellationPreview;
       setCancelModal(preview);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       toast.error(
         currentLocale === "en"
           ? "Unexpected error."
@@ -345,7 +347,7 @@ function BookingsPageContent() {
       // Revalidate cache
       mutate('/api/bookings');
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       toast.error(
         currentLocale === "en"
           ? "Unexpected error."

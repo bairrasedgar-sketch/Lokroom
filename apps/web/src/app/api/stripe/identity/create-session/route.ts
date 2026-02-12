@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -86,7 +88,7 @@ export async function POST() {
       sessionId: verificationSession.id,
     });
   } catch (error) {
-    console.error("[Stripe Identity] Erreur création session:", error);
+    logger.error("[Stripe Identity] Erreur création session:", error);
     return NextResponse.json(
       { error: "Erreur lors de la création de la session de vérification" },
       { status: 500 }

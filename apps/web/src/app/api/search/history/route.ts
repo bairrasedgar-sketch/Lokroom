@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +35,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ history });
   } catch (err) {
-    console.error("GET /api/search/history error", err);
+    logger.error("GET /api/search/history error", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -83,7 +85,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ searchHistory }, { status: 201 });
   } catch (err) {
-    console.error("POST /api/search/history error", err);
+    logger.error("POST /api/search/history error", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -117,7 +119,7 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ message: "History cleared" });
   } catch (err) {
-    console.error("DELETE /api/search/history error", err);
+    logger.error("DELETE /api/search/history error", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

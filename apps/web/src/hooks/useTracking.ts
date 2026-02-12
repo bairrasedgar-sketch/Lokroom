@@ -2,6 +2,8 @@
 "use client";
 
 import { useCallback } from "react";
+import { logger } from "@/lib/logger";
+
 
 type TrackingAction = "view" | "click" | "search" | "favorite" | "book";
 
@@ -25,7 +27,7 @@ export function useTracking() {
           }),
         });
       } catch (error) {
-        console.error("Error tracking behavior:", error);
+        logger.error("Error tracking behavior:", error);
         // Ne pas throw pour ne pas casser l'expérience utilisateur
       }
     },

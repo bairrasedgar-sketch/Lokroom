@@ -5,6 +5,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 import type Stripe from "stripe";
+import { logger } from "@/lib/logger";
+
 
 /**
  * Construit l'origin (http(s)://host) à partir de la requête.
@@ -206,7 +208,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ url: accountLink.url });
   } catch (err) {
-    console.error("Erreur création payout-link Stripe:", err);
+    logger.error("Erreur création payout-link Stripe:", err);
     return NextResponse.json(
       { error: "Erreur lors de la création du lien Stripe." },
       { status: 500 }

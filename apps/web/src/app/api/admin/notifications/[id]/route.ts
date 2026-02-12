@@ -5,6 +5,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdminPermission, logAdminAction } from "@/lib/admin-auth";
+import { logger } from "@/lib/logger";
+
 
 export async function DELETE(
   request: Request,
@@ -58,7 +60,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Erreur suppression notification:", error);
+    logger.error("Erreur suppression notification:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }
@@ -124,7 +126,7 @@ export async function POST(
 
     return NextResponse.json({ success: true, deleted: count });
   } catch (error) {
-    console.error("Erreur suppression notifications en masse:", error);
+    logger.error("Erreur suppression notifications en masse:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

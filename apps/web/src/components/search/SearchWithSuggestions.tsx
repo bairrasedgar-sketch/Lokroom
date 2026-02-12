@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Search, MapPin, Clock, TrendingUp, X } from "lucide-react";
+import { logger } from "@/lib/logger";
+
 
 interface CitySuggestion {
   name: string;
@@ -76,7 +78,7 @@ export function SearchWithSuggestions() {
         setHistory(data.history || []);
       }
     } catch (error) {
-      console.error("Erreur chargement historique:", error);
+      logger.error("Erreur chargement historique:", error);
     }
   };
 
@@ -92,7 +94,7 @@ export function SearchWithSuggestions() {
         setListings(data.listings || []);
       }
     } catch (error) {
-      console.error("Erreur chargement suggestions:", error);
+      logger.error("Erreur chargement suggestions:", error);
     } finally {
       setLoading(false);
     }
@@ -137,7 +139,7 @@ export function SearchWithSuggestions() {
         body: JSON.stringify({ destination }),
       });
     } catch (error) {
-      console.error("Erreur sauvegarde historique:", error);
+      logger.error("Erreur sauvegarde historique:", error);
     }
   };
 
@@ -146,7 +148,7 @@ export function SearchWithSuggestions() {
       await fetch("/api/search/history", { method: "DELETE" });
       setHistory([]);
     } catch (error) {
-      console.error("Erreur suppression historique:", error);
+      logger.error("Erreur suppression historique:", error);
     }
   };
 

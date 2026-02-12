@@ -3,6 +3,8 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
+
 
 const RESPONSE_TIME_LABELS: Record<string, string> = {
   moins_une_heure: "Moins d’une heure",
@@ -95,7 +97,7 @@ export default function HostProfileForm({ initialProfile }: HostProfileFormProps
 
       toast.success("Profil hôte mis à jour avec succès ✨");
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       toast.error("Erreur inattendue lors de la mise à jour du profil.");
     } finally {
       setLoading(false);

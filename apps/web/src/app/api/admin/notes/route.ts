@@ -6,6 +6,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdminPermission } from "@/lib/admin-auth";
+import { logger } from "@/lib/logger";
+
 
 export async function POST(request: Request) {
   const auth = await requireAdminPermission("users:view");
@@ -36,7 +38,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ note });
   } catch (error) {
-    console.error("Erreur création note:", error);
+    logger.error("Erreur création note:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }
@@ -67,7 +69,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ notes });
   } catch (error) {
-    console.error("Erreur récupération notes:", error);
+    logger.error("Erreur récupération notes:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

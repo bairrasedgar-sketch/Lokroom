@@ -2,6 +2,8 @@
 
 import { useState, useCallback } from "react";
 import { GlobeAltIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
+import { logger } from "@/lib/logger";
+
 
 type TranslatedMessageProps = {
   messageId: string;
@@ -82,7 +84,7 @@ export function TranslatedMessage({
       setTranslatedContent(data.translatedContent);
       setShowOriginal(false);
     } catch (e) {
-      console.error("Erreur traduction:", e);
+      logger.error("Erreur traduction:", e);
       setError("Impossible de traduire ce message");
     } finally {
       setIsTranslating(false);

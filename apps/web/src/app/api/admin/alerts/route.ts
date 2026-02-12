@@ -7,6 +7,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdminPermission } from "@/lib/admin-auth";
+import { logger } from "@/lib/logger";
+
 
 export async function GET() {
   const auth = await requireAdminPermission("dashboard:view");
@@ -134,7 +136,7 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error("Erreur API admin alerts:", error);
+    logger.error("Erreur API admin alerts:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

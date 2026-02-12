@@ -2,6 +2,8 @@
 
 import { isNativeMobile } from './capacitor';
 import { Preferences } from '@capacitor/preferences';
+import { logger } from "@/lib/logger";
+
 
 /**
  * Configuration de l'API Client
@@ -35,7 +37,7 @@ export const TokenManager = {
       const { value } = await Preferences.get({ key: 'auth_token' });
       return value;
     } catch (error) {
-      console.error('Error getting token:', error);
+      logger.error('Error getting token:', error);
       return null;
     }
   },
@@ -46,7 +48,7 @@ export const TokenManager = {
     try {
       await Preferences.set({ key: 'auth_token', value: token });
     } catch (error) {
-      console.error('Error setting token:', error);
+      logger.error('Error setting token:', error);
     }
   },
 
@@ -56,7 +58,7 @@ export const TokenManager = {
     try {
       await Preferences.remove({ key: 'auth_token' });
     } catch (error) {
-      console.error('Error removing token:', error);
+      logger.error('Error removing token:', error);
     }
   },
 };
@@ -201,7 +203,7 @@ export async function apiCall<T = any>(
     return data as T;
 
   } catch (error: any) {
-    console.error(`API Error [${endpoint}]:`, error);
+    logger.error(`API Error [${endpoint}]:`, error);
     throw error;
   }
 }

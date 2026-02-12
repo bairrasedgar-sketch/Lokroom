@@ -5,6 +5,8 @@
 
 import { randomBytes, createHash } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
+
 
 // ============================================
 // GÉNÉRATION DE TOKENS
@@ -135,7 +137,7 @@ export function addCsrfHeader(headers: HeadersInit = {}): HeadersInit {
   const token = getCsrfTokenFromCookie();
 
   if (!token) {
-    console.warn("[CSRF] Token CSRF non trouvé dans les cookies");
+    logger.warn("[CSRF] Token CSRF non trouvé dans les cookies");
     return headers;
   }
 

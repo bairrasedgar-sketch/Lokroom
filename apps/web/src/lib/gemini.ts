@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 // Service Gemini AI pour le support bot Lok'Room
 // Avec système de cache pour réduire les coûts
 
@@ -233,7 +234,7 @@ export async function getGeminiResponse(userMessage: string): Promise<string> {
 
   // 3. Appeler l'API Gemini
   if (!GEMINI_API_KEY) {
-    console.error("[Gemini] API key not configured");
+    logger.error("[Gemini] API key not configured");
     return "Désolé, le service est temporairement indisponible. Veuillez réessayer plus tard ou consulter notre centre d'aide.";
   }
 
@@ -282,7 +283,7 @@ export async function getGeminiResponse(userMessage: string): Promise<string> {
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
-      console.error("[Gemini] API error:", response.status, errorText);
+      logger.error("[Gemini] API error:", response.status, errorText);
       throw new Error(`API error: ${response.status} - ${errorText}`);
     }
 
@@ -292,7 +293,7 @@ export async function getGeminiResponse(userMessage: string): Promise<string> {
     const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!aiResponse) {
-      console.error("[Gemini] No response in data:", data);
+      logger.error("[Gemini] No response in data:", data);
       throw new Error("No response from API");
     }
 
@@ -301,7 +302,7 @@ export async function getGeminiResponse(userMessage: string): Promise<string> {
 
     return aiResponse;
   } catch (error) {
-    console.error("[Gemini] Error:", error);
+    logger.error("[Gemini] Error:", error);
     return "Désolé, je n'ai pas pu traiter votre demande. Vous pouvez consulter notre centre d'aide ou réessayer dans quelques instants.";
   }
 }

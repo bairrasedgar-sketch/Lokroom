@@ -8,6 +8,8 @@ import { sendPasswordResetEmail } from "@/lib/email";
 import { rateLimit } from "@/lib/rate-limit";
 import { authRateLimiter, withRateLimit } from "@/lib/security/rate-limit";
 import { sanitizeEmail } from "@/lib/security/sanitize";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -94,7 +96,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       message: "Si cet email existe, un code de réinitialisation a été envoyé.",
     });
   } catch (error) {
-    console.error("POST /api/auth/forgot-password error:", error);
+    logger.error("POST /api/auth/forgot-password error:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
@@ -252,7 +254,7 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
       message: "Mot de passe réinitialisé avec succès",
     });
   } catch (error) {
-    console.error("PUT /api/auth/forgot-password error:", error);
+    logger.error("PUT /api/auth/forgot-password error:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

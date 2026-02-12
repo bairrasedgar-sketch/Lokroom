@@ -8,6 +8,8 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import {
+import { logger } from "@/lib/logger";
+
   ArrowLeftIcon,
   FlagIcon,
   UserCircleIcon,
@@ -167,7 +169,7 @@ export default function AdminDisputeDetailPage() {
       if (data.dispute) setDispute(data.dispute);
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') return;
-      console.error("Error fetching dispute:", error);
+      logger.error("Error fetching dispute:", error);
     } finally {
       setLoading(false);
     }

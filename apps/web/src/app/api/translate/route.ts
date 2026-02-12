@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import {
+import { logger } from "@/lib/logger";
+
   translateText,
   detectLanguage,
   getSupportedLanguages,
@@ -90,7 +92,7 @@ export async function POST(req: NextRequest) {
       wasTranslated: true,
     });
   } catch (error) {
-    console.error("Erreur /api/translate:", error);
+    logger.error("Erreur /api/translate:", error);
     return NextResponse.json(
       { error: "Erreur lors de la traduction" },
       { status: 500 }
@@ -107,7 +109,7 @@ export async function GET() {
     const languages = getSupportedLanguages();
     return NextResponse.json({ languages });
   } catch (error) {
-    console.error("Erreur /api/translate GET:", error);
+    logger.error("Erreur /api/translate GET:", error);
     return NextResponse.json(
       { error: "Erreur lors de la recuperation des langues" },
       { status: 500 }

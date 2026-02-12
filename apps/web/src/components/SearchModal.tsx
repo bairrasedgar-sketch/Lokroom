@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import LocationAutocomplete, { type LocationAutocompletePlace } from "./LocationAutocomplete";
 import CategoryIcon from "./CategoryIcon";
+import { logger } from "@/lib/logger";
+
 
 // Catégories avec leurs labels
 const CATEGORIES = [
@@ -266,7 +268,7 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
           body: JSON.stringify({ destination, startDate, endDate, guests: totalGuests }),
         });
       } catch (e) {
-        console.error("Failed to save search history:", e);
+        logger.error("Failed to save search history:", e);
       }
     }
 
@@ -301,7 +303,7 @@ export default function SearchModal({ isOpen, onClose, initialTab = "destination
       await fetch("/api/search-history", { method: "DELETE" });
       setSearchHistory([]);
     } catch (e) {
-      console.error("Failed to clear history:", e);
+      logger.error("Failed to clear history:", e);
     }
   };
 

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { cache, CacheKeys, CacheTTL } from "@/lib/redis/cache-safe";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -46,7 +48,7 @@ export async function GET() {
       },
     });
   } catch (err) {
-    console.error("GET /api/amenities error", err);
+    logger.error("GET /api/amenities error", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

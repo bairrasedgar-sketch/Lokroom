@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { TranslatedMessage } from "@/components/TranslatedMessage";
 import { TranslationToggle } from "@/components/TranslationToggle";
+import { logger } from "@/lib/logger";
+
 
 type Sender = {
   id: string;
@@ -61,7 +63,7 @@ export function ConversationPanel({
           });
         }
       } catch (e) {
-        console.error("Erreur chargement preferences traduction:", e);
+        logger.error("Erreur chargement preferences traduction:", e);
       }
     };
     void loadPrefs();
@@ -77,7 +79,7 @@ export function ConversationPanel({
       const json = await res.json();
       setMessages(json.messages ?? []);
     } catch (e) {
-      console.error(e);
+      logger.error(e);
     } finally {
       setLoading(false);
     }
@@ -120,7 +122,7 @@ export function ConversationPanel({
       });
 
       if (!res.ok) {
-        console.error(await res.text());
+        logger.error(await res.text());
         return;
       }
 
@@ -130,7 +132,7 @@ export function ConversationPanel({
       // ajout optimiste
       setMessages((prev) => [...prev, newMsg]);
     } catch (e) {
-      console.error(e);
+      logger.error(e);
     } finally {
       setSending(false);
     }

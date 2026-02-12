@@ -1,6 +1,8 @@
 // apps/web/src/app/api/auth/mobile/logout/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { verifyMobileAuthToken, extractBearerToken } from "@/lib/auth/jwt";
+import { logger } from "@/lib/logger";
+
 
 /**
  * POST /api/auth/mobile/logout
@@ -40,7 +42,7 @@ export async function POST(req: NextRequest) {
       message: "Déconnexion réussie",
     });
   } catch (error) {
-    console.error("[Mobile Auth] Logout error:", error);
+    logger.error("[Mobile Auth] Logout error:", error);
     return NextResponse.json(
       { error: "Erreur lors de la déconnexion" },
       { status: 500 }

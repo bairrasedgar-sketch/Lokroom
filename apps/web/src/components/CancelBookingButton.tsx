@@ -3,6 +3,8 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
+
 
 type PreviewResponse = {
   allowed: boolean;
@@ -93,7 +95,7 @@ export default function CancelBookingButton({
 
       setPreview(data as PreviewResponse);
     } catch (e) {
-      console.error(e);
+      logger.error(e);
       setError("Erreur réseau lors de la prévisualisation.");
     } finally {
       setLoadingPreview(false);
@@ -136,7 +138,7 @@ export default function CancelBookingButton({
       setOpen(false);
       setPreview(null);
     } catch (e) {
-      console.error(e);
+      logger.error(e);
       toast.error("Erreur réseau lors du remboursement.");
     } finally {
       setLoadingRefund(false);

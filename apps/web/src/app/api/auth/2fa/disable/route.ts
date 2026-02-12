@@ -5,6 +5,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { rateLimit } from "@/lib/rate-limit";
 import { verifyPassword } from "@/lib/password";
+import { logger } from "@/lib/logger";
+
 
 export async function POST(req: NextRequest) {
   try {
@@ -97,7 +99,7 @@ export async function POST(req: NextRequest) {
       message: "L'authentification a deux facteurs a ete desactivee",
     });
   } catch (error) {
-    console.error("[2FA Disable] Erreur:", error);
+    logger.error("[2FA Disable] Erreur:", error);
     return NextResponse.json(
       { error: "Erreur lors de la desactivation du 2FA" },
       { status: 500 }

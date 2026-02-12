@@ -5,6 +5,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { sendWelcomeEmail } from "@/lib/email";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
+
 
 // Schéma de validation Zod pour l'onboarding
 const onboardingSchema = z.object({
@@ -126,7 +128,7 @@ export async function POST(req: Request) {
   if (isNewUser && session.user.email) {
     // Fire and forget - on ne bloque pas la réponse
     sendWelcomeEmail(session.user.email, firstName).catch((error) => {
-      console.error("[Onboarding] Erreur envoi email bienvenue:", error);
+      logger.error("[Onboarding] Erreur envoi email bienvenue:", error);
     });
   }
 

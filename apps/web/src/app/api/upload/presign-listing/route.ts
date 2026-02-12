@@ -8,6 +8,8 @@ import { randomUUID } from "crypto";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import {
+import { logger } from "@/lib/logger";
+
   s3,
   S3_BUCKET,
   S3_PUBLIC_BASE,
@@ -53,7 +55,7 @@ export async function POST(req: Request) {
   const parsed = bodySchema.safeParse(json);
 
   if (!parsed.success) {
-    console.error("[presign-listing] invalid body:", parsed.error.flatten());
+    logger.error("[presign-listing] invalid body:", parsed.error.flatten());
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 

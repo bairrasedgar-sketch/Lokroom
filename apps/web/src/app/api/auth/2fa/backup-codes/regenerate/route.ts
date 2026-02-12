@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { rateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 import {
   decryptSecret,
   verifyToken,
@@ -102,7 +103,7 @@ export async function POST(req: NextRequest) {
       message: "Nouveaux codes de secours generes. Les anciens codes ne sont plus valides.",
     });
   } catch (error) {
-    console.error("[2FA Regenerate Backup] Erreur:", error);
+    logger.error("[2FA Regenerate Backup] Erreur:", error);
     return NextResponse.json(
       { error: "Erreur lors de la regeneration des codes" },
       { status: 500 }

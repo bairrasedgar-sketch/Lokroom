@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useMobileSheetSafe } from "@/contexts/MobileSheetContext";
+import { logger } from "@/lib/logger";
+
 
 export default function MobileNavBar() {
   const pathname = usePathname();
@@ -34,7 +36,7 @@ export default function MobileNavBar() {
 
   // Debug: afficher les valeurs dans la console
   if (typeof window !== 'undefined' && sessionUser) {
-    console.log('[MobileNavBar] Session user:', {
+    logger.debug('[MobileNavBar] Session user:', {
       isHost: sessionUser.isHost,
       role: sessionUser.role,
       computed_isHost: isHost

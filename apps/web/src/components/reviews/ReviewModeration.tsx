@@ -4,6 +4,8 @@
 import { useState } from "react";
 import { FlagIcon, EyeSlashIcon, TrashIcon, CheckIcon } from "@heroicons/react/24/outline";
 import { StarIcon } from "@heroicons/react/24/solid";
+import { logger } from "@/lib/logger";
+
 
 interface Review {
   id: string;
@@ -60,7 +62,7 @@ function ReviewCard({
       onStatusChange(newStatus);
       setShowActions(false);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       alert("Erreur lors de la mise à jour du statut");
     } finally {
       setLoading(false);

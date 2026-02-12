@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
+import { logger } from "@/lib/logger";
+
   EnvelopeIcon,
   CalendarIcon,
   ArrowDownTrayIcon,
@@ -51,7 +53,7 @@ export default function AdminWaitlistPage() {
       setEntries(data.entries);
       setStats(data.stats);
     } catch (error) {
-      console.error("Erreur:", error);
+      logger.error("Erreur:", error);
     } finally {
       setLoading(false);
     }
@@ -103,7 +105,7 @@ export default function AdminWaitlistPage() {
         alert(`Erreur: ${data.error}`);
       }
     } catch (error) {
-      console.error("Erreur:", error);
+      logger.error("Erreur:", error);
       alert("Erreur lors de l'envoi des notifications");
     } finally {
       setNotifying(false);

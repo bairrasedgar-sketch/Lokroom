@@ -25,6 +25,8 @@ import {
   ReceiptRefundIcon,
 } from "@heroicons/react/24/outline";
 import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
+import { logger } from "@/lib/logger";
+
 
 type Listing = {
   id: string;
@@ -154,7 +156,7 @@ export default function AdminBookingDetailPage() {
         setRefundAmount(maxRefund / 100);
       }
     } catch (error) {
-      console.error("Error fetching booking:", error);
+      logger.error("Error fetching booking:", error);
     } finally {
       setLoading(false);
     }

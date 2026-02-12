@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
+
 
 // POST /api/messages/upload - Upload de fichiers pour les messages
 export async function POST(request: Request) {
@@ -88,7 +90,7 @@ export async function POST(request: Request) {
       attachment,
     });
   } catch (error) {
-    console.error("Error uploading file:", error);
+    logger.error("Error uploading file:", error);
     return NextResponse.json(
       { error: "Erreur lors de l'upload" },
       { status: 500 }

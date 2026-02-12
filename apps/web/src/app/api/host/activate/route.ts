@@ -6,6 +6,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -68,7 +70,7 @@ export async function POST() {
       message: "Mode hôte activé avec succès",
     });
   } catch (e: unknown) {
-    console.error("host/activate error:", e);
+    logger.error("host/activate error:", e);
     const msg = e instanceof Error ? e.message : "Erreur activation hôte";
     return NextResponse.json({ error: msg }, { status: 500 });
   }

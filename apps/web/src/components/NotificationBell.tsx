@@ -6,6 +6,8 @@ import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useNotifications } from "@/hooks/useUser";
+import { logger } from "@/lib/logger";
+
 
 type NotificationType =
   | "BOOKING_REQUEST"
@@ -109,7 +111,7 @@ export default function NotificationBell() {
       // Refresh notifications
       refreshNotifications();
     } catch (error) {
-      console.error("Error marking notification as read:", error);
+      logger.error("Error marking notification as read:", error);
     }
   }
 
@@ -128,7 +130,7 @@ export default function NotificationBell() {
       // Refresh notifications
       refreshNotifications();
     } catch (error) {
-      console.error("Error marking all notifications as read:", error);
+      logger.error("Error marking all notifications as read:", error);
     }
   }
 

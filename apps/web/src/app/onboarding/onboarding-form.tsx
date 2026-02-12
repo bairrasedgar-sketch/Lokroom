@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import useTranslation from "@/hooks/useTranslation";
 import PasswordInput, { validatePassword } from "@/components/PasswordInput";
+import { logger } from "@/lib/logger";
+
 
 type UserData = {
   firstName: string;
@@ -119,13 +121,13 @@ export default function OnboardingForm({ email, initialData, returnFromStripe }:
           });
           if (res.ok) {
             const data = await res.json();
-            console.log("Sync Identity response:", data);
+            logger.debug("Sync Identity response:", data);
             if (data.identityStatus && data.identityStatus !== currentStatus) {
               setIdentityStatus(data.identityStatus);
             }
           }
         } catch (err) {
-          console.error("Erreur sync status:", err);
+          logger.error("Erreur sync status:", err);
         } finally {
           setSyncingStatus(false);
         }
@@ -169,7 +171,7 @@ export default function OnboardingForm({ email, initialData, returnFromStripe }:
         }),
       });
     } catch (err) {
-      console.error("Erreur sauvegarde:", err);
+      logger.error("Erreur sauvegarde:", err);
     }
   }
 

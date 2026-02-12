@@ -7,6 +7,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import useTranslation from "@/hooks/useTranslation";
 import { useGoogleMaps } from "@/components/GoogleMapsLoader";
+import { logger } from "@/lib/logger";
+
 
 // Liste des pays (les plus courants en premier)
 const COUNTRIES_LIST = [
@@ -457,7 +459,7 @@ export default function ProfilePage() {
       );
       toast.success(t.avatarUpdated);
     } catch (e) {
-      console.error(e);
+      logger.error(e);
       setAvatarStatus("error");
       toast.error(t.avatarUploadFailed);
     }

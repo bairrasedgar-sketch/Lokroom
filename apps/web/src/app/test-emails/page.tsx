@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
+
 
 const EMAIL_TYPES = [
   { value: "booking-confirmation", label: "Confirmation de réservation (Voyageur)" },
@@ -48,7 +50,7 @@ export default function TestEmailsPage() {
       }
     } catch (error) {
       toast.error("Erreur réseau");
-      console.error(error);
+      logger.error(error);
     } finally {
       setLoading(false);
     }

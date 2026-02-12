@@ -10,6 +10,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { authorizeDeposit } from "@/lib/security-deposit";
 import { createNotification } from "@/lib/notifications";
+import { logger } from "@/lib/logger";
+
 
 export async function POST(
   req: Request,
@@ -77,7 +79,7 @@ export async function POST(
       message: "Dépôt autorisé avec succès",
     });
   } catch (error) {
-    console.error("[API] Erreur autorisation dépôt:", error);
+    logger.error("[API] Erreur autorisation dépôt:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

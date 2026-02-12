@@ -7,6 +7,8 @@
 
 import { NextResponse } from "next/server";
 import { isRedisAvailable } from "@/lib/redis/cache-safe";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -35,7 +37,7 @@ export async function GET() {
       );
     }
   } catch (error) {
-    console.error("[Health Check] Redis error:", error);
+    logger.error("[Health Check] Redis error:", error);
     return NextResponse.json(
       {
         status: "unhealthy",

@@ -3,6 +3,8 @@
 
 import { useEffect, useState } from "react";
 import useSWR from "swr";
+import { logger } from "@/lib/logger";
+
 
 interface Recommendation {
   id: string;
@@ -62,7 +64,7 @@ export function useRecommendations(): UseRecommendationsReturn {
       // Revalider les données
       await mutate();
     } catch (err) {
-      console.error("Error regenerating recommendations:", err);
+      logger.error("Error regenerating recommendations:", err);
       throw err;
     }
   };

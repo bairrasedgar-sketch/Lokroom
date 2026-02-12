@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendAppLaunchNotification } from "@/lib/email";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
+
 
 const notifySchema = z.object({
   appStoreUrl: z.string().url("URL App Store invalide"),
@@ -110,7 +112,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Log the notification event
-    console.log(`Waitlist notification sent: ${results.sent}/${results.total} emails`);
+    logger.debug(`Waitlist notification sent: ${results.sent}/${results.total} emails`);
 
     return NextResponse.json({
       success: true,
@@ -118,7 +120,7 @@ export async function POST(request: NextRequest) {
       ...results,
     });
   } catch (error) {
-    console.error("Waitlist notify error:", error);
+    logger.error("Waitlist notify error:", error);
     return NextResponse.json(
       { error: "Une erreur est survenue lors de l'envoi des notifications" },
       { status: 500 }

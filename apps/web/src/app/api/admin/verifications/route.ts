@@ -7,6 +7,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdminPermission, logAdminAction } from "@/lib/admin-auth";
 import { parsePageParam, parseLimitParam } from "@/lib/validation/params";
+import { logger } from "@/lib/logger";
+
 
 export async function GET(request: Request) {
   const auth = await requireAdminPermission("users:view");
@@ -111,7 +113,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Erreur API admin verifications:", error);
+    logger.error("Erreur API admin verifications:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }
@@ -279,7 +281,7 @@ export async function PUT(request: Request) {
         );
     }
   } catch (error) {
-    console.error("Erreur action verification:", error);
+    logger.error("Erreur action verification:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

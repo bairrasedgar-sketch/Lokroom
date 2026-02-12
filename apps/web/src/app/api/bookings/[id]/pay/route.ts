@@ -4,6 +4,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
+import { logger } from "@/lib/logger";
+
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -174,7 +176,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       },
     });
   } catch (e) {
-    console.error("bookings/[id]/pay error:", e);
+    logger.error("bookings/[id]/pay error:", e);
     return NextResponse.json(
       { error: "payment_intent_failed" },
       { status: 500 }

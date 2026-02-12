@@ -22,6 +22,8 @@ import {
 import { notifyBookingConfirmed, notifyBookingCancelled } from "@/lib/notifications";
 import { rateLimit } from "@/lib/rate-limit";
 import { securityLogger } from "@/lib/security-logger";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +52,7 @@ async function checkAndMarkEventProcessed(eventId: string, eventType: string): P
       return true; // Déjà traité
     }
     // Autre erreur - on continue quand même
-    console.warn("[PayPal Webhook] Idempotence check error:", error);
+    logger.warn("[PayPal Webhook] Idempotence check error:", error);
     return false;
   }
 }
@@ -62,7 +64,7 @@ export async function POST(req: NextRequest) {
   const rateLimitResult = await rateLimit(rateLimitKey, 100, 60_000);
 
   if (!rateLimitResult.ok) {
-    console.error("[PayPal Webhook] Rate limit exceeded", { ip });
+    logger.error("[PayPal Webhook] Rate limit exceeded", { ip });
     securityLogger.webhookRateLimit(ip, "/api/payments/paypal/webhook");
     return NextResponse.json(
       { error: "Too many requests" },
@@ -82,7 +84,7 @@ export async function POST(req: NextRequest) {
     // Extraire les headers de webhook
     const webhookHeaders = extractWebhookHeaders(req.headers);
     if (!webhookHeaders) {
-      console.error("[PayPal Webhook] Missing webhook headers");
+      logger.error("[PayPal Webhook] Missing webhook headers");
       return NextResponse.json(
         { error: "missing_webhook_headers" },
         { status: 400 }
@@ -96,7 +98,7 @@ export async function POST(req: NextRequest) {
     try {
       event = JSON.parse(rawBody) as PayPalWebhookEvent;
     } catch {
-      console.error("[PayPal Webhook] Invalid JSON body");
+      logger.error("[PayPal Webhook] Invalid JSON body");
       return NextResponse.json(
         { error: "invalid_json" },
         { status: 400 }
@@ -112,7 +114,7 @@ export async function POST(req: NextRequest) {
       });
 
       if (!isValid) {
-        console.error("[PayPal Webhook] Invalid signature");
+        logger.error("[PayPal Webhook] Invalid signature");
         return NextResponse.json(
           { error: "invalid_signature" },
           { status: 401 }
@@ -123,11 +125,11 @@ export async function POST(req: NextRequest) {
     // Vérification d'idempotence
     const alreadyProcessed = await checkAndMarkEventProcessed(event.id, event.event_type);
     if (alreadyProcessed) {
-      console.log("[PayPal Webhook] Duplicate event:", event.id);
+      logger.debug("[PayPal Webhook] Duplicate event:", event.id);
       return NextResponse.json({ received: true, duplicate: true });
     }
 
-    console.log("[PayPal Webhook] Processing event:", {
+    logger.debug("[PayPal Webhook] Processing event:", {
       id: event.id,
       type: event.event_type,
       resourceType: event.resource_type,
@@ -153,17 +155,17 @@ export async function POST(req: NextRequest) {
       case "CHECKOUT.ORDER.APPROVED": {
         // L'utilisateur a approuvé la commande - on peut capturer
         // Note: Généralement, la capture est faite côté client via l'API capture-order
-        console.log("[PayPal Webhook] Order approved:", event.resource);
+        logger.debug("[PayPal Webhook] Order approved:", event.resource);
         break;
       }
 
       default:
-        console.log("[PayPal Webhook] Unhandled event type:", event.event_type);
+        logger.debug("[PayPal Webhook] Unhandled event type:", event.event_type);
     }
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error("[PayPal Webhook] Error:", error);
+    logger.error("[PayPal Webhook] Error:", error);
     return NextResponse.json(
       { error: "webhook_processing_failed" },
       { status: 500 }
@@ -191,7 +193,7 @@ async function handleCaptureCompleted(event: PayPalWebhookEvent) {
   const orderId = resource.supplementary_data?.related_ids?.order_id;
   const bookingId = resource.custom_id;
 
-  console.log("[PayPal Webhook] Capture completed:", {
+  logger.debug("[PayPal Webhook] Capture completed:", {
     captureId,
     orderId,
     bookingId,
@@ -229,13 +231,13 @@ async function handleCaptureCompleted(event: PayPalWebhookEvent) {
   }
 
   if (!transaction) {
-    console.warn("[PayPal Webhook] Transaction not found for capture:", captureId);
+    logger.warn("[PayPal Webhook] Transaction not found for capture:", captureId);
     return;
   }
 
   // Vérifier si déjà traité
   if (transaction.status === "CAPTURED" && transaction.captureId === captureId) {
-    console.log("[PayPal Webhook] Capture already processed:", captureId);
+    logger.debug("[PayPal Webhook] Capture already processed:", captureId);
     return;
   }
 
@@ -299,7 +301,7 @@ async function handleCaptureCompleted(event: PayPalWebhookEvent) {
   try {
     await notifyBookingConfirmed(transaction.bookingId);
   } catch (error) {
-    console.error("[PayPal Webhook] Notification error:", error);
+    logger.error("[PayPal Webhook] Notification error:", error);
   }
 }
 
@@ -317,7 +319,7 @@ async function handleCaptureRefunded(event: PayPalWebhookEvent) {
   const refundId = resource.id;
   const refundAmountCents = Math.round(parseFloat(resource.amount.value) * 100);
 
-  console.log("[PayPal Webhook] Capture refunded:", {
+  logger.debug("[PayPal Webhook] Capture refunded:", {
     refundId,
     amount: resource.amount,
   });
@@ -339,7 +341,7 @@ async function handleCaptureRefunded(event: PayPalWebhookEvent) {
   });
 
   if (!transaction) {
-    console.warn("[PayPal Webhook] Transaction not found for refund");
+    logger.warn("[PayPal Webhook] Transaction not found for refund");
     return;
   }
 
@@ -407,7 +409,7 @@ async function handleCaptureRefunded(event: PayPalWebhookEvent) {
   try {
     await notifyBookingCancelled(transaction.bookingId, "system");
   } catch (error) {
-    console.error("[PayPal Webhook] Notification error:", error);
+    logger.error("[PayPal Webhook] Notification error:", error);
   }
 }
 
@@ -421,7 +423,7 @@ async function handleCaptureDenied(event: PayPalWebhookEvent) {
     custom_id?: string;
   };
 
-  console.log("[PayPal Webhook] Capture denied:", resource);
+  logger.debug("[PayPal Webhook] Capture denied:", resource);
 
   // Trouver et mettre à jour la transaction
   if (resource.custom_id) {

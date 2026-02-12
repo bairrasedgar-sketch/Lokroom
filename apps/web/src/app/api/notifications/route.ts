@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { parseLimitParam, parsePageParam } from "@/lib/validation/params";
+import { logger } from "@/lib/logger";
+
 
 // GET /api/notifications - Get user notifications
 export async function GET(request: Request) {
@@ -45,7 +47,7 @@ export async function GET(request: Request) {
   } catch (error) {
     // Note: Utiliser un logger approprié en production (Sentry, Winston, etc.)
     if (process.env.NODE_ENV === "development") {
-      console.error("Error fetching notifications:", error);
+      logger.error("Error fetching notifications:", error);
     }
     return NextResponse.json(
       { error: "Erreur lors de la récupération des notifications" },
@@ -110,7 +112,7 @@ export async function PUT(request: Request) {
 
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   } catch (error) {
-    console.error("Error updating notifications:", error);
+    logger.error("Error updating notifications:", error);
     return NextResponse.json(
       { error: "Erreur lors de la mise à jour des notifications" },
       { status: 500 }
@@ -153,7 +155,7 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error deleting notification:", error);
+    logger.error("Error deleting notification:", error);
     return NextResponse.json(
       { error: "Erreur lors de la suppression" },
       { status: 500 }

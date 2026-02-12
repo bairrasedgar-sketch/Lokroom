@@ -1,5 +1,7 @@
 // apps/web/src/lib/s3.ts
 import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { logger } from "@/lib/logger";
+
 
 /**
  * ⚙️ Config S3 / R2
@@ -60,6 +62,6 @@ export async function deleteObject(key: string | null | undefined) {
       })
     );
   } catch (err) {
-    console.error("[s3.deleteObject] Erreur suppression S3/R2:", err);
+    logger.error("[s3.deleteObject] Erreur suppression S3/R2:", err);
   }
 }

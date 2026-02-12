@@ -1,5 +1,7 @@
 // Wrapper sécurisé pour le cache Redis qui gère l'absence de Redis
 import { CacheService } from "./cache";
+import { logger } from "@/lib/logger";
+
 
 // Réexporter les constantes de keys.ts pour la compatibilité
 export { CacheKeys, CacheTTL, CachePatterns } from "./keys";
@@ -21,7 +23,7 @@ export function getSafeCache(): CacheService | null {
     try {
       cacheInstance = new CacheService();
     } catch (error) {
-      console.error('[Cache] Failed to initialize:', error);
+      logger.error('[Cache] Failed to initialize:', error);
       return null;
     }
   }
@@ -139,7 +141,7 @@ export async function isRedisAvailable(): Promise<boolean> {
     // Tester la connexion avec une commande simple
     return await c.exists("__health_check__");
   } catch (error) {
-    console.error("[Redis] Health check failed:", error);
+    logger.error("[Redis] Health check failed:", error);
     return false;
   }
 }

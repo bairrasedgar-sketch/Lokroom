@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import useTranslation from "@/hooks/useTranslation";
+import { logger } from "@/lib/logger";
+
 
 type HostBooking = {
   id: string;
@@ -62,7 +64,7 @@ export default function HostBookingsPage() {
       setData(json);
     } catch (err) {
       if (err instanceof Error && err.name !== "AbortError") {
-        console.error("Erreur lors du chargement des reservations:", err);
+        logger.error("Erreur lors du chargement des reservations:", err);
       }
     } finally {
       setLoading(false);

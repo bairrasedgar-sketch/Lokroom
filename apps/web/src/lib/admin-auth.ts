@@ -13,6 +13,8 @@ import {
   hasPermission,
 } from "@/lib/permissions";
 import type { AuditAction } from "@prisma/client";
+import { logger } from "@/lib/logger";
+
 
 export type AdminSession = {
   user: {
@@ -106,6 +108,6 @@ export async function logAdminAction({
       },
     });
   } catch (error) {
-    console.error("Erreur lors du log audit:", error);
+    logger.error("Erreur lors du log audit:", error);
   }
 }

@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { Bell, Send, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { logger } from "@/lib/logger";
+
 
 export default function TestNotificationsPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -68,7 +70,7 @@ export default function TestNotificationsPage() {
         });
       }
     } catch (error) {
-      console.error("Error sending test notification:", error);
+      logger.error("Error sending test notification:", error);
       setResult({
         type: "error",
         message: "Erreur lors de l'envoi de la notification",

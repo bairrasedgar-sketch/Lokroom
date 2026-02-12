@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +36,7 @@ export async function PATCH(
 
     return NextResponse.json({ message: "Alert updated", enabled });
   } catch (err) {
-    console.error("PATCH /api/search/saved/[id]/alert error", err);
+    logger.error("PATCH /api/search/saved/[id]/alert error", err);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
 import {
   translateText,
   detectLanguage,
@@ -135,7 +136,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
       fromCache: false,
     });
   } catch (error) {
-    console.error("Erreur /api/messages/[id]/translate:", error);
+    logger.error("Erreur /api/messages/[id]/translate:", error);
     return NextResponse.json(
       { error: "Erreur lors de la traduction" },
       { status: 500 }
@@ -235,7 +236,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       targetLanguage: targetLang,
     });
   } catch (error) {
-    console.error("Erreur POST /api/messages/[id]/translate:", error);
+    logger.error("Erreur POST /api/messages/[id]/translate:", error);
     return NextResponse.json(
       { error: "Erreur lors de la traduction" },
       { status: 500 }

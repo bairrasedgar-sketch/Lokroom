@@ -8,6 +8,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import {
+import { logger } from "@/lib/logger";
+
   MagnifyingGlassIcon,
   CheckCircleIcon,
   XCircleIcon,
@@ -90,7 +92,7 @@ export default function AdminListingsPage() {
       if (data.stats) setStats(data.stats);
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') return;
-      console.error("Erreur chargement listings:", error);
+      logger.error("Erreur chargement listings:", error);
     } finally {
       setLoading(false);
     }
@@ -122,7 +124,7 @@ export default function AdminListingsPage() {
         fetchListings();
       }
     } catch (error) {
-      console.error("Erreur action:", error);
+      logger.error("Erreur action:", error);
     }
   };
 

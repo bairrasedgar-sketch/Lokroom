@@ -1,4 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
+import { logger } from "@/lib/logger";
+
 
 /**
  * Example API route with Sentry error tracking
@@ -38,7 +40,7 @@ export function withSentryAPI<T extends (...args: any[]) => Promise<Response>>(
 
       // Log in development
       if (process.env.NODE_ENV === "development") {
-        console.error("API Error:", error);
+        logger.error("API Error:", error);
       }
 
       // Return error response
@@ -66,7 +68,7 @@ export async function trackAPIPerformance<T>(
   if (process.env.NODE_ENV === "development") {
     const start = Date.now();
     const result = await operation();
-    console.log(`API Performance [${name}]: ${Date.now() - start}ms`);
+    logger.debug(`API Performance [${name}]: ${Date.now() - start}ms`);
     return result;
   }
 

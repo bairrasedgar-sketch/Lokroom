@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { validatePromoSchema, validateRequestBody } from "@/lib/validations/api";
+import { logger } from "@/lib/logger";
+
 
 // POST /api/promo/validate - Valider un code promo
 export async function POST(request: Request) {
@@ -173,7 +175,7 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Error validating promo code:", error);
+    logger.error("Error validating promo code:", error);
     return NextResponse.json(
       { error: "Erreur lors de la validation du code promo" },
       { status: 500 }

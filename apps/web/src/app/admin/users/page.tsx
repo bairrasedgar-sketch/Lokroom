@@ -8,6 +8,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import {
+import { logger } from "@/lib/logger";
+
   MagnifyingGlassIcon,
   FunnelIcon,
   UserCircleIcon,
@@ -78,7 +80,7 @@ export default function AdminUsersPage() {
       if (data.pagination) setPagination(data.pagination);
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') return;
-      console.error("Erreur chargement users:", error);
+      logger.error("Erreur chargement users:", error);
     } finally {
       setLoading(false);
     }

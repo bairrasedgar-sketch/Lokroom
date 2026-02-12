@@ -4,6 +4,8 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { verifyMobileAuthToken, extractBearerToken } from "@/lib/auth/jwt";
+import { logger } from "@/lib/logger";
+
 
 /**
  * GET /api/auth/mobile/me
@@ -107,7 +109,7 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("[Mobile Auth] Me error:", error);
+    logger.error("[Mobile Auth] Me error:", error);
     return NextResponse.json(
       { error: "Erreur lors de la récupération des données" },
       { status: 500 }

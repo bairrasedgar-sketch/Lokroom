@@ -14,6 +14,8 @@ import { rateLimit } from "@/lib/rate-limit";
 import { SignJWT } from "jose";
 import { authRateLimiter, withRateLimit } from "@/lib/security/rate-limit";
 import { sanitizeEmail } from "@/lib/security/sanitize";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -149,7 +151,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       expiresInMinutes: CODE_EXPIRY_MINUTES,
     });
   } catch (error) {
-    console.error("POST /api/auth/signup error:", error);
+    logger.error("POST /api/auth/signup error:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
@@ -251,7 +253,7 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
       verificationToken,
     });
   } catch (error) {
-    console.error("PUT /api/auth/signup error:", error);
+    logger.error("PUT /api/auth/signup error:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

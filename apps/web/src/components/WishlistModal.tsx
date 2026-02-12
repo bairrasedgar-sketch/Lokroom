@@ -8,6 +8,8 @@ import { HeartIcon as HeartSolid } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
+
 
 type WishlistModalProps = {
   isOpen: boolean;
@@ -77,7 +79,7 @@ export default function WishlistModal({
       // Ajouter immédiatement le favori à cette nouvelle liste
       await saveToWishlist(newWishlist.id);
     } catch (e) {
-      console.error(e);
+      logger.error(e);
       toast.error(e instanceof Error ? e.message : "Erreur lors de la création de la liste");
     } finally {
       setCreating(false);
@@ -104,7 +106,7 @@ export default function WishlistModal({
       onSaved();
       onClose();
     } catch (e) {
-      console.error(e);
+      logger.error(e);
       toast.error(e instanceof Error ? e.message : "Erreur lors de l'ajout aux favoris");
     } finally {
       setSavingTo(null);

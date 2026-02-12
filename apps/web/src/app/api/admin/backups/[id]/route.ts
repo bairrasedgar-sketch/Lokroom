@@ -7,6 +7,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdminPermission } from "@/lib/admin-auth";
 import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { logger } from "@/lib/logger";
+
 
 export async function DELETE(
   request: NextRequest,
@@ -62,7 +64,7 @@ export async function DELETE(
         })
       );
     } catch (s3Error) {
-      console.error("Error deleting from S3:", s3Error);
+      logger.error("Error deleting from S3:", s3Error);
       // Continuer même si la suppression S3 échoue
     }
 
@@ -94,7 +96,7 @@ export async function DELETE(
       },
     });
   } catch (error) {
-    console.error("Error deleting backup:", error);
+    logger.error("Error deleting backup:", error);
     return NextResponse.json(
       { error: "Failed to delete backup" },
       { status: 500 }

@@ -9,6 +9,8 @@ import { Loader2, MapPin, SlidersHorizontal } from "lucide-react";
 import type { Currency } from "@/lib/currency";
 import { formatMoneyAsync } from "@/lib/currency.client";
 import { useSearch } from "@/hooks/useSearch";
+import { logger } from "@/lib/logger";
+
 
 interface Listing {
   id: string;
@@ -151,7 +153,7 @@ export default function SearchPage() {
       setPagination(data.pagination);
       setSortBy(data.sortBy);
     } catch (error) {
-      console.error("Erreur lors de la recherche:", error);
+      logger.error("Erreur lors de la recherche:", error);
     } finally {
       setLoading(false);
     }

@@ -1,5 +1,7 @@
 // apps/web/src/lib/auth/jwt.ts
 import { SignJWT, jwtVerify } from "jose";
+import { logger } from "@/lib/logger";
+
 
 // 🔒 SÉCURITÉ : Clé pour les JWT
 // CRITICAL: Fail fast si la variable d'environnement n'est pas définie
@@ -63,7 +65,7 @@ export async function verifyMobileAuthToken(
       type: "mobile-auth",
     };
   } catch (error) {
-    console.error("[JWT] Verification failed:", error);
+    logger.error("[JWT] Verification failed:", error);
     return null;
   }
 }

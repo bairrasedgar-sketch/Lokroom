@@ -2,6 +2,8 @@
 
 import Script from "next/script";
 import { useEffect, useState, createContext, useContext } from "react";
+import { logger } from "@/lib/logger";
+
 
 type GoogleMapsContextType = {
   isLoaded: boolean;
@@ -53,7 +55,7 @@ export default function GoogleMapsLoader({
           setIsLoaded(true);
         }}
         onError={(e) => {
-          console.error("Error loading Google Maps", e);
+          logger.error("Error loading Google Maps", e);
           setLoadError("Failed to load Google Maps");
         }}
       />

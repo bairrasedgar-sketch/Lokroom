@@ -7,6 +7,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import crypto from "crypto";
+import { logger } from "@/lib/logger";
+
 
 // ============================================
 // TYPES
@@ -506,11 +508,11 @@ export function securityLog(
 
   // En production, envoyer vers un service de logging
   if (level === "security" || level === "error") {
-    console.error("[SECURITY]", JSON.stringify(entry));
+    logger.error("[SECURITY]", JSON.stringify(entry));
   } else if (level === "warn") {
-    console.warn("[SECURITY]", JSON.stringify(entry));
+    logger.warn("[SECURITY]", JSON.stringify(entry));
   } else {
-    console.log("[SECURITY]", JSON.stringify(entry));
+    logger.debug("[SECURITY]", JSON.stringify(entry));
   }
 }
 

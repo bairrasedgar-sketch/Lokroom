@@ -3,6 +3,8 @@
 import { useState, useRef, useCallback } from "react";
 import Image from "next/image";
 import { PhotoIcon, DocumentIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { logger } from "@/lib/logger";
+
 
 type Attachment = {
   id: string;
@@ -77,7 +79,7 @@ export default function MessageAttachments({
           ]);
         }
       } catch (err) {
-        console.error("Upload error:", err);
+        logger.error("Upload error:", err);
         setError("Erreur lors de l'upload");
       } finally {
         setUploading(false);

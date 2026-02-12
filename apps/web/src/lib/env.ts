@@ -6,6 +6,8 @@
  */
 
 import { z } from "zod";
+import { logger } from "@/lib/logger";
+
 
 // Schéma pour la production (strict)
 const productionEnvSchema = z.object({
@@ -123,30 +125,30 @@ export function validateEnv(): void {
 
     // Avertissements pour la production
     if (isProduction) {
-      console.log("✅ Variables d'environnement validées (PRODUCTION)\n");
+      logger.debug("✅ Variables d'environnement validées (PRODUCTION)\n");
     } else {
-      console.log("✅ Variables d'environnement validées (DÉVELOPPEMENT)\n");
+      logger.debug("✅ Variables d'environnement validées (DÉVELOPPEMENT)\n");
 
       // Avertir si des variables importantes manquent en dev
       if (!parsed.UPSTASH_REDIS_REST_URL || !parsed.UPSTASH_REDIS_REST_TOKEN) {
-        console.warn(
+        logger.warn(
           "⚠️  Redis non configuré - Le rate limiting utilisera la mémoire (moins sécurisé)\n"
         );
       }
     }
   } catch (error) {
     if (error instanceof z.ZodError) {
-      console.error(`❌ Erreur de validation des variables d'environnement (${isProduction ? 'PRODUCTION' : 'DÉVELOPPEMENT'}):\n`);
+      logger.error(`❌ Erreur de validation des variables d'environnement (${isProduction ? 'PRODUCTION' : 'DÉVELOPPEMENT'}):\n`);
 
       error.errors.forEach((err) => {
-        console.error(`   - ${err.path.join(".")}: ${err.message}`);
+        logger.error(`   - ${err.path.join(".")}: ${err.message}`);
       });
 
-      console.error("\n💡 Vérifiez votre fichier .env et comparez avec .env.example\n");
+      logger.error("\n💡 Vérifiez votre fichier .env et comparez avec .env.example\n");
 
       // En production, on arrête le serveur
       if (isProduction) {
-        console.error("🚨 Le serveur ne peut pas démarrer en production avec des variables manquantes.\n");
+        logger.error("🚨 Le serveur ne peut pas démarrer en production avec des variables manquantes.\n");
         process.exit(1);
       }
     } else {

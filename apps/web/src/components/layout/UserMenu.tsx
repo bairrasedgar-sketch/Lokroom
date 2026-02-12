@@ -5,6 +5,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
+import { logger } from "@/lib/logger";
+
 
 // Types pour la locale
 type LocaleCode = "fr" | "en" | "es" | "de" | "it" | "pt" | "zh";
@@ -85,7 +87,7 @@ export function UserMenu() {
         callbackUrl: "/", // retour sur la home après logout
       });
     } catch (error) {
-      console.error(error);
+      logger.error(error);
       alert("Erreur lors de la déconnexion");
     } finally {
       setLogoutLoading(false);

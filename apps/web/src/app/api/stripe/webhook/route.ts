@@ -15,6 +15,8 @@ import type { Prisma } from "@prisma/client";
 import { securityLog } from "@/lib/security";
 import { rateLimit } from "@/lib/rate-limit";
 import { securityLogger } from "@/lib/security-logger";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -73,7 +75,7 @@ async function checkAndMarkEventProcessed(eventId: string, eventType: string): P
     }
 
     // Autre erreur - on continue quand même (mieux traiter deux fois que pas du tout)
-    console.warn("[Webhook] Erreur vérification idempotence:", error);
+    logger.warn("[Webhook] Erreur vérification idempotence:", error);
     return false;
   }
 }
@@ -217,7 +219,7 @@ export async function POST(req: Request) {
             expectedCents: validation.expectedCents,
           });
           // On ne bloque pas le webhook mais on log l'alerte
-          console.error(
+          logger.error(
             `[SECURITY ALERT] Payment amount mismatch for booking ${bookingId}: paid ${pi.amount}, expected ${validation.expectedCents}`
           );
         }
@@ -889,7 +891,7 @@ export async function POST(req: Request) {
       eventId: event?.id,
       error: e instanceof Error ? e.message : "unknown",
     });
-    console.error("webhook error:", e);
+    logger.error("webhook error:", e);
     return NextResponse.json({ error: "webhook_failed" }, { status: 500 });
   }
 }

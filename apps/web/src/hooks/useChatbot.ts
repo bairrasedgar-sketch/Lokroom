@@ -1,5 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { getLocalStorageItem, setLocalStorageItem } from "./useLocalStorage";
+import { logger } from "@/lib/logger";
+
 
 export interface ChatMessage {
   id: string;
@@ -68,7 +70,7 @@ export function useChatbot(): UseChatbotReturn {
       }
     } catch (error) {
       if (process.env.NODE_ENV === "development") {
-        console.error("Error loading chat messages:", error);
+        logger.error("Error loading chat messages:", error);
       }
     }
   }, []);
@@ -149,7 +151,7 @@ export function useChatbot(): UseChatbotReturn {
           setMessages((prev) => [...prev, systemMessage]);
         }
       } catch (error) {
-        console.error("Error sending message:", error);
+        logger.error("Error sending message:", error);
         const errorMessage: ChatMessage = {
           id: `error-${Date.now()}`,
           content:

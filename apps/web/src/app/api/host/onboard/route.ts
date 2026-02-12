@@ -5,6 +5,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 import { getOrigin } from "@/lib/origin";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -70,7 +72,7 @@ export async function POST() {
       stripeAccountId: host.stripeAccountId,
     });
   } catch (e: unknown) {
-    console.error("host/onboard error:", e);
+    logger.error("host/onboard error:", e);
     const error = e as { raw?: { message?: string }; message?: string };
     const msg = error?.raw?.message || error?.message || "onboard_failed";
     return NextResponse.json({ error: msg }, { status: 500 });

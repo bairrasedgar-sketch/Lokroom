@@ -9,6 +9,8 @@ import { randomUUID } from "crypto";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import {
+import { logger } from "@/lib/logger";
+
   s3,
   S3_BUCKET,
   S3_PUBLIC_BASE,
@@ -257,7 +259,7 @@ export async function DELETE(
       }
     }
   } catch (err) {
-    console.error("[review photos DELETE] Erreur suppression S3:", err);
+    logger.error("[review photos DELETE] Erreur suppression S3:", err);
   }
 
   return new NextResponse(null, { status: 204 });

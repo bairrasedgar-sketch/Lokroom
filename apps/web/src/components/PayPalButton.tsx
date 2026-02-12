@@ -4,6 +4,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
+
 
 // Types pour le SDK PayPal
 declare global {
@@ -115,7 +117,7 @@ export default function PayPalButton({
 
       return data.orderId;
     } catch (err) {
-      console.error("[PayPal] Create order error:", err);
+      logger.error("[PayPal] Create order error:", err);
       throw err;
     }
   }, [bookingId]);
@@ -148,7 +150,7 @@ export default function PayPalButton({
           router.push("/bookings?paid=1");
         }
       } catch (err) {
-        console.error("[PayPal] Capture error:", err);
+        logger.error("[PayPal] Capture error:", err);
         toast.error("Erreur lors de la confirmation du paiement");
         if (onError && err instanceof Error) {
           onError(err);
@@ -161,7 +163,7 @@ export default function PayPalButton({
   // Gérer l'annulation
   const handleCancel = useCallback(
     (data: { orderID: string }) => {
-      console.log("[PayPal] Payment cancelled:", data.orderID);
+      logger.debug("[PayPal] Payment cancelled:", data.orderID);
       toast("Paiement annulé");
       if (onCancel) {
         onCancel();
@@ -173,7 +175,7 @@ export default function PayPalButton({
   // Gérer les erreurs
   const handleError = useCallback(
     (err: Error) => {
-      console.error("[PayPal] Button error:", err);
+      logger.error("[PayPal] Button error:", err);
       setError("Une erreur est survenue avec PayPal");
       toast.error("Erreur PayPal");
       if (onError) {
@@ -206,7 +208,7 @@ export default function PayPalButton({
     });
 
     buttons.render(containerRef.current).catch((err) => {
-      console.error("[PayPal] Render error:", err);
+      logger.error("[PayPal] Render error:", err);
       setError("Impossible d'afficher le bouton PayPal");
     });
 

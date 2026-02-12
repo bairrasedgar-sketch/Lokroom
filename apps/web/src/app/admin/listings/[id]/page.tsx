@@ -30,6 +30,8 @@ import {
   PhotoIcon,
 } from "@heroicons/react/24/outline";
 import { StarIcon as StarIconSolid } from "@heroicons/react/24/solid";
+import { logger } from "@/lib/logger";
+
 
 type Owner = {
   id: string;
@@ -223,7 +225,7 @@ export default function AdminListingDetailPage() {
       const data = await res.json();
       if (data.listing) setListing(data.listing);
     } catch (error) {
-      console.error("Error fetching listing:", error);
+      logger.error("Error fetching listing:", error);
     } finally {
       setLoading(false);
     }
@@ -251,7 +253,7 @@ export default function AdminListingDetailPage() {
         setActionReason("");
       }
     } catch (error) {
-      console.error("Error:", error);
+      logger.error("Error:", error);
     } finally {
       setSaving(false);
     }
@@ -276,7 +278,7 @@ export default function AdminListingDetailPage() {
         setShowActionModal(null);
       }
     } catch (error) {
-      console.error("Error:", error);
+      logger.error("Error:", error);
     } finally {
       setSaving(false);
     }
@@ -302,7 +304,7 @@ export default function AdminListingDetailPage() {
         setNoteContent("");
       }
     } catch (error) {
-      console.error("Error:", error);
+      logger.error("Error:", error);
     } finally {
       setSaving(false);
     }

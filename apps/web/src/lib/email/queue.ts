@@ -5,6 +5,8 @@
  */
 
 import { emailService } from "./service";
+import { logger } from "@/lib/logger";
+
 
 interface EmailJob {
   type: string;
@@ -47,14 +49,14 @@ async function processQueue(): Promise<void> {
 
     try {
       await sendEmailByType(job);
-      console.log(`[EmailQueue] Email envoyé: ${job.type} to ${job.to}`);
+      logger.debug(`[EmailQueue] Email envoyé: ${job.type} to ${job.to}`);
     } catch (error) {
-      console.error(`[EmailQueue] Erreur envoi email:`, error);
+      logger.error(`[EmailQueue] Erreur envoi email:`, error);
 
       // Retry logic
       if ((job.retries || 0) < MAX_RETRIES) {
         job.retries = (job.retries || 0) + 1;
-        console.log(`[EmailQueue] Retry ${job.retries}/${MAX_RETRIES} pour ${job.type}`);
+        logger.debug(`[EmailQueue] Retry ${job.retries}/${MAX_RETRIES} pour ${job.type}`);
 
         // Remettre dans la queue après un délai
         setTimeout(() => {
@@ -62,7 +64,7 @@ async function processQueue(): Promise<void> {
           if (!isProcessing) processQueue();
         }, RETRY_DELAY * job.retries);
       } else {
-        console.error(`[EmailQueue] Max retries atteint pour ${job.type} to ${job.to}`);
+        logger.error(`[EmailQueue] Max retries atteint pour ${job.type} to ${job.to}`);
       }
     }
   }

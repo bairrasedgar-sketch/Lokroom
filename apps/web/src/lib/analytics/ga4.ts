@@ -1,4 +1,6 @@
 import ReactGA from 'react-ga4';
+import { logger } from "@/lib/logger";
+
 
 // Types pour les événements analytics
 export interface SearchEvent {
@@ -49,7 +51,7 @@ let isInitialized = false;
  */
 export const initGA = () => {
   if (!GA_MEASUREMENT_ID) {
-    console.warn('GA4: NEXT_PUBLIC_GA_MEASUREMENT_ID not configured');
+    logger.warn('GA4: NEXT_PUBLIC_GA_MEASUREMENT_ID not configured');
     return;
   }
 
@@ -68,9 +70,9 @@ export const initGA = () => {
       },
     });
     isInitialized = true;
-    console.log('GA4: Initialized successfully');
+    logger.debug('GA4: Initialized successfully');
   } catch (error) {
-    console.error('GA4: Initialization failed', error);
+    logger.error('GA4: Initialization failed', error);
   }
 };
 
@@ -87,7 +89,7 @@ export const trackPageView = (path: string, title?: string) => {
       title: title || document.title,
     });
   } catch (error) {
-    console.error('GA4: Page view tracking failed', error);
+    logger.error('GA4: Page view tracking failed', error);
   }
 };
 
@@ -107,7 +109,7 @@ export const trackSearch = (event: SearchEvent) => {
       guests: event.filters?.guests,
     });
   } catch (error) {
-    console.error('GA4: Search tracking failed', error);
+    logger.error('GA4: Search tracking failed', error);
   }
 };
 
@@ -131,7 +133,7 @@ export const trackListingClick = (event: ListingClickEvent) => {
       ],
     });
   } catch (error) {
-    console.error('GA4: Listing click tracking failed', error);
+    logger.error('GA4: Listing click tracking failed', error);
   }
 };
 
@@ -146,7 +148,7 @@ export const trackFavorite = (event: FavoriteEvent) => {
       listing_id: event.listingId,
     });
   } catch (error) {
-    console.error('GA4: Favorite tracking failed', error);
+    logger.error('GA4: Favorite tracking failed', error);
   }
 };
 
@@ -173,7 +175,7 @@ export const trackBeginCheckout = (event: BookingEvent) => {
       guests: event.guests,
     });
   } catch (error) {
-    console.error('GA4: Begin checkout tracking failed', error);
+    logger.error('GA4: Begin checkout tracking failed', error);
   }
 };
 
@@ -202,7 +204,7 @@ export const trackBookingCompleted = (event: BookingCompletedEvent) => {
       guests: event.guests,
     });
   } catch (error) {
-    console.error('GA4: Booking completed tracking failed', error);
+    logger.error('GA4: Booking completed tracking failed', error);
   }
 };
 
@@ -218,7 +220,7 @@ export const trackEvent = (
   try {
     ReactGA.event(eventName, eventParams);
   } catch (error) {
-    console.error(`GA4: Event tracking failed for ${eventName}`, error);
+    logger.error(`GA4: Event tracking failed for ${eventName}`, error);
   }
 };
 
@@ -231,7 +233,7 @@ export const setUserProperties = (properties: Record<string, any>) => {
   try {
     ReactGA.set(properties);
   } catch (error) {
-    console.error('GA4: Set user properties failed', error);
+    logger.error('GA4: Set user properties failed', error);
   }
 };
 
@@ -246,6 +248,6 @@ export const setUserId = (userId: string | null) => {
       ReactGA.set({ userId });
     }
   } catch (error) {
-    console.error('GA4: Set user ID failed', error);
+    logger.error('GA4: Set user ID failed', error);
   }
 };

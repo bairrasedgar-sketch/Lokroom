@@ -14,6 +14,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { refundCapture, isPayPalConfigured } from "@/lib/paypal";
 import { notifyBookingCancelled } from "@/lib/notifications";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -205,7 +207,7 @@ export async function POST(req: NextRequest) {
             },
           });
 
-          console.log("[PayPal] Host wallet debited:", {
+          logger.debug("[PayPal] Host wallet debited:", {
             hostUserId,
             bookingId: booking.id,
             amountCents: appliedDebit,
@@ -220,11 +222,11 @@ export async function POST(req: NextRequest) {
         const cancelledBy = isGuest ? "guest" : isHost ? "host" : "system";
         await notifyBookingCancelled(booking.id, cancelledBy);
       } catch (error) {
-        console.error("[PayPal] Notification error:", error);
+        logger.error("[PayPal] Notification error:", error);
       }
     }
 
-    console.log("[PayPal] Refund processed:", {
+    logger.debug("[PayPal] Refund processed:", {
       bookingId: booking.id,
       refundId: refund.id,
       amountCents: refundAmountCents,
@@ -240,7 +242,7 @@ export async function POST(req: NextRequest) {
       bookingStatus: isFullRefund ? "CANCELLED" : booking.status,
     });
   } catch (error) {
-    console.error("[PayPal] Refund error:", error);
+    logger.error("[PayPal] Refund error:", error);
     return NextResponse.json(
       { error: "paypal_refund_failed" },
       { status: 500 }

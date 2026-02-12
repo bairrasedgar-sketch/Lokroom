@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +32,7 @@ export async function GET() {
 
     return NextResponse.json(history);
   } catch (error) {
-    console.error("Error fetching search history:", error);
+    logger.error("Error fetching search history:", error);
     return NextResponse.json([], { status: 200 });
   }
 }
@@ -102,7 +104,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(history);
   } catch (error) {
-    console.error("Error saving search history:", error);
+    logger.error("Error saving search history:", error);
     return NextResponse.json({ error: "save_failed" }, { status: 500 });
   }
 }
@@ -122,7 +124,7 @@ export async function DELETE() {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error clearing search history:", error);
+    logger.error("Error clearing search history:", error);
     return NextResponse.json({ error: "delete_failed" }, { status: 500 });
   }
 }

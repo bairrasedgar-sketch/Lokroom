@@ -7,6 +7,8 @@
 
 import { getRedisClient } from "./client";
 import type { Redis } from "ioredis";
+import { logger } from "@/lib/logger";
+
 
 export class CacheService {
   private redis: Redis | null = null;
@@ -38,7 +40,7 @@ export class CacheService {
         try {
           return JSON.parse(cached) as T;
         } catch (parseError) {
-          console.error(`[Cache] Failed to parse cached value for key ${key}:`, parseError);
+          logger.error(`[Cache] Failed to parse cached value for key ${key}:`, parseError);
           // Supprimer la valeur corrompue
           await this.del(key);
         }
@@ -52,7 +54,7 @@ export class CacheService {
 
       return null;
     } catch (error) {
-      console.error(`[Cache] Get error for key ${key}:`, error);
+      logger.error(`[Cache] Get error for key ${key}:`, error);
       // En cas d'erreur Redis, exécuter le fallback sans mettre en cache
       return fallback ? await fallback() : null;
     }
@@ -66,7 +68,7 @@ export class CacheService {
       const serialized = JSON.stringify(value);
       await this.getRedis().setex(key, ttl, serialized);
     } catch (error) {
-      console.error(`[Cache] Set error for key ${key}:`, error);
+      logger.error(`[Cache] Set error for key ${key}:`, error);
     }
   }
 
@@ -83,7 +85,7 @@ export class CacheService {
         await this.getRedis().del(key);
       }
     } catch (error) {
-      console.error(`[Cache] Delete error for key(s) ${key}:`, error);
+      logger.error(`[Cache] Delete error for key(s) ${key}:`, error);
     }
   }
 
@@ -115,10 +117,10 @@ export class CacheService {
           const batch = keys.slice(i, i + batchSize);
           await this.getRedis().del(...batch);
         }
-        console.log(`[Cache] Deleted ${keys.length} keys matching pattern: ${pattern}`);
+        logger.debug(`[Cache] Deleted ${keys.length} keys matching pattern: ${pattern}`);
       }
     } catch (error) {
-      console.error(`[Cache] Delete pattern error for ${pattern}:`, error);
+      logger.error(`[Cache] Delete pattern error for ${pattern}:`, error);
     }
   }
 
@@ -133,7 +135,7 @@ export class CacheService {
       }
       return value;
     } catch (error) {
-      console.error(`[Cache] Incr error for key ${key}:`, error);
+      logger.error(`[Cache] Incr error for key ${key}:`, error);
       return 0;
     }
   }
@@ -145,7 +147,7 @@ export class CacheService {
     try {
       return await this.getRedis().decr(key);
     } catch (error) {
-      console.error(`[Cache] Decr error for key ${key}:`, error);
+      logger.error(`[Cache] Decr error for key ${key}:`, error);
       return 0;
     }
   }
@@ -158,7 +160,7 @@ export class CacheService {
       const result = await this.getRedis().exists(key);
       return result === 1;
     } catch (error) {
-      console.error(`[Cache] Exists error for key ${key}:`, error);
+      logger.error(`[Cache] Exists error for key ${key}:`, error);
       return false;
     }
   }
@@ -171,7 +173,7 @@ export class CacheService {
     try {
       return await this.getRedis().ttl(key);
     } catch (error) {
-      console.error(`[Cache] TTL error for key ${key}:`, error);
+      logger.error(`[Cache] TTL error for key ${key}:`, error);
       return -1;
     }
   }
@@ -184,7 +186,7 @@ export class CacheService {
       const result = await this.getRedis().expire(key, ttl);
       return result === 1;
     } catch (error) {
-      console.error(`[Cache] Expire error for key ${key}:`, error);
+      logger.error(`[Cache] Expire error for key ${key}:`, error);
       return false;
     }
   }
@@ -206,7 +208,7 @@ export class CacheService {
         }
       });
     } catch (error) {
-      console.error(`[Cache] Mget error for keys ${keys}:`, error);
+      logger.error(`[Cache] Mget error for keys ${keys}:`, error);
       return keys.map(() => null);
     }
   }
@@ -229,7 +231,7 @@ export class CacheService {
 
       await pipeline.exec();
     } catch (error) {
-      console.error(`[Cache] Mset error:`, error);
+      logger.error(`[Cache] Mset error:`, error);
     }
   }
 
@@ -239,9 +241,9 @@ export class CacheService {
   async flushAll(): Promise<void> {
     try {
       await this.getRedis().flushall();
-      console.log("[Cache] All cache cleared");
+      logger.debug("[Cache] All cache cleared");
     } catch (error) {
-      console.error("[Cache] Flush error:", error);
+      logger.error("[Cache] Flush error:", error);
     }
   }
 
@@ -280,7 +282,7 @@ export class CacheService {
 
       return stats;
     } catch (error) {
-      console.error("[Cache] Stats error:", error);
+      logger.error("[Cache] Stats error:", error);
       return { keys: 0, memory: "0", hits: "0", misses: "0" };
     }
   }

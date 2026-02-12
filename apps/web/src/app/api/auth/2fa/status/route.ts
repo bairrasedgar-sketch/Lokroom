@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
+
 
 export async function GET() {
   try {
@@ -60,7 +62,7 @@ export async function GET() {
       recentActivity: recentLogs,
     });
   } catch (error) {
-    console.error("[2FA Status] Erreur:", error);
+    logger.error("[2FA Status] Erreur:", error);
     return NextResponse.json(
       { error: "Erreur lors de la recuperation du statut" },
       { status: 500 }

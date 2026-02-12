@@ -8,6 +8,8 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useHostListings } from "@/hooks/useListings";
+import { logger } from "@/lib/logger";
+
 
 // Types d'espaces avec leurs labels
 const SPACE_TYPE_LABELS: Record<string, string> = {
@@ -113,7 +115,7 @@ export default function HostListingsPage() {
       }
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") return;
-      console.error("Error fetching stats:", err);
+      logger.error("Error fetching stats:", err);
     }
   }, []);
 

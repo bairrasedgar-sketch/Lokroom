@@ -5,6 +5,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
+
 
 const preferencesSchema = z.object({
   pushEnabled: z.boolean().optional(),
@@ -61,7 +63,7 @@ export async function GET(request: Request) {
       preferences,
     });
   } catch (error) {
-    console.error("Error fetching notification preferences:", error);
+    logger.error("Error fetching notification preferences:", error);
     return NextResponse.json(
       { error: "Erreur lors de la récupération des préférences" },
       { status: 500 }
@@ -120,7 +122,7 @@ export async function PUT(request: Request) {
       preferences,
     });
   } catch (error) {
-    console.error("Error updating notification preferences:", error);
+    logger.error("Error updating notification preferences:", error);
     return NextResponse.json(
       { error: "Erreur lors de la mise à jour des préférences" },
       { status: 500 }

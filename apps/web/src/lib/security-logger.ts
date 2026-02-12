@@ -1,3 +1,4 @@
+import { logger } from "@/lib/logger";
 /**
  * Système de logging de sécurité centralisé
  *
@@ -88,18 +89,18 @@ export function logSecurityEvent(
   // Log selon la sévérité
   switch (event.severity) {
     case 'critical':
-      console.error(logMessage, JSON.stringify(logData));
+      logger.error(logMessage, JSON.stringify(logData));
       // TODO: Envoyer une alerte (email, Slack, etc.)
       break;
     case 'error':
-      console.error(logMessage, JSON.stringify(logData));
+      logger.error(logMessage, JSON.stringify(logData));
       break;
     case 'warn':
-      console.warn(logMessage, JSON.stringify(logData));
+      logger.warn(logMessage, JSON.stringify(logData));
       break;
     case 'info':
     default:
-      console.log(logMessage, JSON.stringify(logData));
+      logger.debug(logMessage, JSON.stringify(logData));
       break;
   }
 

@@ -13,6 +13,8 @@ import AmenitiesSelector from "@/components/listings/AmenitiesSelector";
 import BedConfiguration from "@/components/listings/BedConfiguration";
 import type { BedConfig } from "@/components/listings/BedConfiguration";
 import { Plus, Minus } from "lucide-react";
+import { logger } from "@/lib/logger";
+
 
 // ============================================================================
 // GOOGLE MAPS TYPES (simplified for TypeScript compatibility)
@@ -763,7 +765,7 @@ export default function NewListingPage() {
           setIdentityStatus(data.identityStatus || "UNVERIFIED");
         }
       } catch (e) {
-        console.error("Error checking identity status:", e);
+        logger.error("Error checking identity status:", e);
       }
     }
     if (status === "authenticated") {
@@ -821,7 +823,7 @@ export default function NewListingPage() {
         }
       } catch (e) {
         if (process.env.NODE_ENV === "development") {
-          console.error("Error loading drafts:", e);
+          logger.error("Error loading drafts:", e);
         }
         // 🔒 SÉCURITÉ : Check SSR avant de supprimer
         if (typeof window !== "undefined") {

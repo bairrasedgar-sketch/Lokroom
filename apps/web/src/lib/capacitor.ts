@@ -1,5 +1,7 @@
 // apps/web/src/lib/capacitor.ts
 import { Capacitor } from '@capacitor/core';
+import { logger } from "@/lib/logger";
+
 
 /**
  * Détecte si l'app tourne dans Capacitor (app native iOS/Android)
@@ -37,6 +39,6 @@ export function initializeCapacitor(): void {
   // Capacitor s'initialise automatiquement
   // Cette fonction existe pour la compatibilité
   if (isCapacitor()) {
-    console.log('[Capacitor] App native détectée:', getPlatform());
+    logger.debug('[Capacitor] App native détectée:', getPlatform());
   }
 }

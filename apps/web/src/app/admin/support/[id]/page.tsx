@@ -14,6 +14,8 @@ import {
 } from "@heroicons/react/24/outline";
 import { SparklesIcon } from "@heroicons/react/24/solid";
 import { toast } from "sonner";
+import { logger } from "@/lib/logger";
+
 
 type SupportMessage = {
   id: string;
@@ -112,7 +114,7 @@ export default function AdminSupportConversationPage() {
         router.push("/admin/support");
       }
     } catch (error) {
-      console.error("Error fetching conversation:", error);
+      logger.error("Error fetching conversation:", error);
     } finally {
       setLoading(false);
     }

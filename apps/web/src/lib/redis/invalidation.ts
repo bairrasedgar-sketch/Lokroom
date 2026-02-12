@@ -7,6 +7,8 @@
 
 import { cache } from "./cache-safe";
 import { CacheKeys, CachePatterns } from "./keys";
+import { logger } from "@/lib/logger";
+
 
 /**
  * Invalide le cache d'une annonce et toutes les données associées.
@@ -24,9 +26,9 @@ export async function invalidateListingCache(listingId: string): Promise<void> {
     // Invalider toutes les listes de listings
     await cache.delPattern(CachePatterns.allListings());
 
-    console.log(`[Cache] Invalidated listing cache: ${listingId}`);
+    logger.debug(`[Cache] Invalidated listing cache: ${listingId}`);
   } catch (error) {
-    console.error(`[Cache] Error invalidating listing cache:`, error);
+    logger.error(`[Cache] Error invalidating listing cache:`, error);
   }
 }
 
@@ -48,9 +50,9 @@ export async function invalidateUserCache(userId: string): Promise<void> {
       CacheKeys.unreadMessages(userId),
     ]);
 
-    console.log(`[Cache] Invalidated user cache: ${userId}`);
+    logger.debug(`[Cache] Invalidated user cache: ${userId}`);
   } catch (error) {
-    console.error(`[Cache] Error invalidating user cache:`, error);
+    logger.error(`[Cache] Error invalidating user cache:`, error);
   }
 }
 
@@ -73,9 +75,9 @@ export async function invalidateBookingCache(
     // Invalider la disponibilité du listing
     await cache.delPattern(`bookings:availability:${listingId}:*`);
 
-    console.log(`[Cache] Invalidated booking cache: ${bookingId}`);
+    logger.debug(`[Cache] Invalidated booking cache: ${bookingId}`);
   } catch (error) {
-    console.error(`[Cache] Error invalidating booking cache:`, error);
+    logger.error(`[Cache] Error invalidating booking cache:`, error);
   }
 }
 
@@ -97,9 +99,9 @@ export async function invalidateReviewCache(
       await cache.del(CacheKeys.userReviews(userId));
     }
 
-    console.log(`[Cache] Invalidated review cache: ${listingId}`);
+    logger.debug(`[Cache] Invalidated review cache: ${listingId}`);
   } catch (error) {
-    console.error(`[Cache] Error invalidating review cache:`, error);
+    logger.error(`[Cache] Error invalidating review cache:`, error);
   }
 }
 
@@ -111,9 +113,9 @@ export async function invalidateSearchCache(): Promise<void> {
     await cache.delPattern("search:*");
     await cache.delPattern("listings:search:*");
 
-    console.log(`[Cache] Invalidated search cache`);
+    logger.debug(`[Cache] Invalidated search cache`);
   } catch (error) {
-    console.error(`[Cache] Error invalidating search cache:`, error);
+    logger.error(`[Cache] Error invalidating search cache:`, error);
   }
 }
 
@@ -125,9 +127,9 @@ export async function invalidateAmenitiesCache(): Promise<void> {
     await cache.del(CacheKeys.amenities());
     await cache.delPattern("amenities:*");
 
-    console.log(`[Cache] Invalidated amenities cache`);
+    logger.debug(`[Cache] Invalidated amenities cache`);
   } catch (error) {
-    console.error(`[Cache] Error invalidating amenities cache:`, error);
+    logger.error(`[Cache] Error invalidating amenities cache:`, error);
   }
 }
 
@@ -142,9 +144,9 @@ export async function invalidateStatsCache(userId?: string): Promise<void> {
       await cache.delPattern(CachePatterns.allStats());
     }
 
-    console.log(`[Cache] Invalidated stats cache`);
+    logger.debug(`[Cache] Invalidated stats cache`);
   } catch (error) {
-    console.error(`[Cache] Error invalidating stats cache:`, error);
+    logger.error(`[Cache] Error invalidating stats cache:`, error);
   }
 }
 
@@ -155,9 +157,9 @@ export async function invalidateFavoritesCache(userId: string): Promise<void> {
   try {
     await cache.del(CacheKeys.favorites(userId));
 
-    console.log(`[Cache] Invalidated favorites cache: ${userId}`);
+    logger.debug(`[Cache] Invalidated favorites cache: ${userId}`);
   } catch (error) {
-    console.error(`[Cache] Error invalidating favorites cache:`, error);
+    logger.error(`[Cache] Error invalidating favorites cache:`, error);
   }
 }
 
@@ -171,9 +173,9 @@ export async function invalidateNotificationsCache(userId: string): Promise<void
       CacheKeys.unreadCount(userId),
     ]);
 
-    console.log(`[Cache] Invalidated notifications cache: ${userId}`);
+    logger.debug(`[Cache] Invalidated notifications cache: ${userId}`);
   } catch (error) {
-    console.error(`[Cache] Error invalidating notifications cache:`, error);
+    logger.error(`[Cache] Error invalidating notifications cache:`, error);
   }
 }
 
@@ -183,8 +185,8 @@ export async function invalidateNotificationsCache(userId: string): Promise<void
 export async function invalidateAllCache(): Promise<void> {
   try {
     await cache.flushAll();
-    console.log(`[Cache] Invalidated all cache`);
+    logger.debug(`[Cache] Invalidated all cache`);
   } catch (error) {
-    console.error(`[Cache] Error invalidating all cache:`, error);
+    logger.error(`[Cache] Error invalidating all cache:`, error);
   }
 }

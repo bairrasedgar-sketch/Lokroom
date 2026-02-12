@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { rateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 import {
   decryptSecret,
   verifyToken,
@@ -112,7 +113,7 @@ export async function POST(req: NextRequest) {
       message: "L'authentification a deux facteurs est maintenant activee. Conservez vos codes de secours en lieu sur.",
     });
   } catch (error) {
-    console.error("[2FA Verify Setup] Erreur:", error);
+    logger.error("[2FA Verify Setup] Erreur:", error);
     return NextResponse.json(
       { error: "Erreur lors de l'activation du 2FA" },
       { status: 500 }

@@ -8,6 +8,8 @@ import { Redis } from "@upstash/redis";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { logger } from "@/lib/logger";
+
 
 // Initialiser Redis (utilise les variables d'env UPSTASH_REDIS_REST_URL et UPSTASH_REDIS_REST_TOKEN)
 const redis = new Redis({
@@ -126,7 +128,7 @@ export async function withRateLimit(
   // Si Redis n'est pas configuré, skip le rate limiting en dev
   if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
     if (process.env.NODE_ENV === "development") {
-      console.warn("[RateLimit] Redis non configuré - rate limiting désactivé");
+      logger.warn("[RateLimit] Redis non configuré - rate limiting désactivé");
       return { success: true };
     }
     // En production, bloquer si Redis n'est pas configuré
@@ -164,7 +166,7 @@ export async function withRateLimit(
 
     return { success: true };
   } catch (error) {
-    console.error("[RateLimit] Erreur:", error);
+    logger.error("[RateLimit] Erreur:", error);
     // En cas d'erreur Redis, laisser passer la requête (fail-open)
     return { success: true };
   }

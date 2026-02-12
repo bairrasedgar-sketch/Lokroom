@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
+
 
 // POST /api/host/ical/import - Importer un calendrier iCal externe
 export async function POST(request: Request) {
@@ -102,7 +104,7 @@ export async function POST(request: Request) {
       blocksCreatedCount: blocksCreated.length,
     });
   } catch (error) {
-    console.error("iCal import error:", error);
+    logger.error("iCal import error:", error);
     return NextResponse.json({ error: "Erreur lors de l'import" }, { status: 500 });
   }
 }

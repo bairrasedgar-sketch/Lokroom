@@ -11,6 +11,8 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -121,7 +123,7 @@ export async function GET() {
 
     return NextResponse.json({ payments });
   } catch (error) {
-    console.error("[Account Payments] Error:", error);
+    logger.error("[Account Payments] Error:", error);
     return NextResponse.json(
       { error: "failed_to_load_payments" },
       { status: 500 }

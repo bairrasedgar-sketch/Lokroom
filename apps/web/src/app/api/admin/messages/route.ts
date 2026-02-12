@@ -8,6 +8,8 @@ import { prisma } from "@/lib/db";
 import { requireAdminPermission, logAdminAction } from "@/lib/admin-auth";
 import { sendSupportMessage } from "@/lib/email";
 import { parsePageParam, parseLimitParam } from "@/lib/validation/params";
+import { logger } from "@/lib/logger";
+
 
 export async function GET(request: Request) {
   const auth = await requireAdminPermission("users:view");
@@ -105,7 +107,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Erreur API admin messages:", error);
+    logger.error("Erreur API admin messages:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }
@@ -280,7 +282,7 @@ export async function POST(request: Request) {
       emailsSent,
     });
   } catch (error) {
-    console.error("Erreur envoi message admin:", error);
+    logger.error("Erreur envoi message admin:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

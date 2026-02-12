@@ -9,6 +9,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getDepositPolicy, upsertDepositPolicy } from "@/lib/security-deposit";
+import { logger } from "@/lib/logger";
+
 
 export async function GET(
   req: Request,
@@ -49,7 +51,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error("[API] Erreur récupération politique dépôt:", error);
+    logger.error("[API] Erreur récupération politique dépôt:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }
@@ -122,7 +124,7 @@ export async function PUT(
       policy: result.policy,
     });
   } catch (error) {
-    console.error("[API] Erreur mise à jour politique dépôt:", error);
+    logger.error("[API] Erreur mise à jour politique dépôt:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

@@ -16,6 +16,8 @@ import {
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
 import PayPalButton from "@/components/PayPalButton";
+import { logger } from "@/lib/logger";
+
 
 type Currency = "EUR" | "CAD";
 type PaymentMethod = "stripe" | "paypal";
@@ -210,7 +212,7 @@ function StripePaymentForm(props: {
       });
 
       if (error) {
-        console.error(error);
+        logger.error(error);
         toast.error(error.message ?? t.payment.paymentFailed);
         setSubmitting(false);
         return;
@@ -223,7 +225,7 @@ function StripePaymentForm(props: {
             method: "POST",
           });
         } catch (e) {
-          console.error("Error confirming payment:", e);
+          logger.error("Error confirming payment:", e);
         }
         toast.success(t.payment.paymentConfirmed);
         router.push(`/bookings/${props.bookingId}/confirmation`);
@@ -239,7 +241,7 @@ function StripePaymentForm(props: {
       toast.error(t.payment.paymentFailed);
       setSubmitting(false);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       toast.error(t.payment.unexpectedError);
       setSubmitting(false);
     }
@@ -384,7 +386,7 @@ export default function BookingPaymentPage({
         setIntent(data as CreateIntentResponse);
         setLoading(false);
       } catch (err) {
-        console.error(err);
+        logger.error(err);
         setError(t.payment.unexpectedLoadError);
         setLoading(false);
       }

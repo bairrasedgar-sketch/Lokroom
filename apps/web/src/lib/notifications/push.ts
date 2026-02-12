@@ -4,6 +4,8 @@
  */
 
 import webpush from 'web-push';
+import { logger } from "@/lib/logger";
+
 
 // Configuration VAPID (clés publiques/privées pour l'authentification)
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
@@ -49,7 +51,7 @@ export async function sendPushNotification(
 ): Promise<boolean> {
   try {
     if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
-      console.error('VAPID keys not configured');
+      logger.error('VAPID keys not configured');
       return false;
     }
 
@@ -68,7 +70,7 @@ export async function sendPushNotification(
 
     return true;
   } catch (error: any) {
-    console.error('Error sending push notification:', error);
+    logger.error('Error sending push notification:', error);
 
     // Si l'abonnement est invalide (410 Gone), retourner false pour le supprimer
     if (error.statusCode === 410) {

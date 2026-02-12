@@ -26,6 +26,8 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { CheckBadgeIcon } from "@heroicons/react/24/solid";
+import { logger } from "@/lib/logger";
+
 
 type User = {
   id: string;
@@ -113,7 +115,7 @@ export default function AdminVerificationsPage() {
       setPagination(data.pagination);
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') return;
-      console.error("Error fetching verifications:", error);
+      logger.error("Error fetching verifications:", error);
     } finally {
       setLoading(false);
     }

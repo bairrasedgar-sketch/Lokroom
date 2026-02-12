@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { GlobeAltIcon, CheckIcon } from "@heroicons/react/24/outline";
+import { logger } from "@/lib/logger";
+
 
 type LanguageInfo = {
   code: string;
@@ -46,7 +48,7 @@ export function TranslationToggle({
           setAutoTranslate(prefData.autoTranslate ?? true);
         }
       } catch (error) {
-        console.error("Erreur chargement preferences traduction:", error);
+        logger.error("Erreur chargement preferences traduction:", error);
       } finally {
         setLoading(false);
       }
@@ -86,7 +88,7 @@ export function TranslationToggle({
           }
         }
       } catch (error) {
-        console.error("Erreur sauvegarde preferences:", error);
+        logger.error("Erreur sauvegarde preferences:", error);
       } finally {
         setSaving(false);
       }

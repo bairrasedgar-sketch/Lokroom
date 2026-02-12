@@ -1,6 +1,8 @@
 // apps/web/src/lib/recommendations/tracking.ts
 import { prisma } from "@/lib/db";
 import { regenerateRecommendations } from "./engine";
+import { logger } from "@/lib/logger";
+
 
 /**
  * Track user behavior for recommendations
@@ -25,11 +27,11 @@ export async function trackUserBehavior(
     if (["favorite", "book"].includes(action)) {
       // Ne pas attendre la régénération pour ne pas bloquer la requête
       regenerateRecommendations(userId).catch((error) => {
-        console.error(`[Tracking] Failed to regenerate recommendations for user ${userId}:`, error);
+        logger.error(`[Tracking] Failed to regenerate recommendations for user ${userId}:`, error);
       });
     }
   } catch (error) {
-    console.error(`[Tracking] Failed to track behavior for user ${userId}:`, error);
+    logger.error(`[Tracking] Failed to track behavior for user ${userId}:`, error);
     // Ne pas throw pour ne pas casser l'expérience utilisateur
   }
 }

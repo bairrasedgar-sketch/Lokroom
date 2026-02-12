@@ -5,6 +5,8 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
+
 
 export const dynamic = "force-dynamic";
 
@@ -94,7 +96,7 @@ export async function GET() {
 
     return NextResponse.json({ listings: transformedListings, stats });
   } catch (error) {
-    console.error("GET /api/host/listings error:", error);
+    logger.error("GET /api/host/listings error:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

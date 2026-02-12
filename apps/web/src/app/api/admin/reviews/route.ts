@@ -8,6 +8,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdminPermission, logAdminAction } from "@/lib/admin-auth";
 import { parsePageParam, parseLimitParam, parseRatingParam } from "@/lib/validation/params";
+import { logger } from "@/lib/logger";
+
 
 export async function GET(request: Request) {
   const auth = await requireAdminPermission("bookings:view");
@@ -164,7 +166,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Erreur API admin reviews:", error);
+    logger.error("Erreur API admin reviews:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }
@@ -269,7 +271,7 @@ export async function PUT(request: Request) {
         );
     }
   } catch (error) {
-    console.error("Erreur action review:", error);
+    logger.error("Erreur action review:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }
@@ -372,7 +374,7 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ success: true, deleted: true });
   } catch (error) {
-    console.error("Erreur suppression review:", error);
+    logger.error("Erreur suppression review:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

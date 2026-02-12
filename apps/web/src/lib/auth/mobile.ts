@@ -1,5 +1,7 @@
 // apps/web/src/lib/auth/mobile.ts
 import { Preferences } from "@capacitor/preferences";
+import { logger } from "@/lib/logger";
+
 
 const AUTH_TOKEN_KEY = "auth_token";
 const AUTH_USER_KEY = "auth_user";
@@ -95,7 +97,7 @@ export async function mobileLogin(email: string, password: string): Promise<{ su
 
     return { success: true, user: data.user };
   } catch (error) {
-    console.error("[Mobile Auth] Login error:", error);
+    logger.error("[Mobile Auth] Login error:", error);
     return { success: false, error: "Erreur réseau" };
   }
 }
@@ -161,7 +163,7 @@ export async function refreshAuth(): Promise<{ success: boolean; error?: string 
 
     return { success: true };
   } catch (error) {
-    console.error("[Mobile Auth] Refresh error:", error);
+    logger.error("[Mobile Auth] Refresh error:", error);
     return { success: false, error: "Erreur réseau" };
   }
 }

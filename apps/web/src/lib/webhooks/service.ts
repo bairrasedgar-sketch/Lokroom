@@ -5,6 +5,8 @@
 
 import { prisma } from "@/lib/db";
 import crypto from "crypto";
+import { logger } from "@/lib/logger";
+
 
 /**
  * Événements disponibles pour les webhooks
@@ -180,7 +182,7 @@ export async function triggerWebhook(
     // Envoyer en background avec retry
     processWebhookDelivery(delivery.id, webhook.url, payload, webhook.secret).catch(
       (error) => {
-        console.error(`Failed to process webhook delivery ${delivery.id}:`, error);
+        logger.error(`Failed to process webhook delivery ${delivery.id}:`, error);
       }
     );
   });

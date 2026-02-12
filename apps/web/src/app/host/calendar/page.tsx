@@ -7,6 +7,8 @@ import Link from "next/link";
 import Image from "next/image";
 import dynamicImport from "next/dynamic";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import { logger } from "@/lib/logger";
+
 
 // Lazy load HostCalendar - heavy component with calendar logic
 const HostCalendar = dynamicImport(() => import("@/components/calendar/HostCalendar"), {
@@ -62,7 +64,7 @@ export default function HostCalendarPage() {
       }
     } catch (err) {
       if (err instanceof Error && err.name !== "AbortError") {
-        console.error(err);
+        logger.error(err);
       }
     } finally {
       setLoading(false);

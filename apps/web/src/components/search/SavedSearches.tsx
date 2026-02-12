@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { Bell, BellOff, Trash2, Plus, Search } from "lucide-react";
+import { logger } from "@/lib/logger";
+
 
 interface SavedSearch {
   id: string;
@@ -37,7 +39,7 @@ export function SavedSearches() {
         setSearches(data.searches || []);
       }
     } catch (error) {
-      console.error("Erreur chargement recherches sauvegardées:", error);
+      logger.error("Erreur chargement recherches sauvegardées:", error);
     } finally {
       setLoading(false);
     }
@@ -59,7 +61,7 @@ export function SavedSearches() {
         );
       }
     } catch (error) {
-      console.error("Erreur toggle alerte:", error);
+      logger.error("Erreur toggle alerte:", error);
     }
   };
 
@@ -75,7 +77,7 @@ export function SavedSearches() {
         setSearches(searches.filter((s) => s.id !== searchId));
       }
     } catch (error) {
-      console.error("Erreur suppression recherche:", error);
+      logger.error("Erreur suppression recherche:", error);
     }
   };
 

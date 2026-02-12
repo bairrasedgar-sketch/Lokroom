@@ -7,6 +7,8 @@
 import { prisma } from "@/lib/db";
 import { createNotification } from "@/lib/notifications";
 import { sendEmail, emailLayout } from "@/lib/email";
+import { logger } from "@/lib/logger";
+
 
 // ============================================================================
 // TYPES
@@ -319,7 +321,7 @@ export async function processInstantBooking(
       conversation: conversation ? { id: conversation.id } : undefined,
     };
   } catch (error) {
-    console.error("[InstantBook] Error processing booking:", error);
+    logger.error("[InstantBook] Error processing booking:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Erreur inconnue",

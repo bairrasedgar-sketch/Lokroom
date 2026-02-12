@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { generateBadgeId } from "@/lib/crypto/random";
+import { logger } from "@/lib/logger";
+
 
 // POST /api/badges/check - Vérifier et attribuer automatiquement les badges
 export async function POST(request: Request) {
@@ -142,7 +144,7 @@ export async function POST(request: Request) {
       totalBadges: [...existingTypes, ...newBadges],
     });
   } catch (error) {
-    console.error("Error checking badges:", error);
+    logger.error("Error checking badges:", error);
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

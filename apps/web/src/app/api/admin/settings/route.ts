@@ -6,6 +6,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdminPermission, logAdminAction } from "@/lib/admin-auth";
+import { logger } from "@/lib/logger";
+
 
 // Clés de configuration par défaut
 const DEFAULT_CONFIG: Record<string, unknown> = {
@@ -46,7 +48,7 @@ export async function GET() {
 
     return NextResponse.json({ config });
   } catch (error) {
-    console.error("Erreur API admin settings:", error);
+    logger.error("Erreur API admin settings:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }
@@ -114,7 +116,7 @@ export async function PUT(request: Request) {
 
     return NextResponse.json({ success: true, config: body });
   } catch (error) {
-    console.error("Erreur API admin settings:", error);
+    logger.error("Erreur API admin settings:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

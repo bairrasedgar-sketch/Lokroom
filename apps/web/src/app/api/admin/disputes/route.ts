@@ -7,6 +7,8 @@ import { prisma } from "@/lib/db";
 import { requireAdminPermission } from "@/lib/admin-auth";
 import { parsePageParam, parseLimitParam, parsePriorityParam } from "@/lib/validation/params";
 import type { Prisma } from "@prisma/client";
+import { logger } from "@/lib/logger";
+
 
 export async function GET(request: Request) {
   const auth = await requireAdminPermission("disputes:view");
@@ -153,7 +155,7 @@ export async function GET(request: Request) {
       stats,
     });
   } catch (error) {
-    console.error("Erreur API admin disputes:", error);
+    logger.error("Erreur API admin disputes:", error);
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }
