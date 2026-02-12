@@ -69,7 +69,7 @@ export const authOptions: NextAuthOptions = {
   // Changé en JWT pour supporter le Credentials provider
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 jours
+    maxAge: 7 * 24 * 60 * 60, // 🔒 SÉCURITÉ : 7 jours au lieu de 30 (réduit le risque si token volé)
   },
 
   providers: [
