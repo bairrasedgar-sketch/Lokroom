@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useHostListings } from "@/hooks/useListings";
 
 // Types d'espaces avec leurs labels
