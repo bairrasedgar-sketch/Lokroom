@@ -6,7 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { applyFeesToBooking } from "@/lib/bookingFees";
 import { createBookingSchema, validateRequestBody } from "@/lib/validations";
-import { apiRateLimiter, withRateLimit } from "@/lib/security/rate-limit";
+import { apiRateLimiter, withRateLimitAuth } from "@/lib/security/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -41,12 +41,13 @@ function daysDiff(d1: Date, d2: Date): number {
  * - Retourne booking + fees + hostUserId + nights
  */
 export async function POST(req: NextRequest) {
-  // Rate limiting
-  const rateLimitResult = await withRateLimit(req, apiRateLimiter);
+  // 🔒 SÉCURITÉ : Rate limiting avec user ID (impossible à contourner avec VPN)
+  const rateLimitResult = await withRateLimitAuth(req, apiRateLimiter);
   if (rateLimitResult instanceof NextResponse) {
     return rateLimitResult;
   }
 
+  // Récupérer la session (déjà récupérée par withRateLimitAuth, mais on la récupère à nouveau pour la validation)
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return NextResponse.json({ error: "UNAUTHENTICATED" }, { status: 401 });

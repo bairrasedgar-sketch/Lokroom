@@ -6,6 +6,8 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 // Initialiser Redis (utilise les variables d'env UPSTASH_REDIS_REST_URL et UPSTASH_REDIS_REST_TOKEN)
 const redis = new Redis({
@@ -66,7 +68,8 @@ export const strictRateLimiter = new Ratelimit({
 // ============================================
 
 /**
- * Extrait l'identifiant unique de la requête (IP ou user ID)
+ * Extrait l'identifiant unique de la requête (IP uniquement)
+ * @deprecated Utiliser getIdentifierWithAuth() pour inclure le user ID
  */
 export function getIdentifier(req: NextRequest): string {
   // Priorité 1: IP réelle (Vercel, Cloudflare, etc.)
@@ -86,13 +89,39 @@ export function getIdentifier(req: NextRequest): string {
 }
 
 /**
- * Middleware de rate limiting
+ * 🔒 SÉCURITÉ AMÉLIORÉE : Extrait l'identifiant avec priorité au user ID
+ *
+ * Priorité des identifiants :
+ * 1. User ID (si authentifié) - Impossible à contourner
+ * 2. IP (si non authentifié) - Peut être contourné avec VPN
+ *
+ * Avantages :
+ * - Empêche les utilisateurs authentifiés de contourner le rate limiting avec un VPN
+ * - Permet un rate limiting plus strict par utilisateur
+ * - Protège mieux contre les abus
+ */
+export function getIdentifierWithAuth(req: NextRequest, userId?: string | null): string {
+  // Priorité 1: User ID si authentifié (impossible à contourner)
+  if (userId) {
+    return `user:${userId}`;
+  }
+
+  // Priorité 2: IP pour les utilisateurs non authentifiés
+  return `ip:${getIdentifier(req)}`;
+}
+
+/**
+ * Middleware de rate limiting avec support du user ID
  * Retourne NextResponse si rate limit dépassé, sinon { success: true }
+ *
+ * @param req - NextRequest
+ * @param limiter - Ratelimit instance
+ * @param userId - User ID optionnel (si authentifié)
  */
 export async function withRateLimit(
   req: NextRequest,
   limiter: Ratelimit,
-  identifier?: string
+  userId?: string | null
 ): Promise<NextResponse | { success: true }> {
   // Si Redis n'est pas configuré, skip le rate limiting en dev
   if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
@@ -107,7 +136,8 @@ export async function withRateLimit(
     );
   }
 
-  const id = identifier || getIdentifier(req);
+  // Utiliser getIdentifierWithAuth pour inclure le user ID si disponible
+  const id = getIdentifierWithAuth(req, userId);
 
   try {
     const { success, limit, remaining, reset } = await limiter.limit(id);
@@ -141,7 +171,38 @@ export async function withRateLimit(
 }
 
 /**
+ * 🔒 SÉCURITÉ AMÉLIORÉE : Rate limiting avec authentification automatique
+ *
+ * Cette fonction récupère automatiquement le user ID depuis la session NextAuth
+ * et l'utilise pour le rate limiting. Cela empêche les utilisateurs authentifiés
+ * de contourner le rate limiting avec un VPN.
+ *
+ * @param req - NextRequest
+ * @param limiter - Ratelimit instance
+ * @returns NextResponse si rate limit dépassé, sinon { success: true, userId?: string }
+ */
+export async function withRateLimitAuth(
+  req: NextRequest,
+  limiter: Ratelimit
+): Promise<NextResponse | { success: true; userId?: string }> {
+  // Récupérer la session NextAuth
+  const session = await getServerSession(authOptions);
+  const userId = session?.user?.id || null;
+
+  // Appliquer le rate limiting avec le user ID si disponible
+  const result = await withRateLimit(req, limiter, userId);
+
+  // Si le rate limiting a réussi, retourner le userId pour éviter de refaire la requête
+  if (result instanceof NextResponse) {
+    return result;
+  }
+
+  return { success: true, userId: userId || undefined };
+}
+
+/**
  * Wrapper pour créer un handler API avec rate limiting automatique
+ * @deprecated Utiliser withRateLimitAuth() pour inclure le user ID
  */
 export function withRateLimitHandler(
   handler: (req: NextRequest) => Promise<NextResponse>,
