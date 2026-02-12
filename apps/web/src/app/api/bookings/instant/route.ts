@@ -250,50 +250,62 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Vérifier les chevauchements de dates
-  const overlapping = await prisma.booking.findFirst({
-    where: {
-      listingId: listing.id,
-      status: { in: ["CONFIRMED", "PENDING"] as BookingStatusLiteral[] },
-      startDate: { lt: endDate },
-      endDate: { gt: startDate },
-    },
-    select: { id: true },
-  });
-
-  if (overlapping) {
-    return NextResponse.json(
-      { error: "DATES_NOT_AVAILABLE" },
-      { status: 409 }
-    );
-  }
-
   // Calculer le prix total
   const totalPrice = listing.price * nights;
 
-  // Créer la réservation avec statut PENDING (sera confirmée après paiement)
-  const booking = await prisma.booking.create({
-    data: {
-      listingId: listing.id,
-      guestId: me.id,
-      startDate,
-      endDate,
-      totalPrice,
-      currency: listing.currency,
-      status: "PENDING", // Reste PENDING jusqu'au paiement réussi
-      pricingMode: listing.pricingMode,
-    },
-    select: {
-      id: true,
-      listingId: true,
-      guestId: true,
-      startDate: true,
-      endDate: true,
-      totalPrice: true,
-      currency: true,
-      status: true,
-    },
-  });
+  // 🔒 SÉCURITÉ : Transaction atomique pour éviter les race conditions
+  // Vérifie les chevauchements et crée la réservation de manière atomique
+  let booking;
+  try {
+    booking = await prisma.$transaction(async (tx) => {
+      // Vérifier les chevauchements dans la transaction
+      const overlapping = await tx.booking.findFirst({
+        where: {
+          listingId: listing.id,
+          status: { in: ["CONFIRMED", "PENDING"] as BookingStatusLiteral[] },
+          startDate: { lt: endDate },
+          endDate: { gt: startDate },
+        },
+        select: { id: true },
+      });
+
+      if (overlapping) {
+        throw new Error("DATES_NOT_AVAILABLE");
+      }
+
+      // Créer la réservation avec statut PENDING (sera confirmée après paiement)
+      return await tx.booking.create({
+        data: {
+          listingId: listing.id,
+          guestId: me.id,
+          startDate,
+          endDate,
+          totalPrice,
+          currency: listing.currency,
+          status: "PENDING", // Reste PENDING jusqu'au paiement réussi
+          pricingMode: listing.pricingMode,
+        },
+        select: {
+          id: true,
+          listingId: true,
+          guestId: true,
+          startDate: true,
+          endDate: true,
+          totalPrice: true,
+          currency: true,
+          status: true,
+        },
+      });
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "DATES_NOT_AVAILABLE") {
+      return NextResponse.json(
+        { error: "DATES_NOT_AVAILABLE" },
+        { status: 409 }
+      );
+    }
+    throw error;
+  }
 
   // Appliquer les frais Lok'Room
   const { fees, hostUserId } = await applyFeesToBooking(booking.id);

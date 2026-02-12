@@ -217,73 +217,87 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Chevauchement (PENDING/CONFIRMED) sur cette annonce
-  const overlapping = await prisma.booking.findFirst({
-    where: {
-      listingId: listing.id,
-      status: { in: ["CONFIRMED", "PENDING"] as BookingStatusLiteral[] },
-      startDate: { lt: end },
-      endDate: { gt: start },
-    },
-    select: { id: true },
-  });
-
-  if (overlapping) {
-    return NextResponse.json(
-      { error: "DATES_NOT_AVAILABLE" },
-      { status: 409 },
-    );
-  }
-
   // Prix total de la réservation (hors frais Lok'Room)
   const totalPrice = listing.price * nights;
 
-  // Idempotence applicative : si on a déjà une PENDING identique, on la réutilise
-  const existing = await prisma.booking.findFirst({
-    where: {
-      guestId: me.id,
-      listingId: listing.id,
-      startDate: start,
-      endDate: end,
-      status: "PENDING",
-    },
-    select: {
-      id: true,
-      listingId: true,
-      guestId: true,
-      startDate: true,
-      endDate: true,
-      totalPrice: true,
-      currency: true,
-      status: true,
-    },
-  });
+  // 🔒 SÉCURITÉ : Transaction atomique pour éviter les race conditions
+  // Vérifie les chevauchements et crée la réservation de manière atomique
+  let booking;
+  try {
+    booking = await prisma.$transaction(async (tx) => {
+      // Vérifier les chevauchements dans la transaction
+      const overlapping = await tx.booking.findFirst({
+        where: {
+          listingId: listing.id,
+          status: { in: ["CONFIRMED", "PENDING"] as BookingStatusLiteral[] },
+          startDate: { lt: end },
+          endDate: { gt: start },
+        },
+        select: { id: true },
+      });
 
-  const booking =
-    existing ??
-    (await prisma.booking.create({
-      data: {
-        listingId: listing.id,
-        guestId: me.id,
-        startDate: start,
-        endDate: end,
-        totalPrice,
-        currency: listing.currency,
-        status: "PENDING",
-        // 👇 CHAMP MANQUANT QUI FAISAIT PLANTER LE BUILD
-        pricingMode: listing.pricingMode,
-      },
-      select: {
-        id: true,
-        listingId: true,
-        guestId: true,
-        startDate: true,
-        endDate: true,
-        totalPrice: true,
-        currency: true,
-        status: true,
-      },
-    }));
+      if (overlapping) {
+        throw new Error("DATES_NOT_AVAILABLE");
+      }
+
+      // Idempotence applicative : si on a déjà une PENDING identique, on la réutilise
+      const existing = await tx.booking.findFirst({
+        where: {
+          guestId: me.id,
+          listingId: listing.id,
+          startDate: start,
+          endDate: end,
+          status: "PENDING",
+        },
+        select: {
+          id: true,
+          listingId: true,
+          guestId: true,
+          startDate: true,
+          endDate: true,
+          totalPrice: true,
+          currency: true,
+          status: true,
+        },
+      });
+
+      if (existing) {
+        return existing;
+      }
+
+      // Créer la réservation dans la transaction
+      return await tx.booking.create({
+        data: {
+          listingId: listing.id,
+          guestId: me.id,
+          startDate: start,
+          endDate: end,
+          totalPrice,
+          currency: listing.currency,
+          status: "PENDING",
+          pricingMode: listing.pricingMode,
+        },
+        select: {
+          id: true,
+          listingId: true,
+          guestId: true,
+          startDate: true,
+          endDate: true,
+          totalPrice: true,
+          currency: true,
+          status: true,
+        },
+      });
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "DATES_NOT_AVAILABLE") {
+      return NextResponse.json(
+        { error: "DATES_NOT_AVAILABLE" },
+        { status: 409 },
+      );
+    }
+    throw error;
+  }
 
   // Applique les frais Lok'Room et met à jour la booking
   const { fees, hostUserId } = await applyFeesToBooking(booking.id);
