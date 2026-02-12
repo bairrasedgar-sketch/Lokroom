@@ -5,9 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useTranslation } from "@/hooks/useTranslation";
-import {
 import { logger } from "@/lib/logger";
-
+import {
   CreditCardIcon,
   BanknotesIcon,
   ArrowUpIcon,

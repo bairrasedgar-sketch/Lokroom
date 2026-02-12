@@ -3,9 +3,8 @@
  * Validation stricte des URLs pour éviter les attaques XSS/injection
  */
 import { prisma } from "@/lib/db";
-import {
 import { logger } from "@/lib/logger";
-
+import {
   secureJsonResponse,
   secureErrorResponse,
   requireAuth,

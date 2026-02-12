@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import {
 import { logger } from "@/lib/logger";
-
+import {
   translateText,
   detectLanguage,
   getSupportedLanguages,

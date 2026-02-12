@@ -3,9 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
-import {
 import { logger } from "@/lib/logger";
-
+import {
   sendPushNotificationToMultiple,
   createNotificationPayload,
   type PushSubscriptionData,
