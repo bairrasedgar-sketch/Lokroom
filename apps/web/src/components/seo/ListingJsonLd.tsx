@@ -1,4 +1,5 @@
 import Script from "next/script";
+import { secureJsonLd } from "@/lib/security/json-ld";
 
 interface ListingJsonLdProps {
   listing: {
@@ -246,25 +247,25 @@ export default function ListingJsonLd({ listing }: ListingJsonLdProps) {
       <Script
         id="lodging-jsonld"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(lodgingJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: secureJsonLd(lodgingJsonLd) }}
         strategy="afterInteractive"
       />
       <Script
         id="place-jsonld"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(placeJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: secureJsonLd(placeJsonLd) }}
         strategy="afterInteractive"
       />
       <Script
         id="breadcrumb-jsonld"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: secureJsonLd(breadcrumbJsonLd) }}
         strategy="afterInteractive"
       />
       <Script
         id="faq-jsonld"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: secureJsonLd(faqJsonLd) }}
         strategy="afterInteractive"
       />
     </>

@@ -1,4 +1,5 @@
 import Script from "next/script";
+import { secureJsonLd } from "@/lib/security/json-ld";
 
 interface SearchPageJsonLdProps {
   searchParams?: {
@@ -162,19 +163,19 @@ export default function SearchPageJsonLd({
       <Script
         id="search-results-jsonld"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(searchResultsJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: secureJsonLd(searchResultsJsonLd) }}
         strategy="afterInteractive"
       />
       <Script
         id="breadcrumb-search-jsonld"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: secureJsonLd(breadcrumbJsonLd) }}
         strategy="afterInteractive"
       />
       <Script
         id="website-jsonld"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: secureJsonLd(websiteJsonLd) }}
         strategy="afterInteractive"
       />
     </>

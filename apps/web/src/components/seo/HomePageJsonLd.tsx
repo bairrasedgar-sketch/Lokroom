@@ -1,4 +1,5 @@
 import Script from "next/script";
+import { secureJsonLd } from "@/lib/security/json-ld";
 
 interface HomePageJsonLdProps {
   stats?: {
@@ -179,25 +180,25 @@ export default function HomePageJsonLd({ stats }: HomePageJsonLdProps) {
       <Script
         id="organization-jsonld"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: secureJsonLd(organizationJsonLd) }}
         strategy="afterInteractive"
       />
       <Script
         id="website-home-jsonld"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: secureJsonLd(websiteJsonLd) }}
         strategy="afterInteractive"
       />
       <Script
         id="webpage-jsonld"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: secureJsonLd(webPageJsonLd) }}
         strategy="afterInteractive"
       />
       <Script
         id="localbusiness-jsonld"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: secureJsonLd(localBusinessJsonLd) }}
         strategy="afterInteractive"
       />
       {aggregateOfferJsonLd && (
@@ -205,7 +206,7 @@ export default function HomePageJsonLd({ stats }: HomePageJsonLdProps) {
           id="aggregate-offer-jsonld"
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(aggregateOfferJsonLd),
+            __html: secureJsonLd(aggregateOfferJsonLd),
           }}
           strategy="afterInteractive"
         />
@@ -213,7 +214,7 @@ export default function HomePageJsonLd({ stats }: HomePageJsonLdProps) {
       <Script
         id="breadcrumb-home-jsonld"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: secureJsonLd(breadcrumbJsonLd) }}
         strategy="afterInteractive"
       />
     </>
