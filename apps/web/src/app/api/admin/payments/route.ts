@@ -5,21 +5,23 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdminPermission } from "@/lib/admin-auth";
+import { parsePageParam, parseLimitParam, parseDaysParam } from "@/lib/validation/params";
 
 export async function GET(request: Request) {
   const auth = await requireAdminPermission("payments:view");
   if ("error" in auth) return auth.error;
 
   const { searchParams } = new URL(request.url);
-  const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "20");
+  // 🔒 SÉCURITÉ : Validation sécurisée des paramètres de pagination
+  const page = parsePageParam(searchParams.get("page"));
+  const limit = parseLimitParam(searchParams.get("limit"), 20, 100);
   const status = searchParams.get("status");
-  const period = searchParams.get("period") || "30";
+  const period = parseDaysParam(searchParams.get("period"), 30, 365);
 
   try {
     const skip = (page - 1) * limit;
     const startDate = new Date();
-    startDate.setDate(startDate.getDate() - parseInt(period));
+    startDate.setDate(startDate.getDate() - period);
 
     // Statistiques globales
     const [

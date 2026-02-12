@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/api-auth";
 import { jsonError } from "@/lib/api-error";
 import { cache, CacheKeys, CacheTTL } from "@/lib/redis/cache-safe";
+import { parsePageParam, parseLimitParam } from "@/lib/validation/params";
 
 export const dynamic = "force-dynamic";
 
@@ -21,8 +22,9 @@ export async function GET(req: NextRequest) {
   }
 
   const searchParams = req.nextUrl.searchParams;
-  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-  const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get("pageSize") || "20", 10)));
+  // 🔒 SÉCURITÉ : Validation sécurisée des paramètres de pagination
+  const page = parsePageParam(searchParams.get("page"));
+  const pageSize = parseLimitParam(searchParams.get("pageSize"), 20, 100);
 
   // Clé de cache incluant la pagination
   const cacheKey = `${CacheKeys.bookingsByUser(me.id)}:page:${page}:size:${pageSize}`;

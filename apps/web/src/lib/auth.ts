@@ -9,9 +9,16 @@ import { sendEmail, magicLinkEmail } from "@/lib/email";
 import { verifyPassword } from "@/lib/password";
 import { jwtVerify } from "jose";
 
-// Cle pour les tokens temporaires 2FA et verification email
+// 🔒 SÉCURITÉ : Clé pour les tokens temporaires 2FA et verification email
+// CRITICAL: Fail fast si la variable d'environnement n'est pas définie
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error(
+    "NEXTAUTH_SECRET is required. Please set it in your .env file."
+  );
+}
+
 const AUTH_TOKEN_SECRET = new TextEncoder().encode(
-  process.env.NEXTAUTH_SECRET || "fallback-secret-key-for-2fa"
+  process.env.NEXTAUTH_SECRET
 );
 
 /**

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { generateBadgeId } from "@/lib/crypto/random";
 
 // POST /api/badges/check - Vérifier et attribuer automatiquement les badges
 export async function POST(request: Request) {
@@ -127,7 +128,7 @@ export async function POST(request: Request) {
     if (newBadges.length > 0) {
       await prisma.userBadge.createMany({
         data: newBadges.map((type) => ({
-          id: `badge_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          id: generateBadgeId(), // 🔒 SÉCURITÉ : Utilise crypto au lieu de Math.random()
           userId,
           type: type as typeof existingTypes[number],
         })),

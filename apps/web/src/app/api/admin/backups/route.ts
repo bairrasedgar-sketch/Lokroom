@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdminPermission } from "@/lib/admin-auth";
+import { parsePageParam, parseLimitParam } from "@/lib/validation/params";
 import { exec } from "child_process";
 import { promisify } from "util";
 
@@ -21,8 +22,9 @@ export async function GET(request: NextRequest) {
 
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "20");
+    // 🔒 SÉCURITÉ : Validation sécurisée des paramètres de pagination
+    const page = parsePageParam(searchParams.get("page"));
+    const limit = parseLimitParam(searchParams.get("limit"), 20, 100);
     const type = searchParams.get("type") as "DAILY" | "WEEKLY" | "MONTHLY" | "MANUAL" | null;
     const status = searchParams.get("status") as "PENDING" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "DELETED" | null;
 

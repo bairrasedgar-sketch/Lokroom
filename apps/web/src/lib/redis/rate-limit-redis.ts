@@ -7,6 +7,7 @@
 
 import { cache } from "./cache-safe";
 import { CacheKeys } from "./keys";
+import { generateRateLimitToken } from "@/lib/crypto/random";
 
 export interface RateLimitResult {
   allowed: boolean;
@@ -72,8 +73,8 @@ export async function checkRateLimitSlidingWindow(
     // Compter les requêtes dans la fenêtre
     pipeline.zcard(key);
 
-    // Ajouter la requête actuelle
-    pipeline.zadd(key, now, `${now}-${Math.random()}`);
+    // Ajouter la requête actuelle avec token sécurisé
+    pipeline.zadd(key, now, generateRateLimitToken());
 
     // Définir l'expiration de la clé
     pipeline.expire(key, Math.ceil(windowMs / 1000));

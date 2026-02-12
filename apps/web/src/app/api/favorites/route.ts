@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { parsePageParam, parseLimitParam } from "@/lib/validation/params";
 
 export const dynamic = "force-dynamic";
 
@@ -12,8 +13,9 @@ export async function GET(req: NextRequest) {
   }
 
   const searchParams = req.nextUrl.searchParams;
-  const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
-  const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get("pageSize") || "20", 10)));
+  // 🔒 SÉCURITÉ : Validation sécurisée des paramètres de pagination
+  const page = parsePageParam(searchParams.get("page"));
+  const pageSize = parseLimitParam(searchParams.get("pageSize"), 20, 100);
 
   const [favorites, total] = await Promise.all([
     prisma.favorite.findMany({

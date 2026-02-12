@@ -8,10 +8,19 @@ import { prisma } from "@/lib/db";
 
 export async function POST(req: NextRequest) {
   try {
-    // Vérifier l'authentification du cron job
-    const authHeader = req.headers.get("authorization");
-    const cronSecret = process.env.CRON_SECRET || "dev-secret";
+    // 🔒 SÉCURITÉ : Vérifier l'authentification du cron job
+    // CRITICAL: Fail fast si CRON_SECRET n'est pas défini
+    const cronSecret = process.env.CRON_SECRET;
 
+    if (!cronSecret) {
+      console.error("[Cron] CRON_SECRET is not defined in environment variables");
+      return NextResponse.json(
+        { error: "Configuration error" },
+        { status: 500 }
+      );
+    }
+
+    const authHeader = req.headers.get("authorization");
     if (authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }

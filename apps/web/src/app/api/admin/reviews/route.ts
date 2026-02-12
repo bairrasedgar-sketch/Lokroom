@@ -7,15 +7,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdminPermission, logAdminAction } from "@/lib/admin-auth";
+import { parsePageParam, parseLimitParam, parseRatingParam } from "@/lib/validation/params";
 
 export async function GET(request: Request) {
   const auth = await requireAdminPermission("bookings:view");
   if ("error" in auth) return auth.error;
 
   const { searchParams } = new URL(request.url);
-  const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "20");
-  const rating = searchParams.get("rating"); // 1, 2, 3, 4, 5
+  // 🔒 SÉCURITÉ : Validation sécurisée des paramètres de pagination
+  const page = parsePageParam(searchParams.get("page"));
+  const limit = parseLimitParam(searchParams.get("limit"), 20, 100);
+  const ratingParam = searchParams.get("rating"); // 1, 2, 3, 4, 5
   // flagged parameter reserved for future use
   const search = searchParams.get("search");
   const sortBy = searchParams.get("sortBy") || "recent"; // recent, rating_low, rating_high
@@ -26,8 +28,12 @@ export async function GET(request: Request) {
     // Build where clause
     const where: Record<string, unknown> = {};
 
-    if (rating) {
-      where.rating = parseInt(rating);
+    if (ratingParam) {
+      // 🔒 SÉCURITÉ : Validation sécurisée du paramètre rating
+      const rating = parseRatingParam(ratingParam);
+      if (rating !== null) {
+        where.rating = rating;
+      }
     }
 
     if (search) {

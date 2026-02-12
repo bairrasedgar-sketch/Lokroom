@@ -19,13 +19,19 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(req: NextRequest) {
   try {
+    // 🔒 SÉCURITÉ : Vérifier que l'utilisateur est admin
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // TODO: Vérifier que l'utilisateur est admin
-    // Pour l'instant, on autorise tous les utilisateurs authentifiés
+    // Vérifier le rôle admin
+    if ((session.user as any).role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Forbidden - Admin access required" },
+        { status: 403 }
+      );
+    }
 
     const body = await req.json().catch(() => ({}));
     const pattern = body.pattern;
@@ -46,7 +52,10 @@ export async function POST(req: NextRequest) {
       });
     }
   } catch (error) {
-    console.error("[Cache Clear] Error:", error);
+    // Note: Utiliser un logger approprié en production (Sentry, Winston, etc.)
+    if (process.env.NODE_ENV === "development") {
+      console.error("[Cache Clear] Error:", error);
+    }
     return NextResponse.json(
       { error: "Failed to clear cache" },
       { status: 500 }

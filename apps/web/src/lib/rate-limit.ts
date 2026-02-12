@@ -6,6 +6,7 @@
  */
 
 import { Redis } from "@upstash/redis";
+import { generateRateLimitToken } from "@/lib/crypto/random";
 
 const WINDOW_MS = 60_000; // 1 minute
 const MAX_REQUESTS = 20;
@@ -59,8 +60,8 @@ async function rateLimitRedis(
     // Compter les requêtes dans la fenêtre
     pipeline.zcard(redisKey);
 
-    // Ajouter la requête actuelle
-    pipeline.zadd(redisKey, { score: now, member: `${now}-${Math.random()}` });
+    // Ajouter la requête actuelle avec token sécurisé
+    pipeline.zadd(redisKey, { score: now, member: generateRateLimitToken() });
 
     // Définir l'expiration de la clé
     pipeline.expire(redisKey, Math.ceil(windowMs / 1000));

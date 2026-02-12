@@ -243,14 +243,30 @@ export function generateCSP(config: CspConfig): string {
 }
 
 /**
- * Génère un nonce CSP aléatoire
+ * Génère un nonce CSP aléatoire cryptographiquement sécurisé
+ * 🔒 SÉCURITÉ : Utilise crypto.randomBytes au lieu de Math.random()
  */
 export function generateNonce(): string {
+  // Node.js environment (server-side)
+  if (typeof require !== "undefined") {
+    const { randomBytes } = require("crypto");
+    return randomBytes(24).toString("base64");
+  }
+
+  // Browser environment avec crypto.randomUUID
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
     return crypto.randomUUID();
   }
-  // Fallback pour les environnements sans crypto.randomUUID
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+
+  // Browser environment avec crypto.getRandomValues
+  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+    const array = new Uint8Array(24);
+    crypto.getRandomValues(array);
+    return btoa(String.fromCharCode(...array));
+  }
+
+  // Fallback: Fail fast si aucune méthode sécurisée n'est disponible
+  throw new Error("No secure random number generator available");
 }
 
 /**

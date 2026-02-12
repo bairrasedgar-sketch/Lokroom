@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { generateAvailabilityId } from "@/lib/crypto/random";
 
 // GET /api/host/calendar - Récupérer le calendrier d'une annonce
 export async function GET(request: Request) {
@@ -235,7 +236,7 @@ export async function POST(request: Request) {
               note: note ?? undefined,
             },
             create: {
-              id: `dp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+              id: generateAvailabilityId(), // 🔒 SÉCURITÉ : Utilise crypto au lieu de Math.random()
               listingId,
               date: new Date(date),
               dailyPrice,

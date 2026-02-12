@@ -209,6 +209,7 @@ function generateCSP(isDev: boolean): string {
   }
 
   // Production - CSP stricte pour score A+
+  // 🔒 SÉCURITÉ : CSP renforcée sans unsafe-eval
   const s3Host = process.env.S3_PUBLIC_BASE
     ? new URL(process.env.S3_PUBLIC_BASE).host
     : "";
@@ -216,7 +217,9 @@ function generateCSP(isDev: boolean): string {
   const cspDirectives = [
     "default-src 'self'",
     // Scripts: Self + Maps + Stripe + Google Analytics
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://maps.gstatic.com https://js.stripe.com https://www.googletagmanager.com https://www.google-analytics.com",
+    // Note: 'unsafe-inline' nécessaire pour Next.js inline scripts
+    // TODO: Remplacer par nonces pour une sécurité maximale
+    "script-src 'self' 'unsafe-inline' https://maps.googleapis.com https://maps.gstatic.com https://js.stripe.com https://www.googletagmanager.com https://www.google-analytics.com",
     // Styles: Self + Inline (nécessaire pour Tailwind) + Google Fonts
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     // Images: Self + Data URLs + Blob + CDNs externes

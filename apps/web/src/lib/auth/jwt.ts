@@ -1,8 +1,16 @@
 // apps/web/src/lib/auth/jwt.ts
 import { SignJWT, jwtVerify } from "jose";
 
+// 🔒 SÉCURITÉ : Clé pour les JWT
+// CRITICAL: Fail fast si la variable d'environnement n'est pas définie
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error(
+    "NEXTAUTH_SECRET is required. Please set it in your .env file."
+  );
+}
+
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.NEXTAUTH_SECRET || "fallback-secret-key"
+  process.env.NEXTAUTH_SECRET
 );
 
 export interface MobileAuthPayload {

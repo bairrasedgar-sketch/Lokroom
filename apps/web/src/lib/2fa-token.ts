@@ -3,9 +3,16 @@
 
 import { SignJWT, jwtVerify } from "jose";
 
-// Cle pour les tokens temporaires 2FA
+// 🔒 SÉCURITÉ : Clé pour les tokens temporaires 2FA
+// CRITICAL: Fail fast si la variable d'environnement n'est pas définie
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error(
+    "NEXTAUTH_SECRET is required. Please set it in your .env file."
+  );
+}
+
 const TWO_FACTOR_SECRET = new TextEncoder().encode(
-  process.env.NEXTAUTH_SECRET || "fallback-secret-key-for-2fa"
+  process.env.NEXTAUTH_SECRET
 );
 
 // Duree de validite du token temporaire (5 minutes)

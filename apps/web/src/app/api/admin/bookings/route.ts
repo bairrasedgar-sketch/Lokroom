@@ -5,6 +5,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdminPermission } from "@/lib/admin-auth";
+import { parsePageParam, parseLimitParam } from "@/lib/validation/params";
 import type { Prisma } from "@prisma/client";
 
 export async function GET(request: Request) {
@@ -13,8 +14,9 @@ export async function GET(request: Request) {
 
   try {
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const pageSize = parseInt(searchParams.get("pageSize") || "20");
+    // 🔒 SÉCURITÉ : Validation sécurisée des paramètres de pagination
+    const page = parsePageParam(searchParams.get("page"));
+    const pageSize = parseLimitParam(searchParams.get("pageSize"), 20, 100);
     const search = searchParams.get("search") || "";
     const status = searchParams.get("status") || "";
     const dateFrom = searchParams.get("dateFrom");

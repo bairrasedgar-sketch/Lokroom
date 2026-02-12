@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { parseLimitParam, parsePageParam } from "@/lib/validation/params";
 
 // GET /api/notifications - Get user notifications
 export async function GET(request: Request) {
@@ -12,8 +13,9 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get("limit") || "20");
-    const offset = parseInt(searchParams.get("offset") || "0");
+    // 🔒 SÉCURITÉ : Validation sécurisée des paramètres de pagination
+    const limit = parseLimitParam(searchParams.get("limit"), 20, 100);
+    const offset = parsePageParam(searchParams.get("offset"), 0);
     const unreadOnly = searchParams.get("unread") === "true";
 
     const where = {
@@ -41,7 +43,10 @@ export async function GET(request: Request) {
       hasMore: offset + notifications.length < total,
     });
   } catch (error) {
-    console.error("Error fetching notifications:", error);
+    // Note: Utiliser un logger approprié en production (Sentry, Winston, etc.)
+    if (process.env.NODE_ENV === "development") {
+      console.error("Error fetching notifications:", error);
+    }
     return NextResponse.json(
       { error: "Erreur lors de la récupération des notifications" },
       { status: 500 }

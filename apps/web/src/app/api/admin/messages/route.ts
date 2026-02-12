@@ -7,14 +7,16 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireAdminPermission, logAdminAction } from "@/lib/admin-auth";
 import { sendSupportMessage } from "@/lib/email";
+import { parsePageParam, parseLimitParam } from "@/lib/validation/params";
 
 export async function GET(request: Request) {
   const auth = await requireAdminPermission("users:view");
   if ("error" in auth) return auth.error;
 
   const { searchParams } = new URL(request.url);
-  const page = parseInt(searchParams.get("page") || "1");
-  const limit = parseInt(searchParams.get("limit") || "20");
+  // 🔒 SÉCURITÉ : Validation sécurisée des paramètres de pagination
+  const page = parsePageParam(searchParams.get("page"));
+  const limit = parseLimitParam(searchParams.get("limit"), 20, 100);
   // type parameter reserved for future use
 
   try {

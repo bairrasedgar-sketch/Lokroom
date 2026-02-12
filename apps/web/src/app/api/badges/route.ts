@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { badgeInfo, BADGE_TYPES } from "@/lib/badges";
+import { generateBadgeId } from "@/lib/crypto/random";
 
 // GET /api/badges - Récupérer les badges d'un utilisateur
 export async function GET(request: Request) {
@@ -78,7 +79,7 @@ export async function POST(request: Request) {
         metadata: metadata || undefined,
       },
       create: {
-        id: `badge_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: generateBadgeId(), // 🔒 SÉCURITÉ : Utilise crypto au lieu de Math.random()
         userId,
         type: badgeType,
         expiresAt: expiresAt ? new Date(expiresAt) : null,

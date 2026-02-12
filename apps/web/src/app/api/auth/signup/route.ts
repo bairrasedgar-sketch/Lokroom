@@ -24,9 +24,16 @@ const SIGNUP_WINDOW_MS = 15 * 60_000;
 // Durée de validité du code: 15 minutes
 const CODE_EXPIRY_MINUTES = 15;
 
-// Clé pour signer les tokens
+// 🔒 SÉCURITÉ : Clé pour signer les tokens
+// CRITICAL: Fail fast si la variable d'environnement n'est pas définie
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error(
+    "NEXTAUTH_SECRET is required. Please set it in your .env file."
+  );
+}
+
 const AUTH_TOKEN_SECRET = new TextEncoder().encode(
-  process.env.NEXTAUTH_SECRET || "fallback-secret-key"
+  process.env.NEXTAUTH_SECRET
 );
 
 /**
