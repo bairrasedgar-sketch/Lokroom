@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import { getLocalStorageItem, setLocalStorageItem } from "./useLocalStorage";
 
 export interface ChatMessage {
   id: string;
@@ -36,9 +37,10 @@ export function useChatbot(): UseChatbotReturn {
     if (hasInitialized.current) return;
     hasInitialized.current = true;
 
+    // 🔒 SÉCURITÉ : Utilisation de getLocalStorageItem pour éviter les erreurs SSR
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      const storedOpen = localStorage.getItem(STORAGE_OPEN_KEY);
+      const stored = getLocalStorageItem<string>(STORAGE_KEY, "");
+      const storedOpen = getLocalStorageItem<string>(STORAGE_OPEN_KEY, "false");
 
       if (stored) {
         const parsed = JSON.parse(stored);
@@ -65,7 +67,9 @@ export function useChatbot(): UseChatbotReturn {
         setIsOpen(true);
       }
     } catch (error) {
-      console.error("Error loading chat messages:", error);
+      if (process.env.NODE_ENV === "development") {
+        console.error("Error loading chat messages:", error);
+      }
     }
   }, []);
 
@@ -73,22 +77,16 @@ export function useChatbot(): UseChatbotReturn {
   useEffect(() => {
     if (!hasInitialized.current) return;
 
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
-    } catch (error) {
-      console.error("Error saving chat messages:", error);
-    }
+    // 🔒 SÉCURITÉ : Utilisation de setLocalStorageItem pour éviter les erreurs SSR
+    setLocalStorageItem(STORAGE_KEY, JSON.stringify(messages));
   }, [messages]);
 
   // Save open state
   useEffect(() => {
     if (!hasInitialized.current) return;
 
-    try {
-      localStorage.setItem(STORAGE_OPEN_KEY, String(isOpen));
-    } catch (error) {
-      console.error("Error saving chat open state:", error);
-    }
+    // 🔒 SÉCURITÉ : Utilisation de setLocalStorageItem pour éviter les erreurs SSR
+    setLocalStorageItem(STORAGE_OPEN_KEY, String(isOpen));
   }, [isOpen]);
 
   const sendMessage = useCallback(

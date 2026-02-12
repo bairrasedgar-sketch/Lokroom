@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useIsClient } from "@/hooks/useLocalStorage";
 import type { Currency } from "@/lib/currency";
 
 const SUPPORTED: Currency[] = ["EUR", "CAD", "USD", "CNY", "GBP"];
@@ -11,8 +12,12 @@ export default function CurrencyNotice() {
   const router = useRouter();
   const [visible, setVisible] = useState(false);
   const [detected, setDetected] = useState<Currency>("EUR");
+  const isClient = useIsClient();
 
   useEffect(() => {
+    // 🔒 SÉCURITÉ : Check SSR - Ne pas accéder à localStorage côté serveur
+    if (!isClient) return;
+
     // déjà masqué ?
     if (localStorage.getItem("currency-notice-dismissed") === "1") return;
 
@@ -27,7 +32,7 @@ export default function CurrencyNotice() {
     }
 
     setVisible(true);
-  }, []);
+  }, [isClient]);
 
   if (!visible) return null;
 
@@ -60,7 +65,10 @@ export default function CurrencyNotice() {
           ))}
           <button
             onClick={() => {
-              localStorage.setItem("currency-notice-dismissed", "1");
+              // 🔒 SÉCURITÉ : Check SSR avant d'accéder à localStorage
+              if (typeof window !== "undefined") {
+                localStorage.setItem("currency-notice-dismissed", "1");
+              }
               setVisible(false);
             }}
             className="rounded border px-2 py-1"

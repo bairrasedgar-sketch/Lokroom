@@ -773,6 +773,7 @@ export default function NewListingPage() {
 
   // Load drafts from localStorage - show modal if drafts exist
   useEffect(() => {
+    // 🔒 SÉCURITÉ : Check SSR - Ne pas accéder à localStorage côté serveur
     // Attendre d'avoir l'email de l'utilisateur pour isoler les brouillons
     if (typeof window === "undefined" || !DRAFTS_KEY) return;
 
@@ -807,7 +808,10 @@ export default function NewListingPage() {
 
           // Update localStorage with only valid drafts
           if (validDrafts.length !== parsed.length) {
-            localStorage.setItem(DRAFTS_KEY, JSON.stringify(validDrafts));
+            // 🔒 SÉCURITÉ : Check SSR avant d'écrire
+            if (typeof window !== "undefined") {
+              localStorage.setItem(DRAFTS_KEY, JSON.stringify(validDrafts));
+            }
           }
 
           if (validDrafts.length > 0) {
@@ -816,8 +820,13 @@ export default function NewListingPage() {
           }
         }
       } catch (e) {
-        console.error("Error loading drafts:", e);
-        localStorage.removeItem(DRAFTS_KEY);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Error loading drafts:", e);
+        }
+        // 🔒 SÉCURITÉ : Check SSR avant de supprimer
+        if (typeof window !== "undefined") {
+          localStorage.removeItem(DRAFTS_KEY);
+        }
       }
     }
   }, [DRAFTS_KEY]);
@@ -1002,9 +1011,12 @@ export default function NewListingPage() {
       // Get existing drafts from localStorage
       let existingDrafts: typeof availableDrafts = [];
       try {
-        const stored = localStorage.getItem(DRAFTS_KEY);
-        if (stored) {
-          existingDrafts = JSON.parse(stored);
+        // 🔒 SÉCURITÉ : Check SSR avant de lire
+        if (typeof window !== "undefined") {
+          const stored = localStorage.getItem(DRAFTS_KEY);
+          if (stored) {
+            existingDrafts = JSON.parse(stored);
+          }
         }
       } catch {
         existingDrafts = [];
@@ -1018,7 +1030,10 @@ export default function NewListingPage() {
         existingDrafts.push(newDraft);
       }
 
-      localStorage.setItem(DRAFTS_KEY, JSON.stringify(existingDrafts));
+      // 🔒 SÉCURITÉ : Check SSR avant d'écrire
+      if (typeof window !== "undefined") {
+        localStorage.setItem(DRAFTS_KEY, JSON.stringify(existingDrafts));
+      }
       setAvailableDrafts(existingDrafts);
       setLastSaved(new Date());
     }

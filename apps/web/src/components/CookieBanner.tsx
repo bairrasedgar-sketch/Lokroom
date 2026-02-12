@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useLocalStorage, useIsClient } from "@/hooks/useLocalStorage";
 
 type CookieConsent = {
   necessary: boolean;
@@ -22,8 +23,12 @@ export function CookieBanner() {
     functional: false,
     marketing: false,
   });
+  const isClient = useIsClient();
 
   useEffect(() => {
+    // 🔒 SÉCURITÉ : Check SSR - Ne pas accéder à localStorage côté serveur
+    if (!isClient) return;
+
     // Check if consent was already given
     const savedConsent = localStorage.getItem(COOKIE_CONSENT_KEY);
     if (savedConsent) {
@@ -40,7 +45,7 @@ export function CookieBanner() {
     // Show banner after a short delay for better UX
     const timer = setTimeout(() => setIsVisible(true), 1000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [isClient]);
 
   // Listen for settings open event (from cookies page)
   useEffect(() => {
@@ -53,14 +58,17 @@ export function CookieBanner() {
   }, []);
 
   const saveConsent = useCallback((newConsent: CookieConsent) => {
-    localStorage.setItem(
-      COOKIE_CONSENT_KEY,
-      JSON.stringify({
-        version: COOKIE_CONSENT_VERSION,
-        consent: newConsent,
-        timestamp: new Date().toISOString(),
-      })
-    );
+    // 🔒 SÉCURITÉ : Check SSR avant d'accéder à localStorage
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        COOKIE_CONSENT_KEY,
+        JSON.stringify({
+          version: COOKIE_CONSENT_VERSION,
+          consent: newConsent,
+          timestamp: new Date().toISOString(),
+        })
+      );
+    }
     setConsent(newConsent);
     setIsVisible(false);
     setShowSettings(false);

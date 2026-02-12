@@ -117,6 +117,7 @@ export default function HostListingsPage() {
   }, []);
 
   const loadDrafts = useCallback(() => {
+    // 🔒 SÉCURITÉ : Check SSR - Ne pas accéder à localStorage côté serveur
     if (typeof window === "undefined" || !DRAFTS_KEY) return;
     const savedDrafts = localStorage.getItem(DRAFTS_KEY);
     if (savedDrafts) {
@@ -134,7 +135,10 @@ export default function HostListingsPage() {
 
           // Update localStorage if some drafts were filtered out
           if (validDrafts.length !== parsed.length) {
-            localStorage.setItem(DRAFTS_KEY, JSON.stringify(validDrafts));
+            // 🔒 SÉCURITÉ : Check SSR avant d'écrire
+            if (typeof window !== "undefined") {
+              localStorage.setItem(DRAFTS_KEY, JSON.stringify(validDrafts));
+            }
           }
 
           setDrafts(validDrafts);
@@ -162,10 +166,12 @@ export default function HostListingsPage() {
   }, [status, router, fetchStats, loadDrafts]);
 
   function deleteDraft(draftId: string) {
+    // 🔒 SÉCURITÉ : Check SSR avant d'accéder à localStorage
     if (typeof window !== "undefined") {
       const updatedDrafts = drafts.filter(d => d.id !== draftId);
       localStorage.setItem(DRAFTS_KEY, JSON.stringify(updatedDrafts));
       setDrafts(updatedDrafts);
+      toast.success("Brouillon supprimé");
     }
   }
 
