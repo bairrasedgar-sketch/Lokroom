@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import type { Session } from "next-auth";
 
 /**
  * Verify that the authenticated user owns the resource
@@ -12,7 +13,7 @@ export async function verifyOwnership(
   req: NextRequest,
   resourceType: "listing" | "booking" | "message" | "review" | "conversation",
   resourceId: string
-): Promise<{ session: any; error?: NextResponse }> {
+): Promise<{ session: Session | null; error?: NextResponse }> {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
@@ -110,7 +111,10 @@ export async function verifyOwnership(
 
     return { session };
   } catch (error) {
-    console.error(`Error verifying ownership for ${resourceType}:`, error);
+    // Note: Utiliser un logger approprié en production (Sentry, Winston, etc.)
+    if (process.env.NODE_ENV === "development") {
+      console.error(`Error verifying ownership for ${resourceType}:`, error);
+    }
     return {
       session,
       error: NextResponse.json(

@@ -30,7 +30,13 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    // 🔒 SÉCURITÉ : Type sécurisé pour les filtres Prisma
+    type BackupWhereInput = {
+      type?: "DAILY" | "WEEKLY" | "MONTHLY" | "MANUAL";
+      status?: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "DELETED";
+    };
+
+    const where: BackupWhereInput = {};
     if (type) where.type = type;
     if (status) where.status = status;
 
