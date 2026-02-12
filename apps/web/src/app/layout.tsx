@@ -11,7 +11,6 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SentryErrorBoundary } from "@/components/SentryErrorBoundary";
 import Analytics from "@/components/Analytics";
 import ChatWidget from "@/components/chat/ChatWidget";
-import NotificationPermission from "@/components/notifications/NotificationPermission";
 import ServiceWorkerRegistration from "@/components/ServiceWorkerRegistration";
 
 const SUPPORTED_LOCALES = ["fr", "en", "es", "de", "it", "pt", "zh"] as const;
@@ -164,7 +163,6 @@ export default async function RootLayout({
               <ConditionalFooter />
               <ConditionalCookieBanner />
               <ChatWidget />
-              <NotificationPermission />
             </Providers>
           </ErrorBoundary>
         </SentryErrorBoundary>
