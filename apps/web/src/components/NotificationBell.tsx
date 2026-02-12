@@ -83,7 +83,7 @@ export default function NotificationBell() {
   const { notifications: swrNotifications, loading: isLoading, mutate: refreshNotifications } = useNotifications();
 
   const notifications = swrNotifications || [];
-  const unreadCount = notifications.filter((n: any) => !n.read).length;
+  const unreadCount = notifications.filter((n: Notification) => !n.read).length;
 
   // Fermer le dropdown quand on clique en dehors
   useEffect(() => {
@@ -116,7 +116,7 @@ export default function NotificationBell() {
   // Marquer toutes comme lues
   async function markAllAsRead() {
     try {
-      const unreadIds = notifications.filter((n: any) => !n.read).map((n: any) => n.id);
+      const unreadIds = notifications.filter((n: Notification) => !n.read).map((n: Notification) => n.id);
       if (unreadIds.length === 0) return;
 
       await fetch("/api/notifications", {
@@ -210,7 +210,7 @@ export default function NotificationBell() {
               </div>
             ) : (
               <div>
-                {notifications.map((notification: any) => (
+                {notifications.map((notification: Notification) => (
                   <div
                     key={notification.id}
                     className={`relative ${!notification.read ? "bg-blue-50/50" : ""}`}
