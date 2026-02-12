@@ -80,45 +80,47 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const total = await prisma.booking.count({ where });
-
-  const bookings = await prisma.booking.findMany({
-    where,
-    orderBy: {
-      startDate: "desc",
-    },
-    skip: (page - 1) * pageSize,
-    take: pageSize,
-    select: {
-      id: true,
-      startDate: true,
-      endDate: true,
-      totalPrice: true,
-      currency: true,
-      status: true,
-      createdAt: true,
-      guest: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
+  // 🚀 PERFORMANCE : Requêtes parallèles au lieu de séquentielles
+  const [total, bookings] = await Promise.all([
+    prisma.booking.count({ where }),
+    prisma.booking.findMany({
+      where,
+      orderBy: {
+        startDate: "desc",
       },
-      listing: {
-        select: {
-          id: true,
-          title: true,
-          images: {
-            select: {
-              id: true,
-              url: true,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      select: {
+        id: true,
+        startDate: true,
+        endDate: true,
+        totalPrice: true,
+        currency: true,
+        status: true,
+        createdAt: true,
+        guest: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        listing: {
+          select: {
+            id: true,
+            title: true,
+            images: {
+              select: {
+                id: true,
+                url: true,
+              },
+              take: 1,
             },
-            take: 1,
           },
         },
       },
-    },
-  });
+    })
+  ]);
 
   return NextResponse.json({
     page,
