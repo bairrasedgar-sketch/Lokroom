@@ -55,15 +55,12 @@ export async function GET(request: Request) {
       };
     }
 
-    // Stats pour les onglets
-    const [pending, reportedCount, total] = await Promise.all([
+    // 🚀 PERFORMANCE : Requêtes parallèles (stats + listings)
+    const [pending, reportedCount, total, listings] = await Promise.all([
       prisma.listingModeration.count({ where: { status: "PENDING_REVIEW" } }),
       prisma.listingModeration.count({ where: { reportCount: { gt: 0 } } }),
       prisma.listing.count({ where }),
-    ]);
-
-    // Récupérer les annonces
-    const listings = await prisma.listing.findMany({
+      prisma.listing.findMany({
       where,
       select: {
         id: true,
@@ -110,7 +107,8 @@ export async function GET(request: Request) {
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * pageSize,
       take: pageSize,
-    });
+      })
+    ]);
 
     // Transformer pour inclure les champs de modération
     const listingsTransformed = listings.map((listing) => ({
