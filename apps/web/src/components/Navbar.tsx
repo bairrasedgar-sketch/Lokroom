@@ -691,7 +691,7 @@ export default function Navbar() {
                     if (window.location.pathname === "/") {
                       window.dispatchEvent(new CustomEvent("openSearchModal"));
                     } else {
-                      window.location.href = "/?search=open";
+                      router.push("/?search=open");
                     }
                   }
                 }}
@@ -1005,7 +1005,7 @@ export default function Navbar() {
                   type="button"
                   onClick={() => {
                     setAuthModalOpen(false);
-                    window.location.href = "/login";
+                    router.push("/login");
                   }}
                   aria-label="Continuer avec l'adresse e-mail"
                   className="flex w-full items-center justify-start gap-3 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium hover:bg-gray-50"

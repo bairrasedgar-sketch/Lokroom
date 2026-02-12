@@ -786,7 +786,7 @@ function SecurityTabContent({ t, router }: { t: AccountTranslations; router: Ret
 }
 
 // ---------- Contenu Données personnelles AMÉLIORÉ ----------
-function PersonalTabContent({ t }: { t: AccountTranslations }) {
+function PersonalTabContent({ t, router }: { t: AccountTranslations; router: ReturnType<typeof useRouter> }) {
   const pT = t.personal;
   
   const extT = t.personalExtended || {} as any;
@@ -1186,7 +1186,7 @@ function PersonalTabContent({ t }: { t: AccountTranslations }) {
             <button
               type="button"
               onClick={() => {
-                window.location.href = "/messages?support=true&autoMessage=changement%20d%27adresse%20mail";
+                router.push("/messages?support=true&autoMessage=changement%20d%27adresse%20mail");
               }}
               className="text-xs font-medium text-gray-700 hover:text-gray-900 hover:underline flex-shrink-0"
             >
@@ -2991,7 +2991,7 @@ function TabContent({
 }) {
   switch (active) {
     case "personal":
-      return <PersonalTabContent t={t} />;
+      return <PersonalTabContent t={t} router={router} />;
 
     case "security":
       return <SecurityTabContent t={t} router={router} />;

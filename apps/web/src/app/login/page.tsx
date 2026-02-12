@@ -272,7 +272,7 @@ export default function LoginPage() {
           setError("Erreur lors de la connexion");
         } else if (signInRes?.ok) {
           // Forcer la redirection vers l'onboarding
-          window.location.href = "/onboarding";
+          router.push("/onboarding");
         }
       } else {
         setError(data.error || "Code invalide");

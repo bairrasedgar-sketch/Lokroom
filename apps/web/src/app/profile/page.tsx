@@ -1796,7 +1796,7 @@ function AboutSection(props: AboutProps) {
                     type="button"
                     onClick={() => {
                       // Rediriger vers le support avec message automatique pour changement d'email
-                      window.location.href = "/messages?support=true&autoMessage=changement%20d%27adresse%20mail";
+                      router.push("/messages?support=true&autoMessage=changement%20d%27adresse%20mail");
                     }}
                     className="text-sm font-medium text-gray-700 hover:underline"
                   >

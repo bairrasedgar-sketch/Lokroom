@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export function MaintenanceRedirect({ isMaintenanceMode }: { isMaintenanceMode: boolean }) {
   const pathname = usePathname();
+  const router = useRouter();
   const hasRedirected = useRef(false);
 
   useEffect(() => {
@@ -21,7 +22,7 @@ export function MaintenanceRedirect({ isMaintenanceMode }: { isMaintenanceMode: 
 
       if (!isExcluded) {
         hasRedirected.current = true;
-        window.location.href = "/maintenance";
+        router.push("/maintenance");
       }
     }
   }, [isMaintenanceMode, pathname]);
