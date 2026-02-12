@@ -336,7 +336,7 @@ export default function HostListingsPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {listings.map((listing: any) => (
+              {listings.map((listing: Listing) => (
                 <div
                   key={listing.id}
                   className="group flex flex-col sm:flex-row gap-4 rounded-xl border border-gray-200 bg-white p-4 transition hover:border-gray-300 hover:shadow-sm"

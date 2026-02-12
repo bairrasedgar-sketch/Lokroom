@@ -4516,7 +4516,7 @@ export default function NewListingPage() {
                       Réductions ({activeDiscounts.length})
                     </h4>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {activeDiscounts.map((discount: any, idx: number) => (
+                      {activeDiscounts.map((discount, idx: number) => discount && (
                         <div key={idx} className="rounded-lg bg-white border border-amber-200 p-3 text-center">
                           <div className="text-xs text-gray-600">{discount.label}</div>
                           <div className="text-lg font-bold text-amber-600">-{discount.value}%</div>
