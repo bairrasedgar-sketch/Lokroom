@@ -22,43 +22,59 @@ export async function GET() {
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  // Toutes les annonces de l'hôte (pour affichage)
-  const allListings = await prisma.listing.findMany({
-    where: { ownerId: me.id },
-    select: {
-      id: true,
-      title: true,
-      city: true,
-      country: true,
-      price: true,
-      currency: true,
-      isActive: true,
-      ListingModeration: {
-        select: { status: true }
+  // 🚀 PERFORMANCE : Requêtes parallèles au lieu de séquentielles
+  const [allListings, bookings, revenueStats] = await Promise.all([
+    // Toutes les annonces de l'hôte (pour affichage)
+    prisma.listing.findMany({
+      where: { ownerId: me.id },
+      select: {
+        id: true,
+        title: true,
+        city: true,
+        country: true,
+        price: true,
+        currency: true,
+        isActive: true,
+        ListingModeration: {
+          select: { status: true }
+        },
+        images: { select: { url: true }, take: 1 }
+      }
+    }),
+
+    // Toutes les réservations de l'hôte
+    prisma.booking.findMany({
+      where: { listing: { ownerId: me.id } },
+      include: {
+        guest: { select: { name: true, email: true } }
       },
-      images: { select: { url: true }, take: 1 }
-    }
-  });
+      orderBy: { startDate: "desc" }
+    }),
+
+    // 🚀 PERFORMANCE : Calculer les revenus en DB au lieu de filtrer en mémoire
+    prisma.booking.aggregate({
+      where: {
+        listing: { ownerId: me.id },
+        status: "CONFIRMED"
+      },
+      _sum: { totalPrice: true }
+    })
+  ]);
 
   // Filtrer les annonces actives pour les stats
   const activeListings = allListings.filter(
     (l) => l.isActive && l.ListingModeration?.status === "APPROVED"
   );
 
-  const bookings = await prisma.booking.findMany({
-    where: { listing: { ownerId: me.id } },
-    include: {
-      guest: { select: { name: true, email: true } }
+  // 🚀 PERFORMANCE : Calculer les revenus du mois en DB
+  const thisMonthRevenueResult = await prisma.booking.aggregate({
+    where: {
+      listing: { ownerId: me.id },
+      status: "CONFIRMED",
+      createdAt: { gte: startOfMonth }
     },
-    orderBy: { startDate: "desc" }
+    _sum: { totalPrice: true }
   });
-
-  // Calculer les revenus (uniquement réservations confirmées)
-  const confirmedBookings = bookings.filter(b => b.status === "CONFIRMED");
-  const totalRevenue = confirmedBookings.reduce((sum, b) => sum + b.totalPrice, 0);
-  const thisMonthRevenue = confirmedBookings
-    .filter(b => b.createdAt >= startOfMonth)
-    .reduce((sum, b) => sum + b.totalPrice, 0);
 
   // Devise principale (prendre la première ou EUR par défaut)
   const primaryCurrency = activeListings[0]?.currency || "EUR";
@@ -70,8 +86,8 @@ export async function GET() {
     upcoming: bookings.filter(b => b.startDate > now && b.status === "CONFIRMED").length,
     thisMonth: bookings.filter(b => b.createdAt >= startOfMonth).length,
     cancelled: bookings.filter(b => b.status === "CANCELLED").length,
-    totalRevenue,
-    thisMonthRevenue,
+    totalRevenue: revenueStats._sum.totalPrice || 0,
+    thisMonthRevenue: thisMonthRevenueResult._sum.totalPrice || 0,
     currency: primaryCurrency
   };
 
