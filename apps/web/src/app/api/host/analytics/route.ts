@@ -79,66 +79,69 @@ export async function GET() {
     );
     occupancyStart.setHours(0, 0, 0, 0);
 
-    // 🔹 Toutes les réservations de cet hôte
-    const allBookings = await prisma.booking.findMany({
-      where: {
-        listing: {
+    // 🚀 PERFORMANCE : Requêtes parallèles au lieu de séquentielles
+    const [allBookings, reviews, activeListings] = await Promise.all([
+      // 🔹 Toutes les réservations de cet hôte
+      prisma.booking.findMany({
+        where: {
+          listing: {
+            ownerId: hostId,
+          },
+        },
+        select: {
+          id: true,
+          status: true,
+          totalPrice: true,
+          currency: true,
+          startDate: true,
+          endDate: true,
+          createdAt: true,
+          refundAmountCents: true,
+          hostFeeCents: true,
+        },
+      }),
+
+      // 🔹 Avis reçus par cet hôte
+      prisma.review.findMany({
+        where: {
+          targetUserId: hostId,
+        },
+        select: {
+          rating: true,
+        },
+      }),
+
+      // 🔹 Annonces ACTIVES de l'hôte (pour l'occupation et les stats)
+      prisma.listing.findMany({
+        where: {
           ownerId: hostId,
-        },
-      },
-      select: {
-        id: true,
-        status: true,
-        totalPrice: true,
-        currency: true,
-        startDate: true,
-        endDate: true,
-        createdAt: true,
-        refundAmountCents: true,
-        hostFeeCents: true,
-      },
-    });
-
-    // 🔹 Avis reçus par cet hôte
-    const reviews = await prisma.review.findMany({
-      where: {
-        targetUserId: hostId,
-      },
-      select: {
-        rating: true,
-      },
-    });
-
-    // 🔹 Annonces ACTIVES de l'hôte (pour l'occupation et les stats)
-    const activeListings = await prisma.listing.findMany({
-      where: {
-        ownerId: hostId,
-        isActive: true,
-        ListingModeration: {
-          status: "APPROVED",
-        },
-      },
-      select: {
-        id: true,
-        title: true,
-        currency: true,
-        bookings: {
-          where: {
-            status: "CONFIRMED",
-          },
-          select: {
-            totalPrice: true,
-            startDate: true,
-            endDate: true,
+          isActive: true,
+          ListingModeration: {
+            status: "APPROVED",
           },
         },
-        reviews: {
-          select: {
-            rating: true,
+        select: {
+          id: true,
+          title: true,
+          currency: true,
+          bookings: {
+            where: {
+              status: "CONFIRMED",
+            },
+            select: {
+              totalPrice: true,
+              startDate: true,
+              endDate: true,
+            },
+          },
+          reviews: {
+            select: {
+              rating: true,
+            },
           },
         },
-      },
-    });
+      })
+    ]);
 
     const listingsCount = activeListings.length;
 
