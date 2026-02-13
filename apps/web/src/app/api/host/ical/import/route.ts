@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
+import { randomUUID } from "crypto";
 
 
 // POST /api/host/ical/import - Importer un calendrier iCal externe
@@ -70,7 +71,7 @@ export async function POST(request: Request) {
       // Créer nouvelle source de sync
       calendarSync = await prisma.calendarSync.create({
         data: {
-          id: `sync_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          id: `sync_${Date.now()}_${randomUUID().slice(0, 9)}`,
           listingId,
           externalUrl: icalUrl,
           name: name || "Calendrier externe",

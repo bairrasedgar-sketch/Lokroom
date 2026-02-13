@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+import { randomUUID } from "crypto";
 
 
 const preferencesSchema = z.object({
@@ -34,7 +35,7 @@ export async function GET(request: Request) {
     if (!preferences) {
       preferences = await prisma.notificationPreference.create({
         data: {
-          id: `pref_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          id: `pref_${Date.now()}_${randomUUID().slice(0, 9)}`,
           userId: session.user.id,
           emailEnabled: true,
           pushEnabled: true,
@@ -104,7 +105,7 @@ export async function PUT(request: Request) {
         ...(data.timezone && { timezone: data.timezone }),
       },
       create: {
-        id: `pref_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: `pref_${Date.now()}_${randomUUID().slice(0, 9)}`,
         userId: session.user.id,
         emailEnabled: data.emailEnabled ?? true,
         pushEnabled: data.pushEnabled ?? true,

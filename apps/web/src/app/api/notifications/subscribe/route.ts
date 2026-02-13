@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+import { randomUUID } from "crypto";
 
 
 const subscribeSchema = z.object({
@@ -62,7 +63,7 @@ export async function POST(request: Request) {
     // Créer un nouvel abonnement
     const subscription = await prisma.pushSubscription.create({
       data: {
-        id: `push_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: `push_${Date.now()}_${randomUUID().slice(0, 9)}`,
         userId: session.user.id,
         endpoint,
         p256dh: keys.p256dh,

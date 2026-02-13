@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+import { randomUUID } from "crypto";
 import {
   sendPushNotificationToMultiple,
   createNotificationPayload,
@@ -141,7 +142,7 @@ export async function POST(request: Request) {
     // Créer les notifications en base de données
     await prisma.notification.createMany({
       data: targetUserIds.map(userId => ({
-        id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: `notif_${Date.now()}_${randomUUID().slice(0, 9)}`,
         userId,
         type: type as any,
         title: payload.title,
