@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { generateBadgeId } from "@/lib/crypto/random";
 import { logger } from "@/lib/logger";
@@ -7,11 +9,27 @@ import { logger } from "@/lib/logger";
 // POST /api/badges/check - Vérifier et attribuer automatiquement les badges
 export async function POST(request: Request) {
   try {
+    // 🔒 SÉCURITÉ : Authentification requise
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await request.json();
     const { userId } = body;
 
     if (!userId) {
       return NextResponse.json({ error: "userId requis" }, { status: 400 });
+    }
+
+    // 🔒 SÉCURITÉ : Vérifier que c'est son propre userId ou qu'il est admin
+    const currentUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { role: true }
+    });
+
+    if (userId !== session.user.id && currentUser?.role !== "ADMIN") {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const user = await prisma.user.findUnique({

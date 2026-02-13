@@ -10,6 +10,14 @@ export const dynamic = "force-dynamic";
  * GET /api/test-sentry?type=error|warning|info
  */
 export async function GET(req: NextRequest) {
+  // 🔒 SÉCURITÉ : Désactiver en production
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json(
+      { error: "Not available in production" },
+      { status: 404 }
+    );
+  }
+
   const type = req.nextUrl.searchParams.get("type") || "error";
 
   try {

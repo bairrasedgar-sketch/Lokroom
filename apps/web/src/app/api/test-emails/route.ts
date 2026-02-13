@@ -16,6 +16,14 @@ export const dynamic = "force-dynamic";
  * Body: { type: string, to?: string }
  */
 export async function POST(req: NextRequest) {
+  // 🔒 SÉCURITÉ : Désactiver en production
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json(
+      { error: "Not available in production" },
+      { status: 404 }
+    );
+  }
+
   try {
     const body = await req.json();
     const { type, to = "test@example.com" } = body;

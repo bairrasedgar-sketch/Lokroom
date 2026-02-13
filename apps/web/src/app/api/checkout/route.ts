@@ -1,8 +1,16 @@
 // apps/web/src/app/api/checkout/route.ts
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 
 export async function POST(req: Request) {
+  // 🔒 SÉCURITÉ : Authentification requise pour créer un checkout
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { amountCents, currency = "eur", applicationFeeCents = 0, metadata } =
     (await req.json()) || {};
 
