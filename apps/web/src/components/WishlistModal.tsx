@@ -79,7 +79,7 @@ export default function WishlistModal({
       // Ajouter immédiatement le favori à cette nouvelle liste
       await saveToWishlist(newWishlist.id);
     } catch (e) {
-      logger.error(e);
+      logger.error("Failed to create wishlist", { error: e instanceof Error ? e.message : String(e) });
       toast.error(e instanceof Error ? e.message : "Erreur lors de la création de la liste");
     } finally {
       setCreating(false);
@@ -106,7 +106,7 @@ export default function WishlistModal({
       onSaved();
       onClose();
     } catch (e) {
-      logger.error(e);
+      logger.error("Failed to add to wishlist", { error: e instanceof Error ? e.message : String(e) });
       toast.error(e instanceof Error ? e.message : "Erreur lors de l'ajout aux favoris");
     } finally {
       setSavingTo(null);

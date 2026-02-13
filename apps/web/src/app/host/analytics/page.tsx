@@ -5,9 +5,8 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import dynamicImport from "next/dynamic";
-import {
 import { logger } from "@/lib/logger";
-
+import {
   ArrowDownTrayIcon,
   ArrowTrendingUpIcon,
   ArrowTrendingDownIcon,
@@ -251,7 +250,7 @@ export default function HostAnalyticsPage() {
         a.click();
       }
     } catch (err) {
-      logger.error(err);
+      logger.error("Failed to export analytics", { error: err instanceof Error ? err.message : String(err) });
     }
   }
 

@@ -62,7 +62,7 @@ function ReviewCard({
       onStatusChange(newStatus);
       setShowActions(false);
     } catch (err) {
-      logger.error(err);
+      logger.error("Failed to update review status", { error: err instanceof Error ? err.message : String(err) });
       alert("Erreur lors de la mise à jour du statut");
     } finally {
       setLoading(false);

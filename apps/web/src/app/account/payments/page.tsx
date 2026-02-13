@@ -534,7 +534,7 @@ function PayoutStripeCard() {
       // Redirection vers Stripe
       window.location.href = json.url;
     } catch (err) {
-      logger.error(err);
+      logger.error("Failed to redirect to Stripe", { error: err instanceof Error ? err.message : String(err) });
       toast.error(
         err instanceof Error
           ? err.message

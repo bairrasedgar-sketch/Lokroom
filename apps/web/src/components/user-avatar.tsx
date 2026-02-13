@@ -50,7 +50,7 @@ export default function UserAvatar() {
         // Ignorer les erreurs d'abort
         if (err instanceof Error && err.name === "AbortError") return;
         if (process.env.NODE_ENV !== "production") {
-          logger.debug("UserAvatar: échec fetch /api/profile:", err);
+          logger.debug("UserAvatar: échec fetch /api/profile", { error: err instanceof Error ? err.message : String(err) });
         }
       }
     }

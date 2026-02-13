@@ -4,9 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import dynamicImport from "next/dynamic";
-import {
 import { logger } from "@/lib/logger";
-
+import {
   UsersIcon,
   HomeModernIcon,
   CalendarDaysIcon,

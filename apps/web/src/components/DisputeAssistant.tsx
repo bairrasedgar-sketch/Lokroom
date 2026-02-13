@@ -3,9 +3,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import {
 import { logger } from "@/lib/logger";
-
+import {
   ChatBubbleLeftRightIcon,
   PaperAirplaneIcon,
   XMarkIcon,

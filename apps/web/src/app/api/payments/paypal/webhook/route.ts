@@ -52,7 +52,7 @@ async function checkAndMarkEventProcessed(eventId: string, eventType: string): P
       return true; // Déjà traité
     }
     // Autre erreur - on continue quand même
-    logger.warn("[PayPal Webhook] Idempotence check error:", error);
+    logger.warn("[PayPal Webhook] Idempotence check error", { error });
     return false;
   }
 }
@@ -125,11 +125,11 @@ export async function POST(req: NextRequest) {
     // Vérification d'idempotence
     const alreadyProcessed = await checkAndMarkEventProcessed(event.id, event.event_type);
     if (alreadyProcessed) {
-      logger.debug("[PayPal Webhook] Duplicate event:", event.id);
+      logger.debug("[PayPal Webhook] Duplicate event", { eventId: event.id });
       return NextResponse.json({ received: true, duplicate: true });
     }
 
-    logger.debug("[PayPal Webhook] Processing event:", {
+    logger.debug("[PayPal Webhook] Processing event", {
       id: event.id,
       type: event.event_type,
       resourceType: event.resource_type,
@@ -160,12 +160,12 @@ export async function POST(req: NextRequest) {
       }
 
       default:
-        logger.debug("[PayPal Webhook] Unhandled event type:", event.event_type);
+        logger.debug("[PayPal Webhook] Unhandled event type", { eventType: event.event_type });
     }
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    logger.error("[PayPal Webhook] Error:", error);
+    logger.error("[PayPal Webhook] Error", { error });
     return NextResponse.json(
       { error: "webhook_processing_failed" },
       { status: 500 }
@@ -231,13 +231,13 @@ async function handleCaptureCompleted(event: PayPalWebhookEvent) {
   }
 
   if (!transaction) {
-    logger.warn("[PayPal Webhook] Transaction not found for capture:", captureId);
+    logger.warn("[PayPal Webhook] Transaction not found for capture", { captureId });
     return;
   }
 
   // Vérifier si déjà traité
   if (transaction.status === "CAPTURED" && transaction.captureId === captureId) {
-    logger.debug("[PayPal Webhook] Capture already processed:", captureId);
+    logger.debug("[PayPal Webhook] Capture already processed", { captureId });
     return;
   }
 

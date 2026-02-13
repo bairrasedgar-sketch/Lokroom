@@ -39,6 +39,6 @@ export function initializeCapacitor(): void {
   // Capacitor s'initialise automatiquement
   // Cette fonction existe pour la compatibilité
   if (isCapacitor()) {
-    logger.debug('[Capacitor] App native détectée:', getPlatform());
+    logger.debug('[Capacitor] App native détectée', { platform: getPlatform() });
   }
 }

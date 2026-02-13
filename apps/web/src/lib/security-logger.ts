@@ -89,18 +89,18 @@ export function logSecurityEvent(
   // Log selon la sévérité
   switch (event.severity) {
     case 'critical':
-      logger.error(logMessage, JSON.stringify(logData));
+      logger.error(logMessage, logData);
       // TODO: Envoyer une alerte (email, Slack, etc.)
       break;
     case 'error':
-      logger.error(logMessage, JSON.stringify(logData));
+      logger.error(logMessage, logData);
       break;
     case 'warn':
-      logger.warn(logMessage, JSON.stringify(logData));
+      logger.warn(logMessage, logData);
       break;
     case 'info':
     default:
-      logger.debug(logMessage, JSON.stringify(logData));
+      logger.debug(logMessage, logData);
       break;
   }
 

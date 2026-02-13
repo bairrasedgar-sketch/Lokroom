@@ -29,7 +29,6 @@ import {
 } from "@heroicons/react/24/outline";
 import { signOut } from "next-auth/react";
 import { logger } from "@/lib/logger";
-import { logger } from "@/lib/logger";
 
 
 type AdminRole = "ADMIN" | "MODERATOR" | "SUPPORT" | "ANALYST";

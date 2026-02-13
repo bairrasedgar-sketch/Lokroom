@@ -212,7 +212,7 @@ function StripePaymentForm(props: {
       });
 
       if (error) {
-        logger.error(error);
+        logger.error("Payment confirmation failed", { error: error.message });
         toast.error(error.message ?? t.payment.paymentFailed);
         setSubmitting(false);
         return;
@@ -241,7 +241,7 @@ function StripePaymentForm(props: {
       toast.error(t.payment.paymentFailed);
       setSubmitting(false);
     } catch (err) {
-      logger.error(err);
+      logger.error("Payment error", { error: err instanceof Error ? err.message : String(err) });
       toast.error(t.payment.unexpectedError);
       setSubmitting(false);
     }
@@ -386,7 +386,7 @@ export default function BookingPaymentPage({
         setIntent(data as CreateIntentResponse);
         setLoading(false);
       } catch (err) {
-        logger.error(err);
+        logger.error("Failed to load payment intent", { error: err instanceof Error ? err.message : String(err) });
         setError(t.payment.unexpectedLoadError);
         setLoading(false);
       }

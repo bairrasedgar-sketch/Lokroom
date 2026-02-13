@@ -117,7 +117,7 @@ export default function PayPalButton({
 
       return data.orderId;
     } catch (err) {
-      logger.error("[PayPal] Create order error:", err);
+      logger.error("[PayPal] Create order error", { error: err instanceof Error ? err.message : String(err) });
       throw err;
     }
   }, [bookingId]);
@@ -150,7 +150,7 @@ export default function PayPalButton({
           router.push("/bookings?paid=1");
         }
       } catch (err) {
-        logger.error("[PayPal] Capture error:", err);
+        logger.error("[PayPal] Capture error", { error: err instanceof Error ? err.message : String(err) });
         toast.error("Erreur lors de la confirmation du paiement");
         if (onError && err instanceof Error) {
           onError(err);
@@ -163,7 +163,7 @@ export default function PayPalButton({
   // Gérer l'annulation
   const handleCancel = useCallback(
     (data: { orderID: string }) => {
-      logger.debug("[PayPal] Payment cancelled:", data.orderID);
+      logger.debug("[PayPal] Payment cancelled", { orderID: data.orderID });
       toast("Paiement annulé");
       if (onCancel) {
         onCancel();
@@ -175,7 +175,7 @@ export default function PayPalButton({
   // Gérer les erreurs
   const handleError = useCallback(
     (err: Error) => {
-      logger.error("[PayPal] Button error:", err);
+      logger.error("[PayPal] Button error", { error: err.message });
       setError("Une erreur est survenue avec PayPal");
       toast.error("Erreur PayPal");
       if (onError) {
@@ -208,7 +208,7 @@ export default function PayPalButton({
     });
 
     buttons.render(containerRef.current).catch((err) => {
-      logger.error("[PayPal] Render error:", err);
+      logger.error("[PayPal] Render error", { error: err instanceof Error ? err.message : String(err) });
       setError("Impossible d'afficher le bouton PayPal");
     });
 

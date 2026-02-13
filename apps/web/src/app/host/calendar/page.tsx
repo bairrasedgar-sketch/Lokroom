@@ -64,7 +64,7 @@ export default function HostCalendarPage() {
       }
     } catch (err) {
       if (err instanceof Error && err.name !== "AbortError") {
-        logger.error(err);
+        logger.error("Failed to load listings", { error: err.message });
       }
     } finally {
       setLoading(false);

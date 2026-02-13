@@ -38,7 +38,11 @@ export class SentryErrorBoundary extends Component<Props, State> {
 
     // Log to console in development
     if (process.env.NODE_ENV === "development") {
-      logger.error("Error caught by boundary:", error, errorInfo);
+      logger.error("Error caught by boundary", {
+        error: error.message,
+        stack: error.stack,
+        componentStack: errorInfo.componentStack
+      });
     }
   }
 

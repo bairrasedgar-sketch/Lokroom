@@ -11,7 +11,7 @@ export default function ServiceWorkerRegistration() {
       navigator.serviceWorker
         .register("/sw.js")
         .then((registration) => {
-          logger.debug("Service Worker registered:", registration);
+          logger.debug("Service Worker registered", { scope: registration.scope });
 
           // Vérifier les mises à jour toutes les heures
           setInterval(() => {
@@ -19,14 +19,14 @@ export default function ServiceWorkerRegistration() {
           }, 60 * 60 * 1000);
         })
         .catch((error) => {
-          logger.error("Service Worker registration failed:", error);
+          logger.error("Service Worker registration failed", { error: error instanceof Error ? error.message : String(error) });
         });
 
       // Écouter les messages du Service Worker
       navigator.serviceWorker.addEventListener("message", (event) => {
         if (event.data && event.data.type === "NOTIFICATION_CLICKED") {
           // Gérer le clic sur notification
-          logger.debug("Notification clicked:", event.data);
+          logger.debug("Notification clicked", { type: event.data.type, data: event.data });
         }
       });
     }

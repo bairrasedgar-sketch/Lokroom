@@ -5,9 +5,8 @@
  */
 
 import { Resend } from "resend";
-import {
 import { logger } from "@/lib/logger";
-
+import {
   bookingConfirmationTemplate,
   bookingRequestTemplate,
   paymentReceiptTemplate,

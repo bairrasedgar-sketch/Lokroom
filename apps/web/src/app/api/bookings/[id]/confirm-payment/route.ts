@@ -118,10 +118,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
           currency: booking.currency,
           bookingId: booking.id,
         });
-        logger.debug("[confirm-payment] Email sent to guest:", booking.guest.email);
+        logger.debug("[confirm-payment] Email sent to guest", { email: booking.guest.email });
       }
     } catch (emailError) {
-      logger.error("[confirm-payment] Guest email error:", emailError);
+      logger.error("[confirm-payment] Guest email error", { error: emailError });
     }
 
     // Envoyer une notification à l'hôte
@@ -140,10 +140,10 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
           currency: booking.currency,
           bookingId: booking.id,
         });
-        logger.debug("[confirm-payment] Email sent to host:", booking.listing.owner.email);
+        logger.debug("[confirm-payment] Email sent to host", { email: booking.listing.owner.email });
       }
     } catch (hostEmailError) {
-      logger.error("[confirm-payment] Host email error:", hostEmailError);
+      logger.error("[confirm-payment] Host email error", { error: hostEmailError });
     }
 
     return NextResponse.json({

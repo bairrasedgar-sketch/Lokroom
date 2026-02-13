@@ -1,4 +1,3 @@
-import { logger } from "@/lib/logger";
 /**
  * Logger centralisé pour l'application
  * Gestion professionnelle des logs avec niveaux et contexte

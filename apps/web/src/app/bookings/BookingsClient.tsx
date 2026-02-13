@@ -274,7 +274,7 @@ function BookingsPageContent() {
       // Revalidate cache
       mutate('/api/bookings');
     } catch (err) {
-      logger.error(err);
+      logger.error("Failed to cancel booking", { error: err instanceof Error ? err.message : String(err) });
       toast.error(
         currentLocale === "en"
           ? "Unexpected error."
@@ -302,7 +302,7 @@ function BookingsPageContent() {
       const preview = (await res.json()) as CancellationPreview;
       setCancelModal(preview);
     } catch (err) {
-      logger.error(err);
+      logger.error("Failed to preview cancellation", { error: err instanceof Error ? err.message : String(err) });
       toast.error(
         currentLocale === "en"
           ? "Unexpected error."
@@ -347,7 +347,7 @@ function BookingsPageContent() {
       // Revalidate cache
       mutate('/api/bookings');
     } catch (err) {
-      logger.error(err);
+      logger.error("Failed to cancel booking", { error: err instanceof Error ? err.message : String(err) });
       toast.error(
         currentLocale === "en"
           ? "Unexpected error."

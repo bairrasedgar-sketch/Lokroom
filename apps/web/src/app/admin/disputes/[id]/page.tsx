@@ -7,9 +7,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import {
 import { logger } from "@/lib/logger";
-
+import {
   ArrowLeftIcon,
   FlagIcon,
   UserCircleIcon,

@@ -97,7 +97,7 @@ export default function HostProfileForm({ initialProfile }: HostProfileFormProps
 
       toast.success("Profil hôte mis à jour avec succès ✨");
     } catch (err) {
-      logger.error(err);
+      logger.error("Failed to update host profile", { error: err instanceof Error ? err.message : String(err) });
       toast.error("Erreur inattendue lors de la mise à jour du profil.");
     } finally {
       setLoading(false);

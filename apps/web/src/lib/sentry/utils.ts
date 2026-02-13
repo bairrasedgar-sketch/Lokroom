@@ -7,7 +7,7 @@ import { logger } from "@/lib/logger";
  */
 export function captureException(error: Error, context?: Record<string, any>) {
   if (process.env.NODE_ENV === "development") {
-    logger.error("Sentry (dev):", error, context);
+    logger.error("Sentry (dev)", { error: error.message, stack: error.stack, ...context });
     return;
   }
 
@@ -25,7 +25,7 @@ export function captureMessage(
   context?: Record<string, any>
 ) {
   if (process.env.NODE_ENV === "development") {
-    logger.debug(`Sentry (dev) [${level}]:`, message, context);
+    logger.debug(`Sentry (dev) [${level}]`, { message, ...context });
     return;
   }
 
@@ -44,7 +44,7 @@ export function setUser(user: {
   username?: string;
 }) {
   if (process.env.NODE_ENV === "development") {
-    logger.debug("Sentry (dev) - Set user:", user);
+    logger.debug("Sentry (dev) - Set user", { user });
     return;
   }
 
@@ -72,7 +72,7 @@ export function addBreadcrumb(
   data?: Record<string, any>
 ) {
   if (process.env.NODE_ENV === "development") {
-    logger.debug(`Sentry (dev) - Breadcrumb [${category}]:`, message, data);
+    logger.debug(`Sentry (dev) - Breadcrumb [${category}]`, { message, ...data });
     return;
   }
 

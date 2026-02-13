@@ -6,9 +6,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
 import { logger } from "@/lib/logger";
-
+import {
   PlusIcon,
   MagnifyingGlassIcon,
   TicketIcon,

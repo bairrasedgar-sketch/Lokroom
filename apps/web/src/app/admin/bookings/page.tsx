@@ -7,9 +7,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import {
 import { logger } from "@/lib/logger";
-
+import {
   MagnifyingGlassIcon,
   CalendarDaysIcon,
   ExclamationTriangleIcon,

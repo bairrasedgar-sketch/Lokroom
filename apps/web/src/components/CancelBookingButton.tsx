@@ -95,7 +95,7 @@ export default function CancelBookingButton({
 
       setPreview(data as PreviewResponse);
     } catch (e) {
-      logger.error(e);
+      logger.error("Failed to preview cancellation", { error: e instanceof Error ? e.message : String(e) });
       setError("Erreur réseau lors de la prévisualisation.");
     } finally {
       setLoadingPreview(false);
@@ -138,7 +138,7 @@ export default function CancelBookingButton({
       setOpen(false);
       setPreview(null);
     } catch (e) {
-      logger.error(e);
+      logger.error("Failed to cancel booking", { error: e instanceof Error ? e.message : String(e) });
       toast.error("Erreur réseau lors du remboursement.");
     } finally {
       setLoadingRefund(false);

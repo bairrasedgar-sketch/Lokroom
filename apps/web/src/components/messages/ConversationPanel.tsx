@@ -79,7 +79,7 @@ export function ConversationPanel({
       const json = await res.json();
       setMessages(json.messages ?? []);
     } catch (e) {
-      logger.error(e);
+      logger.error("Failed to load messages", { error: e instanceof Error ? e.message : String(e) });
     } finally {
       setLoading(false);
     }
@@ -132,7 +132,7 @@ export function ConversationPanel({
       // ajout optimiste
       setMessages((prev) => [...prev, newMsg]);
     } catch (e) {
-      logger.error(e);
+      logger.error("Failed to send message", { error: e instanceof Error ? e.message : String(e) });
     } finally {
       setSending(false);
     }

@@ -87,7 +87,7 @@ export function UserMenu() {
         callbackUrl: "/", // retour sur la home après logout
       });
     } catch (error) {
-      logger.error(error);
+      logger.error("Failed to sign out", { error: error instanceof Error ? error.message : String(error) });
       alert("Erreur lors de la déconnexion");
     } finally {
       setLogoutLoading(false);

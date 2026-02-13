@@ -507,12 +507,13 @@ export function securityLog(
   }
 
   // En production, envoyer vers un service de logging
+  const logContext = { ...entry } as Record<string, unknown>;
   if (level === "security" || level === "error") {
-    logger.error("[SECURITY]", JSON.stringify(entry));
+    logger.error("[SECURITY]", logContext);
   } else if (level === "warn") {
-    logger.warn("[SECURITY]", JSON.stringify(entry));
+    logger.warn("[SECURITY]", logContext);
   } else {
-    logger.debug("[SECURITY]", JSON.stringify(entry));
+    logger.debug("[SECURITY]", logContext);
   }
 }
 

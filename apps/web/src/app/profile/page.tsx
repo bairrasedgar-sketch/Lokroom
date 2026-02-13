@@ -459,7 +459,7 @@ export default function ProfilePage() {
       );
       toast.success(t.avatarUpdated);
     } catch (e) {
-      logger.error(e);
+      logger.error("Failed to upload avatar", { error: e instanceof Error ? e.message : String(e) });
       setAvatarStatus("error");
       toast.error(t.avatarUploadFailed);
     }

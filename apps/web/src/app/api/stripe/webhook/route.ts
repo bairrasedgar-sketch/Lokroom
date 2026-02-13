@@ -75,7 +75,7 @@ async function checkAndMarkEventProcessed(eventId: string, eventType: string): P
     }
 
     // Autre erreur - on continue quand même (mieux traiter deux fois que pas du tout)
-    logger.warn("[Webhook] Erreur vérification idempotence:", error);
+    logger.warn("[Webhook] Erreur vérification idempotence", { error });
     return false;
   }
 }

@@ -1,13 +1,13 @@
 {
-  "timestamp": "2026-02-12T20:54:06.267Z",
+  "timestamp": "2026-02-13T02:26:53.875Z",
   "stats": {
-    "totalFiles": 1001,
-    "compressedFiles": 954,
-    "skippedFiles": 47,
-    "originalSize": 34187554,
-    "brotliSize": 7604695,
-    "gzipSize": 9837413,
+    "totalFiles": 1008,
+    "compressedFiles": 960,
+    "skippedFiles": 48,
+    "originalSize": 34384202,
+    "brotliSize": 7649419,
+    "gzipSize": 9887558,
     "errors": []
   },
-  "brotliVsGzipImprovement": "22.70%"
+  "brotliVsGzipImprovement": "22.64%"
 }

@@ -50,7 +50,7 @@ export default function TestEmailsPage() {
       }
     } catch (error) {
       toast.error("Erreur réseau");
-      logger.error(error);
+      logger.error("Failed to send test email", { error: error instanceof Error ? error.message : String(error) });
     } finally {
       setLoading(false);
     }

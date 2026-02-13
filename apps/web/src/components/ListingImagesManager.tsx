@@ -81,7 +81,7 @@ export default function ListingImagesManager({
       toast.success("Images ajoutées ✅");
     } catch (e) {
       toast.error("Erreur pendant l'upload");
-      logger.error(e);
+      logger.error("Failed to upload images", { error: e instanceof Error ? e.message : String(e) });
     } finally {
       setBusy(false);
     }
