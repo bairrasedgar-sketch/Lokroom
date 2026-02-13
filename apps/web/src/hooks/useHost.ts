@@ -18,6 +18,8 @@ type DashboardStats = {
 
 type HostDashboardResponse = {
   stats: DashboardStats;
+  listings?: any[];
+  bookings?: any[];
 };
 
 /**
