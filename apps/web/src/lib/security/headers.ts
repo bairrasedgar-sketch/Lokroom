@@ -72,6 +72,40 @@ export function generateSecurityHeaders(config: SecurityHeadersConfig): Record<s
 
 /**
  * Headers pour les APIs (CORS + Security)
+ * CORS restreint aux domaines autorisés pour la sécurité
+ */
+export function getApiSecurityHeaders(origin?: string | null): Record<string, string> {
+  // Domaines autorisés (ajoutez vos domaines de production ici)
+  const allowedOrigins = [
+    'https://lokroom.com',
+    'https://www.lokroom.com',
+    'https://app.lokroom.com',
+    // En développement, autoriser localhost
+    ...(process.env.NODE_ENV === 'development'
+      ? ['http://localhost:3000', 'http://localhost:3001']
+      : []
+    ),
+  ];
+
+  // Vérifier si l'origine est autorisée
+  const allowedOrigin = origin && allowedOrigins.includes(origin)
+    ? origin
+    : allowedOrigins[0];
+
+  return {
+    "Access-Control-Allow-Origin": allowedOrigin,
+    "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
+    "Access-Control-Max-Age": "86400",
+    "Cache-Control": "private, no-cache, no-store, must-revalidate",
+    "Pragma": "no-cache",
+    "Expires": "0",
+  };
+}
+
+/**
+ * @deprecated Use getApiSecurityHeaders() instead for better security
+ * Kept for backward compatibility
  */
 export const API_SECURITY_HEADERS = {
   "Access-Control-Allow-Origin": "*",
