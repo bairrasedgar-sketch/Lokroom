@@ -117,14 +117,39 @@ const nextConfig = {
   async headers() {
     if (isCapacitorBuild) return [];
 
+    // Content Security Policy - Protection maximale contre XSS
+    const isDev = process.env.NODE_ENV === 'development';
+    const cspHeader = `
+      default-src 'self';
+      script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://maps.googleapis.com https://www.paypal.com https://js.stripe.com;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      img-src 'self' blob: data: https: http://localhost:3000;
+      font-src 'self' https://fonts.gstatic.com;
+      connect-src 'self' https://api.stripe.com https://maps.googleapis.com https://www.paypal.com https://*.sentry.io https://*.upstash.io https://*.neon.tech;
+      frame-src 'self' https://www.paypal.com https://js.stripe.com https://verify.stripe.com;
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+      frame-ancestors 'none';
+      upgrade-insecure-requests;
+    `.replace(/\s{2,}/g, ' ').trim();
+
     return [
       {
         // Applique les headers à toutes les routes
         source: '/:path*',
         headers: [
           {
+            key: 'Content-Security-Policy',
+            value: isDev ? cspHeader.replace('upgrade-insecure-requests;', '') : cspHeader
+          },
+          {
             key: 'X-DNS-Prefetch-Control',
             value: 'on'
+          },
+          {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=63072000; includeSubDomains; preload'
           },
           {
             key: 'X-Content-Type-Options',
