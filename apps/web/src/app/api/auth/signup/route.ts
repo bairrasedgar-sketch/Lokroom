@@ -15,6 +15,7 @@ import { SignJWT } from "jose";
 import { authRateLimiter, withRateLimit } from "@/lib/security/rate-limit";
 import { sanitizeEmail } from "@/lib/security/sanitize";
 import { logger } from "@/lib/logger";
+import { validateUserInput, isValidEmail } from "@/lib/security/input-validation";
 
 
 export const dynamic = "force-dynamic";
@@ -83,6 +84,21 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     if (!email) {
       return NextResponse.json({ error: "Email requis" }, { status: 400 });
+    }
+
+    // Validation de sécurité avancée
+    const validation = validateUserInput(email);
+    if (!validation.valid) {
+      logger.warn("[SECURITY] Suspicious input detected in signup", {
+        ip,
+        error: validation.error,
+      });
+      return NextResponse.json({ error: "Format d'email invalide" }, { status: 400 });
+    }
+
+    // Validation email spécifique
+    if (!isValidEmail(email)) {
+      return NextResponse.json({ error: "Format d'email invalide" }, { status: 400 });
     }
 
     // Sanitize email input

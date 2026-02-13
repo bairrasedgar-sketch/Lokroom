@@ -43,6 +43,13 @@ async function logHoneypotAccess(req: NextRequest, type: string) {
 }
 
 /**
+ * Détecte et log un accès honeypot (fonction simplifiée pour les routes)
+ */
+export async function detectHoneypot(req: NextRequest, type: string) {
+  await logHoneypotAccess(req, type);
+}
+
+/**
  * Vérifie si un champ honeypot a été rempli
  */
 export function checkHoneypotField(fieldValue: unknown): boolean {

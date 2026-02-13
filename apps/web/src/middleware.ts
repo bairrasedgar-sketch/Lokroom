@@ -1,5 +1,6 @@
 /**
  * Lok'Room - Middleware de sécurité Next.js
+ * - Détection d'attaques et rate limiting
  * - Détection locale et devise
  * - Headers de sécurité (CSP, XSS, etc.)
  * - Protection des routes (auth required)
@@ -8,6 +9,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
+import { securityMiddleware } from "@/lib/security/middleware";
 
 // Rôles admin autorisés
 const ADMIN_ROLES = ["ADMIN", "MODERATOR", "SUPPORT", "FINANCE"];
@@ -251,7 +253,16 @@ export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // ─────────────────────────────────────────────────────────────
-  // 0. CORS pour App Mobile (Architecture Professionnelle)
+  // 0. SECURITY MIDDLEWARE - Détection d'attaques et rate limiting
+  // ─────────────────────────────────────────────────────────────
+  const securityResponse = await securityMiddleware(req);
+  if (securityResponse) {
+    // Attaque détectée ou rate limit dépassé
+    return securityResponse;
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // 1. CORS pour App Mobile (Architecture Professionnelle)
   // ─────────────────────────────────────────────────────────────
   if (pathname.startsWith('/api')) {
     // Autoriser les requêtes OPTIONS (preflight)
