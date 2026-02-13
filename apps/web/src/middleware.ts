@@ -191,14 +191,23 @@ function addSecurityHeaders(res: NextResponse): void {
 }
 
 /**
- * Génère la Content Security Policy
+ * Génère un nonce cryptographique unique pour CSP
  */
-function generateCSP(isDev: boolean): string {
+function generateNonce(): string {
+  const array = new Uint8Array(16);
+  crypto.getRandomValues(array);
+  return Buffer.from(array).toString('base64');
+}
+
+/**
+ * Génère la Content Security Policy avec nonce
+ */
+function generateCSP(isDev: boolean, nonce: string): string {
   // En développement, on est plus permissif
   if (isDev) {
     return [
       "default-src 'self';",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://maps.googleapis.com https://maps.gstatic.com https://js.stripe.com;",
+      `script-src 'self' 'nonce-${nonce}' 'unsafe-eval' https://maps.googleapis.com https://maps.gstatic.com https://js.stripe.com;`,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;",
       "img-src 'self' data: blob: https: http:;",
       "connect-src 'self' https: http: ws: wss:;",
@@ -211,17 +220,16 @@ function generateCSP(isDev: boolean): string {
   }
 
   // Production - CSP stricte pour score A+
-  // 🔒 SÉCURITÉ : CSP renforcée sans unsafe-eval
+  // 🔒 SÉCURITÉ : CSP renforcée avec nonces (pas de unsafe-inline)
   const s3Host = process.env.S3_PUBLIC_BASE
     ? new URL(process.env.S3_PUBLIC_BASE).host
     : "";
 
   const cspDirectives = [
     "default-src 'self'",
-    // Scripts: Self + Maps + Stripe + Google Analytics
-    // Note: 'unsafe-inline' nécessaire pour Next.js inline scripts
-    // TODO: Remplacer par nonces pour une sécurité maximale
-    "script-src 'self' 'unsafe-inline' https://maps.googleapis.com https://maps.gstatic.com https://js.stripe.com https://www.googletagmanager.com https://www.google-analytics.com",
+    // Scripts: Self + Nonce + Maps + Stripe + Google Analytics
+    // ✅ NONCES : Remplace 'unsafe-inline' pour une sécurité maximale
+    `script-src 'self' 'nonce-${nonce}' https://maps.googleapis.com https://maps.gstatic.com https://js.stripe.com https://www.googletagmanager.com https://www.google-analytics.com`,
     // Styles: Self + Inline (nécessaire pour Tailwind) + Google Fonts
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     // Images: Self + Data URLs + Blob + CDNs externes
@@ -251,6 +259,11 @@ function generateCSP(isDev: boolean): string {
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  // ─────────────────────────────────────────────────────────────
+  // 0. GÉNÉRATION DU NONCE CSP - Sécurité maximale
+  // ─────────────────────────────────────────────────────────────
+  const nonce = generateNonce();
 
   // ─────────────────────────────────────────────────────────────
   // 0. SECURITY MIDDLEWARE - Détection d'attaques et rate limiting
@@ -426,13 +439,14 @@ export async function middleware(req: NextRequest) {
   // Headers utiles côté serveur (headers())
   res.headers.set("x-locale", locale);
   res.headers.set("x-currency", currency);
+  res.headers.set("x-nonce", nonce); // ✅ Passer le nonce au layout
 
   // --- Headers de sécurité ---
   addSecurityHeaders(res);
 
-  // --- Content-Security-Policy ---
+  // --- Content-Security-Policy avec nonce ---
   const isDev = process.env.NODE_ENV === "development";
-  res.headers.set("Content-Security-Policy", generateCSP(isDev));
+  res.headers.set("Content-Security-Policy", generateCSP(isDev, nonce));
 
   // --- Headers de compression ---
   // Vary: Accept-Encoding pour indiquer que la réponse varie selon l'encodage accepté

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import "./globals.css";
 import Providers from "@/components/providers";
 import { ConditionalNavbar, ConditionalFooter, ConditionalCookieBanner } from "@/components/ConditionalLayout";
@@ -141,13 +141,18 @@ export default async function RootLayout({
   const locale = getInitialLocale();
   const isMaintenanceMode = await checkMaintenanceMode();
 
+  // Récupérer le nonce CSP depuis le middleware
+  const headersList = headers();
+  const nonce = headersList.get('x-nonce') || '';
+
   return (
     <html
       lang={locale}
       data-locale={locale}
       className="h-full"
+      nonce={nonce}
     >
-      <body className="min-h-screen bg-white text-gray-900 antialiased relative">
+      <body className="min-h-screen bg-white text-gray-900 antialiased relative" nonce={nonce}>
         <SentryErrorBoundary>
           <ErrorBoundary>
             <Providers>
