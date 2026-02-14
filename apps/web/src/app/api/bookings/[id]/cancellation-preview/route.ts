@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { evaluateCancellationPolicy } from "@/lib/cancellation";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -37,89 +38,104 @@ async function getCurrentUser() {
  *   => afficher une modale "vous serez remboursé X €, frais Y €"
  */
 export async function GET(_req: NextRequest, { params }: RouteParams) {
-  const me = await getCurrentUser();
-  if (!me) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  try {
+    const me = await getCurrentUser();
+    if (!me) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  const booking = await prisma.booking.findUnique({
-    where: { id: params.id },
-    include: {
-      listing: {
-        select: {
-          id: true,
-          title: true,
-          ownerId: true,
-          currency: true,
+    const booking = await prisma.booking.findUnique({
+      where: { id: params.id },
+      include: {
+        listing: {
+          select: {
+            id: true,
+            title: true,
+            ownerId: true,
+            currency: true,
+          },
         },
       },
-    },
-  });
+    });
 
-  if (!booking) {
-    return NextResponse.json({ error: "Booking not found" }, { status: 404 });
-  }
+    if (!booking) {
+      return NextResponse.json({ error: "Booking not found" }, { status: 404 });
+    }
 
-  const isGuest = booking.guestId === me.id;
-  const isHost = booking.listing.ownerId === me.id;
+    const isGuest = booking.guestId === me.id;
+    const isHost = booking.listing.ownerId === me.id;
 
-  if (!isGuest && !isHost) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+    if (!isGuest && !isHost) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
-  // Pour l’instant, on ne fait des refunds que pour les bookings payées
-  if (booking.status !== "CONFIRMED") {
-    return NextResponse.json(
-      {
-        error: "booking_not_confirmed",
-        message:
-          "Cette réservation n'est pas encore payée. L'annulation ne déclenchera pas de remboursement.",
-        booking: {
-          id: booking.id,
-          status: booking.status,
+    // Pour l'instant, on ne fait des refunds que pour les bookings payées
+    if (booking.status !== "CONFIRMED") {
+      return NextResponse.json(
+        {
+          error: "booking_not_confirmed",
+          message:
+            "Cette réservation n'est pas encore payée. L'annulation ne déclenchera pas de remboursement.",
+          booking: {
+            id: booking.id,
+            status: booking.status,
+          },
         },
-      },
-      { status: 400 }
-    );
-  }
+        { status: 400 }
+      );
+    }
 
-  const role = isHost ? "host" : ("guest" as const);
-  const now = new Date();
-  const totalPriceCents = Math.round(booking.totalPrice * 100);
+    const role = isHost ? "host" : ("guest" as const);
+    const now = new Date();
+    const totalPriceCents = Math.round(booking.totalPrice * 100);
 
-  const decision = evaluateCancellationPolicy({
-    role,
-    now,
-    startDate: booking.startDate,
-    endDate: booking.endDate,
-    totalPriceCents,
-    currency: booking.currency,
-  });
-
-  return NextResponse.json({
-    allowed: decision.allowed,
-    role,
-    booking: {
-      id: booking.id,
-      status: booking.status,
+    const decision = evaluateCancellationPolicy({
+      role,
+      now,
       startDate: booking.startDate,
       endDate: booking.endDate,
       totalPriceCents,
       currency: booking.currency,
-      listing: {
-        id: booking.listing.id,
-        title: booking.listing.title,
+    });
+
+    return NextResponse.json({
+      allowed: decision.allowed,
+      role,
+      booking: {
+        id: booking.id,
+        status: booking.status,
+        startDate: booking.startDate,
+        endDate: booking.endDate,
+        totalPriceCents,
+        currency: booking.currency,
+        listing: {
+          id: booking.listing.id,
+          title: booking.listing.title,
+        },
       },
-    },
-    policy: {
-      reasonCode: decision.reasonCode,
-      message: decision.message,
-      refundRatio: decision.refundRatio, // 0..1
-      refundAmountCents: decision.refundAmountCents,
-      serviceFeeRetainedCents: decision.serviceFeeRetainedCents,
-      hostPayoutCents: decision.hostPayoutCents,
-      guestPenaltyCents: decision.guestPenaltyCents,
-      policyType: decision.policyType,
-    },
-  });
+      policy: {
+        reasonCode: decision.reasonCode,
+        message: decision.message,
+        refundRatio: decision.refundRatio, // 0..1
+        refundAmountCents: decision.refundAmountCents,
+        serviceFeeRetainedCents: decision.serviceFeeRetainedCents,
+        hostPayoutCents: decision.hostPayoutCents,
+        guestPenaltyCents: decision.guestPenaltyCents,
+        policyType: decision.policyType,
+      },
+    });
+  } catch (error) {
+    logger.error("Failed to preview cancellation", {
+      error: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
+    return NextResponse.json(
+      {
+        error: "CANCELLATION_PREVIEW_FAILED",
+        message: "Failed to preview cancellation. Please try again."
+      },
+      { status: 500 }
+    );
+  }
 }

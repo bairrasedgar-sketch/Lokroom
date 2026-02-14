@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/lib/api-auth";
 import { jsonError } from "@/lib/api-error";
 import { cache, CacheKeys, CacheTTL } from "@/lib/redis/cache-safe";
 import { parsePageParam, parseLimitParam } from "@/lib/validation/params";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -16,53 +17,68 @@ export const dynamic = "force-dynamic";
  * Supporte la pagination avec ?page=1&pageSize=20
  */
 export async function GET(req: NextRequest) {
-  const me = await getCurrentUser();
-  if (!me) {
-    return jsonError("unauthorized", 401);
-  }
+  try {
+    const me = await getCurrentUser();
+    if (!me) {
+      return jsonError("unauthorized", 401);
+    }
 
-  const searchParams = req.nextUrl.searchParams;
-  // 🔒 SÉCURITÉ : Validation sécurisée des paramètres de pagination
-  const page = parsePageParam(searchParams.get("page"));
-  const pageSize = parseLimitParam(searchParams.get("pageSize"), 20, 100);
+    const searchParams = req.nextUrl.searchParams;
+    // 🔒 SÉCURITÉ : Validation sécurisée des paramètres de pagination
+    const page = parsePageParam(searchParams.get("page"));
+    const pageSize = parseLimitParam(searchParams.get("pageSize"), 20, 100);
 
-  // Clé de cache incluant la pagination
-  const cacheKey = `${CacheKeys.bookingsByUser(me.id)}:page:${page}:size:${pageSize}`;
+    // Clé de cache incluant la pagination
+    const cacheKey = `${CacheKeys.bookingsByUser(me.id)}:page:${page}:size:${pageSize}`;
 
-  const cached = await cache.get(
-    cacheKey,
-    async () => {
-      const [bookings, total] = await Promise.all([
-        prisma.booking.findMany({
-          where: { guestId: me.id },
-          orderBy: { createdAt: "desc" },
-          skip: (page - 1) * pageSize,
-          take: pageSize,
-          include: {
-            listing: {
-              select: {
-                id: true,
-                title: true,
-                price: true,
-                currency: true,
-                images: { select: { id: true, url: true }, take: 1 },
+    const cached = await cache.get(
+      cacheKey,
+      async () => {
+        const [bookings, total] = await Promise.all([
+          prisma.booking.findMany({
+            where: { guestId: me.id },
+            orderBy: { createdAt: "desc" },
+            skip: (page - 1) * pageSize,
+            take: pageSize,
+            include: {
+              listing: {
+                select: {
+                  id: true,
+                  title: true,
+                  price: true,
+                  currency: true,
+                  images: { select: { id: true, url: true }, take: 1 },
+                },
               },
             },
-          },
-        }),
-        prisma.booking.count({ where: { guestId: me.id } }),
-      ]);
+          }),
+          prisma.booking.count({ where: { guestId: me.id } }),
+        ]);
 
-      return {
-        bookings,
-        page,
-        pageSize,
-        total,
-        pageCount: total === 0 ? 0 : Math.ceil(total / pageSize),
-      };
-    },
-    CacheTTL.SHORT // Les bookings changent fréquemment
-  );
+        return {
+          bookings,
+          page,
+          pageSize,
+          total,
+          pageCount: total === 0 ? 0 : Math.ceil(total / pageSize),
+        };
+      },
+      CacheTTL.SHORT // Les bookings changent fréquemment
+    );
 
-  return NextResponse.json(cached);
+    return NextResponse.json(cached);
+  } catch (error) {
+    logger.error("Failed to fetch bookings", {
+      error: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
+    return NextResponse.json(
+      {
+        error: "BOOKINGS_FETCH_FAILED",
+        message: "Failed to fetch bookings. Please try again."
+      },
+      { status: 500 }
+    );
+  }
 }

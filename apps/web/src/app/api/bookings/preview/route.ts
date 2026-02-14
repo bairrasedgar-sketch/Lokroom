@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { inferRegion, type Currency } from "@/lib/fees";
 import { buildClientFeeBreakdown } from "@/lib/bookingFees";
+import { requireAuth } from "@/lib/auth-helpers";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -20,8 +22,23 @@ export const dynamic = "force-dynamic";
  * → ne crée PAS de réservation.
  * → renvoie juste le détail des prix (base + frais + taxes + total)
  *   pour afficher dans le checkout façon Airbnb.
+ *
+ * 🔒 PROTECTION: Requiert authentification pour éviter abus/scraping
  */
 export async function POST(req: NextRequest) {
+  // 🔒 PROTECTION: Vérifier authentification
+  try {
+    await requireAuth();
+  } catch (error) {
+    logger.warn("Unauthorized booking preview attempt", {
+      ip: req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip"),
+      userAgent: req.headers.get("user-agent"),
+    });
+    return NextResponse.json(
+      { error: "UNAUTHORIZED", message: "Authentication required" },
+      { status: 401 }
+    );
+  }
   let body: {
     listingId?: string;
     startDate?: string;

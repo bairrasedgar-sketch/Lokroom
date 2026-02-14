@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { checkInstantBookEligibility } from "@/lib/instant-book";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -29,35 +30,36 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const listingId = params.id;
+  try {
+    const listingId = params.id;
 
-  // Récupérer l'annonce
-  const listing = await prisma.listing.findUnique({
-    where: { id: listingId },
-    select: {
-      id: true,
-      title: true,
-      isInstantBook: true,
-      instantBookSettings: {
-        select: {
-          requireVerifiedId: true,
-          requirePositiveReviews: true,
-          minGuestRating: true,
-          requireProfilePhoto: true,
-          requirePhoneVerified: true,
-          maxNights: true,
-          minNights: true,
-          advanceNoticeHours: true,
+    // Récupérer l'annonce
+    const listing = await prisma.listing.findUnique({
+      where: { id: listingId },
+      select: {
+        id: true,
+        title: true,
+        isInstantBook: true,
+        instantBookSettings: {
+          select: {
+            requireVerifiedId: true,
+            requirePositiveReviews: true,
+            minGuestRating: true,
+            requireProfilePhoto: true,
+            requirePhoneVerified: true,
+            maxNights: true,
+            minNights: true,
+            advanceNoticeHours: true,
+          },
         },
       },
-    },
-  });
+    });
 
-  if (!listing) {
-    return NextResponse.json(
-      { error: "LISTING_NOT_FOUND" },
-      { status: 404 }
-    );
+    if (!listing) {
+      return NextResponse.json(
+        { error: "LISTING_NOT_FOUND" },
+        { status: 404 }
+      );
   }
 
   // Si l'annonce n'a pas instant book activé
@@ -131,4 +133,18 @@ export async function GET(
       settings: listing.instantBookSettings,
     },
   });
+  } catch (error) {
+    logger.error("Failed to check instant book eligibility", {
+      error: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
+    return NextResponse.json(
+      {
+        error: "ELIGIBILITY_CHECK_FAILED",
+        message: "Failed to check instant book eligibility. Please try again."
+      },
+      { status: 500 }
+    );
+  }
 }

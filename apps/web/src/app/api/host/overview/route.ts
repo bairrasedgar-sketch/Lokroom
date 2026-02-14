@@ -4,60 +4,62 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  const me = await prisma.user.findUnique({
-    where: { email: session.user.email },
-    select: { id: true },
-  });
+    const me = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { id: true },
+    });
 
-  if (!me) {
-    return NextResponse.json({ error: "user_not_found" }, { status: 404 });
-  }
+    if (!me) {
+      return NextResponse.json({ error: "user_not_found" }, { status: 404 });
+    }
 
-  const hostId = me.id;
+    const hostId = me.id;
 
-  const [
-    totalListings,
-    activeListingsCount,
-    totalBookings,
-    totalCancelled,
-    wallet,
-    profile,
-    recentBookings,
-    listingRows,
-    ledger,
-  ] = await Promise.all([
-    prisma.listing.count({
-      where: { ownerId: hostId },
-    }),
-    prisma.listing.count({
-      where: {
-        ownerId: hostId,
-        isActive: true,
-        ListingModeration: {
-          status: "APPROVED",
+    const [
+      totalListings,
+      activeListingsCount,
+      totalBookings,
+      totalCancelled,
+      wallet,
+      profile,
+      recentBookings,
+      listingRows,
+      ledger,
+    ] = await Promise.all([
+      prisma.listing.count({
+        where: { ownerId: hostId },
+      }),
+      prisma.listing.count({
+        where: {
+          ownerId: hostId,
+          isActive: true,
+          ListingModeration: {
+            status: "APPROVED",
+          },
         },
-      },
-    }),
-    prisma.booking.count({
-      where: { listing: { ownerId: hostId } },
-    }),
-    prisma.booking.count({
-      where: { listing: { ownerId: hostId }, status: "CANCELLED" },
-    }),
-    prisma.wallet.findUnique({
-      where: { hostId },
-      select: { balanceCents: true },
-    }),
-    prisma.userProfile.findUnique({
+      }),
+      prisma.booking.count({
+        where: { listing: { ownerId: hostId } },
+      }),
+      prisma.booking.count({
+        where: { listing: { ownerId: hostId }, status: "CANCELLED" },
+      }),
+      prisma.wallet.findUnique({
+        where: { hostId },
+        select: { balanceCents: true },
+      }),
+      prisma.userProfile.findUnique({
       where: { userId: hostId },
       select: { ratingAvg: true, ratingCount: true },
     }),
@@ -146,4 +148,18 @@ export async function GET() {
       lastTransactions: ledger,
     },
   });
+  } catch (error) {
+    logger.error("Failed to fetch host overview", {
+      error: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
+    return NextResponse.json(
+      {
+        error: "OVERVIEW_FETCH_FAILED",
+        message: "Failed to fetch host overview. Please try again."
+      },
+      { status: 500 }
+    );
+  }
 }

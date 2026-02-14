@@ -12,42 +12,43 @@ const RESPONSE_DEADLINE_DAYS = 3;
 
 // GET /api/disputes - Liste des litiges de l'utilisateur
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  const me = await prisma.user.findUnique({
-    where: { email: session.user.email },
-    select: { id: true, role: true },
-  });
-  if (!me) {
-    return NextResponse.json({ error: "User_not_found" }, { status: 404 });
-  }
+    const me = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { id: true, role: true },
+    });
+    if (!me) {
+      return NextResponse.json({ error: "User_not_found" }, { status: 404 });
+    }
 
-  // Validation des paramètres de pagination
-  const validation = validateSearchParams(req.nextUrl.searchParams, paginationSchema);
-  if (!validation.success) {
-    return NextResponse.json({ error: validation.error }, { status: 400 });
-  }
+    // Validation des paramètres de pagination
+    const validation = validateSearchParams(req.nextUrl.searchParams, paginationSchema);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
+    }
 
-  const { page = 1, limit = 20 } = validation.data;
-  const status = req.nextUrl.searchParams.get("status");
+    const { page = 1, limit = 20 } = validation.data;
+    const status = req.nextUrl.searchParams.get("status");
 
-  // Construire le filtre
-  const where: Record<string, unknown> = {
-    OR: [{ openedById: me.id }, { againstId: me.id }],
-  };
+    // Construire le filtre
+    const where: Record<string, unknown> = {
+      OR: [{ openedById: me.id }, { againstId: me.id }],
+    };
 
-  if (status) {
-    where.status = status;
-  }
+    if (status) {
+      where.status = status;
+    }
 
-  const [disputes, total] = await Promise.all([
-    prisma.dispute.findMany({
-      where,
-      orderBy: { updatedAt: "desc" },
-      skip: (page - 1) * limit,
+    const [disputes, total] = await Promise.all([
+      prisma.dispute.findMany({
+        where,
+        orderBy: { updatedAt: "desc" },
+        skip: (page - 1) * limit,
       take: limit,
       include: {
         booking: {

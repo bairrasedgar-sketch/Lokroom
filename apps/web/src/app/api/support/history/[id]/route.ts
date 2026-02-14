@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -12,41 +13,56 @@ export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
-    select: { id: true },
-  });
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { id: true },
+    });
 
-  if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
-  }
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
 
-  const { id } = await params;
+    const { id } = await params;
 
-  // Récupérer la conversation
-  const conversation = await prisma.supportConversation.findFirst({
-    where: {
-      id,
-      userId: user.id, // S'assurer que c'est bien la conversation de l'utilisateur
-    },
-    include: {
-      messages: {
-        orderBy: { createdAt: "asc" },
+    // Récupérer la conversation
+    const conversation = await prisma.supportConversation.findFirst({
+      where: {
+        id,
+        userId: user.id, // S'assurer que c'est bien la conversation de l'utilisateur
       },
-      assignedAdmin: {
-        select: { id: true, name: true },
+      include: {
+        messages: {
+          orderBy: { createdAt: "asc" },
+        },
+        assignedAdmin: {
+          select: { id: true, name: true },
+        },
       },
-    },
-  });
+    });
 
-  if (!conversation) {
-    return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
+    if (!conversation) {
+      return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ conversation });
+  } catch (error) {
+    logger.error("Failed to fetch support conversation", {
+      error: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
+    return NextResponse.json(
+      {
+        error: "CONVERSATION_FETCH_FAILED",
+        message: "Failed to fetch conversation. Please try again."
+      },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json({ conversation });
 }

@@ -2,62 +2,64 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
 
 // GET /api/host/ical/export/[listingId] - Exporter le calendrier en format iCal
 export async function GET(
   request: Request,
   { params }: { params: { listingId: string } }
 ) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  }
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
 
-  const { listingId } = params;
+    const { listingId } = params;
 
-  // Vérifier que l'utilisateur est le propriétaire
-  const listing = await prisma.listing.findFirst({
-    where: {
-      id: listingId,
-      ownerId: session.user.id,
-    },
-    select: {
-      id: true,
-      title: true,
-    },
-  });
-
-  if (!listing) {
-    return NextResponse.json({ error: "Annonce non trouvée" }, { status: 404 });
-  }
-
-  // Récupérer les réservations confirmées
-  const bookings = await prisma.booking.findMany({
-    where: {
-      listingId,
-      status: { in: ["CONFIRMED", "PENDING"] },
-      endDate: { gte: new Date() },
-    },
-    select: {
-      id: true,
-      startDate: true,
-      endDate: true,
-      status: true,
-      guest: {
-        select: { name: true },
+    // Vérifier que l'utilisateur est le propriétaire
+    const listing = await prisma.listing.findFirst({
+      where: {
+        id: listingId,
+        ownerId: session.user.id,
       },
-    },
-    orderBy: { startDate: "asc" },
-  });
+      select: {
+        id: true,
+        title: true,
+      },
+    });
 
-  // Récupérer les blocages (CalendarBlock sans bookingId = blocage manuel)
-  const blockedPeriods = await prisma.calendarBlock.findMany({
-    where: {
-      listingId,
-      bookingId: null, // Seulement les blocages manuels
-      end: { gte: new Date() },
-    },
-    select: {
+    if (!listing) {
+      return NextResponse.json({ error: "Annonce non trouvée" }, { status: 404 });
+    }
+
+    // Récupérer les réservations confirmées
+    const bookings = await prisma.booking.findMany({
+      where: {
+        listingId,
+        status: { in: ["CONFIRMED", "PENDING"] },
+        endDate: { gte: new Date() },
+      },
+      select: {
+        id: true,
+        startDate: true,
+        endDate: true,
+        status: true,
+        guest: {
+          select: { name: true },
+        },
+      },
+      orderBy: { startDate: "asc" },
+    });
+
+    // Récupérer les blocages (CalendarBlock sans bookingId = blocage manuel)
+    const blockedPeriods = await prisma.calendarBlock.findMany({
+      where: {
+        listingId,
+        bookingId: null, // Seulement les blocages manuels
+        end: { gte: new Date() },
+      },
+      select: {
       id: true,
       start: true,
       end: true,
@@ -157,4 +159,20 @@ function escapeICalText(text: string): string {
     .replace(/;/g, "\\;")
     .replace(/,/g, "\\,")
     .replace(/\n/g, "\\n");
+}
+  } catch (error) {
+    logger.error("Failed to export iCal", {
+      error: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+      listingId: params.listingId,
+    });
+
+    return NextResponse.json(
+      {
+        error: "ICAL_EXPORT_FAILED",
+        message: "Failed to export calendar. Please try again."
+      },
+      { status: 500 }
+    );
+  }
 }
