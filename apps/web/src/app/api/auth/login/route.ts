@@ -8,6 +8,7 @@ import { rateLimit } from "@/lib/rate-limit";
 import { authRateLimiter, withRateLimit } from "@/lib/security/rate-limit";
 import { sanitizeEmail } from "@/lib/security/sanitize";
 import { logger } from "@/lib/logger";
+import { validateRequestBody, loginSchema } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
 
@@ -41,14 +42,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const body = await req.json();
-    const { email, password } = body;
-
-    if (!email || !password) {
-      return NextResponse.json({
-        error: "Email et mot de passe requis",
-      }, { status: 400 });
+    // 🔒 VALIDATION : Valider les inputs avec Zod
+    const validation = await validateRequestBody(req, loginSchema);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: validation.status });
     }
+
+    const { email, password } = validation.data;
 
     // Sanitize email input
     const normalizedEmail = sanitizeEmail(email);

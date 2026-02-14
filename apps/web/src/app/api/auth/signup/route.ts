@@ -16,6 +16,7 @@ import { authRateLimiter, withRateLimit } from "@/lib/security/rate-limit";
 import { sanitizeEmail } from "@/lib/security/sanitize";
 import { logger } from "@/lib/logger";
 import { validateUserInput, isValidEmail } from "@/lib/security/input-validation";
+import { validateRequestBody, signupEmailSchema, signupVerifySchema } from "@/lib/validations";
 
 
 export const dynamic = "force-dynamic";
@@ -79,27 +80,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const body = await req.json();
-    const { email } = body;
-
-    if (!email) {
-      return NextResponse.json({ error: "Email requis" }, { status: 400 });
+    // 🔒 VALIDATION : Valider les inputs avec Zod
+    const validation = await validateRequestBody(req, signupEmailSchema);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: validation.status });
     }
 
-    // Validation de sécurité avancée
-    const validation = validateUserInput(email);
-    if (!validation.valid) {
-      logger.warn("[SECURITY] Suspicious input detected in signup", {
-        ip,
-        error: validation.error,
-      });
-      return NextResponse.json({ error: "Format d'email invalide" }, { status: 400 });
-    }
-
-    // Validation email spécifique
-    if (!isValidEmail(email)) {
-      return NextResponse.json({ error: "Format d'email invalide" }, { status: 400 });
-    }
+    const { email } = validation.data;
 
     // Sanitize email input
     const normalizedEmail = sanitizeEmail(email);
@@ -197,14 +184,13 @@ export async function PUT(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const body = await req.json();
-    const { email, code } = body;
-
-    if (!email || !code) {
-      return NextResponse.json({
-        error: "Email et code requis",
-      }, { status: 400 });
+    // 🔒 VALIDATION : Valider les inputs avec Zod
+    const validation = await validateRequestBody(req, signupVerifySchema);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: validation.status });
     }
+
+    const { email, code } = validation.data;
 
     // Sanitize inputs
     const normalizedEmail = sanitizeEmail(email);
