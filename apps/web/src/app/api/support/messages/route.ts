@@ -80,54 +80,59 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ message });
+  } catch (error) {
+    logger.error("POST /api/support/messages error", { error: error instanceof Error ? error.message : "Unknown error" });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }
 
 // PATCH /api/support/messages → marquer les messages comme lus
 export async function PATCH(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
-    select: { id: true, role: true },
-  });
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { id: true, role: true },
+    });
 
-  if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
-  }
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
 
-  const body = await req.json();
-  const { conversationId } = body as { conversationId: string };
+    const body = await req.json();
+    const { conversationId } = body as { conversationId: string };
 
-  if (!conversationId) {
-    return NextResponse.json({ error: "Missing conversationId" }, { status: 400 });
-  }
+    if (!conversationId) {
+      return NextResponse.json({ error: "Missing conversationId" }, { status: 400 });
+    }
 
-  // Vérifier que la conversation existe
-  const conversation = await prisma.supportConversation.findUnique({
-    where: { id: conversationId },
-  });
+    // Vérifier que la conversation existe
+    const conversation = await prisma.supportConversation.findUnique({
+      where: { id: conversationId },
+    });
 
-  if (!conversation) {
-    return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
-  }
+    if (!conversation) {
+      return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
+    }
 
-  const isOwner = conversation.userId === user.id;
-  const isAdmin = user.role === "ADMIN";
+    const isOwner = conversation.userId === user.id;
+    const isAdmin = user.role === "ADMIN";
 
-  if (!isOwner && !isAdmin) {
-    return NextResponse.json({ error: "Access denied" }, { status: 403 });
-  }
+    if (!isOwner && !isAdmin) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
 
-  // Marquer les messages comme lus
-  if (isOwner) {
-    await prisma.supportMessage.updateMany({
-      where: {
-        conversationId,
-        readByUser: false,
-        type: { in: ["ADMIN", "SYSTEM"] },
+    // Marquer les messages comme lus
+    if (isOwner) {
+      await prisma.supportMessage.updateMany({
+        where: {
+          conversationId,
+          readByUser: false,
+          type: { in: ["ADMIN", "SYSTEM"] },
       },
       data: {
         readByUser: true,
@@ -152,17 +157,7 @@ export async function PATCH(req: Request) {
 
   return NextResponse.json({ success: true });
   } catch (error) {
-    logger.error("Failed to send support message", {
-      error: error instanceof Error ? error.message : "Unknown error",
-      stack: error instanceof Error ? error.stack : undefined,
-    });
-
-    return NextResponse.json(
-      {
-        error: "MESSAGE_SEND_FAILED",
-        message: "Failed to send message. Please try again."
-      },
-      { status: 500 }
-    );
+    logger.error("PATCH /api/support/messages error", { error: error instanceof Error ? error.message : "Unknown error" });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

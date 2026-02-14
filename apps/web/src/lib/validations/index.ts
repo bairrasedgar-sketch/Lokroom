@@ -119,6 +119,62 @@ export const phoneSchema = z
   .nullable();
 
 // ============================================
+// SCHÉMAS AUTH
+// ============================================
+
+export const loginSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1, "Mot de passe requis"),
+});
+
+export const signupEmailSchema = z.object({
+  email: emailSchema,
+});
+
+export const signupVerifySchema = z.object({
+  email: emailSchema,
+  code: z.string().length(6, "Code à 6 chiffres requis").regex(/^\d{6}$/, "Code invalide"),
+});
+
+export const forgotPasswordSchema = z.object({
+  email: emailSchema,
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, "Token requis"),
+  password: z.string().min(8, "Mot de passe minimum 8 caractères").max(100),
+});
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Mot de passe actuel requis"),
+  newPassword: z.string().min(8, "Nouveau mot de passe minimum 8 caractères").max(100),
+});
+
+export const twoFactorVerifySchema = z.object({
+  code: z.string().length(6, "Code à 6 chiffres requis").regex(/^\d{6}$/, "Code invalide"),
+});
+
+export const twoFactorDisableSchema = z.object({
+  password: z.string().min(1, "Mot de passe requis"),
+});
+
+// ============================================
+// SCHÉMAS PAYMENT
+// ============================================
+
+export const createCheckoutSchema = z.object({
+  amountCents: z.number().int().min(50, "Montant minimum 50 centimes").max(100_000_000),
+  currency: currencySchema.default("EUR"),
+  applicationFeeCents: z.number().int().min(0).max(100_000_000).optional().default(0),
+  metadata: z.record(z.string(), z.string()).optional(),
+});
+
+export const paymentIntentSchema = z.object({
+  bookingId: idSchema,
+  paymentMethodId: z.string().optional(),
+});
+
+// ============================================
 // SCHÉMAS MÉTIER - UTILISATEURS
 // ============================================
 

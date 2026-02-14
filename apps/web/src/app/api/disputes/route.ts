@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { paginationSchema, validateSearchParams } from "@/lib/validations/api";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -161,6 +162,10 @@ export async function GET(req: NextRequest) {
       totalPages: Math.ceil(total / limit),
     },
   });
+  } catch (error) {
+    logger.error("GET /api/disputes error", { error: error instanceof Error ? error.message : "Unknown error" });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }
 
 // POST /api/disputes - Créer un nouveau litige

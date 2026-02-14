@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import { logger } from "@/lib/logger";
+import { validateRequestBody, createCheckoutSchema } from "@/lib/validations";
 
 export async function POST(req: Request) {
   try {
@@ -13,17 +14,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { amountCents, currency = "eur", applicationFeeCents = 0, metadata } =
-      (await req.json()) || {};
-
-    if (!amountCents || amountCents < 50) {
-      return NextResponse.json({ error: "amount_too_small" }, { status: 400 });
+    // 🔒 VALIDATION : Valider les inputs avec Zod
+    const validation = await validateRequestBody(req, createCheckoutSchema);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: validation.status });
     }
+
+    const { amountCents, currency, applicationFeeCents, metadata } = validation.data;
 
     // Paiement sur la plateforme (pas de transfer_data ici)
     const pi = await stripe.paymentIntents.create({
       amount: Math.trunc(amountCents),
-      currency,
+      currency: (currency || "EUR").toLowerCase(),
       automatic_payment_methods: { enabled: true },
       application_fee_amount: applicationFeeCents ? Math.trunc(applicationFeeCents) : undefined,
       metadata: metadata || {},

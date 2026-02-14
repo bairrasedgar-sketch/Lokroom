@@ -60,23 +60,27 @@ export async function GET(
         end: { gte: new Date() },
       },
       select: {
-      id: true,
-      start: true,
-      end: true,
-      reason: true,
-    },
-    orderBy: { start: "asc" },
-  });
+        id: true,
+        start: true,
+        end: true,
+        reason: true,
+      },
+      orderBy: { start: "asc" },
+    });
 
-  // Générer le contenu iCal
-  const icalContent = generateICalendar(listing, bookings, blockedPeriods);
+    // Générer le contenu iCal
+    const icalContent = generateICalendar(listing, bookings, blockedPeriods);
 
-  return new Response(icalContent, {
-    headers: {
-      "Content-Type": "text/calendar; charset=utf-8",
-      "Content-Disposition": `attachment; filename="${listing.title.replace(/[^a-z0-9]/gi, "_")}.ics"`,
-    },
-  });
+    return new Response(icalContent, {
+      headers: {
+        "Content-Type": "text/calendar; charset=utf-8",
+        "Content-Disposition": `attachment; filename="${listing.title.replace(/[^a-z0-9]/gi, "_")}.ics"`,
+      },
+    });
+  } catch (error) {
+    logger.error("GET /api/host/ical/export/[listingId] error", { error: error instanceof Error ? error.message : "Unknown error" });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }
 
 function generateICalendar(
@@ -159,20 +163,4 @@ function escapeICalText(text: string): string {
     .replace(/;/g, "\\;")
     .replace(/,/g, "\\,")
     .replace(/\n/g, "\\n");
-}
-  } catch (error) {
-    logger.error("Failed to export iCal", {
-      error: error instanceof Error ? error.message : "Unknown error",
-      stack: error instanceof Error ? error.stack : undefined,
-      listingId: params.listingId,
-    });
-
-    return NextResponse.json(
-      {
-        error: "ICAL_EXPORT_FAILED",
-        message: "Failed to export calendar. Please try again."
-      },
-      { status: 500 }
-    );
-  }
 }
