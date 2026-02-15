@@ -1,9 +1,12 @@
 // apps/web/src/app/api/host/profile/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { z } from "zod";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -72,13 +75,37 @@ async function computeHostStats(userId: string) {
   };
 }
 
+// 🔒 VALIDATION: Schéma Zod pour la mise à jour du profil
+const hostProfileUpdateSchema = z.object({
+  bio: z.string().max(2000).optional(),
+  avatarUrl: z.string().url().optional(),
+  languages: z.array(z.string()).max(10).optional(),
+  responseTimeCategory: z.enum(["moins_une_heure", "quelques_heures", "un_jour"]).nullable().optional(),
+  instagram: z.string().optional(),
+  website: z.string().url().optional(),
+  experienceYears: z.number().int().min(0).max(60).nullable().optional(),
+});
+
 // GET /api/host/profile
-// ⛏️ _req était défini mais jamais utilisé → on l'enlève
-export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export async function GET(req: Request) {
+  try {
+    // 🔒 RATE LIMITING: 30 req/min
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               req.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`host-profile-get:${ip}`, 30, 60_000);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
   const me = await prisma.user.findUnique({
     where: { email: session.user.email },
@@ -109,21 +136,42 @@ export async function GET() {
     where: { userId: me.id },
   });
 
-  return NextResponse.json({
-    profile: freshProfile,
-    stats: {
-      ...stats,
-      verifiedEmail: !!me.emailVerified,
-    },
-  });
+    return NextResponse.json({
+      profile: freshProfile,
+      stats: {
+        ...stats,
+        verifiedEmail: !!me.emailVerified,
+      },
+    });
+  } catch (error) {
+    logger.error("GET /api/host/profile error", { error });
+    return NextResponse.json(
+      { error: "INTERNAL_ERROR", message: "Erreur serveur" },
+      { status: 500 }
+    );
+  }
 }
 
 // PUT /api/host/profile
 export async function PUT(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  try {
+    // 🔒 RATE LIMITING: 10 req/min pour les mises à jour
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               req.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`host-profile-update:${ip}`, 10, 60_000);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
   const me = await prisma.user.findUnique({
     where: { email: session.user.email },
@@ -133,16 +181,19 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "User_not_found" }, { status: 404 });
   }
 
-  const bodyRaw = (await req.json().catch(() => null)) as
-    | HostProfileUpdateBody
-    | null;
-
-  if (!bodyRaw) {
-    return NextResponse.json(
-      { error: "invalid_body" },
-      { status: 400 },
-    );
-  }
+    // 🔒 VALIDATION: Valider les inputs avec Zod
+    let bodyRaw: z.infer<typeof hostProfileUpdateSchema>;
+    try {
+      bodyRaw = hostProfileUpdateSchema.parse(await req.json());
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          { error: "VALIDATION_ERROR", details: error.errors },
+          { status: 400 }
+        );
+      }
+      return NextResponse.json({ error: "INVALID_JSON" }, { status: 400 });
+    }
 
   const languages = sanitizeLanguages(bodyRaw.languages ?? []);
 
@@ -220,11 +271,18 @@ export async function PUT(req: NextRequest) {
     },
   });
 
-  return NextResponse.json({
-    profile: finalProfile,
-    stats: {
-      ...stats,
-      verifiedEmail: !!me.emailVerified,
-    },
-  });
+    return NextResponse.json({
+      profile: finalProfile,
+      stats: {
+        ...stats,
+        verifiedEmail: !!me.emailVerified,
+      },
+    });
+  } catch (error) {
+    logger.error("PUT /api/host/profile error", { error });
+    return NextResponse.json(
+      { error: "INTERNAL_ERROR", message: "Erreur serveur" },
+      { status: 500 }
+    );
+  }
 }
