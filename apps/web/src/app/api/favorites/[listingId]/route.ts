@@ -1,27 +1,69 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { z } from "zod";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
+import { rateLimit } from "@/lib/rate-limit";
+
+// 🔒 VALIDATION: Schéma Zod pour listingId
+const listingIdSchema = z.string().min(1, "listingId requis");
 
 // Vérifier si l'annonce est déjà en favoris
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: { listingId: string } }
 ) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return NextResponse.json({ ok: false, favorited: false }, { status: 200 });
-  }
-  const fav = await prisma.favorite.findUnique({
-    where: {
-      userId_listingId: {
-        userId: session.user.id!, // si tu stockes l'id dans la session
-        listingId: params.listingId,
-      },
-    },
-  }).catch(() => null);
+  try {
+    // 🔒 RATE LIMITING: 30 req/min
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               req.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`favorite-get:${ip}`, 30, 60_000);
 
-  return NextResponse.json({ ok: true, favorited: !!fav });
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ ok: false, favorited: false }, { status: 200 });
+    }
+
+    // 🔒 VALIDATION: Valider le listingId
+    let listingId: string;
+    try {
+      listingId = listingIdSchema.parse(params.listingId);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          { error: "VALIDATION_ERROR", details: error.errors },
+          { status: 400 }
+        );
+      }
+      return NextResponse.json({ error: "Invalid listing ID" }, { status: 400 });
+    }
+
+    const fav = await prisma.favorite.findUnique({
+      where: {
+        userId_listingId: {
+          userId: session.user.id!,
+          listingId,
+        },
+      },
+    }).catch(() => null);
+
+    return NextResponse.json({ ok: true, favorited: !!fav });
+  } catch (error) {
+    logger.error("GET /api/favorites/[listingId] error", { error, listingId: params.listingId });
+    return NextResponse.json(
+      { error: "INTERNAL_ERROR", message: "Erreur serveur" },
+      { status: 500 }
+    );
+  }
 }
 
 // Ajouter en favoris (optionnellement dans une wishlist)
@@ -29,10 +71,38 @@ export async function POST(
   req: Request,
   { params }: { params: { listingId: string } }
 ) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email || !session.user.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  try {
+    // 🔒 RATE LIMITING: 20 req/min pour ajout favoris
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               req.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`favorite-add:${ip}`, 20, 60_000);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email || !session.user.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // 🔒 VALIDATION: Valider le listingId
+    let listingId: string;
+    try {
+      listingId = listingIdSchema.parse(params.listingId);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          { error: "VALIDATION_ERROR", details: error.errors },
+          { status: 400 }
+        );
+      }
+      return NextResponse.json({ error: "Invalid listing ID" }, { status: 400 });
+    }
 
   // Vérifier le rôle de l'utilisateur
   const user = await prisma.user.findUnique({
@@ -50,7 +120,7 @@ export async function POST(
   }
 
   // vérifie que l'annonce existe
-  const listing = await prisma.listing.findUnique({ where: { id: params.listingId } });
+  const listing = await prisma.listing.findUnique({ where: { id: listingId } });
   if (!listing) return NextResponse.json({ error: "Listing not found" }, { status: 404 });
 
   // Récupérer le wishlistId optionnel du body
@@ -72,42 +142,84 @@ export async function POST(
     }
   }
 
-  const fav = await prisma.favorite.upsert({
-    where: {
-      userId_listingId: {
-        userId: session.user.id,
-        listingId: params.listingId,
+    const fav = await prisma.favorite.upsert({
+      where: {
+        userId_listingId: {
+          userId: session.user.id,
+          listingId,
+        },
       },
-    },
-    update: { wishlistId },
-    create: {
-      userId: session.user.id,
-      listingId: params.listingId,
-      wishlistId,
-    },
-  });
+      update: { wishlistId },
+      create: {
+        userId: session.user.id,
+        listingId,
+        wishlistId,
+      },
+    });
 
-  return NextResponse.json({ ok: true, favorite: fav }, { status: 201 });
+    return NextResponse.json({ ok: true, favorite: fav }, { status: 201 });
+  } catch (error) {
+    logger.error("POST /api/favorites/[listingId] error", { error, listingId: params.listingId });
+    return NextResponse.json(
+      { error: "INTERNAL_ERROR", message: "Erreur serveur" },
+      { status: 500 }
+    );
+  }
 }
 
 // Retirer des favoris
 export async function DELETE(
-  _req: Request,
+  req: Request,
   { params }: { params: { listingId: string } }
 ) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email || !session.user.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  try {
+    // 🔒 RATE LIMITING: 20 req/min pour suppression favoris
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               req.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`favorite-delete:${ip}`, 20, 60_000);
 
-  await prisma.favorite.delete({
-    where: {
-      userId_listingId: {
-        userId: session.user.id,
-        listingId: params.listingId,
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email || !session.user.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // 🔒 VALIDATION: Valider le listingId
+    let listingId: string;
+    try {
+      listingId = listingIdSchema.parse(params.listingId);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          { error: "VALIDATION_ERROR", details: error.errors },
+          { status: 400 }
+        );
+      }
+      return NextResponse.json({ error: "Invalid listing ID" }, { status: 400 });
+    }
+
+    await prisma.favorite.delete({
+      where: {
+        userId_listingId: {
+          userId: session.user.id,
+          listingId,
+        },
       },
-    },
-  }).catch(() => null);
+    }).catch(() => null);
 
-  return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    logger.error("DELETE /api/favorites/[listingId] error", { error, listingId: params.listingId });
+    return NextResponse.json(
+      { error: "INTERNAL_ERROR", message: "Erreur serveur" },
+      { status: 500 }
+    );
+  }
 }

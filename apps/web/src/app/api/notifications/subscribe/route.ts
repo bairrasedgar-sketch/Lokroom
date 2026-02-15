@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
 import { randomUUID } from "crypto";
-
+import { rateLimit } from "@/lib/rate-limit";
 
 const subscribeSchema = z.object({
   endpoint: z.string().url(),
@@ -19,6 +19,19 @@ const subscribeSchema = z.object({
 // POST /api/notifications/subscribe - Enregistrer un abonnement push
 export async function POST(request: Request) {
   try {
+    // 🔒 RATE LIMITING: 10 req/min pour subscriptions
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               request.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`notif-subscribe:${ip}`, 10, 60_000);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
@@ -89,6 +102,19 @@ export async function POST(request: Request) {
 // DELETE /api/notifications/subscribe - Supprimer un abonnement push
 export async function DELETE(request: Request) {
   try {
+    // 🔒 RATE LIMITING: 10 req/min pour unsubscribe
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               request.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`notif-unsubscribe:${ip}`, 10, 60_000);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
@@ -128,6 +154,19 @@ export async function DELETE(request: Request) {
 // GET /api/notifications/subscribe - Obtenir les abonnements de l'utilisateur
 export async function GET(request: Request) {
   try {
+    // 🔒 RATE LIMITING: 30 req/min pour GET
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               request.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`notif-get:${ip}`, 30, 60_000);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
