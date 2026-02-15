@@ -8,6 +8,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { s3, S3_BUCKET, S3_PUBLIC_BASE } from "@/lib/s3";
 import { logger } from "@/lib/logger";
+import { rateLimit } from "@/lib/rate-limit";
 
 type ImageBody = {
   url?: string;
@@ -25,10 +26,24 @@ export async function POST(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  try {
+    // 🔒 RATE LIMITING: 20 req/min
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               req.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`listing-images:${ip}`, 20, 60_000);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
   const listingId = params.id;
   const body: ImageBody = await req.json().catch(() => ({}));
@@ -88,7 +103,14 @@ export async function POST(
     },
   });
 
-  return NextResponse.json({ image }, { status: 201 });
+    return NextResponse.json({ image }, { status: 201 });
+  } catch (error) {
+    logger.error("POST /api/listings/[id]/images error", { error });
+    return NextResponse.json(
+      { error: "INTERNAL_ERROR", message: "Erreur serveur" },
+      { status: 500 }
+    );
+  }
 }
 
 /**
@@ -102,10 +124,24 @@ export async function PATCH(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  try {
+    // 🔒 RATE LIMITING: 20 req/min
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               req.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`listing-images-patch:${ip}`, 20, 60_000);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
   const body = (await req.json().catch(() => null)) as
     | { action?: string; imageId?: string; order?: string[] }
@@ -219,9 +255,15 @@ export async function PATCH(
     await prisma.$transaction(queries);
 
     return NextResponse.json({ ok: true });
-  }
 
   return NextResponse.json({ error: "Unknown action" }, { status: 400 });
+  } catch (error) {
+    logger.error("PATCH /api/listings/[id]/images error", { error });
+    return NextResponse.json(
+      { error: "INTERNAL_ERROR", message: "Erreur serveur" },
+      { status: 500 }
+    );
+  }
 }
 
 /**
@@ -234,10 +276,24 @@ export async function DELETE(
   req: Request,
   { params }: { params: { id: string } }
 ) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  try {
+    // 🔒 RATE LIMITING: 20 req/min
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               req.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`listing-images-delete:${ip}`, 20, 60_000);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
   const { searchParams } = new URL(req.url);
   const imageId = searchParams.get("imageId");
@@ -332,4 +388,11 @@ export async function DELETE(
   }
 
   return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    logger.error("DELETE /api/listings/[id]/images error", { error });
+    return NextResponse.json(
+      { error: "INTERNAL_ERROR", message: "Erreur serveur" },
+      { status: 500 }
+    );
+  }
 }
