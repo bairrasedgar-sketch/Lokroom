@@ -4,6 +4,7 @@
  */
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
+import { rateLimit } from "@/lib/rate-limit";
 import {
   secureJsonResponse,
   secureErrorResponse,
@@ -88,11 +89,22 @@ function validateImageUrl(url: string): { valid: boolean; error?: string } {
 }
 
 export async function POST(req: Request) {
-  // Authentification
-  const authResult = await requireAuth();
-  if (!authResult.success) {
-    return authResult.response;
-  }
+  try {
+    // 🔒 RATE LIMITING: 10 req/min pour upload avatar
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               req.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`avatar-upload:${ip}`, 10, 60_000);
+
+    if (!rateLimitOk) {
+      return secureErrorResponse("Trop de tentatives. Réessayez dans une minute.", 429);
+    }
+
+    // Authentification
+    const authResult = await requireAuth();
+    if (!authResult.success) {
+      return authResult.response;
+    }
 
   // Parser le body
   let body: { url?: unknown };
@@ -141,17 +153,32 @@ export async function POST(req: Request) {
 
     return secureJsonResponse({ success: true, user });
   } catch (error) {
-    logger.error("Erreur mise à jour avatar:", error);
+    logger.error("POST /api/profile/avatar error", { error });
     return secureErrorResponse("Erreur lors de la mise à jour", 500);
+  }
+  } catch (error) {
+    logger.error("POST /api/profile/avatar outer error", { error });
+    return secureErrorResponse("Erreur serveur", 500);
   }
 }
 
-export async function DELETE() {
-  // Authentification
-  const authResult = await requireAuth();
-  if (!authResult.success) {
-    return authResult.response;
-  }
+export async function DELETE(req: Request) {
+  try {
+    // 🔒 RATE LIMITING: 10 req/min pour suppression avatar
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               req.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`avatar-delete:${ip}`, 10, 60_000);
+
+    if (!rateLimitOk) {
+      return secureErrorResponse("Trop de tentatives. Réessayez dans une minute.", 429);
+    }
+
+    // Authentification
+    const authResult = await requireAuth();
+    if (!authResult.success) {
+      return authResult.response;
+    }
 
   try {
     await prisma.userProfile.updateMany({
@@ -161,7 +188,11 @@ export async function DELETE() {
 
     return secureJsonResponse({ success: true });
   } catch (error) {
-    logger.error("Erreur suppression avatar:", error);
+    logger.error("DELETE /api/profile/avatar error", { error });
     return secureErrorResponse("Erreur lors de la suppression", 500);
+  }
+  } catch (error) {
+    logger.error("DELETE /api/profile/avatar outer error", { error });
+    return secureErrorResponse("Erreur serveur", 500);
   }
 }

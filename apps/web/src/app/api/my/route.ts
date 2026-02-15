@@ -4,18 +4,34 @@ import { getServerSession } from "next-auth";
 
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
-  const session = await getServerSession(authOptions);
+export async function GET(req: Request) {
+  try {
+    // 🔒 RATE LIMITING: 30 req/min
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               req.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`my:${ip}`, 30, 60_000);
 
-  if (!session?.user?.email) {
-    return NextResponse.json(
-      { error: "unauthorized" },
-      { status: 401 },
-    );
-  }
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.email) {
+      return NextResponse.json(
+        { error: "unauthorized" },
+        { status: 401 },
+      );
+    }
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
@@ -116,4 +132,11 @@ export async function GET() {
       reviewsReceived,
     },
   });
+  } catch (error) {
+    logger.error("GET /api/my error", { error });
+    return NextResponse.json(
+      { error: "INTERNAL_ERROR", message: "Erreur serveur" },
+      { status: 500 }
+    );
+  }
 }
