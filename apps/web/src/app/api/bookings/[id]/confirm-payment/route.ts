@@ -1,15 +1,19 @@
 // apps/web/src/app/api/bookings/[id]/confirm-payment/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { z } from "zod";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 import { sendBookingConfirmation, sendNewBookingToHost } from "@/lib/email";
 import { logger } from "@/lib/logger";
-
+import { rateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+
+// 🔒 VALIDATION: Schéma Zod pour le bookingId
+const bookingIdSchema = z.string().min(1, "bookingId requis");
 
 type RouteParams = {
   params: { id: string };
@@ -22,13 +26,39 @@ type RouteParams = {
  */
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
+    // 🔒 RATE LIMITING: 10 req/min pour éviter abus sur confirmations
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               req.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`confirm-payment:${ip}`, 10, 60_000);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives. Réessayez dans une minute." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     }
 
     const userId = session.user.id;
-    const bookingId = params.id;
+
+    // 🔒 VALIDATION: Valider le bookingId
+    let bookingId: string;
+    try {
+      bookingId = bookingIdSchema.parse(params.id);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          { error: "VALIDATION_ERROR", details: error.errors },
+          { status: 400 }
+        );
+      }
+      return NextResponse.json({ error: "INVALID_BOOKING_ID" }, { status: 400 });
+    }
 
     // Récupérer la réservation
     const booking = await prisma.booking.findUnique({
