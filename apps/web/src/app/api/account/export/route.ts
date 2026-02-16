@@ -8,10 +8,23 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
+import { rateLimit } from "@/lib/rate-limit";
 
-
-export async function POST() {
+export async function POST(request: Request) {
   try {
+    // 🔒 RATE LIMITING: 3 req/hour pour export (opération lourde)
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               request.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`account-export:${ip}`, 3, 3600_000);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives. Réessayez dans une heure." },
+        { status: 429, headers: { "Retry-After": "3600" } }
+      );
+    }
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
@@ -104,8 +117,21 @@ export async function POST() {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    // 🔒 RATE LIMITING: 30 req/min pour status
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               request.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`account-export-status:${ip}`, 30, 60_000);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Non authentifié" }, { status: 401 });

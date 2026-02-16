@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db";
 import { sendWelcomeEmail } from "@/lib/email";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
-
+import { rateLimit } from "@/lib/rate-limit";
 
 // Schéma de validation Zod pour l'onboarding
 const onboardingSchema = z.object({
@@ -22,18 +22,32 @@ const onboardingSchema = z.object({
 });
 
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  }
-
-  let body: unknown;
   try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "JSON invalide" }, { status: 400 });
-  }
+    // 🔒 RATE LIMITING: 10 req/min pour onboarding
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               req.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`onboarding:${ip}`, 10, 60_000);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "JSON invalide" }, { status: 400 });
+    }
 
   // Validation Zod
   const validation = onboardingSchema.safeParse(body);
@@ -124,13 +138,20 @@ export async function POST(req: Request) {
     }
   });
 
-  // Envoyer l'email de bienvenue seulement pour les nouveaux utilisateurs
-  if (isNewUser && session.user.email) {
-    // Fire and forget - on ne bloque pas la réponse
-    sendWelcomeEmail(session.user.email, firstName).catch((error) => {
-      logger.error("[Onboarding] Erreur envoi email bienvenue:", error);
-    });
-  }
+    // Envoyer l'email de bienvenue seulement pour les nouveaux utilisateurs
+    if (isNewUser && session.user.email) {
+      // Fire and forget - on ne bloque pas la réponse
+      sendWelcomeEmail(session.user.email, firstName).catch((error) => {
+        logger.error("[Onboarding] Erreur envoi email bienvenue:", error);
+      });
+    }
 
-  return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    logger.error("POST /api/account/onboarding error", { error });
+    return NextResponse.json(
+      { error: "INTERNAL_ERROR", message: "Erreur serveur" },
+      { status: 500 }
+    );
+  }
 }
