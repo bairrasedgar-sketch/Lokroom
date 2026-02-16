@@ -97,17 +97,10 @@ export async function POST(request: Request) {
       url: dataUrl, // En production: URL S3/Cloudinary
     };
 
-      return NextResponse.json({
-        success: true,
-        attachment,
-      });
-    } catch (error) {
-      logger.error("POST /api/messages/upload inner error", { error });
-      return NextResponse.json(
-        { error: "Erreur lors de l'upload" },
-        { status: 500 }
-      );
-    }
+    return NextResponse.json({
+      success: true,
+      attachment,
+    });
   } catch (error) {
     logger.error("POST /api/messages/upload error", { error });
     return NextResponse.json(

@@ -254,9 +254,16 @@ export async function GET(
       },
     });
   } catch (error) {
-    logger.error("Erreur API admin user detail:", error);
+    logger.error("GET /api/admin/users/[id] error", { error });
     return NextResponse.json(
-      { error: "Erreur serveur" },
+      { error: "INTERNAL_ERROR", message: "Erreur serveur" },
+      { status: 500 }
+    );
+  }
+  } catch (error) {
+    logger.error("GET /api/admin/users/[id] outer error", { error });
+    return NextResponse.json(
+      { error: "INTERNAL_ERROR", message: "Erreur serveur" },
       { status: 500 }
     );
   }
@@ -397,9 +404,16 @@ export async function PUT(
 
     return NextResponse.json({ user: updatedUser });
   } catch (error) {
-    logger.error("Erreur API admin user update:", error);
+    logger.error("PUT /api/admin/users/[id] error", { error });
     return NextResponse.json(
-      { error: "Erreur serveur" },
+      { error: "INTERNAL_ERROR", message: "Erreur serveur" },
+      { status: 500 }
+    );
+  }
+  } catch (error) {
+    logger.error("PUT /api/admin/users/[id] outer error", { error });
+    return NextResponse.json(
+      { error: "INTERNAL_ERROR", message: "Erreur serveur" },
       { status: 500 }
     );
   }

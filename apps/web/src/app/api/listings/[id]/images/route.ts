@@ -255,6 +255,7 @@ export async function PATCH(
     await prisma.$transaction(queries);
 
     return NextResponse.json({ ok: true });
+  }
 
   return NextResponse.json({ error: "Unknown action" }, { status: 400 });
   } catch (error) {
