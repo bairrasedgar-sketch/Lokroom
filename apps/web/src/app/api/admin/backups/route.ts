@@ -11,7 +11,7 @@ import { parsePageParam, parseLimitParam } from "@/lib/validation/params";
 import { exec } from "child_process";
 import { promisify } from "util";
 import { logger } from "@/lib/logger";
-
+import { rateLimit } from "@/lib/rate-limit";
 
 const execAsync = promisify(exec);
 
@@ -19,10 +19,22 @@ const execAsync = promisify(exec);
  * GET - Liste des backups avec pagination
  */
 export async function GET(request: NextRequest) {
-  const auth = await requireAdminPermission("backups:view");
-  if ("error" in auth) return auth.error;
-
   try {
+    // 🔒 RATE LIMITING: 30 req/min pour admin
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               request.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`admin-backups:${ip}`, 30, 60_000);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
+    const auth = await requireAdminPermission("backups:view");
+    if ("error" in auth) return auth.error;
     const { searchParams } = new URL(request.url);
     // 🔒 SÉCURITÉ : Validation sécurisée des paramètres de pagination
     const page = parsePageParam(searchParams.get("page"));
@@ -91,9 +103,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    logger.error("Error fetching backups:", error);
+    logger.error("GET /api/admin/backups error", { error });
     return NextResponse.json(
-      { error: "Failed to fetch backups" },
+      { error: "INTERNAL_ERROR", message: "Erreur serveur" },
       { status: 500 }
     );
   }
@@ -103,10 +115,22 @@ export async function GET(request: NextRequest) {
  * POST - Déclencher un backup manuel
  */
 export async function POST(request: NextRequest) {
-  const auth = await requireAdminPermission("backups:create");
-  if ("error" in auth) return auth.error;
-
   try {
+    // 🔒 RATE LIMITING: 5 req/min pour backup manuel
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               request.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`admin-backups-create:${ip}`, 5, 60_000);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
+    const auth = await requireAdminPermission("backups:create");
+    if ("error" in auth) return auth.error;
     // Vérifier qu'il n'y a pas déjà un backup en cours
     const inProgressBackup = await prisma.databaseBackup.findFirst({
       where: {
@@ -156,9 +180,9 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    logger.error("Error starting backup:", error);
+    logger.error("POST /api/admin/backups error", { error });
     return NextResponse.json(
-      { error: "Failed to start backup" },
+      { error: "INTERNAL_ERROR", message: "Erreur serveur" },
       { status: 500 }
     );
   }

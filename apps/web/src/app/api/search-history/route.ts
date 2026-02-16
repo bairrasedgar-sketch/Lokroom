@@ -3,20 +3,34 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
-
+import { rateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
 // GET - Récupérer l'historique de recherche de l'utilisateur
-export async function GET() {
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user?.id) {
-    return NextResponse.json([], { status: 200 });
-  }
-
+export async function GET(req: Request) {
   try {
-    const history = await prisma.searchHistory.findMany({
+    // 🔒 RATE LIMITING: 30 req/min
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               req.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`search-history-get:${ip}`, 30, 60_000);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json([], { status: 200 });
+    }
+
+    try {
+      const history = await prisma.searchHistory.findMany({
       where: { userId: session.user.id },
       orderBy: { createdAt: "desc" },
       take: 10,
@@ -30,24 +44,42 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json(history);
+      return NextResponse.json(history);
+    } catch (error) {
+      logger.error("GET /api/search-history inner error", { error });
+      return NextResponse.json([], { status: 200 });
+    }
   } catch (error) {
-    logger.error("Error fetching search history:", error);
+    logger.error("GET /api/search-history error", { error });
     return NextResponse.json([], { status: 200 });
   }
 }
 
 // POST - Ajouter une recherche à l'historique
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
   try {
-    // Validation Zod du body
-    const { saveSearchSchema, validateRequestBody } = await import("@/lib/validations/api");
+    // 🔒 RATE LIMITING: 20 req/min
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               req.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`search-history-post:${ip}`, 20, 60_000);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    }
+
+    try {
+      // Validation Zod du body
+      const { saveSearchSchema, validateRequestBody } = await import("@/lib/validations/api");
     const validation = await validateRequestBody(req, saveSearchSchema);
     if (!validation.success) {
       return NextResponse.json({ error: validation.error }, { status: validation.status });
@@ -102,29 +134,51 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json(history);
+      return NextResponse.json(history);
+    } catch (error) {
+      logger.error("POST /api/search-history inner error", { error });
+      return NextResponse.json({ error: "save_failed" }, { status: 500 });
+    }
   } catch (error) {
-    logger.error("Error saving search history:", error);
+    logger.error("POST /api/search-history error", { error });
     return NextResponse.json({ error: "save_failed" }, { status: 500 });
   }
 }
 
 // DELETE - Effacer l'historique de recherche
-export async function DELETE() {
-  const session = await getServerSession(authOptions);
-
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
-
+export async function DELETE(req: Request) {
   try {
-    await prisma.searchHistory.deleteMany({
+    // 🔒 RATE LIMITING: 10 req/min
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               req.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`search-history-delete:${ip}`, 10, 60_000);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    }
+
+    try {
+      await prisma.searchHistory.deleteMany({
       where: { userId: session.user.id },
     });
 
-    return NextResponse.json({ success: true });
+      return NextResponse.json({ success: true });
+    } catch (error) {
+      logger.error("DELETE /api/search-history inner error", { error });
+      return NextResponse.json({ error: "delete_failed" }, { status: 500 });
+    }
   } catch (error) {
-    logger.error("Error clearing search history:", error);
+    logger.error("DELETE /api/search-history error", { error });
     return NextResponse.json({ error: "delete_failed" }, { status: 500 });
   }
 }

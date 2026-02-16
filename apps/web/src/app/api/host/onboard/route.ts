@@ -6,12 +6,25 @@ import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 import { getOrigin } from "@/lib/origin";
 import { logger } from "@/lib/logger";
-
+import { rateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
-export async function POST() {
+export async function POST(req: Request) {
   try {
+    // 🔒 RATE LIMITING: 10 req/min
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               req.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`host-onboard:${ip}`, 10, 60_000);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -72,7 +85,7 @@ export async function POST() {
       stripeAccountId: host.stripeAccountId,
     });
   } catch (e: unknown) {
-    logger.error("host/onboard error:", e);
+    logger.error("POST /api/host/onboard error", { error: e });
     const error = e as { raw?: { message?: string }; message?: string };
     const msg = error?.raw?.message || error?.message || "onboard_failed";
     return NextResponse.json({ error: msg }, { status: 500 });
