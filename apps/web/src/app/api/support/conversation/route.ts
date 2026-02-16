@@ -4,18 +4,32 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
 import { logger } from "@/lib/logger";
-
+import { rateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
 // GET /api/support/conversation → récupère la conversation support de l'utilisateur
-export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+export async function GET(req: Request) {
+  try {
+    // 🔒 RATE LIMITING: 30 req/min
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               req.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`support-conversation-get:${ip}`, 30, 60_000);
 
-  const user = await prisma.user.findUnique({
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const user = await prisma.user.findUnique({
     where: { email: session.user.email },
     select: { id: true },
   });
@@ -41,17 +55,38 @@ export async function GET() {
     orderBy: { createdAt: "desc" },
   });
 
-  return NextResponse.json({ conversation });
+    return NextResponse.json({ conversation });
+  } catch (error) {
+    logger.error("GET /api/support/conversation error", { error });
+    return NextResponse.json(
+      { error: "INTERNAL_ERROR", message: "Erreur serveur" },
+      { status: 500 }
+    );
+  }
 }
 
 // POST /api/support/conversation → crée une nouvelle conversation support
 export async function POST(req: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  try {
+    // 🔒 RATE LIMITING: 10 req/min pour création
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               req.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`support-conversation-post:${ip}`, 10, 60_000);
 
-  const user = await prisma.user.findUnique({
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const user = await prisma.user.findUnique({
     where: { email: session.user.email },
     select: { id: true },
   });
@@ -161,7 +196,14 @@ export async function POST(req: Request) {
     },
   });
 
-  return NextResponse.json({ conversation: fullConversation, created: true });
+    return NextResponse.json({ conversation: fullConversation, created: true });
+  } catch (error) {
+    logger.error("POST /api/support/conversation error", { error });
+    return NextResponse.json(
+      { error: "INTERNAL_ERROR", message: "Erreur serveur" },
+      { status: 500 }
+    );
+  }
 }
 
 // Fonction pour notifier les admins d'une nouvelle demande de support (email uniquement - UNE SEULE FOIS)

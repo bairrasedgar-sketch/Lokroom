@@ -4,11 +4,24 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { generateBadgeId } from "@/lib/crypto/random";
 import { logger } from "@/lib/logger";
-
+import { rateLimit } from "@/lib/rate-limit";
 
 // POST /api/badges/check - Vérifier et attribuer automatiquement les badges
 export async function POST(request: Request) {
   try {
+    // 🔒 RATE LIMITING: 10 req/min
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               request.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`badges-check:${ip}`, 10, 60_000);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
     // 🔒 SÉCURITÉ : Authentification requise
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -162,7 +175,10 @@ export async function POST(request: Request) {
       totalBadges: [...existingTypes, ...newBadges],
     });
   } catch (error) {
-    logger.error("Error checking badges:", error);
-    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+    logger.error("POST /api/badges/check error", { error });
+    return NextResponse.json(
+      { error: "INTERNAL_ERROR", message: "Erreur serveur" },
+      { status: 500 }
+    );
   }
 }

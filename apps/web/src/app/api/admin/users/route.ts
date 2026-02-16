@@ -10,13 +10,25 @@ import { requireAdminPermission } from "@/lib/admin-auth";
 import { parsePageParam, parseLimitParam } from "@/lib/validation/params";
 import type { Prisma } from "@prisma/client";
 import { logger } from "@/lib/logger";
-
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function GET(request: Request) {
-  const auth = await requireAdminPermission("users:view");
-  if ("error" in auth) return auth.error;
-
   try {
+    // 🔒 RATE LIMITING: 60 req/min pour admin
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               request.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`admin-users:${ip}`, 60, 60_000);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
+    const auth = await requireAdminPermission("users:view");
+    if ("error" in auth) return auth.error;
     const { searchParams } = new URL(request.url);
     // 🔒 SÉCURITÉ : Validation sécurisée des paramètres de pagination
     const page = parsePageParam(searchParams.get("page"));
@@ -140,9 +152,9 @@ export async function GET(request: Request) {
       stats,
     });
   } catch (error) {
-    logger.error("Erreur API admin users:", error);
+    logger.error("GET /api/admin/users error", { error });
     return NextResponse.json(
-      { error: "Erreur serveur" },
+      { error: "INTERNAL_ERROR", message: "Erreur serveur" },
       { status: 500 }
     );
   }
