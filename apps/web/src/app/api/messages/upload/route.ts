@@ -3,16 +3,28 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
-
+import { rateLimit } from "@/lib/rate-limit";
 
 // POST /api/messages/upload - Upload de fichiers pour les messages
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-  }
-
   try {
+    // 🔒 RATE LIMITING: 10 req/min pour uploads de messages
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               request.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`message-upload:${ip}`, 10, 60_000);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
     const conversationId = formData.get("conversationId") as string | null;
@@ -85,14 +97,21 @@ export async function POST(request: Request) {
       url: dataUrl, // En production: URL S3/Cloudinary
     };
 
-    return NextResponse.json({
-      success: true,
-      attachment,
-    });
+      return NextResponse.json({
+        success: true,
+        attachment,
+      });
+    } catch (error) {
+      logger.error("POST /api/messages/upload inner error", { error });
+      return NextResponse.json(
+        { error: "Erreur lors de l'upload" },
+        { status: 500 }
+      );
+    }
   } catch (error) {
-    logger.error("Error uploading file:", error);
+    logger.error("POST /api/messages/upload error", { error });
     return NextResponse.json(
-      { error: "Erreur lors de l'upload" },
+      { error: "INTERNAL_ERROR", message: "Erreur serveur" },
       { status: 500 }
     );
   }

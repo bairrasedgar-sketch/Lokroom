@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { paginationSchema, validateSearchParams } from "@/lib/validations/api";
 import { logger } from "@/lib/logger";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,19 @@ const RESPONSE_DEADLINE_DAYS = 3;
 // GET /api/disputes - Liste des litiges de l'utilisateur
 export async function GET(req: NextRequest) {
   try {
+    // 🔒 RATE LIMITING: 30 req/min
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               req.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`disputes-get:${ip}`, 30, 60_000);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -170,12 +184,26 @@ export async function GET(req: NextRequest) {
 
 // POST /api/disputes - Créer un nouveau litige
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  try {
+    // 🔒 RATE LIMITING: 5 req/min pour création de litiges
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               req.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`disputes-create:${ip}`, 5, 60_000);
 
-  const me = await prisma.user.findUnique({
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const me = await prisma.user.findUnique({
     where: { email: session.user.email },
     select: { id: true, name: true },
   });
@@ -308,5 +336,12 @@ export async function POST(req: NextRequest) {
     return d;
   });
 
-  return NextResponse.json({ dispute }, { status: 201 });
+    return NextResponse.json({ dispute }, { status: 201 });
+  } catch (error) {
+    logger.error("POST /api/disputes error", { error });
+    return NextResponse.json(
+      { error: "INTERNAL_ERROR", message: "Erreur serveur" },
+      { status: 500 }
+    );
+  }
 }
