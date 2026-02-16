@@ -2,11 +2,26 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { requireHost } from "@/lib/auth-helpers";
+import { rateLimit } from "@/lib/rate-limit";
+import { logger } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    // 🔒 RATE LIMITING: 30 req/min pour wallet
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+               req.headers.get("x-real-ip") ||
+               "unknown";
+    const { ok: rateLimitOk } = await rateLimit(`wallet-get:${ip}`, 30, 60_000);
+
+    if (!rateLimitOk) {
+      return NextResponse.json(
+        { error: "RATE_LIMITED", message: "Trop de tentatives." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
     const { session } = await requireHost();
 
     const host = await prisma.hostProfile.findFirst({
@@ -47,6 +62,7 @@ export async function GET() {
     if (error?.message === "FORBIDDEN_HOST_ONLY") {
       return NextResponse.json({ error: "forbidden" }, { status: 403 });
     }
+    logger.error("GET /api/host/wallet error", { error: e });
     return NextResponse.json({ error: "error" }, { status: 500 });
   }
 }
