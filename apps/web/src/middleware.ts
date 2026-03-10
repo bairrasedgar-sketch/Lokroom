@@ -10,7 +10,6 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { securityMiddleware } from "@/lib/security/middleware";
-import { generateCsrfToken } from "@/lib/security/csrf";
 
 // Rôles admin autorisés
 const ADMIN_ROLES = ["ADMIN", "MODERATOR", "SUPPORT", "FINANCE"];
@@ -463,7 +462,9 @@ export async function middleware(req: NextRequest) {
 
   // --- Cookie CSRF (double-submit pattern) ---
   if (!req.cookies.get("csrf-token")?.value) {
-    const csrfToken = generateCsrfToken();
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    const csrfToken = Array.from(array).map(b => b.toString(16).padStart(2, "0")).join("");
     res.cookies.set("csrf-token", csrfToken, {
       httpOnly: false, // Doit être lisible en JS
       secure: process.env.NODE_ENV === "production",
