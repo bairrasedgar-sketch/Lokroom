@@ -33,5 +33,5 @@
     "src/types/next-auth.d.ts",
     "middleware.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "src/setupEnv.ts", "src/__mocks__"]
 }

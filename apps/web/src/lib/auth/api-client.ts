@@ -3,6 +3,7 @@
 
 import { isCapacitor } from "@/lib/capacitor";
 import { getAuthHeaders } from "@/lib/auth/mobile";
+import { getCsrfToken } from "@/lib/csrf-client";
 
 /**
  * Wrapper pour fetch qui ajoute automatiquement le token JWT mobile
@@ -12,15 +13,27 @@ export async function authenticatedFetch(
   url: string,
   options: RequestInit = {}
 ): Promise<Response> {
+  const headers: Record<string, string> = {};
+
   // Si on est dans Capacitor, ajouter le token JWT
   if (isCapacitor()) {
     const authHeaders = await getAuthHeaders();
-
-    options.headers = {
-      ...options.headers,
-      ...authHeaders,
-    };
+    Object.assign(headers, authHeaders);
   }
+
+  // Ajouter le token CSRF pour les requêtes mutantes (web uniquement)
+  const method = (options.method || 'GET').toUpperCase();
+  if (!isCapacitor() && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+    const csrfToken = getCsrfToken();
+    if (csrfToken) {
+      headers['X-CSRF-Token'] = csrfToken;
+    }
+  }
+
+  options.headers = {
+    ...options.headers,
+    ...headers,
+  };
 
   return fetch(url, options);
 }

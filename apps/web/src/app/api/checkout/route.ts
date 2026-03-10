@@ -1,12 +1,15 @@
+export const dynamic = "force-dynamic";
+
 // apps/web/src/app/api/checkout/route.ts
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import { logger } from "@/lib/logger";
 import { validateRequestBody, createCheckoutSchema } from "@/lib/validations";
+import { captureException } from "@/lib/sentry/utils";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     // 🔒 SÉCURITÉ : Authentification requise pour créer un checkout
     const session = await getServerSession(authOptions);
@@ -44,6 +47,7 @@ export async function POST(req: Request) {
       error: error instanceof Error ? error.message : "Unknown error",
       stack: error instanceof Error ? error.stack : undefined,
     });
+    captureException(error as Error, { route: "checkout" });
 
     return NextResponse.json(
       {

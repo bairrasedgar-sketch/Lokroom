@@ -1,6 +1,6 @@
 // apps/web/src/app/api/profile/route.ts
 import { getServerSession } from "next-auth";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { authOptions } from "@/lib/auth";
 import { updateProfileSchema, validateRequestBody } from "@/lib/validations";
@@ -8,7 +8,7 @@ import { updateProfileSchema, validateRequestBody } from "@/lib/validations";
 export const dynamic = "force-dynamic";
 
 // PATCH /api/profile → met à jour le profil (user + user.profile)
-export async function PATCH(req: Request) {
+export async function PATCH(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -290,3 +290,6 @@ export class CacheService {
 
 // Note: N'exportez PAS d'instance singleton ici pour éviter l'initialisation pendant le build.
 // Utilisez cache-safe.ts à la place, qui gère l'initialisation lazy de manière sécurisée.
+
+// Export d'une instance pour les tests (nécessite REDIS_URL configuré)
+export const cache = new CacheService();

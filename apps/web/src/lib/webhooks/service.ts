@@ -260,6 +260,12 @@ export function validateWebhookUrl(url: string): {
   try {
     const parsed = new URL(url);
 
+    // Bloquer les protocoles dangereux (toujours, pas seulement en production)
+    const allowedProtocols = ["http:", "https:"];
+    if (!allowedProtocols.includes(parsed.protocol)) {
+      return { valid: false, error: "Protocole non autorisé" };
+    }
+
     // En production, forcer HTTPS
     if (process.env.NODE_ENV === "production" && parsed.protocol !== "https:") {
       return { valid: false, error: "HTTPS requis en production" };

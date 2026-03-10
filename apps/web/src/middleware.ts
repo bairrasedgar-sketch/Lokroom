@@ -10,6 +10,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 import { securityMiddleware } from "@/lib/security/middleware";
+import { generateCsrfToken } from "@/lib/security/csrf";
 
 // Rôles admin autorisés
 const ADMIN_ROLES = ["ADMIN", "MODERATOR", "SUPPORT", "FINANCE"];
@@ -456,8 +457,20 @@ export async function middleware(req: NextRequest) {
   if (pathname.startsWith('/api')) {
     res.headers.set('Access-Control-Allow-Origin', '*');
     res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-    res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-CSRF-Token');
     res.headers.set('Access-Control-Allow-Credentials', 'true');
+  }
+
+  // --- Cookie CSRF (double-submit pattern) ---
+  if (!req.cookies.get("csrf-token")?.value) {
+    const csrfToken = generateCsrfToken();
+    res.cookies.set("csrf-token", csrfToken, {
+      httpOnly: false, // Doit être lisible en JS
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/",
+      maxAge: 60 * 60 * 24, // 24h
+    });
   }
 
   return res;

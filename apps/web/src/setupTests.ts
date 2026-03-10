@@ -1,5 +1,8 @@
 import '@testing-library/jest-dom';
 
+// Configure environment for tests
+process.env.REDIS_URL = 'redis://localhost:6379';
+
 // Mock Capacitor
 jest.mock('@capacitor/core', () => ({
   Capacitor: {

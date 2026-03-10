@@ -3,6 +3,7 @@
 import { isNativeMobile } from './capacitor';
 import { Preferences } from '@capacitor/preferences';
 import { logger } from "@/lib/logger";
+import { getCsrfToken } from "@/lib/csrf-client";
 
 
 /**
@@ -140,6 +141,15 @@ export async function apiCall<T = any>(
   // Ajouter le token si disponible
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  // Ajouter le token CSRF pour les requêtes mutantes (web uniquement)
+  const method = (fetchConfig.method || 'GET').toUpperCase();
+  if (!isNativeMobile() && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
+    const csrfToken = getCsrfToken();
+    if (csrfToken) {
+      headers['X-CSRF-Token'] = csrfToken;
+    }
   }
 
   // Fonction de retry avec backoff exponentiel
