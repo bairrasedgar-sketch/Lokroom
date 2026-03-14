@@ -401,29 +401,25 @@ export default async function ListingDetailPage({
 
       {/* ========== VERSION MOBILE ========== */}
       <div className="lg:hidden min-h-screen bg-white pb-24">
-        {/* Galerie avec header overlay */}
-        <div className="relative">
-          {/* Header sticky sur l'image */}
-          <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4 pt-4 pb-8 bg-gradient-to-b from-black/40 to-transparent">
-            <Link
-              href="/listings"
-              className="flex items-center justify-center px-5 py-3 rounded-full bg-gray-800/60 backdrop-blur-sm shadow-lg"
-            >
-              <svg className="h-5 w-5 text-white mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-              <span className="text-white text-base font-medium">Retour aux annonces</span>
-            </Link>
-            <div className="flex items-center gap-2">
-              <ShareButton variant="mobile" />
-              <FavoriteButton listingId={listing.id} />
-            </div>
+        {/* Header fixe en haut - toujours visible */}
+        <div className="sticky top-0 z-20 flex items-center justify-between px-4 py-3 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+          <Link
+            href="/listings"
+            className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+          >
+            <svg className="h-5 w-5 text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </Link>
+          <div className="flex items-center gap-2">
+            <ShareButton variant="mobile" />
+            <FavoriteButton listingId={listing.id} />
           </div>
+        </div>
 
-          {/* Galerie */}
-          <div className="aspect-[4/3] bg-gray-100">
-            <ListingGallery images={listing.images ?? []} title={listing.title} />
-          </div>
+        {/* Galerie */}
+        <div className="aspect-[4/3] bg-gray-100">
+          <ListingGallery images={listing.images ?? []} title={listing.title} />
         </div>
 
         {/* Contenu */}

@@ -160,23 +160,24 @@ export default function ListingGallery({ images, title }: ListingGalleryProps) {
     };
   }, [modalOpen, modalPrev, modalNext, closeModal]);
 
-  // Modal swipe support
+  // Modal swipe support (native non-passive for scroll blocking)
+  const modalContainerRef = useRef<HTMLDivElement>(null);
   const modalTouchStartX = useRef<number | null>(null);
 
-  const handleModalTouchStart = (e: React.TouchEvent) => {
-    modalTouchStartX.current = e.touches[0].clientX;
-  };
-
-  const handleModalTouchEnd = (e: React.TouchEvent) => {
-    if (modalTouchStartX.current === null) return;
-    const dx = e.changedTouches[0].clientX - modalTouchStartX.current;
-    // Increased swipe threshold from 50px to 80px for less sensitivity
-    if (Math.abs(dx) > 80) {
-      if (dx < 0) modalNext();
-      else modalPrev();
-    }
-    modalTouchStartX.current = null;
-  };
+  useEffect(() => {
+    const el = modalContainerRef.current;
+    if (!el) return;
+    const onStart = (e: TouchEvent) => { modalTouchStartX.current = e.touches[0].clientX; };
+    const onEnd = (e: TouchEvent) => {
+      if (modalTouchStartX.current === null) return;
+      const dx = e.changedTouches[0].clientX - modalTouchStartX.current;
+      if (Math.abs(dx) > 50) { if (dx < 0) modalNext(); else modalPrev(); }
+      modalTouchStartX.current = null;
+    };
+    el.addEventListener("touchstart", onStart, { passive: true });
+    el.addEventListener("touchend", onEnd, { passive: true });
+    return () => { el.removeEventListener("touchstart", onStart); el.removeEventListener("touchend", onEnd); };
+  }, [modalNext, modalPrev]);
 
   if (total === 0) {
     return (
@@ -224,68 +225,60 @@ export default function ListingGallery({ images, title }: ListingGalleryProps) {
           </button>
         </div>
 
-        {/* Main image area */}
+        {/* Main image area - slide carousel */}
         <div
-          className="flex-1 relative flex items-center justify-center px-4 md:px-16"
-          onTouchStart={handleModalTouchStart}
-          onTouchEnd={handleModalTouchEnd}
+          ref={modalContainerRef}
+          className="flex-1 relative overflow-hidden"
         >
-          {/* Left arrow */}
-          <button
-            type="button"
-            onClick={modalPrev}
-            className="absolute left-2 md:left-4 z-10 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors hidden md:flex items-center justify-center"
-            aria-label={gallery.prevImage}
+          {/* Sliding strip */}
+          <div
+            className="flex h-full transition-transform duration-300 ease-out"
+            style={{ transform: `translateX(-${modalIdx * 100}%)` }}
           >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15 19l-7-7 7-7"
-              />
-            </svg>
-          </button>
-
-          {/* Image container */}
-          <div className="relative w-full h-full max-w-5xl max-h-[70vh]">
-            <Image
-              src={getImageSrc(safeImages[modalIdx])}
-              alt={`${title} - ${gallery.imageAlt.replace("{number}", String(modalIdx + 1))} / ${total}`}
-              fill
-              className="object-contain"
-              sizes="100vw"
-              priority
-              onError={() => handleImageError(safeImages[modalIdx].id)}
-            />
+            {safeImages.map((img, i) => (
+              <div key={img.id || i} className="relative h-full w-full flex-shrink-0 flex items-center justify-center px-4 md:px-16">
+                <div className="relative w-full h-full max-w-5xl">
+                  <Image
+                    src={getImageSrc(img)}
+                    alt={`${title} - ${gallery.imageAlt.replace("{number}", String(i + 1))} / ${total}`}
+                    fill
+                    className="object-contain"
+                    sizes="100vw"
+                    priority={Math.abs(i - modalIdx) <= 1}
+                    onError={() => handleImageError(img.id)}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
 
-          {/* Right arrow */}
-          <button
-            type="button"
-            onClick={modalNext}
-            className="absolute right-2 md:right-4 z-10 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors hidden md:flex items-center justify-center"
-            aria-label={gallery.nextImage}
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
+          {/* Left arrow */}
+          {modalIdx > 0 && (
+            <button
+              type="button"
+              onClick={modalPrev}
+              className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors hidden md:flex items-center justify-center"
+              aria-label={gallery.prevImage}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </button>
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          )}
+
+          {/* Right arrow */}
+          {modalIdx < total - 1 && (
+            <button
+              type="button"
+              onClick={modalNext}
+              className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors hidden md:flex items-center justify-center"
+              aria-label={gallery.nextImage}
+            >
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          )}
         </div>
 
         {/* Thumbnail strip */}
