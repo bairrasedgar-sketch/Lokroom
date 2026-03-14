@@ -557,80 +557,54 @@ export default function FiltersBar(props: FiltersBarProps) {
           </div>
         </div>
 
-        {/* ====== RANGÉE DE PILULES (Filtres, Populaires, Tarifs, Trier) ====== */}
-        <div className="flex flex-wrap gap-2 text-xs">
-          {/* Bouton qui ouvre le GRAND panneau de filtres façon Airbnb */}
+        {/* ====== BARRE FILTRES STYLE AIRBNB ====== */}
+        <div className="flex items-center gap-2">
+          {/* Bouton Filtres avec icône sliders */}
           <button
             type="button"
             onClick={() => setIsFilterOpen(true)}
-            className="flex items-center gap-2 rounded-full border border-gray-300 bg-white px-3 py-1.5 text-[13px] text-gray-800 shadow-sm transition hover:border-black hover:bg-gray-50"
-          >
-            <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-gray-400 text-[10px]">
-              ●
-            </span>
-            {fb.filtersButton}
-          </button>
-
-          {/* Populaires → tri par meilleure note */}
-          <button
-            type="submit"
-            name="sort"
-            value="rating_desc"
-            className={`rounded-full border px-3 py-1.5 shadow-sm transition ${
-              sort === "rating_desc"
-                ? "border-black bg-black text-white"
-                : "border-gray-300 bg-white text-gray-800 hover:border-black"
+            className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition hover:border-gray-900 hover:bg-gray-50 ${
+              (minPrice || maxPrice || minRating !== "0")
+                ? "border-gray-900 bg-gray-900 text-white hover:bg-gray-800 hover:border-gray-800"
+                : "border-gray-300 bg-white text-gray-800"
             }`}
           >
-            {fb.popular}
-          </button>
-
-          {/* Tarifs : résumé (édition dans le panneau de filtres) */}
-          <button
-            type="button"
-            onClick={() => setIsFilterOpen(true)}
-            className="rounded-full border border-gray-300 bg-white px-3 py-1.5 text-[13px] text-gray-800 shadow-sm transition hover:border-black hover:bg-gray-50"
-          >
-            {fb.pricing}
-            {minPrice || maxPrice ? (
-              <span className="ml-1 text-[11px] text-gray-500">
-                {minPrice || "0"} – {maxPrice || fb.maxPrice}
-              </span>
-            ) : (
-              <span className="ml-1 text-[11px] text-gray-400">
-                {fb.priceScale}
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
+            </svg>
+            {fb.filtersButton}
+            {(minPrice || maxPrice || minRating !== "0") && (
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] font-bold text-gray-900">
+                {[minPrice, maxPrice, minRating !== "0"].filter(Boolean).length}
               </span>
             )}
           </button>
 
-          {/* Pièces & espaces (placeholder) */}
-          <button
-            type="button"
-            className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-[13px] text-gray-400 shadow-sm"
-          >
-            {fb.roomsAndSpaces}
-          </button>
+          {/* Séparateur */}
+          <div className="h-6 w-px bg-gray-200" />
 
-          {/* Trier par : capsule avec select customisé */}
-          <div className="flex items-center gap-2 rounded-full border border-gray-300 bg-white px-3 py-1.5 shadow-sm">
-            <span className="hidden text-[13px] text-gray-600 sm:inline">
-              {fb.sortBy}
-            </span>
-            <div className="relative">
-              <select
-                name="sort"
-                defaultValue={sort}
-                className="h-7 appearance-none rounded-full border border-gray-200 bg-gray-50 pl-3 pr-6 text-[11px] font-medium text-gray-800 focus:border-black focus:outline-none"
-              >
-                <option value="newest">{fb.sortNewest}</option>
-                <option value="price_asc">{fb.sortPriceAsc}</option>
-                <option value="price_desc">{fb.sortPriceDesc}</option>
-                <option value="rating_desc">{fb.sortBestRated}</option>
-              </select>
-              <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-[10px] text-gray-400">
-                ▾
-              </span>
-            </div>
+          {/* Trier par */}
+          <div className="flex items-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-2 shadow-sm transition hover:border-gray-900">
+            <svg className="h-3.5 w-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 7h18M6 12h12M9 17h6" />
+            </svg>
+            <select
+              name="sort"
+              defaultValue={sort}
+              onChange={(e) => {
+                const form = e.target.closest("form");
+                if (form) form.requestSubmit();
+              }}
+              className="appearance-none bg-transparent text-sm font-medium text-gray-800 focus:outline-none cursor-pointer"
+            >
+              <option value="newest">{fb.sortNewest}</option>
+              <option value="price_asc">{fb.sortPriceAsc}</option>
+              <option value="price_desc">{fb.sortPriceDesc}</option>
+              <option value="rating_desc">{fb.sortBestRated}</option>
+            </select>
+            <svg className="h-3 w-3 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
           </div>
         </div>
 
