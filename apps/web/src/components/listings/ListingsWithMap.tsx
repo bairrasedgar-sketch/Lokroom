@@ -126,8 +126,6 @@ function ListingCard({
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
   const [slideDirection, setSlideDirection] = useState<'left' | 'right' | null>(null);
-  const [touchStartX, setTouchStartX] = useState(0);
-  const [touchEndX, setTouchEndX] = useState(0);
   const images = listing.images || [];
   const hasMultipleImages = images.length > 1;
 
@@ -161,7 +159,6 @@ function ListingCard({
   };
 
   // Gestion du swipe sur mobile avec event listeners natifs pour bloquer le scroll
-  const [touchStartY, setTouchStartY] = useState(0);
   const [touchStartTime, setTouchStartTime] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
   const imageContainerRef = useRef<HTMLDivElement>(null);
@@ -184,9 +181,6 @@ function ListingCard({
       const touch = e.touches[0];
       touchStartXRef.current = touch.clientX;
       touchStartYRef.current = touch.clientY;
-      setTouchStartX(touch.clientX);
-      setTouchEndX(touch.clientX);
-      setTouchStartY(touch.clientY);
       setTouchStartTime(Date.now());
       isHorizontalSwipeRef.current = false;
       directionLockedRef.current = false;
@@ -224,8 +218,6 @@ function ListingCard({
       // Si c'est un swipe horizontal, bloquer le scroll et gérer le drag
       if (isHorizontalSwipeRef.current) {
         e.preventDefault(); // Bloquer le scroll vertical
-
-        setTouchEndX(currentX);
 
         let offset = diffX;
         if (currentImageIndex === 0 && offset > 0) {
@@ -318,8 +310,8 @@ function ListingCard({
                     fill
                     className="object-cover"
                     sizes="(min-width: 1280px) 20vw, (min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-                    priority={true}
-                    loading="eager"
+                    priority={index < 4 && idx === 0}
+                    loading={index < 4 && idx === 0 ? "eager" : "lazy"}
                   />
                 </div>
               ))}

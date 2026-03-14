@@ -8,6 +8,7 @@ import { stripe } from "@/lib/stripe";
 import { sendBookingConfirmation, sendNewBookingToHost } from "@/lib/email";
 import { logger } from "@/lib/logger";
 import { rateLimit } from "@/lib/rate-limit";
+import { captureException } from "@/lib/sentry/utils";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -183,6 +184,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     });
   } catch (e) {
     logger.error("[confirm-payment] Error:", e);
+    captureException(e as Error, { route: "bookings/[id]/confirm-payment" });
     return NextResponse.json(
       { error: "internal_error" },
       { status: 500 }

@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { stripe } from "@/lib/stripe";
 import { logger } from "@/lib/logger";
-
+import { captureException } from "@/lib/sentry/utils";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -177,6 +177,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     });
   } catch (e) {
     logger.error("bookings/[id]/pay error:", e);
+    captureException(e as Error, { route: "bookings/[id]/pay" });
     return NextResponse.json(
       { error: "payment_intent_failed" },
       { status: 500 }

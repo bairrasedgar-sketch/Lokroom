@@ -250,45 +250,46 @@ export async function GET(req: NextRequest) {
   const take = pageSize;
 
   try {
-    // Compte total pour pagination
-    const total = await prisma.listing.count({ where });
-
-    const listings = await prisma.listing.findMany({
-      where,
-      orderBy,
-      skip,
-      take,
-      include: {
-        images: {
-          select: { id: true, url: true },
-          take: 4, // on renvoie quelques images pour la grille
-        },
-        reviews: {
-          select: { rating: true },
-        },
-        owner: {
-          select: {
-            id: true,
-            name: true,
+    // Compte total et listings en parallèle
+    const [total, listings] = await Promise.all([
+      prisma.listing.count({ where }),
+      prisma.listing.findMany({
+        where,
+        orderBy,
+        skip,
+        take,
+        include: {
+          images: {
+            select: { id: true, url: true },
+            take: 4,
+          },
+          _count: { select: { reviews: true } },
+          owner: {
+            select: {
+              id: true,
+              name: true,
+            },
           },
         },
-      },
-    });
+      }),
+    ]);
+
+    // Fetch avg ratings in one query for all listing IDs
+    const listingIds = listings.map((l) => l.id);
+    const avgRatings = listingIds.length > 0
+      ? await prisma.review.groupBy({
+          by: ["listingId"],
+          where: { listingId: { in: listingIds } },
+          _avg: { rating: true },
+        })
+      : [];
+    const avgRatingMap = new Map(avgRatings.map((r) => [r.listingId, r._avg.rating]));
 
     const pageCount = Math.ceil(total / pageSize);
 
-    // On prépare un petit summary pour les reviews
     const enriched = listings.map((l) => {
-      const reviews = l.reviews ?? [];
-      const reviewCount = reviews.length;
-      const avgRating =
-        reviewCount > 0
-          ? Number(
-              (
-                reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount
-              ).toFixed(2),
-            )
-          : null;
+      const reviewCount = l._count.reviews;
+      const avgRating = avgRatingMap.get(l.id) ?? null;
 
       return {
         id: l.id,
@@ -307,7 +308,7 @@ export async function GET(req: NextRequest) {
         images: l.images,
         reviewSummary: {
           count: reviewCount,
-          avgRating,
+          avgRating: avgRating != null ? Number(avgRating.toFixed(2)) : null,
         },
       };
     });

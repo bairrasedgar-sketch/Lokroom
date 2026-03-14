@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { Metadata } from "next";
 import dynamicImport from "next/dynamic";
 import {
@@ -170,7 +171,8 @@ type Listing = {
   };
 };
 
-async function getListing(id: string): Promise<Listing | null> {
+// React cache deduplicates calls within the same request (generateMetadata + page)
+const getListing = cache(async (id: string): Promise<Listing | null> => {
   const origin = getOrigin();
   const res = await fetch(`${origin}/api/listings/${id}`, {
     cache: "no-store",
@@ -179,7 +181,7 @@ async function getListing(id: string): Promise<Listing | null> {
   if (!res.ok) return null;
   const data = await res.json();
   return (data.listing ?? null) as Listing | null;
-}
+});
 
 // Mapping des types vers les labels français pour SEO
 const typeLabels: Record<string, string> = {

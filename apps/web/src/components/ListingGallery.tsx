@@ -56,45 +56,64 @@ export default function ListingGallery({ images, title }: ListingGalleryProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [total]);
 
-  // Mobile carousel swipe
+  // Mobile carousel swipe - using native listeners (non-passive) so preventDefault works
+  const carouselRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
   const isDragging = useRef(false);
+  // Keep mobileIdx in a ref so event listeners always see the latest value
+  const mobileIdxRef = useRef(mobileIdx);
+  useEffect(() => { mobileIdxRef.current = mobileIdx; }, [mobileIdx]);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-    touchStartY.current = e.touches[0].clientY;
-    isDragging.current = false;
-  };
+  useEffect(() => {
+    const el = carouselRef.current;
+    if (!el) return;
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (touchStartX.current === null || touchStartY.current === null) return;
-    const dx = Math.abs(e.touches[0].clientX - touchStartX.current);
-    const dy = Math.abs(e.touches[0].clientY - touchStartY.current);
-    if (dx > dy && dx > 10) {
-      isDragging.current = true;
-    }
-  };
+    const onTouchStart = (e: TouchEvent) => {
+      touchStartX.current = e.touches[0].clientX;
+      touchStartY.current = e.touches[0].clientY;
+      isDragging.current = false;
+    };
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current === null || !isDragging.current) {
+    const onTouchMove = (e: TouchEvent) => {
+      if (touchStartX.current === null || touchStartY.current === null) return;
+      const dx = Math.abs(e.touches[0].clientX - touchStartX.current);
+      const dy = Math.abs(e.touches[0].clientY - touchStartY.current);
+      if (dx > dy && dx > 10) {
+        isDragging.current = true;
+        e.preventDefault(); // blocks page scroll while swiping images
+      }
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      if (touchStartX.current === null || !isDragging.current) {
+        touchStartX.current = null;
+        touchStartY.current = null;
+        return;
+      }
+      const dx = e.changedTouches[0].clientX - touchStartX.current;
+      if (Math.abs(dx) > 50) {
+        if (dx < 0 && mobileIdxRef.current < total - 1) {
+          setMobileIdx((i) => i + 1);
+        } else if (dx > 0 && mobileIdxRef.current > 0) {
+          setMobileIdx((i) => i - 1);
+        }
+      }
       touchStartX.current = null;
       touchStartY.current = null;
-      return;
-    }
-    const dx = e.changedTouches[0].clientX - touchStartX.current;
-    // Increased swipe threshold from 50px to 80px for less sensitivity
-    if (Math.abs(dx) > 80) {
-      if (dx < 0 && mobileIdx < total - 1) {
-        setMobileIdx((i) => i + 1);
-      } else if (dx > 0 && mobileIdx > 0) {
-        setMobileIdx((i) => i - 1);
-      }
-    }
-    touchStartX.current = null;
-    touchStartY.current = null;
-    isDragging.current = false;
-  };
+      isDragging.current = false;
+    };
+
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd, { passive: true });
+
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [total]);
 
   // Open modal at specific index
   const openModal = (index: number) => {
@@ -307,10 +326,8 @@ export default function ListingGallery({ images, title }: ListingGalleryProps) {
       {/* Mobile Carousel - visible on small screens */}
       <div className="block md:hidden">
         <div
+          ref={carouselRef}
           className="relative w-full aspect-[4/3] overflow-hidden rounded-xl bg-gray-100"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
         >
           {/* Sliding images container */}
           <div
@@ -338,46 +355,19 @@ export default function ListingGallery({ images, title }: ListingGalleryProps) {
             ))}
           </div>
 
-          {/* Counter badge */}
-          <div className="absolute bottom-3 right-3 px-2.5 py-1 bg-black/70 text-white text-xs font-medium rounded-md">
-            {mobileIdx + 1} / {total}
-          </div>
-
-          {/* Dots indicator - show for 2-5 images, counter badge handles > 5 */}
-          {total > 1 && total <= 5 && (
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-              {safeImages.map((_, i) => (
-                <button
-                  key={`dot-${i}`}
-                  type="button"
-                  onClick={() => setMobileIdx(i)}
-                  className={`w-1.5 h-1.5 rounded-full transition-all ${
-                    i === mobileIdx
-                      ? "bg-white w-2.5"
-                      : "bg-white/60 hover:bg-white/80"
-                  }`}
-                  aria-label={gallery.goToImage.replace("{number}", String(i + 1))}
-                  aria-current={i === mobileIdx}
-                />
-              ))}
-            </div>
-          )}
-
-          {/* Scrollable dots indicator for > 5 images - shows 5 dots with sliding window */}
-          {total > 5 && (
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 items-center">
+          {/* Dots indicator - small dots like map/PC style */}
+          {total > 1 && (
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1 items-center z-10">
               {(() => {
-                // Calculate which 5 dots to show based on current index
-                const maxVisible = 5;
-                let startIdx = Math.max(0, Math.min(mobileIdx - 2, total - maxVisible));
-                const visibleIndices = Array.from({ length: Math.min(maxVisible, total) }, (_, i) => startIdx + i);
-
+                const maxDots = 5;
+                const startIdx = Math.max(0, Math.min(mobileIdx - 2, total - maxDots));
+                const visibleIndices = Array.from({ length: Math.min(maxDots, total) }, (_, i) => startIdx + i);
                 return visibleIndices.map((i) => (
                   <button
                     key={`dot-${i}`}
                     type="button"
                     onClick={() => setMobileIdx(i)}
-                    className={`rounded-full transition-all ${
+                    className={`rounded-full transition-all duration-200 ${
                       i === mobileIdx
                         ? "bg-white w-2 h-2"
                         : Math.abs(i - mobileIdx) === 1
@@ -389,6 +379,9 @@ export default function ListingGallery({ images, title }: ListingGalleryProps) {
                   />
                 ));
               })()}
+              {total > 5 && mobileIdx >= 3 && (
+                <span className="text-white/70 text-[10px] ml-0.5">+{total - 5}</span>
+              )}
             </div>
           )}
         </div>

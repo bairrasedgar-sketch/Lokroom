@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 // apps/web/src/app/api/bookings/[id]/security-deposit/release/route.ts
 /**
  * POST /api/bookings/[id]/security-deposit/release
@@ -12,6 +14,7 @@ import { prisma } from "@/lib/db";
 import { releaseDeposit, canReleaseDeposit } from "@/lib/security-deposit";
 import { createNotification } from "@/lib/notifications";
 import { logger } from "@/lib/logger";
+import { captureException } from "@/lib/sentry/utils";
 
 
 export async function POST(
@@ -82,6 +85,7 @@ export async function POST(
     });
   } catch (error) {
     logger.error("[API] Erreur libération dépôt:", error);
+    captureException(error as Error, { route: "bookings/[id]/security-deposit/release" });
     return NextResponse.json(
       { error: "Erreur serveur" },
       { status: 500 }

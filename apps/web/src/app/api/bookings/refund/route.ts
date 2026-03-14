@@ -5,6 +5,7 @@ import { stripe } from "@/lib/stripe";
 import { getCurrentUser } from "@/lib/api-auth";
 import { evaluateCancellationPolicy } from "@/lib/cancellation";
 import { refundBookingSchema, validateRequestBody } from "@/lib/validations";
+import { captureException } from "@/lib/sentry/utils";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -193,6 +194,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (e: unknown) {
+    captureException(e as Error, { route: "bookings/refund" });
     const error = e as { raw?: { message?: string }; message?: string };
     const msg = error?.raw?.message || error?.message || "refund_failed";
     return NextResponse.json({ error: msg }, { status: 500 });

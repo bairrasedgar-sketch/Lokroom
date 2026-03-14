@@ -7,6 +7,7 @@ import { prisma } from "@/lib/db";
 import { applyFeesToBooking } from "@/lib/bookingFees";
 import { createBookingSchema, validateRequestBody } from "@/lib/validations";
 import { apiRateLimiter, withRateLimitAuth } from "@/lib/security/rate-limit";
+import { captureException } from "@/lib/sentry/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -301,12 +302,17 @@ export async function POST(req: NextRequest) {
   }
 
   // Applique les frais Lok'Room et met à jour la booking
-  const { fees, hostUserId } = await applyFeesToBooking(booking.id);
+  try {
+    const { fees, hostUserId } = await applyFeesToBooking(booking.id);
 
-  return NextResponse.json({
-    booking,
-    fees,
-    hostUserId,
-    nights,
-  });
+    return NextResponse.json({
+      booking,
+      fees,
+      hostUserId,
+      nights,
+    });
+  } catch (e) {
+    captureException(e as Error, { route: "bookings/create", bookingId: booking.id });
+    return NextResponse.json({ error: "FEES_CALCULATION_FAILED" }, { status: 500 });
+  }
 }
