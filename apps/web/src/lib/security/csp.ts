@@ -57,6 +57,8 @@ const CONNECT_SOURCES = {
   analytics: "https://www.google-analytics.com https://analytics.google.com",
   r2: "https://*.r2.dev https://*.r2.cloudflarestorage.com",
   s3: "https://*.amazonaws.com",
+  sentry: "https://*.ingest.sentry.io https://*.ingest.de.sentry.io",
+  pub_r2: "https://pub-359f752ac45f4717a21acf0109db0951.r2.dev",
 } as const;
 
 /**
@@ -167,6 +169,8 @@ function generateConnectSrc(config: CspConfig): string {
     CONNECT_SOURCES.analytics,
     CONNECT_SOURCES.r2,
     CONNECT_SOURCES.s3,
+    CONNECT_SOURCES.sentry,
+    CONNECT_SOURCES.pub_r2,
   ];
 
   if (config.s3Host) {
