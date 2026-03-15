@@ -234,8 +234,8 @@ function generateCSP(isDev: boolean, nonce: string): string {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     // Images: Self + Data URLs + Blob + CDNs externes
     `img-src 'self' data: blob: https://maps.googleapis.com https://maps.gstatic.com https://lh3.googleusercontent.com https://images.unsplash.com https://images.pexels.com https://*.r2.dev https://*.r2.cloudflarestorage.com https://*.amazonaws.com ${s3Host ? `https://${s3Host}` : ""}`,
-    // Connexions API: Self + Maps + Stripe + Analytics + S3
-    `connect-src 'self' https://maps.googleapis.com https://api.stripe.com https://www.google-analytics.com https://analytics.google.com https://*.r2.dev https://*.r2.cloudflarestorage.com https://*.amazonaws.com ${s3Host ? `https://${s3Host}` : ""}`,
+    // Connexions API: Self + Maps + Stripe + Analytics + S3 + Sentry
+    `connect-src 'self' https://maps.googleapis.com https://api.stripe.com https://www.google-analytics.com https://analytics.google.com https://*.r2.dev https://*.r2.cloudflarestorage.com https://*.amazonaws.com https://*.sentry.io https://*.ingest.sentry.io https://*.ingest.de.sentry.io ${s3Host ? `https://${s3Host}` : ""}`,
     // Polices: Self + Google Fonts + Data URLs
     "font-src 'self' https://fonts.gstatic.com data:",
     // iframes: Stripe + Google Maps

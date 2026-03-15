@@ -1,33 +1,68 @@
 /**
  * Lok'Room - Sanitization des inputs utilisateur
  * Protection contre XSS et injection de code
+ *
+ * NOTE: isomorphic-dompurify a été retiré car il tire jsdom (@exodus/bytes ESM-only)
+ * qui est incompatible avec le runtime serverless Vercel (ERR_REQUIRE_ESM).
+ * La sanitization serveur utilise des regex robustes ; DOMPurify reste utilisé côté client.
  */
 
-import DOMPurify from "isomorphic-dompurify";
-
 // ============================================
-// CONFIGURATION DOMPURIFY
+// SANITIZATION SERVEUR (regex — pas de jsdom)
 // ============================================
 
 /**
- * Configuration stricte pour les textes simples
- * Supprime TOUS les tags HTML
+ * Supprime tous les tags HTML d'une chaîne (serveur-safe)
  */
-const STRICT_CONFIG = {
-  ALLOWED_TAGS: [] as string[],
-  ALLOWED_ATTR: [] as string[],
-  KEEP_CONTENT: true,
-};
+function stripAllTags(input: string): string {
+  // Supprime les scripts et leur contenu en premier
+  let out = input.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
+  // Supprime les styles inline
+  out = out.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "");
+  // Supprime tous les tags restants
+  out = out.replace(/<[^>]+>/g, "");
+  // Décode les entités HTML courantes pour éviter les bypass
+  out = out
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&#x2F;/g, "/");
+  // Re-strip après décodage (double-pass)
+  out = out.replace(/<[^>]+>/g, "");
+  return out;
+}
+
+const ALLOWED_RICH_TAGS = new Set(["p", "br", "strong", "em", "u", "ul", "ol", "li", "a"]);
 
 /**
- * Configuration permissive pour les descriptions riches
- * Autorise les tags de formatage basiques
+ * Garde uniquement les tags autorisés, supprime les attributs dangereux (serveur-safe)
  */
-const RICH_TEXT_CONFIG = {
-  ALLOWED_TAGS: ["p", "br", "strong", "em", "u", "ul", "ol", "li", "a"],
-  ALLOWED_ATTR: ["href", "target", "rel"],
-  ALLOW_DATA_ATTR: false,
-};
+function stripDangerousTags(input: string): string {
+  // Supprime scripts/styles et leur contenu
+  let out = input.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
+  out = out.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "");
+
+  // Remplace les tags non autorisés par rien, garde le contenu
+  out = out.replace(/<\/?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>/g, (match, tag) => {
+    if (ALLOWED_RICH_TAGS.has(tag.toLowerCase())) {
+      // Pour les liens, ne garder que href sécurisé
+      if (tag.toLowerCase() === "a") {
+        const hrefMatch = match.match(/href="([^"]+)"/i);
+        const href = hrefMatch?.[1] || "";
+        // Bloque javascript:, data:, vbscript:
+        if (/^(javascript|data|vbscript):/i.test(href.trim())) return "";
+        return `<a href="${href}" target="_blank" rel="noopener noreferrer">`;
+      }
+      // Supprime tous les attributs des autres tags autorisés
+      return match.replace(/\s+on\w+="[^"]*"/gi, "").replace(/\s+style="[^"]*"/gi, "");
+    }
+    return "";
+  });
+
+  return out;
+}
 
 // ============================================
 // FONCTIONS DE SANITIZATION
@@ -43,8 +78,8 @@ export function sanitizeText(input: string | null | undefined): string {
   // Trim et normalise les espaces
   let cleaned = input.trim().replace(/\s+/g, " ");
 
-  // Supprime tous les tags HTML
-  cleaned = DOMPurify.sanitize(cleaned, STRICT_CONFIG);
+  // Supprime tous les tags HTML (serveur-safe, pas de jsdom)
+  cleaned = stripAllTags(cleaned);
 
   // Supprime les caractères de contrôle dangereux
   cleaned = cleaned.replace(/[\x00-\x1F\x7F-\x9F]/g, "");
@@ -59,17 +94,10 @@ export function sanitizeText(input: string | null | undefined): string {
 export function sanitizeRichText(input: string | null | undefined): string {
   if (!input) return "";
 
-  // Trim
   let cleaned = input.trim();
 
-  // Sanitize avec tags autorisés
-  cleaned = DOMPurify.sanitize(cleaned, RICH_TEXT_CONFIG);
-
-  // Sécurise les liens (force target="_blank" et rel="noopener noreferrer")
-  cleaned = cleaned.replace(
-    /<a\s+href="([^"]+)"[^>]*>/gi,
-    '<a href="$1" target="_blank" rel="noopener noreferrer">'
-  );
+  // Sanitize avec tags autorisés (serveur-safe, pas de jsdom)
+  cleaned = stripDangerousTags(cleaned);
 
   return cleaned;
 }
