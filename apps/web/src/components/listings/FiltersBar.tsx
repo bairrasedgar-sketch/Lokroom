@@ -465,6 +465,20 @@ export default function FiltersBar(props: FiltersBarProps) {
   const [pets, setPets] = useState(0);
   const [currentSort, setCurrentSort] = useState(sort || "newest");
 
+  // ── États contrôlés du modal filtres ──
+  const [fMinPrice, setFMinPrice] = useState(minPrice);
+  const [fMaxPrice, setFMaxPrice] = useState(maxPrice);
+  const [fMinRating, setFMinRating] = useState(minRating || "");
+  const [fHasPhoto, setFHasPhoto] = useState(hasPhoto);
+  const [fSpaceType, setFSpaceType] = useState<string>("");
+  const [fAmenities, setFAmenities] = useState<string[]>([]);
+  const [fInstantBook, setFInstantBook] = useState(false);
+
+  const toggleAmenity = (key: string) =>
+    setFAmenities((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+    );
+
   // Total voyageurs pour le champ caché
   const totalGuests = adults + children;
   const guestsLabel = (() => {
@@ -808,35 +822,65 @@ export default function FiltersBar(props: FiltersBarProps) {
 
               {/* Contenu scrollable */}
               <div className="flex-1 space-y-8 overflow-y-auto px-4 sm:px-6 py-5 text-sm text-gray-800">
-                {/* Échelle de prix */}
+
+                {/* ── Type d'espace ── */}
+                <section className="space-y-3">
+                  <h3 className="text-base font-semibold">Type d&apos;espace</h3>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    {[
+                      { value: "HOUSE",            label: "Maison",          icon: "🏠" },
+                      { value: "APARTMENT",         label: "Appartement",     icon: "🏢" },
+                      { value: "ROOM",              label: "Chambre",         icon: "🛏️" },
+                      { value: "STUDIO",            label: "Studio",          icon: "🎨" },
+                      { value: "OFFICE",            label: "Bureau",          icon: "💼" },
+                      { value: "COWORKING",         label: "Coworking",       icon: "🤝" },
+                      { value: "MEETING_ROOM",      label: "Salle réunion",   icon: "📋" },
+                      { value: "EVENT_SPACE",       label: "Événementiel",    icon: "🎉" },
+                      { value: "RECORDING_STUDIO",  label: "Studio enreg.",   icon: "🎙️" },
+                      { value: "PARKING",           label: "Parking",         icon: "🅿️" },
+                      { value: "GARAGE",            label: "Garage",          icon: "🚗" },
+                      { value: "STORAGE",           label: "Stockage",        icon: "📦" },
+                    ].map((item) => (
+                      <button
+                        key={item.value}
+                        type="button"
+                        onClick={() => setFSpaceType((v) => v === item.value ? "" : item.value)}
+                        className={`flex flex-col items-center gap-1.5 rounded-xl border p-3 text-center text-xs transition ${
+                          fSpaceType === item.value
+                            ? "border-gray-900 bg-gray-900 text-white"
+                            : "border-gray-200 bg-white text-gray-700 hover:border-gray-400"
+                        }`}
+                      >
+                        <span className="text-xl leading-none">{item.icon}</span>
+                        <span className="leading-tight">{item.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+
+                {/* ── Prix ── */}
                 <section className="space-y-3">
                   <h3 className="text-base font-semibold">{fb.priceScale2}</h3>
-                  <p className="text-xs text-gray-500">
-                    {fb.priceScaleDesc}
-                  </p>
-                  <div className="mt-3 flex items-center gap-4">
+                  <div className="flex items-center gap-4">
                     <div className="flex flex-1 flex-col gap-1">
-                      <span className="text-[11px] text-gray-500">
-                        {fb.minimum}
-                      </span>
+                      <span className="text-[11px] text-gray-500">{fb.minimum}</span>
                       <input
                         type="number"
-                        name="minPrice"
                         min={0}
-                        defaultValue={minPrice}
+                        value={fMinPrice}
+                        onChange={(e) => setFMinPrice(e.target.value)}
                         placeholder={fb.minPlaceholder}
                         className="h-9 rounded-xl border border-gray-300 bg-gray-50 px-3 text-sm focus:border-black focus:outline-none"
                       />
                     </div>
+                    <span className="mt-5 text-gray-400">–</span>
                     <div className="flex flex-1 flex-col gap-1">
-                      <span className="text-[11px] text-gray-500">
-                        {fb.maximum}
-                      </span>
+                      <span className="text-[11px] text-gray-500">{fb.maximum}</span>
                       <input
                         type="number"
-                        name="maxPrice"
                         min={0}
-                        defaultValue={maxPrice}
+                        value={fMaxPrice}
+                        onChange={(e) => setFMaxPrice(e.target.value)}
                         placeholder={fb.maxPlaceholder}
                         className="h-9 rounded-xl border border-gray-300 bg-gray-50 px-3 text-sm focus:border-black focus:outline-none"
                       />
@@ -844,7 +888,7 @@ export default function FiltersBar(props: FiltersBarProps) {
                   </div>
                 </section>
 
-                {/* Note minimale */}
+                {/* ── Note minimale ── */}
                 <section className="space-y-3">
                   <h3 className="text-base font-semibold">{fb.minRating}</h3>
                   <div className="flex flex-wrap gap-2">
@@ -854,157 +898,114 @@ export default function FiltersBar(props: FiltersBarProps) {
                       { value: "4", label: fb.rating4Plus },
                       { value: "5", label: fb.rating5Only },
                     ].map((opt) => (
-                      <label
+                      <button
                         key={opt.value || "all"}
-                        className={`cursor-pointer rounded-full border px-3 py-1.5 text-xs ${
-                          (minRating || "") === opt.value
+                        type="button"
+                        onClick={() => setFMinRating(opt.value)}
+                        className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                          fMinRating === opt.value
                             ? "border-black bg-black text-white"
-                            : "border-gray-300 bg-white text-gray-800"
+                            : "border-gray-300 bg-white text-gray-800 hover:border-gray-500"
                         }`}
                       >
-                        <input
-                          type="radio"
-                          name="minRating"
-                          value={opt.value}
-                          defaultChecked={(minRating || "") === opt.value}
-                          className="hidden"
-                        />
                         {opt.label}
-                      </label>
-                    ))}
-                  </div>
-
-                  <label className="mt-2 flex items-center gap-2 text-xs text-gray-600">
-                    <input
-                      type="checkbox"
-                      name="hasPhoto"
-                      value="1"
-                      defaultChecked={hasPhoto}
-                      className="h-3.5 w-3.5 rounded border-gray-300 text-black focus:ring-black"
-                    />
-                    <span>{fb.onlyWithPhotos}</span>
-                  </label>
-                </section>
-
-                {/* Chambres et lits (placeholder, côté UX) */}
-                <section className="space-y-3">
-                  <h3 className="text-base font-semibold">{fb.roomsAndBeds}</h3>
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    {[
-                      { key: "chambres", label: fb.bedrooms },
-                      { key: "lits", label: fb.beds },
-                      { key: "sallesDeBain", label: fb.bathrooms },
-                    ].map((item) => (
-                      <div key={item.key} className="flex flex-col gap-1">
-                        <span className="text-xs text-gray-500">
-                          {item.label}
-                        </span>
-                        <input
-                          type="number"
-                          min={0}
-                          name={item.key}
-                          className="h-9 rounded-xl border border-gray-300 bg-gray-50 px-3 text-sm focus:border-black focus:outline-none"
-                          placeholder={fb.anyOption}
-                        />
-                      </div>
+                      </button>
                     ))}
                   </div>
                 </section>
 
-                {/* Commodités (checkbox "chips" – backend pourra les gérer plus tard) */}
+                {/* ── Commodités ── */}
                 <section className="space-y-3">
                   <h3 className="text-base font-semibold">{fb.amenities}</h3>
                   <div className="flex flex-wrap gap-2">
                     {[
-                      { key: "wifi", label: fb.wifi },
-                      { key: "stationnement_gratuit", label: fb.freeParking },
-                      { key: "arrivée_autonome", label: fb.selfCheckIn },
-                      { key: "climatisation", label: fb.airConditioning },
-                      { key: "chauffage", label: fb.heating },
-                      { key: "télévision", label: fb.tv },
+                      { key: "wifi",                  label: "Wi-Fi" },
+                      { key: "parking_gratuit",       label: "Parking gratuit" },
+                      { key: "arrivee_autonome",      label: "Arrivée autonome" },
+                      { key: "climatisation",         label: "Climatisation" },
+                      { key: "chauffage",             label: "Chauffage" },
+                      { key: "television",            label: "Télévision" },
+                      { key: "cuisine",               label: "Cuisine" },
+                      { key: "lave_linge",            label: "Lave-linge" },
+                      { key: "piscine",               label: "Piscine" },
+                      { key: "jacuzzi",               label: "Jacuzzi" },
+                      { key: "salle_sport",           label: "Salle de sport" },
+                      { key: "terrasse",              label: "Terrasse" },
                     ].map((item) => (
-                      <label
+                      <button
                         key={item.key}
-                        className="cursor-pointer rounded-full border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-800 hover:border-black"
+                        type="button"
+                        onClick={() => toggleAmenity(item.key)}
+                        className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                          fAmenities.includes(item.key)
+                            ? "border-black bg-black text-white"
+                            : "border-gray-300 bg-white text-gray-800 hover:border-gray-500"
+                        }`}
                       >
-                        <input
-                          type="checkbox"
-                          name="amenities"
-                          value={item.key}
-                          className="hidden"
-                        />
                         {item.label}
-                      </label>
+                      </button>
                     ))}
                   </div>
                 </section>
 
-                {/* Options de réservation (placeholder) */}
+                {/* ── Options de réservation ── */}
                 <section className="space-y-3">
-                  <h3 className="text-base font-semibold">
-                    {fb.bookingOptions}
-                  </h3>
+                  <h3 className="text-base font-semibold">{fb.bookingOptions}</h3>
                   <div className="flex flex-wrap gap-2">
-                    {[
-                      { key: "réservation_instantanée", label: fb.instantBooking },
-                      { key: "arrivée_autonome", label: fb.selfCheckIn },
-                    ].map((item) => (
-                      <label
-                        key={item.key}
-                        className="cursor-pointer rounded-full border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-800 hover:border-black"
-                      >
-                        <input
-                          type="checkbox"
-                          name="bookingOptions"
-                          value={item.key}
-                          className="hidden"
-                        />
-                        {item.label}
-                      </label>
-                    ))}
-                  </div>
-                </section>
-
-                {/* Type de logement (chips) */}
-                <section className="space-y-3">
-                  <h3 className="text-base font-semibold">{fb.propertyType}</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      { key: "maison", label: fb.house },
-                      { key: "appartement", label: fb.apartment },
-                      { key: "bureau", label: fb.office },
-                      { key: "parking", label: fb.parking },
-                    ].map((item) => (
-                      <label
-                        key={item.key}
-                        className="cursor-pointer rounded-full border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-800 hover:border-black"
-                      >
-                        <input
-                          type="checkbox"
-                          name="spaceType"
-                          value={item.key}
-                          className="hidden"
-                        />
-                        {item.label}
-                      </label>
-                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setFInstantBook((v) => !v)}
+                      className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                        fInstantBook
+                          ? "border-black bg-black text-white"
+                          : "border-gray-300 bg-white text-gray-800 hover:border-gray-500"
+                      }`}
+                    >
+                      ⚡ {fb.instantBooking}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFHasPhoto((v) => !v)}
+                      className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                        fHasPhoto
+                          ? "border-black bg-black text-white"
+                          : "border-gray-300 bg-white text-gray-800 hover:border-gray-500"
+                      }`}
+                    >
+                      📷 {fb.onlyWithPhotos}
+                    </button>
                   </div>
                 </section>
               </div>
 
-              {/* Footer du modal */}
+              {/* Champs cachés pour les états contrôlés */}
+              <input type="hidden" name="minPrice" value={fMinPrice} />
+              <input type="hidden" name="maxPrice" value={fMaxPrice} />
+              <input type="hidden" name="minRating" value={fMinRating} />
+              <input type="hidden" name="hasPhoto" value={fHasPhoto ? "1" : ""} />
+              <input type="hidden" name="type" value={fSpaceType} />
+              {fAmenities.map((a) => (
+                <input key={a} type="hidden" name="amenities" value={a} />
+              ))}
+              {fInstantBook && <input type="hidden" name="instantBook" value="1" />}
+
+              {/* Footer */}
               <div className="flex items-center justify-between gap-4 border-t px-6 py-4">
                 <button
-                  type="reset"
-                  className="text-xs font-medium text-gray-600 hover:underline"
+                  type="button"
                   onClick={() => {
-                    // On laisse le reset du form faire son job, on ferme juste le panneau
-                    setIsFilterOpen(false);
+                    setFMinPrice("");
+                    setFMaxPrice("");
+                    setFMinRating("");
+                    setFHasPhoto(false);
+                    setFSpaceType("");
+                    setFAmenities([]);
+                    setFInstantBook(false);
                   }}
+                  className="text-xs font-medium text-gray-600 hover:underline"
                 >
                   {fb.clearAll}
                 </button>
-
                 <button
                   type="submit"
                   className="inline-flex items-center justify-center rounded-full bg-black px-5 py-2 text-xs font-medium text-white shadow-sm hover:bg-gray-900"
