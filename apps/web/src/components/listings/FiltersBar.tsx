@@ -437,8 +437,10 @@ export default function FiltersBar(props: FiltersBarProps) {
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isSortOpen, setIsSortOpen] = useState(false);
+  const [isGuestsOpen, setIsGuestsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
+  const guestsRef = useRef<HTMLDivElement>(null);
 
   // Détecter mobile (< 768px)
   useEffect(() => {
@@ -458,8 +460,20 @@ export default function FiltersBar(props: FiltersBarProps) {
   const [endDate, setEndDate] = useState(initialEndDate);
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
-  const [guests, setGuests] = useState(initialGuests);
+  const [adults, setAdults] = useState(Math.max(1, parseInt(initialGuests) || 1));
+  const [children, setChildren] = useState(0);
+  const [pets, setPets] = useState(0);
   const [currentSort, setCurrentSort] = useState(sort || "newest");
+
+  // Total voyageurs pour le champ caché
+  const totalGuests = adults + children;
+  const guestsLabel = (() => {
+    const parts: string[] = [];
+    if (adults > 0) parts.push(`${adults} adulte${adults > 1 ? "s" : ""}`);
+    if (children > 0) parts.push(`${children} enfant${children > 1 ? "s" : ""}`);
+    if (pets > 0) parts.push(`${pets} animal${pets > 1 ? "x" : ""}`);
+    return parts.length > 0 ? parts.join(", ") : null;
+  })();
 
   const t = getDictionaryForLocale(locale);
   const fb = t.components.filtersBar;
@@ -475,6 +489,18 @@ export default function FiltersBar(props: FiltersBarProps) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isSortOpen]);
+
+  // Fermer le dropdown voyageurs au clic extérieur
+  useEffect(() => {
+    if (!isGuestsOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (guestsRef.current && !guestsRef.current.contains(e.target as Node)) {
+        setIsGuestsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isGuestsOpen]);
 
   // Handler pour la sélection d'une ville
   const handleLocationSelect = (place: LocationAutocompletePlace) => {
@@ -538,35 +564,28 @@ export default function FiltersBar(props: FiltersBarProps) {
               <input type="hidden" name="endTime" value={endTime} />
             </div>
 
-            {/* Voyageurs */}
-            <div className="flex flex-[0.9] items-center gap-3 lg:px-4 min-w-0">
+            {/* Voyageurs — bulle dropdown */}
+            <div className="relative flex flex-[0.9] items-center gap-3 lg:px-4 min-w-0" ref={guestsRef}>
               <div className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm sm:flex">
                 <svg className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
-              <div className="min-w-0 flex-1">
+              <button
+                type="button"
+                onClick={() => setIsGuestsOpen((v) => !v)}
+                className="min-w-0 flex-1 text-left"
+              >
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                   {fb.travelers}
                 </p>
-                <div className="flex items-center gap-1">
-                  <input
-                    type="number"
-                    name="guests"
-                    min={1}
-                    max={16}
-                    value={guests}
-                    onChange={(e) => setGuests(e.target.value)}
-                    placeholder={fb.travelersPlaceholder}
-                    className="w-full min-w-0 border-none bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-0"
-                  />
-                  {guests && (
-                    <span className="shrink-0 text-xs text-gray-500">
-                      {Number(guests) > 1 ? "voyageurs" : "voyageur"}
-                    </span>
-                  )}
-                </div>
-              </div>
+                <p className="truncate text-sm text-gray-900">
+                  {guestsLabel ?? <span className="text-gray-400">{fb.travelersPlaceholder}</span>}
+                </p>
+              </button>
+
+              {/* Champ caché pour le form */}
+              <input type="hidden" name="guests" value={totalGuests > 0 ? String(totalGuests) : ""} />
 
               {/* Bouton Rechercher */}
               <button
@@ -575,6 +594,99 @@ export default function FiltersBar(props: FiltersBarProps) {
               >
                 {fb.searchButton}
               </button>
+
+              {/* Dropdown voyageurs */}
+              {isGuestsOpen && (
+                <div className="absolute left-0 top-full z-[60] mt-2 w-80 rounded-2xl border border-gray-200 bg-white p-5 shadow-xl">
+                  {/* Adultes */}
+                  <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Adultes</p>
+                      <p className="text-xs text-gray-500">13 ans et plus</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setAdults((v) => Math.max(1, v - 1))}
+                        disabled={adults <= 1}
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 text-gray-600 transition hover:border-gray-900 disabled:opacity-30"
+                      >
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" /></svg>
+                      </button>
+                      <span className="w-5 text-center text-sm font-medium">{adults}</span>
+                      <button
+                        type="button"
+                        onClick={() => setAdults((v) => Math.min(16, v + 1))}
+                        disabled={adults + children >= 16}
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 text-gray-600 transition hover:border-gray-900 disabled:opacity-30"
+                      >
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Enfants */}
+                  <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Enfants</p>
+                      <p className="text-xs text-gray-500">Jusqu&apos;à 12 ans</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setChildren((v) => Math.max(0, v - 1))}
+                        disabled={children <= 0}
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 text-gray-600 transition hover:border-gray-900 disabled:opacity-30"
+                      >
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" /></svg>
+                      </button>
+                      <span className="w-5 text-center text-sm font-medium">{children}</span>
+                      <button
+                        type="button"
+                        onClick={() => setChildren((v) => Math.min(10, v + 1))}
+                        disabled={adults + children >= 16}
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 text-gray-600 transition hover:border-gray-900 disabled:opacity-30"
+                      >
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Animaux */}
+                  <div className="flex items-center justify-between py-3">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Animaux</p>
+                      <p className="text-xs text-gray-500">Chiens, chats…</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setPets((v) => Math.max(0, v - 1))}
+                        disabled={pets <= 0}
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 text-gray-600 transition hover:border-gray-900 disabled:opacity-30"
+                      >
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" /></svg>
+                      </button>
+                      <span className="w-5 text-center text-sm font-medium">{pets}</span>
+                      <button
+                        type="button"
+                        onClick={() => setPets((v) => Math.min(5, v + 1))}
+                        className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 text-gray-600 transition hover:border-gray-900 disabled:opacity-30"
+                      >
+                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsGuestsOpen(false)}
+                    className="mt-2 w-full rounded-xl bg-gray-900 py-2.5 text-xs font-medium text-white hover:bg-black"
+                  >
+                    Appliquer
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
