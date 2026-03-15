@@ -380,11 +380,11 @@ export default async function ListingsPage({
     }));
 
   const resultLabel =
-    total === 0
-      ? t.resultNone
-      : total === 1
-        ? t.resultOne
-        : t.resultMany.replace("{count}", String(total));
+    total === 1
+      ? t.resultOne
+      : total > 1
+        ? t.resultMany.replace("{count}", String(total))
+        : null;
 
   return (
     <PageErrorBoundary>
@@ -412,17 +412,18 @@ export default async function ListingsPage({
       <main className="min-h-screen pb-8 sm:pb-12 pt-4 sm:pt-6 lg:mr-[40%] xl:mr-[42%] 2xl:mr-[44%] 3xl:mr-[46%]">
         <div className="mx-auto max-w-5xl 2xl:max-w-6xl 3xl:max-w-7xl space-y-3 sm:space-y-4 px-4 sm:px-6 lg:px-8">
           {/* Header simple comme Airbnb */}
-          <header className="flex items-center justify-between">
-            <p className="text-sm text-gray-600">
-              {resultLabel}
-            </p>
-
-            {session && (
-              <span className="text-xs text-gray-500">
-                {t.connectedAs} {session.user?.email}
-              </span>
-            )}
-          </header>
+          {(resultLabel || session) && (
+            <header className="flex items-center justify-between">
+              {resultLabel && (
+                <p className="text-sm text-gray-600">{resultLabel}</p>
+              )}
+              {session && (
+                <span className="text-xs text-gray-500 ml-auto">
+                  {t.connectedAs} {session.user?.email}
+                </span>
+              )}
+            </header>
+          )}
 
           {/* 🔍 Barre de recherche + Filtres (client) */}
           <FiltersBar

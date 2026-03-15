@@ -436,7 +436,9 @@ export default function FiltersBar(props: FiltersBarProps) {
   } = props;
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isSortOpen, setIsSortOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const sortRef = useRef<HTMLDivElement>(null);
 
   // Détecter mobile (< 768px)
   useEffect(() => {
@@ -457,9 +459,22 @@ export default function FiltersBar(props: FiltersBarProps) {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [guests, setGuests] = useState(initialGuests);
+  const [currentSort, setCurrentSort] = useState(sort || "newest");
 
   const t = getDictionaryForLocale(locale);
   const fb = t.components.filtersBar;
+
+  // Fermer le dropdown tri au clic extérieur
+  useEffect(() => {
+    if (!isSortOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) {
+        setIsSortOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isSortOpen]);
 
   // Handler pour la sélection d'une ville
   const handleLocationSelect = (place: LocationAutocompletePlace) => {
@@ -524,32 +539,39 @@ export default function FiltersBar(props: FiltersBarProps) {
             </div>
 
             {/* Voyageurs */}
-            <div className="flex flex-[0.9] items-center gap-3 lg:px-4">
-              <div className="hidden h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-sm sm:flex">
+            <div className="flex flex-[0.9] items-center gap-3 lg:px-4 min-w-0">
+              <div className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm sm:flex">
                 <svg className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
-              <div className="flex-1">
+              <div className="min-w-0 flex-1">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
                   {fb.travelers}
                 </p>
-                <input
-                  type="number"
-                  name="guests"
-                  min={1}
-                  max={16}
-                  value={guests}
-                  onChange={(e) => setGuests(e.target.value)}
-                  placeholder={fb.travelersPlaceholder}
-                  className="w-full border-none bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-0"
-                />
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    name="guests"
+                    min={1}
+                    max={16}
+                    value={guests}
+                    onChange={(e) => setGuests(e.target.value)}
+                    placeholder={fb.travelersPlaceholder}
+                    className="w-full min-w-0 border-none bg-transparent text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-0"
+                  />
+                  {guests && (
+                    <span className="shrink-0 text-xs text-gray-500">
+                      {Number(guests) > 1 ? "voyageurs" : "voyageur"}
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Bouton Rechercher */}
               <button
                 type="submit"
-                className="ml-3 inline-flex h-10 items-center justify-center rounded-full bg-black px-4 text-xs font-medium text-white shadow-sm hover:bg-gray-900"
+                className="ml-3 shrink-0 inline-flex h-10 items-center justify-center rounded-full bg-black px-4 text-xs font-medium text-white shadow-sm hover:bg-gray-900"
               >
                 {fb.searchButton}
               </button>
@@ -583,28 +605,68 @@ export default function FiltersBar(props: FiltersBarProps) {
           {/* Séparateur */}
           <div className="h-6 w-px bg-gray-200" />
 
-          {/* Trier par */}
-          <div className="flex items-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-2 shadow-sm transition hover:border-gray-900">
-            <svg className="h-3.5 w-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 7h18M6 12h12M9 17h6" />
-            </svg>
-            <select
-              name="sort"
-              defaultValue={sort}
-              onChange={(e) => {
-                const form = e.target.closest("form");
-                if (form) form.requestSubmit();
-              }}
-              className="appearance-none bg-transparent text-sm font-medium text-gray-800 focus:outline-none cursor-pointer"
+          {/* Trier par — bulle dropdown */}
+          <div className="relative" ref={sortRef}>
+            <button
+              type="button"
+              onClick={() => setIsSortOpen((v) => !v)}
+              className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition hover:border-gray-900 hover:bg-gray-50 ${
+                isSortOpen ? "border-gray-900 bg-gray-900 text-white" : "border-gray-300 bg-white text-gray-800"
+              }`}
             >
-              <option value="newest">{fb.sortNewest}</option>
-              <option value="price_asc">{fb.sortPriceAsc}</option>
-              <option value="price_desc">{fb.sortPriceDesc}</option>
-              <option value="rating_desc">{fb.sortBestRated}</option>
-            </select>
-            <svg className="h-3 w-3 text-gray-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
+              <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 7h18M6 12h12M9 17h6" />
+              </svg>
+              <span>
+                {[
+                  { value: "newest", label: fb.sortNewest },
+                  { value: "price_asc", label: fb.sortPriceAsc },
+                  { value: "price_desc", label: fb.sortPriceDesc },
+                  { value: "rating_desc", label: fb.sortBestRated },
+                ].find((o) => o.value === currentSort)?.label ?? fb.sortNewest}
+              </span>
+              <svg className={`h-3 w-3 shrink-0 transition-transform ${isSortOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {/* Champ caché pour le submit du form */}
+            <input type="hidden" name="sort" value={currentSort} />
+
+            {isSortOpen && (
+              <div className="absolute left-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-xl">
+                {[
+                  { value: "newest", label: fb.sortNewest },
+                  { value: "price_asc", label: fb.sortPriceAsc },
+                  { value: "price_desc", label: fb.sortPriceDesc },
+                  { value: "rating_desc", label: fb.sortBestRated },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => {
+                      setCurrentSort(opt.value);
+                      setIsSortOpen(false);
+                      // Soumettre le form après le prochain render
+                      setTimeout(() => {
+                        const form = sortRef.current?.closest("form");
+                        if (form) form.requestSubmit();
+                      }, 0);
+                    }}
+                    className={`flex w-full items-center justify-between px-4 py-3 text-sm transition hover:bg-gray-50 ${
+                      currentSort === opt.value ? "font-semibold text-gray-900" : "text-gray-700"
+                    }`}
+                  >
+                    <span>{opt.label}</span>
+                    {currentSort === opt.value && (
+                      <svg className="h-4 w-4 text-gray-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -616,7 +678,7 @@ export default function FiltersBar(props: FiltersBarProps) {
           />
         )}
         {isFilterOpen && !isMobile && (
-          <div className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-black/30 p-0 sm:p-4">
+          <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/30 p-0 sm:p-4">
             <div className="relative w-full max-w-3xl max-h-[90vh] sm:max-h-[85vh] rounded-t-3xl sm:rounded-3xl bg-white shadow-2xl flex flex-col">
               {/* Header */}
               <div className="flex items-center justify-between border-b px-6 py-4">
