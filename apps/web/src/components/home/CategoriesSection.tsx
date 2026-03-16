@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import CategoryIcon from "../CategoryIcon";
 
 type Category = {
@@ -27,9 +28,19 @@ function CategoryButton({
   isActive: boolean;
   onClick: () => void;
 }) {
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  const handleClick = () => {
+    if (!isActive) {
+      setIsAnimating(true);
+      setTimeout(() => setIsAnimating(false), 2000);
+    }
+    onClick();
+  };
+
   return (
     <button
-      onClick={onClick}
+      onClick={handleClick}
       className={`group flex flex-col items-center gap-1 px-3 py-2 transition-all duration-300 flex-shrink-0 ${
         isActive
           ? "text-gray-900"
@@ -41,7 +52,7 @@ function CategoryButton({
           ? "bg-gray-100"
           : "group-hover:bg-gray-50"
       }`}>
-        <CategoryIcon category={category} isActive={isActive} isAnimating={false} />
+        <CategoryIcon category={category} isActive={isActive} isAnimating={isAnimating} />
       </div>
       <span className={`whitespace-nowrap text-[11px] font-medium ${isActive ? "text-gray-900" : "text-gray-500"}`}>
         {label}
