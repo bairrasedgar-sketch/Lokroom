@@ -98,51 +98,63 @@ export const metadata: Metadata = {
 };
 
 async function getFeaturedListings() {
-  const listings = await prisma.listing.findMany({
-    include: {
-      images: {
-        orderBy: { position: "asc" },
+  try {
+    const listings = await prisma.listing.findMany({
+      include: {
+        images: {
+          orderBy: { position: "asc" },
+        },
+        owner: {
+          select: { name: true },
+        },
       },
-      owner: {
-        select: { name: true },
-      },
-    },
-    orderBy: { createdAt: "desc" },
-    // Charger toutes les annonces pour que les filtres par catégorie fonctionnent
-  });
+      orderBy: { createdAt: "desc" },
+      // Charger toutes les annonces pour que les filtres par catégorie fonctionnent
+    });
 
-  return listings;
+    return listings;
+  } catch {
+    return [];
+  }
 }
 
 async function getListingStats() {
-  const [totalListings, totalUsers, countries] = await Promise.all([
-    prisma.listing.count(),
-    prisma.user.count(),
-    prisma.listing.groupBy({
-      by: ["country"],
-      _count: true,
-    }),
-  ]);
+  try {
+    const [totalListings, totalUsers, countries] = await Promise.all([
+      prisma.listing.count(),
+      prisma.user.count(),
+      prisma.listing.groupBy({
+        by: ["country"],
+        _count: true,
+      }),
+    ]);
 
-  return {
-    totalListings,
-    totalUsers,
-    totalCountries: countries.length,
-  };
+    return {
+      totalListings,
+      totalUsers,
+      totalCountries: countries.length,
+    };
+  } catch {
+    return { totalListings: 0, totalUsers: 0, totalCountries: 0 };
+  }
 }
 
 async function getCategoryCounts() {
-  const counts = await prisma.listing.groupBy({
-    by: ["type"],
-    _count: true,
-  });
+  try {
+    const counts = await prisma.listing.groupBy({
+      by: ["type"],
+      _count: true,
+    });
 
-  const countMap: Record<string, number> = {};
-  counts.forEach(c => {
-    countMap[c.type] = c._count;
-  });
+    const countMap: Record<string, number> = {};
+    counts.forEach(c => {
+      countMap[c.type] = c._count;
+    });
 
-  return countMap;
+    return countMap;
+  } catch {
+    return {};
+  }
 }
 
 export default async function Home() {

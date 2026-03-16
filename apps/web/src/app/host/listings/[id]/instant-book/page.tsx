@@ -23,14 +23,19 @@ export default async function InstantBookPage({
   const listingId = params.id;
 
   // Récupérer l'annonce avec ses paramètres instant book
-  const listing = await prisma.listing.findUnique({
-    where: { id: listingId },
-    include: {
-      owner: { select: { email: true } },
-      instantBookSettings: true,
-      images: { take: 1, orderBy: { position: "asc" } },
-    },
-  });
+  let listing = null;
+  try {
+    listing = await prisma.listing.findUnique({
+      where: { id: listingId },
+      include: {
+        owner: { select: { email: true } },
+        instantBookSettings: true,
+        images: { take: 1, orderBy: { position: "asc" } },
+      },
+    });
+  } catch {
+    return notFound();
+  }
 
   if (!listing) {
     return notFound();
@@ -42,16 +47,17 @@ export default async function InstantBookPage({
   }
 
   // Récupérer les statistiques
-  const [totalBookings, instantBookings, recentBookings] = await Promise.all([
-    prisma.booking.count({
-      where: { listingId, status: "CONFIRMED" },
-    }),
-    // Approximation: réservations créées quand instant book était activé
-    prisma.booking.count({
-      where: {
-        listingId,
-        status: "CONFIRMED",
-        listing: { isInstantBook: true },
+  let totalBookings = 0, instantBookings = 0, recentBookings: any[] = [];
+  try {
+    [totalBookings, instantBookings, recentBookings] = await Promise.all([
+      prisma.booking.count({
+        where: { listingId, status: "CONFIRMED" },
+      }),
+      prisma.booking.count({
+        where: {
+          listingId,
+          status: "CONFIRMED",
+          listing: { isInstantBook: true },
       },
     }),
     prisma.booking.findMany({
@@ -75,6 +81,9 @@ export default async function InstantBookPage({
       },
     }),
   ]);
+  } catch {
+    // DB error — continue with defaults
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

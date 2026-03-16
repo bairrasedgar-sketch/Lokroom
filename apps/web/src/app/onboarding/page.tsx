@@ -39,7 +39,9 @@ export default async function OnboardingPage({
   const t = dict.onboarding;
 
   // Récupérer les données existantes de l'utilisateur
-  const user = await prisma.user.findUnique({
+  let user = null;
+  try {
+    user = await prisma.user.findUnique({
     where: { email },
     select: {
       role: true,
@@ -65,6 +67,9 @@ export default async function OnboardingPage({
       },
     },
   });
+  } catch {
+    // DB connection error — continue with null user
+  }
 
   // Préparer les données initiales pour le formulaire
   const initialData: UserData = {
