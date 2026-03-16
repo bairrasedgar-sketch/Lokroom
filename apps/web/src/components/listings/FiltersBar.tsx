@@ -6,6 +6,7 @@ import { getDictionaryForLocale, type SupportedLocale } from "@/lib/i18n.client"
 import { CalendarDaysIcon, ClockIcon, XMarkIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import LocationAutocomplete, { type LocationAutocompletePlace } from "@/components/LocationAutocomplete";
 import MobileFiltersModal from "./MobileFiltersModal";
+import CategoryFilters, { EMPTY_CATEGORY_FILTERS, type CategoryFiltersState } from "./CategoryFilters";
 
 type FiltersBarProps = {
   q: string;
@@ -470,14 +471,63 @@ export default function FiltersBar(props: FiltersBarProps) {
   const [fMaxPrice, setFMaxPrice] = useState(maxPrice);
   const [fMinRating, setFMinRating] = useState(minRating || "");
   const [fHasPhoto, setFHasPhoto] = useState(hasPhoto);
-  const [fSpaceType, setFSpaceType] = useState<string>("");
-  const [fAmenities, setFAmenities] = useState<string[]>([]);
   const [fInstantBook, setFInstantBook] = useState(false);
+  const [catFilters, setCatFilters] = useState<CategoryFiltersState>({
+    ...EMPTY_CATEGORY_FILTERS,
+  });
 
-  const toggleAmenity = (key: string) =>
-    setFAmenities((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
-    );
+  const patchCatFilters = (patch: Partial<CategoryFiltersState>) =>
+    setCatFilters((prev) => ({ ...prev, ...patch }));
+
+  const resetFilters = () => {
+    setFMinPrice("");
+    setFMaxPrice("");
+    setFMinRating("");
+    setFHasPhoto(false);
+    setFInstantBook(false);
+    setCatFilters({ ...EMPTY_CATEGORY_FILTERS });
+  };
+
+  // Compte les filtres actifs pour le badge
+  const activeFilterCount = [
+    fMinPrice,
+    fMaxPrice,
+    fMinRating,
+    fHasPhoto,
+    fInstantBook,
+    catFilters.spaceType,
+    catFilters.spaceSubtype,
+    catFilters.minBedrooms > 0,
+    catFilters.minBeds > 0,
+    catFilters.minBathrooms > 0,
+    catFilters.hasGarden,
+    catFilters.hasPool,
+    catFilters.hasTerrace,
+    catFilters.hasSpa,
+    catFilters.petsAllowed,
+    catFilters.smokingAllowed,
+    catFilters.minDesks > 0,
+    catFilters.hasProjector,
+    catFilters.hasWhiteboard,
+    catFilters.hasVideoConf,
+    catFilters.hasKitchen,
+    catFilters.hasReception,
+    catFilters.minCapacity > 0,
+    catFilters.hasCatering,
+    catFilters.hasStage,
+    catFilters.hasSoundSystem,
+    catFilters.hasLighting,
+    catFilters.hasSoundproofing,
+    catFilters.hasGreenScreen,
+    catFilters.hasMixingDesk,
+    catFilters.hasMicrophones,
+    catFilters.parkingCovered,
+    catFilters.parkingSecured,
+    catFilters.hasEVCharger,
+    catFilters.storageClimatized,
+    catFilters.storageSecured,
+    catFilters.minStorageSize > 0,
+  ].filter(Boolean).length;
 
   // Total voyageurs pour le champ caché
   const totalGuests = adults + children;
@@ -707,12 +757,12 @@ export default function FiltersBar(props: FiltersBarProps) {
 
         {/* ====== BARRE FILTRES STYLE AIRBNB ====== */}
         <div className="flex items-center gap-2">
-          {/* Bouton Filtres avec icône sliders */}
+          {/* Bouton Filtres avec badge dynamique */}
           <button
             type="button"
             onClick={() => setIsFilterOpen(true)}
             className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium shadow-sm transition hover:border-gray-900 hover:bg-gray-50 ${
-              (minPrice || maxPrice || minRating !== "0")
+              activeFilterCount > 0
                 ? "border-gray-900 bg-gray-900 text-white hover:bg-gray-800 hover:border-gray-800"
                 : "border-gray-300 bg-white text-gray-800"
             }`}
@@ -721,9 +771,9 @@ export default function FiltersBar(props: FiltersBarProps) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
             </svg>
             {fb.filtersButton}
-            {(minPrice || maxPrice || minRating !== "0") && (
-              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-white text-[10px] font-bold text-gray-900">
-                {[minPrice, maxPrice, minRating !== "0"].filter(Boolean).length}
+            {activeFilterCount > 0 && (
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] font-bold text-gray-900">
+                {activeFilterCount}
               </span>
             )}
           </button>
@@ -796,7 +846,7 @@ export default function FiltersBar(props: FiltersBarProps) {
           </div>
         </div>
 
-        {/* ====== POP-UP DE FILTRES (GRAND MODAL TYPE AIRBNB) ====== */}
+        {/* ====== POP-UP DE FILTRES ====== */}
         {isFilterOpen && isMobile && (
           <MobileFiltersModal
             isOpen={isFilterOpen}
@@ -805,62 +855,33 @@ export default function FiltersBar(props: FiltersBarProps) {
         )}
         {isFilterOpen && !isMobile && (
           <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/30 p-0 sm:p-4">
-            <div className="relative w-full max-w-3xl max-h-[90vh] sm:max-h-[85vh] rounded-t-3xl sm:rounded-3xl bg-white shadow-2xl flex flex-col">
+            <div className="relative w-full max-w-3xl max-h-[90vh] sm:max-h-[88vh] rounded-t-3xl sm:rounded-3xl bg-white shadow-2xl flex flex-col">
+
               {/* Header */}
               <div className="flex items-center justify-between border-b px-6 py-4">
                 <button
                   type="button"
                   onClick={() => setIsFilterOpen(false)}
                   aria-label="Fermer les filtres"
-                  className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-sm text-gray-600 hover:bg-gray-100"
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-600 hover:bg-gray-100"
                 >
-                  ✕
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
                 <h2 className="text-sm font-semibold">{fb.filtersTitle}</h2>
                 <div className="w-8" />
               </div>
 
               {/* Contenu scrollable */}
-              <div className="flex-1 space-y-8 overflow-y-auto px-4 sm:px-6 py-5 text-sm text-gray-800">
+              <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-6 space-y-8">
 
-                {/* ── Type d'espace ── */}
-                <section className="space-y-3">
-                  <h3 className="text-base font-semibold">Type d&apos;espace</h3>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                    {[
-                      { value: "HOUSE",            label: "Maison",          icon: "🏠" },
-                      { value: "APARTMENT",         label: "Appartement",     icon: "🏢" },
-                      { value: "ROOM",              label: "Chambre",         icon: "🛏️" },
-                      { value: "STUDIO",            label: "Studio",          icon: "🎨" },
-                      { value: "OFFICE",            label: "Bureau",          icon: "💼" },
-                      { value: "COWORKING",         label: "Coworking",       icon: "🤝" },
-                      { value: "MEETING_ROOM",      label: "Salle réunion",   icon: "📋" },
-                      { value: "EVENT_SPACE",       label: "Événementiel",    icon: "🎉" },
-                      { value: "RECORDING_STUDIO",  label: "Studio enreg.",   icon: "🎙️" },
-                      { value: "PARKING",           label: "Parking",         icon: "🅿️" },
-                      { value: "GARAGE",            label: "Garage",          icon: "🚗" },
-                      { value: "STORAGE",           label: "Stockage",        icon: "📦" },
-                    ].map((item) => (
-                      <button
-                        key={item.value}
-                        type="button"
-                        onClick={() => setFSpaceType((v) => v === item.value ? "" : item.value)}
-                        className={`flex flex-col items-center gap-1.5 rounded-xl border p-3 text-center text-xs transition ${
-                          fSpaceType === item.value
-                            ? "border-gray-900 bg-gray-900 text-white"
-                            : "border-gray-200 bg-white text-gray-700 hover:border-gray-400"
-                        }`}
-                      >
-                        <span className="text-xl leading-none">{item.icon}</span>
-                        <span className="leading-tight">{item.label}</span>
-                      </button>
-                    ))}
-                  </div>
-                </section>
+                {/* ── Type d'espace + filtres spécifiques ── */}
+                <CategoryFilters filters={catFilters} onChange={patchCatFilters} />
 
                 {/* ── Prix ── */}
                 <section className="space-y-3">
-                  <h3 className="text-base font-semibold">{fb.priceScale2}</h3>
+                  <h3 className="text-base font-semibold text-gray-900">💰 {fb.priceScale2}</h3>
                   <div className="flex items-center gap-4">
                     <div className="flex flex-1 flex-col gap-1">
                       <span className="text-[11px] text-gray-500">{fb.minimum}</span>
@@ -890,7 +911,7 @@ export default function FiltersBar(props: FiltersBarProps) {
 
                 {/* ── Note minimale ── */}
                 <section className="space-y-3">
-                  <h3 className="text-base font-semibold">{fb.minRating}</h3>
+                  <h3 className="text-base font-semibold text-gray-900">⭐ {fb.minRating}</h3>
                   <div className="flex flex-wrap gap-2">
                     {[
                       { value: "", label: fb.allRatings },
@@ -902,7 +923,7 @@ export default function FiltersBar(props: FiltersBarProps) {
                         key={opt.value || "all"}
                         type="button"
                         onClick={() => setFMinRating(opt.value)}
-                        className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                        className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                           fMinRating === opt.value
                             ? "border-black bg-black text-white"
                             : "border-gray-300 bg-white text-gray-800 hover:border-gray-500"
@@ -914,48 +935,14 @@ export default function FiltersBar(props: FiltersBarProps) {
                   </div>
                 </section>
 
-                {/* ── Commodités ── */}
-                <section className="space-y-3">
-                  <h3 className="text-base font-semibold">{fb.amenities}</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      { key: "wifi",                  label: "Wi-Fi" },
-                      { key: "parking_gratuit",       label: "Parking gratuit" },
-                      { key: "arrivee_autonome",      label: "Arrivée autonome" },
-                      { key: "climatisation",         label: "Climatisation" },
-                      { key: "chauffage",             label: "Chauffage" },
-                      { key: "television",            label: "Télévision" },
-                      { key: "cuisine",               label: "Cuisine" },
-                      { key: "lave_linge",            label: "Lave-linge" },
-                      { key: "piscine",               label: "Piscine" },
-                      { key: "jacuzzi",               label: "Jacuzzi" },
-                      { key: "salle_sport",           label: "Salle de sport" },
-                      { key: "terrasse",              label: "Terrasse" },
-                    ].map((item) => (
-                      <button
-                        key={item.key}
-                        type="button"
-                        onClick={() => toggleAmenity(item.key)}
-                        className={`rounded-full border px-3 py-1.5 text-xs transition ${
-                          fAmenities.includes(item.key)
-                            ? "border-black bg-black text-white"
-                            : "border-gray-300 bg-white text-gray-800 hover:border-gray-500"
-                        }`}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-                </section>
-
                 {/* ── Options de réservation ── */}
                 <section className="space-y-3">
-                  <h3 className="text-base font-semibold">{fb.bookingOptions}</h3>
+                  <h3 className="text-base font-semibold text-gray-900">🔖 {fb.bookingOptions}</h3>
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
                       onClick={() => setFInstantBook((v) => !v)}
-                      className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                      className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                         fInstantBook
                           ? "border-black bg-black text-white"
                           : "border-gray-300 bg-white text-gray-800 hover:border-gray-500"
@@ -966,7 +953,7 @@ export default function FiltersBar(props: FiltersBarProps) {
                     <button
                       type="button"
                       onClick={() => setFHasPhoto((v) => !v)}
-                      className={`rounded-full border px-3 py-1.5 text-xs transition ${
+                      className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                         fHasPhoto
                           ? "border-black bg-black text-white"
                           : "border-gray-300 bg-white text-gray-800 hover:border-gray-500"
@@ -978,40 +965,66 @@ export default function FiltersBar(props: FiltersBarProps) {
                 </section>
               </div>
 
-              {/* Champs cachés pour les états contrôlés */}
+              {/* Champs cachés pour le form GET */}
               <input type="hidden" name="minPrice" value={fMinPrice} />
               <input type="hidden" name="maxPrice" value={fMaxPrice} />
               <input type="hidden" name="minRating" value={fMinRating} />
               <input type="hidden" name="hasPhoto" value={fHasPhoto ? "1" : ""} />
-              <input type="hidden" name="type" value={fSpaceType} />
-              {fAmenities.map((a) => (
-                <input key={a} type="hidden" name="amenities" value={a} />
-              ))}
+              <input type="hidden" name="type" value={catFilters.spaceType} />
+              {catFilters.spaceSubtype && <input type="hidden" name="spaceSubtype" value={catFilters.spaceSubtype} />}
+              {catFilters.minBedrooms > 0 && <input type="hidden" name="minBedrooms" value={String(catFilters.minBedrooms)} />}
+              {catFilters.minBeds > 0 && <input type="hidden" name="minBeds" value={String(catFilters.minBeds)} />}
+              {catFilters.minBathrooms > 0 && <input type="hidden" name="minBathrooms" value={String(catFilters.minBathrooms)} />}
+              {catFilters.minDesks > 0 && <input type="hidden" name="minDesks" value={String(catFilters.minDesks)} />}
+              {catFilters.minCapacity > 0 && <input type="hidden" name="minCapacity" value={String(catFilters.minCapacity)} />}
+              {catFilters.minParkingSpaces > 1 && <input type="hidden" name="minParkingSpaces" value={String(catFilters.minParkingSpaces)} />}
+              {catFilters.minStorageSize > 0 && <input type="hidden" name="minStorageSize" value={String(catFilters.minStorageSize)} />}
+              {catFilters.hasGarden && <input type="hidden" name="hasGarden" value="1" />}
+              {catFilters.hasPool && <input type="hidden" name="hasPool" value="1" />}
+              {catFilters.hasTerrace && <input type="hidden" name="hasTerrace" value="1" />}
+              {catFilters.hasSpa && <input type="hidden" name="hasSpa" value="1" />}
+              {catFilters.petsAllowed && <input type="hidden" name="petsAllowed" value="1" />}
+              {catFilters.smokingAllowed && <input type="hidden" name="smokingAllowed" value="1" />}
+              {catFilters.hasProjector && <input type="hidden" name="hasProjector" value="1" />}
+              {catFilters.hasWhiteboard && <input type="hidden" name="hasWhiteboard" value="1" />}
+              {catFilters.hasVideoConf && <input type="hidden" name="hasVideoConf" value="1" />}
+              {catFilters.hasKitchen && <input type="hidden" name="hasKitchen" value="1" />}
+              {catFilters.hasReception && <input type="hidden" name="hasReception" value="1" />}
+              {catFilters.hasCatering && <input type="hidden" name="hasCatering" value="1" />}
+              {catFilters.hasStage && <input type="hidden" name="hasStage" value="1" />}
+              {catFilters.hasSoundSystem && <input type="hidden" name="hasSoundSystem" value="1" />}
+              {catFilters.hasLighting && <input type="hidden" name="hasLighting" value="1" />}
+              {catFilters.hasSoundproofing && <input type="hidden" name="hasSoundproofing" value="1" />}
+              {catFilters.hasGreenScreen && <input type="hidden" name="hasGreenScreen" value="1" />}
+              {catFilters.hasMixingDesk && <input type="hidden" name="hasMixingDesk" value="1" />}
+              {catFilters.hasMicrophones && <input type="hidden" name="hasMicrophones" value="1" />}
+              {catFilters.parkingCovered && <input type="hidden" name="parkingCovered" value="1" />}
+              {catFilters.parkingSecured && <input type="hidden" name="parkingSecured" value="1" />}
+              {catFilters.hasEVCharger && <input type="hidden" name="hasEVCharger" value="1" />}
+              {catFilters.storageClimatized && <input type="hidden" name="storageClimatized" value="1" />}
+              {catFilters.storageSecured && <input type="hidden" name="storageSecured" value="1" />}
               {fInstantBook && <input type="hidden" name="instantBook" value="1" />}
 
               {/* Footer */}
               <div className="flex items-center justify-between gap-4 border-t px-6 py-4">
                 <button
                   type="button"
-                  onClick={() => {
-                    setFMinPrice("");
-                    setFMaxPrice("");
-                    setFMinRating("");
-                    setFHasPhoto(false);
-                    setFSpaceType("");
-                    setFAmenities([]);
-                    setFInstantBook(false);
-                  }}
-                  className="text-xs font-medium text-gray-600 hover:underline"
+                  onClick={resetFilters}
+                  className="text-xs font-medium text-gray-600 underline-offset-2 hover:underline"
                 >
                   {fb.clearAll}
                 </button>
                 <button
                   type="submit"
-                  className="inline-flex items-center justify-center rounded-full bg-black px-5 py-2 text-xs font-medium text-white shadow-sm hover:bg-gray-900"
                   onClick={() => setIsFilterOpen(false)}
+                  className="inline-flex items-center justify-center rounded-full bg-black px-6 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-gray-900"
                 >
                   {fb.showResults}
+                  {activeFilterCount > 0 && (
+                    <span className="ml-1.5 rounded-full bg-white/20 px-1.5 py-0.5 text-[10px]">
+                      {activeFilterCount}
+                    </span>
+                  )}
                 </button>
               </div>
             </div>
