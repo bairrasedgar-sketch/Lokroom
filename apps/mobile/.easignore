@@ -1,0 +1,11 @@
+# Exclure les node_modules du monorepo parent
+../../node_modules
+../web/node_modules
+../web/.next
+
+# Fichiers inutiles
+*.md
+*.log
+.git
+coverage
+__tests__
