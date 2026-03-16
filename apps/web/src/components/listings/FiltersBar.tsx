@@ -5,7 +5,6 @@ import { useState, useRef, useEffect } from "react";
 import { getDictionaryForLocale, type SupportedLocale } from "@/lib/i18n.client";
 import { CalendarDaysIcon, ClockIcon, XMarkIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import LocationAutocomplete, { type LocationAutocompletePlace } from "@/components/LocationAutocomplete";
-import MobileFiltersModal from "./MobileFiltersModal";
 import CategoryFilters, { EMPTY_CATEGORY_FILTERS, type CategoryFiltersState } from "./CategoryFilters";
 
 type FiltersBarProps = {
@@ -858,13 +857,7 @@ export default function FiltersBar(props: FiltersBarProps) {
         </div>
 
         {/* ====== POP-UP DE FILTRES ====== */}
-        {isFilterOpen && isMobile && (
-          <MobileFiltersModal
-            isOpen={isFilterOpen}
-            onClose={() => setIsFilterOpen(false)}
-          />
-        )}
-        {isFilterOpen && !isMobile && (
+        {isFilterOpen && (
           <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/30 p-0 sm:p-4">
             <div className="relative w-full max-w-3xl max-h-[90vh] sm:max-h-[88vh] rounded-t-3xl sm:rounded-3xl bg-white shadow-2xl flex flex-col">
 

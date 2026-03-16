@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import dynamicImport from "next/dynamic";
 import FavoriteButton from "@/components/FavoriteButton";
-import MobileFiltersModal from "./MobileFiltersModal";
 import { useMobileSheet } from "@/contexts/MobileSheetContext";
 import { type MapMarker } from "@/components/Map";
 import { logger } from "@/lib/logger";
@@ -1478,11 +1477,7 @@ export default function ListingsWithMap({
         onClose={() => setIsSearchModalOpen(false)}
       />
 
-      {/* Modal de filtres - Version Premium Mobile */}
-      <MobileFiltersModal
-        isOpen={isFiltersModalOpen}
-        onClose={() => setIsFiltersModalOpen(false)}
-      />
+      {/* TODO: intégrer les filtres par catégorie ici */}
     </div>
   );
 }
