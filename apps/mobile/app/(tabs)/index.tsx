@@ -6,106 +6,101 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
-  Image,
   ActivityIndicator,
   RefreshControl,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { router } from "expo-router";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import Svg, { Path } from "react-native-svg";
+import ListingCard, { type ListingCardData } from "@/components/ui/ListingCard";
+import CategoryBar from "@/components/ui/CategoryBar";
 
-interface Listing {
-  id: string;
-  title: string;
-  city: string;
-  country: string;
-  pricePerNight: number;
-  currency: string;
-  images: { url: string }[];
-  averageRating?: number;
-  reviewCount?: number;
-}
-
-async function fetchListings(search: string) {
+async function fetchListings(search: string, type: string) {
   const params = new URLSearchParams({ pageSize: "20" });
   if (search) params.set("q", search);
+  if (type) params.set("type", type);
   const { data } = await api.get(`/listings?${params}`);
-  return data.listings as Listing[];
+  return data.listings as ListingCardData[];
 }
 
 export default function ExploreScreen() {
+  const insets = useSafeAreaInsets();
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
-  const insets = useSafeAreaInsets();
+  const [category, setCategory] = useState("");
 
   const { data, isLoading, refetch, isRefetching } = useQuery({
-    queryKey: ["listings", query],
-    queryFn: () => fetchListings(query),
+    queryKey: ["listings", query, category],
+    queryFn: () => fetchListings(query, category),
   });
 
   const handleSearch = () => setQuery(search.trim());
 
-  const renderItem = useCallback(({ item }: { item: Listing }) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => router.push(`/listings/${item.id}`)}
-      activeOpacity={0.85}
-    >
-      <Image
-        source={{ uri: item.images[0]?.url || "https://placehold.co/400x250" }}
-        style={styles.cardImage}
-        resizeMode="cover"
-      />
-      <View style={styles.cardBody}>
-        <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
-        <Text style={styles.cardLocation}>{item.city}, {item.country}</Text>
-        <View style={styles.cardFooter}>
-          <Text style={styles.cardPrice}>
-            {item.pricePerNight} {item.currency}
-            <Text style={styles.cardPriceUnit}> / nuit</Text>
-          </Text>
-          {item.averageRating ? (
-            <Text style={styles.cardRating}>⭐ {item.averageRating.toFixed(1)}</Text>
-          ) : null}
-        </View>
-      </View>
-    </TouchableOpacity>
+  const handleCategory = (v: string) => {
+    setCategory(v);
+  };
+
+  const renderItem = useCallback(({ item }: { item: ListingCardData }) => (
+    <View style={s.cardWrap}>
+      <ListingCard item={item} />
+    </View>
   ), []);
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-        <Text style={styles.headerTitle}>Explorer</Text>
-        <View style={styles.searchRow}>
+    <View style={s.container}>
+      {/* Header */}
+      <View style={[s.header, { paddingTop: insets.top + 8 }]}>
+        <Text style={s.logo}>Lok'Room</Text>
+
+        {/* Search bar */}
+        <TouchableOpacity style={s.searchBar} activeOpacity={0.8}>
+          <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+            <Path d="M10.5 18a7.5 7.5 0 100-15 7.5 7.5 0 000 15zM21 21l-4.35-4.35" stroke="#6B7280" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round" />
+          </Svg>
           <TextInput
-            style={styles.searchInput}
-            placeholder="Ville, pays..."
+            style={s.searchInput}
+            placeholder="Où allez-vous ?"
             placeholderTextColor="#9CA3AF"
             value={search}
             onChangeText={setSearch}
             onSubmitEditing={handleSearch}
             returnKeyType="search"
           />
-          <TouchableOpacity style={styles.searchBtn} onPress={handleSearch}>
-            <Text style={styles.searchBtnText}>🔍</Text>
-          </TouchableOpacity>
-        </View>
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => { setSearch(""); setQuery(""); }} style={s.clearBtn}>
+              <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+                <Path d="M18 6L6 18M6 6l12 12" stroke="#9CA3AF" strokeWidth={2} strokeLinecap="round" />
+              </Svg>
+            </TouchableOpacity>
+          )}
+        </TouchableOpacity>
       </View>
 
+      {/* Categories */}
+      <CategoryBar active={category} onChange={handleCategory} />
+
+      {/* Listings */}
       {isLoading ? (
-        <ActivityIndicator style={{ marginTop: 40 }} size="large" color="#2563EB" />
+        <ActivityIndicator style={{ marginTop: 60 }} size="large" color="#111827" />
       ) : (
         <FlatList
           data={data || []}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
-          contentContainerStyle={styles.list}
+          contentContainerStyle={s.list}
+          showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#2563EB" />
+            <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#111827" />
           }
           ListEmptyComponent={
-            <Text style={styles.empty}>Aucune annonce trouvée</Text>
+            <View style={s.emptyWrap}>
+              <Svg width={48} height={48} viewBox="0 0 24 24" fill="none">
+                <Path d="M10.5 18a7.5 7.5 0 100-15 7.5 7.5 0 000 15zM21 21l-4.35-4.35" stroke="#D1D5DB" strokeWidth={1.5} strokeLinecap="round" />
+              </Svg>
+              <Text style={s.emptyTitle}>Aucune annonce trouvée</Text>
+              <Text style={s.emptySub}>Essaie de modifier ta recherche ou tes filtres</Text>
+            </View>
           }
         />
       )}
@@ -113,23 +108,16 @@ export default function ExploreScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F9FAFB" },
   header: { backgroundColor: "#fff", paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: "#F3F4F6" },
-  headerTitle: { fontSize: 26, fontWeight: "700", color: "#111827", marginBottom: 12 },
-  searchRow: { flexDirection: "row", gap: 8 },
-  searchInput: { flex: 1, backgroundColor: "#F3F4F6", borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15, color: "#111827" },
-  searchBtn: { backgroundColor: "#2563EB", borderRadius: 10, paddingHorizontal: 14, justifyContent: "center" },
-  searchBtnText: { fontSize: 18 },
-  list: { padding: 16, gap: 16 },
-  card: { backgroundColor: "#fff", borderRadius: 16, overflow: "hidden", shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
-  cardImage: { width: "100%", height: 200 },
-  cardBody: { padding: 14 },
-  cardTitle: { fontSize: 16, fontWeight: "600", color: "#111827", marginBottom: 4 },
-  cardLocation: { fontSize: 13, color: "#6B7280", marginBottom: 8 },
-  cardFooter: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  cardPrice: { fontSize: 16, fontWeight: "700", color: "#2563EB" },
-  cardPriceUnit: { fontSize: 13, fontWeight: "400", color: "#6B7280" },
-  cardRating: { fontSize: 13, color: "#374151" },
-  empty: { textAlign: "center", color: "#9CA3AF", marginTop: 60, fontSize: 15 },
+  logo: { fontSize: 22, fontWeight: "700", color: "#111827", marginBottom: 12 },
+  searchBar: { flexDirection: "row", alignItems: "center", backgroundColor: "#F3F4F6", borderRadius: 12, paddingHorizontal: 14, height: 44, gap: 10 },
+  searchInput: { flex: 1, fontSize: 15, color: "#111827", paddingVertical: 0 },
+  clearBtn: { padding: 4 },
+  list: { padding: 16, paddingBottom: 32 },
+  cardWrap: { marginBottom: 4 },
+  emptyWrap: { alignItems: "center", paddingTop: 80 },
+  emptyTitle: { fontSize: 16, fontWeight: "600", color: "#374151", marginTop: 16 },
+  emptySub: { fontSize: 13, color: "#9CA3AF", marginTop: 4 },
 });

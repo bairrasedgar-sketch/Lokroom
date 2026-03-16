@@ -1,17 +1,21 @@
 import { Tabs } from "expo-router";
-import { Text } from "react-native";
-
-function TabIcon({ emoji }: { emoji: string }) {
-  return <Text style={{ fontSize: 22 }}>{emoji}</Text>;
-}
+import TabIcon from "@/components/ui/TabIcon";
 
 export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#2563EB",
+        tabBarActiveTintColor: "#111827",
         tabBarInactiveTintColor: "#9CA3AF",
-        tabBarStyle: { borderTopWidth: 1, borderTopColor: "#F3F4F6", paddingBottom: 4 },
+        tabBarStyle: {
+          backgroundColor: "#fff",
+          borderTopWidth: 1,
+          borderTopColor: "#F3F4F6",
+          paddingTop: 8,
+          paddingBottom: 6,
+          height: 56,
+        },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: "500" },
         headerShown: false,
       }}
     >
@@ -19,28 +23,28 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: "Explorer",
-          tabBarIcon: ({ focused }) => <TabIcon emoji={focused ? "🏠" : "🏡"} />,
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="explore" />,
         }}
       />
       <Tabs.Screen
         name="messages"
         options={{
           title: "Messages",
-          tabBarIcon: () => <TabIcon emoji="💬" />,
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="messages" />,
         }}
       />
       <Tabs.Screen
         name="bookings"
         options={{
           title: "Réservations",
-          tabBarIcon: () => <TabIcon emoji="📅" />,
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="bookings" />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: "Profil",
-          tabBarIcon: () => <TabIcon emoji="👤" />,
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="profile" />,
         }}
       />
     </Tabs>
