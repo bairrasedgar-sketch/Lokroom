@@ -19,10 +19,20 @@ export default function RootLayout() {
       <StatusBar style="dark" />
       <QueryClientProvider client={queryClient}>
         <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(auth)" options={{ presentation: "modal" }} />
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="listings/[id]" options={{ headerShown: true, title: "" }} />
-          <Stack.Screen name="bookings/[id]" options={{ headerShown: true, title: "Réservation" }} />
+          <Stack.Screen name="(auth)" options={{ presentation: "modal" }} />
+          <Stack.Screen name="listings/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="bookings/new" options={{ headerShown: false }} />
+          <Stack.Screen name="bookings/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="conversation/[id]" options={{ headerShown: false }} />
+          <Stack.Screen name="account/profile" options={{ headerShown: true, title: "Mon profil" }} />
+          <Stack.Screen name="account/security" options={{ headerShown: true, title: "Sécurité" }} />
+          <Stack.Screen name="account/settings" options={{ headerShown: true, title: "Paramètres" }} />
+          <Stack.Screen name="host/dashboard" options={{ headerShown: true, title: "Dashboard" }} />
+          <Stack.Screen name="host/listings" options={{ headerShown: true, title: "Mes annonces" }} />
+          <Stack.Screen name="host/wallet" options={{ headerShown: true, title: "Portefeuille" }} />
+          <Stack.Screen name="notifications/index" options={{ headerShown: true, title: "Notifications" }} />
+          <Stack.Screen name="reviews/new" options={{ headerShown: false }} />
         </Stack>
       </QueryClientProvider>
     </SafeAreaProvider>

@@ -5,21 +5,24 @@ import TabIcon from "@/components/ui/TabIcon";
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
+  const bottomPad = Math.max(insets.bottom, Platform.OS === "android" ? 10 : 0);
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: "#111827",
-        tabBarInactiveTintColor: "#9CA3AF",
+        tabBarActiveTintColor: "#F43F5E",
+        tabBarInactiveTintColor: "#6B7280",
         tabBarStyle: {
           backgroundColor: "#fff",
           borderTopWidth: 1,
-          borderTopColor: "#F3F4F6",
-          paddingTop: 6,
-          paddingBottom: Platform.OS === "android" ? insets.bottom + 8 : insets.bottom || 8,
-          height: Platform.OS === "android" ? 60 + insets.bottom : 52 + (insets.bottom || 8),
+          borderTopColor: "#E5E7EB",
+          paddingTop: 8,
+          paddingBottom: bottomPad,
+          height: 56 + bottomPad,
+          elevation: 0,
         },
-        tabBarLabelStyle: { fontSize: 10, fontWeight: "500", marginTop: -2 },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: "500" },
+        tabBarHideOnKeyboard: true,
         headerShown: false,
       }}
     >

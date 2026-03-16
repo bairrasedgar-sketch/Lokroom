@@ -3,10 +3,11 @@ import Svg, { Path } from "react-native-svg";
 type IconName = "explore" | "favorites" | "trips" | "messages" | "profile";
 type Props = { focused: boolean; name: IconName };
 
-const color = (f: boolean) => (f ? "#111827" : "#9CA3AF");
+const ACTIVE = "#F43F5E";
+const INACTIVE = "#6B7280";
 
 export default function TabIcon({ focused, name }: Props) {
-  const c = color(focused);
+  const c = focused ? ACTIVE : INACTIVE;
   const sw = focused ? 2 : 1.5;
 
   switch (name) {
@@ -18,14 +19,15 @@ export default function TabIcon({ focused, name }: Props) {
       );
     case "favorites":
       return (
-        <Svg width={22} height={22} viewBox="0 0 24 24" fill={focused ? "#111827" : "none"}>
+        <Svg width={22} height={22} viewBox="0 0 24 24" fill={focused ? ACTIVE : "none"}>
           <Path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" />
         </Svg>
       );
     case "trips":
       return (
         <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-          <Path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" />
+          <Path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" stroke={c} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round" />
+          <Path d="M12 13a3 3 0 100-6 3 3 0 000 6z" stroke={c} strokeWidth={sw} />
         </Svg>
       );
     case "messages":
