@@ -1,7 +1,11 @@
 import { Tabs } from "expo-router";
+import { Platform } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import TabIcon from "@/components/ui/TabIcon";
 
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tabs
       screenOptions={{
@@ -11,11 +15,11 @@ export default function TabsLayout() {
           backgroundColor: "#fff",
           borderTopWidth: 1,
           borderTopColor: "#F3F4F6",
-          paddingTop: 8,
-          paddingBottom: 6,
-          height: 56,
+          paddingTop: 6,
+          paddingBottom: Platform.OS === "android" ? insets.bottom + 8 : insets.bottom || 8,
+          height: Platform.OS === "android" ? 60 + insets.bottom : 52 + (insets.bottom || 8),
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: "500" },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: "500", marginTop: -2 },
         headerShown: false,
       }}
     >
@@ -27,17 +31,24 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="messages"
+        name="favorites"
         options={{
-          title: "Messages",
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="messages" />,
+          title: "Favoris",
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="favorites" />,
         }}
       />
       <Tabs.Screen
         name="bookings"
         options={{
-          title: "Réservations",
-          tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="bookings" />,
+          title: "Voyages",
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="trips" />,
+        }}
+      />
+      <Tabs.Screen
+        name="messages"
+        options={{
+          title: "Messages",
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} name="messages" />,
         }}
       />
       <Tabs.Screen
