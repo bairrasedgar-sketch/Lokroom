@@ -582,12 +582,12 @@ export default function FiltersBar(props: FiltersBarProps) {
     <section className="space-y-3">
       {/* ⚠️ Un seul form GET pour tout (barre + gros pop-up filtres) */}
       <form method="GET" className="space-y-3">
-        {/* ====== BARRE PRINCIPALE (destination / dates / heures / voyageurs) ====== */}
+        {/* ====== BARRE PRINCIPALE ====== */}
         <div className="rounded-3xl border border-gray-200 bg-white px-3 py-3 shadow-sm lg:px-5 lg:py-4">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-            {/* Destination avec autocomplétion */}
-            <div className="flex flex-1 items-center gap-3 border-b border-gray-100 pb-3 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-4">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-100 text-sm">
+          <div className="flex flex-col gap-0 lg:flex-row lg:items-center lg:divide-x lg:divide-gray-100">
+            {/* Destination */}
+            <div className="flex flex-[1.4] items-center gap-3 py-2 lg:py-0 lg:pr-4">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100">
                 <MapPinIcon className="h-4 w-4 text-gray-600" />
               </div>
               <LocationAutocomplete
@@ -598,14 +598,13 @@ export default function FiltersBar(props: FiltersBarProps) {
                 label={fb.whereGoing}
                 compact
               />
-              {/* Champs cachés pour le formulaire */}
               <input type="hidden" name="q" value={destination} />
               {selectedCity && <input type="hidden" name="city" value={selectedCity} />}
               {selectedCountry && <input type="hidden" name="country" value={selectedCountry} />}
             </div>
 
-            {/* Dates + Heures - Nouveau composant style Airbnb */}
-            <div className="flex flex-1 items-stretch gap-3 border-b border-gray-100 pb-3 lg:border-b-0 lg:border-r lg:pb-0 lg:px-4">
+            {/* Dates + Heures */}
+            <div className="flex flex-[1.2] items-stretch py-2 lg:py-0 lg:px-4">
               <DateTimePickerInline
                 startDate={startDate}
                 endDate={endDate}
@@ -621,16 +620,15 @@ export default function FiltersBar(props: FiltersBarProps) {
                   datesAndTimes: fb.datesAndTimes,
                 }}
               />
-              {/* Champs cachés pour le formulaire */}
               <input type="hidden" name="startDate" value={startDate} />
               <input type="hidden" name="endDate" value={endDate} />
               <input type="hidden" name="startTime" value={startTime} />
               <input type="hidden" name="endTime" value={endTime} />
             </div>
 
-            {/* Voyageurs — bulle dropdown */}
-            <div className="relative flex flex-[0.9] items-center gap-3 lg:px-4 min-w-0" ref={guestsRef}>
-              <div className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm sm:flex">
+            {/* Voyageurs + Rechercher */}
+            <div className="relative flex flex-[0.8] items-center gap-2 py-2 lg:py-0 lg:pl-4 min-w-0" ref={guestsRef}>
+              <div className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 sm:flex">
                 <svg className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
@@ -648,13 +646,12 @@ export default function FiltersBar(props: FiltersBarProps) {
                 </p>
               </button>
 
-              {/* Champ caché pour le form */}
               <input type="hidden" name="guests" value={totalGuests > 0 ? String(totalGuests) : ""} />
 
               {/* Bouton Rechercher */}
               <button
                 type="submit"
-                className="ml-3 shrink-0 inline-flex h-10 items-center justify-center rounded-full bg-black px-4 text-xs font-medium text-white shadow-sm hover:bg-gray-900"
+                className="shrink-0 inline-flex h-10 items-center justify-center rounded-full bg-black px-5 text-xs font-semibold text-white shadow-sm hover:bg-gray-900 transition"
               >
                 {fb.searchButton}
               </button>
@@ -881,7 +878,7 @@ export default function FiltersBar(props: FiltersBarProps) {
 
                 {/* ── Prix ── */}
                 <section className="space-y-3">
-                  <h3 className="text-base font-semibold text-gray-900">💰 {fb.priceScale2}</h3>
+                  <h3 className="text-base font-semibold text-gray-900">{fb.priceScale2}</h3>
                   <div className="flex items-center gap-4">
                     <div className="flex flex-1 flex-col gap-1">
                       <span className="text-[11px] text-gray-500">{fb.minimum}</span>
@@ -911,7 +908,7 @@ export default function FiltersBar(props: FiltersBarProps) {
 
                 {/* ── Note minimale ── */}
                 <section className="space-y-3">
-                  <h3 className="text-base font-semibold text-gray-900">⭐ {fb.minRating}</h3>
+                  <h3 className="text-base font-semibold text-gray-900">{fb.minRating}</h3>
                   <div className="flex flex-wrap gap-2">
                     {[
                       { value: "", label: fb.allRatings },
@@ -925,7 +922,7 @@ export default function FiltersBar(props: FiltersBarProps) {
                         onClick={() => setFMinRating(opt.value)}
                         className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                           fMinRating === opt.value
-                            ? "border-black bg-black text-white"
+                            ? "border-gray-700 bg-gray-100 text-gray-900 ring-1 ring-gray-700"
                             : "border-gray-300 bg-white text-gray-800 hover:border-gray-500"
                         }`}
                       >
@@ -937,29 +934,29 @@ export default function FiltersBar(props: FiltersBarProps) {
 
                 {/* ── Options de réservation ── */}
                 <section className="space-y-3">
-                  <h3 className="text-base font-semibold text-gray-900">🔖 {fb.bookingOptions}</h3>
+                  <h3 className="text-base font-semibold text-gray-900">{fb.bookingOptions}</h3>
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
                       onClick={() => setFInstantBook((v) => !v)}
                       className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                         fInstantBook
-                          ? "border-black bg-black text-white"
+                          ? "border-gray-700 bg-gray-100 text-gray-900 ring-1 ring-gray-700"
                           : "border-gray-300 bg-white text-gray-800 hover:border-gray-500"
                       }`}
                     >
-                      ⚡ {fb.instantBooking}
+                      {fb.instantBooking}
                     </button>
                     <button
                       type="button"
                       onClick={() => setFHasPhoto((v) => !v)}
                       className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                         fHasPhoto
-                          ? "border-black bg-black text-white"
+                          ? "border-gray-700 bg-gray-100 text-gray-900 ring-1 ring-gray-700"
                           : "border-gray-300 bg-white text-gray-800 hover:border-gray-500"
                       }`}
                     >
-                      📷 {fb.onlyWithPhotos}
+                      {fb.onlyWithPhotos}
                     </button>
                   </div>
                 </section>

@@ -121,7 +121,7 @@ export default function Footer() {
                 aria-hidden="true"
               />
               <Image
-                src="/illustration final.webp"
+                src="/illustration final bas de page.png"
                 alt="Illustration représentant la communauté Lok'Room - Personnes louant et partageant des espaces"
                 width={900}
                 height={600}

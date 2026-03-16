@@ -110,23 +110,26 @@ const SPACE_TYPES = [
 function ToggleChip({
   active,
   onClick,
-  children,
+  label,
+  sub,
 }: {
   active: boolean;
   onClick: () => void;
-  children: React.ReactNode;
+  label: string;
+  sub?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200 ${
+      className={`rounded-xl border px-3.5 py-2 text-left text-xs font-medium transition-all duration-200 ${
         active
-          ? "border-gray-900 bg-gray-900 text-white shadow-sm"
-          : "border-gray-200 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50"
+          ? "border-gray-700 bg-gray-100 text-gray-900 shadow-sm ring-1 ring-gray-700"
+          : "border-gray-200 bg-white text-gray-600 hover:border-gray-400 hover:bg-gray-50"
       }`}
     >
-      {children}
+      <span className="block">{label}</span>
+      {sub && <span className="mt-0.5 block text-[10px] font-normal text-gray-400">{sub}</span>}
     </button>
   );
 }
@@ -183,7 +186,7 @@ function CounterRow({
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h4 className="mb-3 text-sm font-semibold text-gray-900 flex items-center gap-2">
+    <h4 className="mb-3 text-[13px] font-semibold uppercase tracking-wide text-gray-500">
       {children}
     </h4>
   );
@@ -201,52 +204,43 @@ function ResidentialFilters({
 }) {
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Type de logement */}
       <div>
-        <SectionTitle>
-          <span>🏠</span> Type de mise en location
-        </SectionTitle>
+        <SectionTitle>Type de mise en location</SectionTitle>
         <div className="flex flex-wrap gap-2">
           {[
-            { v: "ENTIRE_PLACE",  l: "Logement entier" },
-            { v: "PRIVATE_ROOM",  l: "Chambre privée" },
-            { v: "SHARED_ROOM",   l: "Chambre partagée" },
-            { v: "SHARED_SPACE",  l: "Espace partagé" },
-          ].map(({ v, l }) => (
-            <ToggleChip key={v} active={f.spaceSubtype === v} onClick={() => set({ spaceSubtype: f.spaceSubtype === v ? "" : v })}>
-              {l}
-            </ToggleChip>
+            { v: "ENTIRE_PLACE",  l: "Logement entier", s: "Tout le logement pour vous" },
+            { v: "PRIVATE_ROOM",  l: "Chambre privee", s: "Votre chambre, espaces communs partages" },
+            { v: "SHARED_ROOM",   l: "Chambre partagee", s: "Un espace partage avec d'autres" },
+          ].map(({ v, l, s }) => (
+            <ToggleChip key={v} active={f.spaceSubtype === v} onClick={() => set({ spaceSubtype: f.spaceSubtype === v ? "" : v })} label={l} sub={s} />
           ))}
         </div>
       </div>
 
-      {/* Compteurs */}
       <div>
-        <SectionTitle><span>🛏️</span> Chambres & salles de bain</SectionTitle>
-        <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-1">
-          <CounterRow label="Chambres" value={f.minBedrooms} onChange={(v) => set({ minBedrooms: v })} />
-          <CounterRow label="Lits" value={f.minBeds} onChange={(v) => set({ minBeds: v })} />
-          <CounterRow label="Salles de bain" value={f.minBathrooms} onChange={(v) => set({ minBathrooms: v })} />
+        <SectionTitle>Chambres, lits et salles de bain</SectionTitle>
+        <div className="rounded-2xl border border-gray-100 bg-gray-50/80 px-4 py-1">
+          <CounterRow label="Chambres" sub="Nombre minimum de chambres" value={f.minBedrooms} onChange={(v) => set({ minBedrooms: v })} />
+          <CounterRow label="Lits" sub="Nombre minimum de couchages" value={f.minBeds} onChange={(v) => set({ minBeds: v })} />
+          <CounterRow label="Salles de bain" sub="Salles de bain ou d'eau" value={f.minBathrooms} onChange={(v) => set({ minBathrooms: v })} />
         </div>
       </div>
 
-      {/* Extérieur */}
       <div>
-        <SectionTitle><span>🌿</span> Extérieur & bien-être</SectionTitle>
-        <div className="flex flex-wrap gap-2">
-          <ToggleChip active={f.hasGarden} onClick={() => set({ hasGarden: !f.hasGarden })}>🌳 Jardin</ToggleChip>
-          <ToggleChip active={f.hasPool} onClick={() => set({ hasPool: !f.hasPool })}>🏊 Piscine</ToggleChip>
-          <ToggleChip active={f.hasTerrace} onClick={() => set({ hasTerrace: !f.hasTerrace })}>☀️ Terrasse</ToggleChip>
-          <ToggleChip active={f.hasSpa} onClick={() => set({ hasSpa: !f.hasSpa })}>🛁 Spa / Jacuzzi</ToggleChip>
+        <SectionTitle>Exterieur et bien-etre</SectionTitle>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <ToggleChip active={f.hasGarden} onClick={() => set({ hasGarden: !f.hasGarden })} label="Jardin" sub="Espace vert privatif" />
+          <ToggleChip active={f.hasPool} onClick={() => set({ hasPool: !f.hasPool })} label="Piscine" sub="Privee ou partagee" />
+          <ToggleChip active={f.hasTerrace} onClick={() => set({ hasTerrace: !f.hasTerrace })} label="Terrasse / Balcon" sub="Espace exterieur" />
+          <ToggleChip active={f.hasSpa} onClick={() => set({ hasSpa: !f.hasSpa })} label="Spa / Jacuzzi" sub="Detente et bien-etre" />
         </div>
       </div>
 
-      {/* Règles */}
       <div>
-        <SectionTitle><span>📋</span> Règles de la maison</SectionTitle>
-        <div className="flex flex-wrap gap-2">
-          <ToggleChip active={f.petsAllowed} onClick={() => set({ petsAllowed: !f.petsAllowed })}>🐾 Animaux acceptés</ToggleChip>
-          <ToggleChip active={f.smokingAllowed} onClick={() => set({ smokingAllowed: !f.smokingAllowed })}>🚬 Fumeurs acceptés</ToggleChip>
+        <SectionTitle>Regles du logement</SectionTitle>
+        <div className="grid grid-cols-2 gap-2">
+          <ToggleChip active={f.petsAllowed} onClick={() => set({ petsAllowed: !f.petsAllowed })} label="Animaux acceptes" sub="Chiens, chats..." />
+          <ToggleChip active={f.smokingAllowed} onClick={() => set({ smokingAllowed: !f.smokingAllowed })} label="Fumeurs acceptes" sub="Fumer autorise a l'interieur" />
         </div>
       </div>
     </div>
@@ -263,27 +257,29 @@ function OfficeFilters({
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <SectionTitle><span>🖥️</span> Postes de travail</SectionTitle>
-        <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-1">
-          <CounterRow label="Bureaux / postes" sub="Nombre minimum" value={f.minDesks} onChange={(v) => set({ minDesks: v })} />
+        <SectionTitle>Postes de travail</SectionTitle>
+        <div className="rounded-2xl border border-gray-100 bg-gray-50/80 px-4 py-1">
+          <CounterRow label="Bureaux / postes" sub="Nombre minimum de places assises" value={f.minDesks} onChange={(v) => set({ minDesks: v })} />
+          <CounterRow label="Salles de bain" sub="Toilettes et sanitaires" value={f.minBathrooms} onChange={(v) => set({ minBathrooms: v })} />
         </div>
       </div>
 
       <div>
-        <SectionTitle><span>🛠️</span> Équipements</SectionTitle>
-        <div className="flex flex-wrap gap-2">
-          <ToggleChip active={f.hasProjector} onClick={() => set({ hasProjector: !f.hasProjector })}>📽️ Projecteur</ToggleChip>
-          <ToggleChip active={f.hasWhiteboard} onClick={() => set({ hasWhiteboard: !f.hasWhiteboard })}>🖊️ Tableau blanc</ToggleChip>
-          <ToggleChip active={f.hasVideoConf} onClick={() => set({ hasVideoConf: !f.hasVideoConf })}>📹 Visioconférence</ToggleChip>
-          <ToggleChip active={f.hasKitchen} onClick={() => set({ hasKitchen: !f.hasKitchen })}>☕ Cuisine / café</ToggleChip>
-          <ToggleChip active={f.hasReception} onClick={() => set({ hasReception: !f.hasReception })}>🏢 Accueil / réception</ToggleChip>
+        <SectionTitle>Equipements bureautiques</SectionTitle>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <ToggleChip active={f.hasProjector} onClick={() => set({ hasProjector: !f.hasProjector })} label="Projecteur / ecran" sub="Presentations et reunions" />
+          <ToggleChip active={f.hasWhiteboard} onClick={() => set({ hasWhiteboard: !f.hasWhiteboard })} label="Tableau blanc" sub="Brainstorming et schemas" />
+          <ToggleChip active={f.hasVideoConf} onClick={() => set({ hasVideoConf: !f.hasVideoConf })} label="Visioconference" sub="Camera, micro, ecran" />
+          <ToggleChip active={f.hasKitchen} onClick={() => set({ hasKitchen: !f.hasKitchen })} label="Cuisine / cafe" sub="Espace pause et boissons" />
+          <ToggleChip active={f.hasReception} onClick={() => set({ hasReception: !f.hasReception })} label="Accueil / reception" sub="Hall d'entree avec accueil" />
         </div>
       </div>
 
       <div>
-        <SectionTitle><span>🛏️</span> Salles de bain</SectionTitle>
-        <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-1">
-          <CounterRow label="Salles de bain" value={f.minBathrooms} onChange={(v) => set({ minBathrooms: v })} />
+        <SectionTitle>Connectivite</SectionTitle>
+        <div className="grid grid-cols-2 gap-2">
+          <ToggleChip active={f.hasPool} onClick={() => set({ hasPool: !f.hasPool })} label="Wi-Fi haut debit" sub="Fibre ou connexion rapide" />
+          <ToggleChip active={f.hasTerrace} onClick={() => set({ hasTerrace: !f.hasTerrace })} label="Imprimante / scanner" sub="Impression sur place" />
         </div>
       </div>
     </div>
@@ -300,26 +296,22 @@ function MeetingFilters({
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <SectionTitle><span>👥</span> Capacité</SectionTitle>
-        <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-1">
-          <CounterRow label="Personnes minimum" value={f.minCapacity} onChange={(v) => set({ minCapacity: v })} max={200} />
+        <SectionTitle>Capacite de la salle</SectionTitle>
+        <div className="rounded-2xl border border-gray-100 bg-gray-50/80 px-4 py-1">
+          <CounterRow label="Personnes" sub="Nombre minimum de places" value={f.minCapacity} onChange={(v) => set({ minCapacity: v })} max={200} />
+          <CounterRow label="Postes de travail" sub="Tables et chaises equipees" value={f.minDesks} onChange={(v) => set({ minDesks: v })} />
         </div>
       </div>
 
       <div>
-        <SectionTitle><span>🛠️</span> Équipements</SectionTitle>
-        <div className="flex flex-wrap gap-2">
-          <ToggleChip active={f.hasProjector} onClick={() => set({ hasProjector: !f.hasProjector })}>📽️ Projecteur / écran</ToggleChip>
-          <ToggleChip active={f.hasWhiteboard} onClick={() => set({ hasWhiteboard: !f.hasWhiteboard })}>🖊️ Tableau blanc</ToggleChip>
-          <ToggleChip active={f.hasVideoConf} onClick={() => set({ hasVideoConf: !f.hasVideoConf })}>📹 Visioconférence</ToggleChip>
-          <ToggleChip active={f.hasKitchen} onClick={() => set({ hasKitchen: !f.hasKitchen })}>☕ Café / collations</ToggleChip>
-        </div>
-      </div>
-
-      <div>
-        <SectionTitle><span>🖥️</span> Postes</SectionTitle>
-        <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-1">
-          <CounterRow label="Postes de travail" value={f.minDesks} onChange={(v) => set({ minDesks: v })} />
+        <SectionTitle>Equipements de reunion</SectionTitle>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <ToggleChip active={f.hasProjector} onClick={() => set({ hasProjector: !f.hasProjector })} label="Projecteur / ecran" sub="Grand ecran ou videoprojecteur" />
+          <ToggleChip active={f.hasWhiteboard} onClick={() => set({ hasWhiteboard: !f.hasWhiteboard })} label="Tableau blanc" sub="Marqueurs fournis" />
+          <ToggleChip active={f.hasVideoConf} onClick={() => set({ hasVideoConf: !f.hasVideoConf })} label="Visioconference" sub="Webcam, micro, haut-parleur" />
+          <ToggleChip active={f.hasKitchen} onClick={() => set({ hasKitchen: !f.hasKitchen })} label="Cafe / collations" sub="Machine a cafe, eau, snacks" />
+          <ToggleChip active={f.hasSoundproofing} onClick={() => set({ hasSoundproofing: !f.hasSoundproofing })} label="Insonorisation" sub="Salle calme et isolee" />
+          <ToggleChip active={f.hasReception} onClick={() => set({ hasReception: !f.hasReception })} label="Accueil visiteurs" sub="Reception et orientation" />
         </div>
       </div>
     </div>
@@ -336,21 +328,23 @@ function EventFilters({
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <SectionTitle><span>🎉</span> Capacité d&apos;accueil</SectionTitle>
-        <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-1">
-          <CounterRow label="Personnes minimum" value={f.minCapacity} onChange={(v) => set({ minCapacity: v })} max={2000} />
+        <SectionTitle>Capacite d&apos;accueil</SectionTitle>
+        <div className="rounded-2xl border border-gray-100 bg-gray-50/80 px-4 py-1">
+          <CounterRow label="Personnes" sub="Capacite maximale de l'espace" value={f.minCapacity} onChange={(v) => set({ minCapacity: v })} max={2000} />
         </div>
       </div>
 
       <div>
-        <SectionTitle><span>🎭</span> Équipements événementiels</SectionTitle>
-        <div className="flex flex-wrap gap-2">
-          <ToggleChip active={f.hasStage} onClick={() => set({ hasStage: !f.hasStage })}>🎤 Scène / podium</ToggleChip>
-          <ToggleChip active={f.hasSoundSystem} onClick={() => set({ hasSoundSystem: !f.hasSoundSystem })}>🔊 Système son</ToggleChip>
-          <ToggleChip active={f.hasLighting} onClick={() => set({ hasLighting: !f.hasLighting })}>💡 Éclairage scénique</ToggleChip>
-          <ToggleChip active={f.hasCatering} onClick={() => set({ hasCatering: !f.hasCatering })}>🍽️ Traiteur / cuisine</ToggleChip>
-          <ToggleChip active={f.hasProjector} onClick={() => set({ hasProjector: !f.hasProjector })}>📽️ Projecteur / écran</ToggleChip>
-          <ToggleChip active={f.hasVideoConf} onClick={() => set({ hasVideoConf: !f.hasVideoConf })}>📹 Diffusion live</ToggleChip>
+        <SectionTitle>Equipements evenementiels</SectionTitle>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <ToggleChip active={f.hasStage} onClick={() => set({ hasStage: !f.hasStage })} label="Scene / podium" sub="Estrade ou scene surélevee" />
+          <ToggleChip active={f.hasSoundSystem} onClick={() => set({ hasSoundSystem: !f.hasSoundSystem })} label="Systeme son" sub="Enceintes, ampli, micro" />
+          <ToggleChip active={f.hasLighting} onClick={() => set({ hasLighting: !f.hasLighting })} label="Eclairage scenique" sub="Spots, jeux de lumiere" />
+          <ToggleChip active={f.hasCatering} onClick={() => set({ hasCatering: !f.hasCatering })} label="Traiteur / cuisine" sub="Cuisine equipee ou traiteur" />
+          <ToggleChip active={f.hasProjector} onClick={() => set({ hasProjector: !f.hasProjector })} label="Projecteur / ecran" sub="Videoprojecteur grand format" />
+          <ToggleChip active={f.hasVideoConf} onClick={() => set({ hasVideoConf: !f.hasVideoConf })} label="Diffusion live" sub="Streaming et captation video" />
+          <ToggleChip active={f.hasSoundproofing} onClick={() => set({ hasSoundproofing: !f.hasSoundproofing })} label="Insonorisation" sub="Isolation phonique" />
+          <ToggleChip active={f.hasReception} onClick={() => set({ hasReception: !f.hasReception })} label="Vestiaire / accueil" sub="Espace d'accueil invites" />
         </div>
       </div>
     </div>
@@ -367,14 +361,14 @@ function RecordingFilters({
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <SectionTitle><span>🎙️</span> Équipements studio</SectionTitle>
-        <div className="flex flex-wrap gap-2">
-          <ToggleChip active={f.hasSoundproofing} onClick={() => set({ hasSoundproofing: !f.hasSoundproofing })}>🔇 Insonorisation</ToggleChip>
-          <ToggleChip active={f.hasMixingDesk} onClick={() => set({ hasMixingDesk: !f.hasMixingDesk })}>🎚️ Table de mixage</ToggleChip>
-          <ToggleChip active={f.hasMicrophones} onClick={() => set({ hasMicrophones: !f.hasMicrophones })}>🎤 Microphones pro</ToggleChip>
-          <ToggleChip active={f.hasGreenScreen} onClick={() => set({ hasGreenScreen: !f.hasGreenScreen })}>🟩 Fond vert</ToggleChip>
-          <ToggleChip active={f.hasLighting} onClick={() => set({ hasLighting: !f.hasLighting })}>💡 Éclairage studio</ToggleChip>
-          <ToggleChip active={f.hasVideoConf} onClick={() => set({ hasVideoConf: !f.hasVideoConf })}>📹 Cabine régie</ToggleChip>
+        <SectionTitle>Equipements studio</SectionTitle>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <ToggleChip active={f.hasSoundproofing} onClick={() => set({ hasSoundproofing: !f.hasSoundproofing })} label="Insonorisation" sub="Traitement acoustique pro" />
+          <ToggleChip active={f.hasMixingDesk} onClick={() => set({ hasMixingDesk: !f.hasMixingDesk })} label="Table de mixage" sub="Console analogique ou numerique" />
+          <ToggleChip active={f.hasMicrophones} onClick={() => set({ hasMicrophones: !f.hasMicrophones })} label="Microphones pro" sub="Condensateur, dynamique..." />
+          <ToggleChip active={f.hasGreenScreen} onClick={() => set({ hasGreenScreen: !f.hasGreenScreen })} label="Fond vert" sub="Incrustation video" />
+          <ToggleChip active={f.hasLighting} onClick={() => set({ hasLighting: !f.hasLighting })} label="Eclairage studio" sub="Softbox, ring light, spots" />
+          <ToggleChip active={f.hasVideoConf} onClick={() => set({ hasVideoConf: !f.hasVideoConf })} label="Cabine regie" sub="Monitoring et controle separe" />
         </div>
       </div>
     </div>
@@ -391,18 +385,18 @@ function ParkingFilters({
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <SectionTitle><span>🚗</span> Places disponibles</SectionTitle>
-        <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-1">
-          <CounterRow label="Nombre de places" value={f.minParkingSpaces} onChange={(v) => set({ minParkingSpaces: v })} min={1} max={50} />
+        <SectionTitle>Places disponibles</SectionTitle>
+        <div className="rounded-2xl border border-gray-100 bg-gray-50/80 px-4 py-1">
+          <CounterRow label="Nombre de places" sub="Places de stationnement minimum" value={f.minParkingSpaces} onChange={(v) => set({ minParkingSpaces: v })} min={1} max={50} />
         </div>
       </div>
 
       <div>
-        <SectionTitle><span>🔒</span> Caractéristiques</SectionTitle>
-        <div className="flex flex-wrap gap-2">
-          <ToggleChip active={f.parkingCovered} onClick={() => set({ parkingCovered: !f.parkingCovered })}>🏗️ Couvert</ToggleChip>
-          <ToggleChip active={f.parkingSecured} onClick={() => set({ parkingSecured: !f.parkingSecured })}>🔐 Sécurisé / gardé</ToggleChip>
-          <ToggleChip active={f.hasEVCharger} onClick={() => set({ hasEVCharger: !f.hasEVCharger })}>⚡ Borne électrique</ToggleChip>
+        <SectionTitle>Caracteristiques du parking</SectionTitle>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <ToggleChip active={f.parkingCovered} onClick={() => set({ parkingCovered: !f.parkingCovered })} label="Couvert" sub="A l'abri des intemperies" />
+          <ToggleChip active={f.parkingSecured} onClick={() => set({ parkingSecured: !f.parkingSecured })} label="Securise / garde" sub="Cameras, badge, gardien" />
+          <ToggleChip active={f.hasEVCharger} onClick={() => set({ hasEVCharger: !f.hasEVCharger })} label="Borne electrique" sub="Recharge vehicule electrique" />
         </div>
       </div>
     </div>
@@ -419,17 +413,17 @@ function StorageFilters({
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <SectionTitle><span>📦</span> Surface minimale (m²)</SectionTitle>
-        <div className="rounded-2xl border border-gray-100 bg-gray-50 px-4 py-1">
-          <CounterRow label="Surface (m²)" value={f.minStorageSize} onChange={(v) => set({ minStorageSize: v })} max={500} />
+        <SectionTitle>Surface minimale</SectionTitle>
+        <div className="rounded-2xl border border-gray-100 bg-gray-50/80 px-4 py-1">
+          <CounterRow label="Surface (m2)" sub="Superficie minimum requise" value={f.minStorageSize} onChange={(v) => set({ minStorageSize: v })} max={500} />
         </div>
       </div>
 
       <div>
-        <SectionTitle><span>🔒</span> Caractéristiques</SectionTitle>
-        <div className="flex flex-wrap gap-2">
-          <ToggleChip active={f.storageClimatized} onClick={() => set({ storageClimatized: !f.storageClimatized })}>🌡️ Climatisé</ToggleChip>
-          <ToggleChip active={f.storageSecured} onClick={() => set({ storageSecured: !f.storageSecured })}>🔐 Sécurisé / alarme</ToggleChip>
+        <SectionTitle>Caracteristiques du stockage</SectionTitle>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <ToggleChip active={f.storageClimatized} onClick={() => set({ storageClimatized: !f.storageClimatized })} label="Climatise" sub="Temperature et humidite controlees" />
+          <ToggleChip active={f.storageSecured} onClick={() => set({ storageSecured: !f.storageSecured })} label="Securise / alarme" sub="Acces restreint, cameras, alarme" />
         </div>
       </div>
     </div>
@@ -491,7 +485,7 @@ export default function CategoryFilters({ filters, onChange }: CategoryFiltersPr
                 onClick={() => handleSelect(item.value)}
                 className={`group flex flex-col items-center gap-1.5 rounded-2xl border p-3 text-center transition-all duration-200 ${
                   isActive
-                    ? "border-gray-900 bg-gray-900 text-white shadow-md scale-[1.03]"
+                    ? "border-gray-800 bg-gray-100 text-gray-900 shadow-md ring-1 ring-gray-800 scale-[1.03]"
                     : "border-gray-200 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50 hover:scale-[1.02]"
                 }`}
               >
