@@ -13,14 +13,24 @@ export type CategoryFiltersState = {
   minBedrooms: number;
   minBeds: number;
   minBathrooms: number;
-  // Résidentiel (HOUSE, APARTMENT, ROOM)
-  spaceSubtype: string;   // ex: "ENTIRE_PLACE" | "PRIVATE_ROOM" | "SHARED_ROOM"
+  // Résidentiel (HOUSE, APARTMENT, ROOM, STUDIO)
+  spaceSubtype: string;
   hasGarden: boolean;
   hasPool: boolean;
   hasTerrace: boolean;
   hasSpa: boolean;
   petsAllowed: boolean;
   smokingAllowed: boolean;
+  hasWifi: boolean;
+  hasAC: boolean;
+  hasHeating: boolean;
+  hasTV: boolean;
+  hasWasher: boolean;
+  hasElevator: boolean;
+  isAccessible: boolean;
+  hasBBQ: boolean;
+  selfCheckIn: boolean;
+  childrenAllowed: boolean;
   // Pro (OFFICE, COWORKING, MEETING_ROOM)
   minDesks: number;
   hasProjector: boolean;
@@ -28,12 +38,16 @@ export type CategoryFiltersState = {
   hasVideoConf: boolean;
   hasKitchen: boolean;
   hasReception: boolean;
+  hasPrinter: boolean;
+  hasHighSpeedInternet: boolean;
+  hasConferencePhone: boolean;
   // Événementiel (EVENT_SPACE)
   minCapacity: number;
   hasCatering: boolean;
   hasStage: boolean;
   hasSoundSystem: boolean;
   hasLighting: boolean;
+  eventsAllowed: boolean;
   // Studio enregistrement (RECORDING_STUDIO)
   hasSoundproofing: boolean;
   hasGreenScreen: boolean;
@@ -62,17 +76,31 @@ export const EMPTY_CATEGORY_FILTERS: CategoryFiltersState = {
   hasSpa: false,
   petsAllowed: false,
   smokingAllowed: false,
+  hasWifi: false,
+  hasAC: false,
+  hasHeating: false,
+  hasTV: false,
+  hasWasher: false,
+  hasElevator: false,
+  isAccessible: false,
+  hasBBQ: false,
+  selfCheckIn: false,
+  childrenAllowed: false,
   minDesks: 0,
   hasProjector: false,
   hasWhiteboard: false,
   hasVideoConf: false,
   hasKitchen: false,
   hasReception: false,
+  hasPrinter: false,
+  hasHighSpeedInternet: false,
+  hasConferencePhone: false,
   minCapacity: 0,
   hasCatering: false,
   hasStage: false,
   hasSoundSystem: false,
   hasLighting: false,
+  eventsAllowed: false,
   hasSoundproofing: false,
   hasGreenScreen: false,
   hasMixingDesk: false,
@@ -227,18 +255,152 @@ function ResidentialFilters({
       </div>
 
       <div>
+        <SectionTitle>Equipements essentiels</SectionTitle>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <ToggleChip active={f.hasWifi} onClick={() => set({ hasWifi: !f.hasWifi })} label="Wi-Fi" sub="Connexion internet incluse" />
+          <ToggleChip active={f.hasAC} onClick={() => set({ hasAC: !f.hasAC })} label="Climatisation" sub="Air conditionne" />
+          <ToggleChip active={f.hasHeating} onClick={() => set({ hasHeating: !f.hasHeating })} label="Chauffage" sub="Chauffage central ou electrique" />
+          <ToggleChip active={f.hasTV} onClick={() => set({ hasTV: !f.hasTV })} label="Television" sub="TV ecran plat ou connectee" />
+          <ToggleChip active={f.hasKitchen} onClick={() => set({ hasKitchen: !f.hasKitchen })} label="Cuisine equipee" sub="Four, plaques, frigo, ustensiles" />
+          <ToggleChip active={f.hasWasher} onClick={() => set({ hasWasher: !f.hasWasher })} label="Lave-linge" sub="Machine a laver disponible" />
+        </div>
+      </div>
+
+      <div>
         <SectionTitle>Exterieur et bien-etre</SectionTitle>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           <ToggleChip active={f.hasGarden} onClick={() => set({ hasGarden: !f.hasGarden })} label="Jardin" sub="Espace vert privatif" />
           <ToggleChip active={f.hasPool} onClick={() => set({ hasPool: !f.hasPool })} label="Piscine" sub="Privee ou partagee" />
           <ToggleChip active={f.hasTerrace} onClick={() => set({ hasTerrace: !f.hasTerrace })} label="Terrasse / Balcon" sub="Espace exterieur" />
           <ToggleChip active={f.hasSpa} onClick={() => set({ hasSpa: !f.hasSpa })} label="Spa / Jacuzzi" sub="Detente et bien-etre" />
+          <ToggleChip active={f.hasBBQ} onClick={() => set({ hasBBQ: !f.hasBBQ })} label="Barbecue" sub="BBQ ou plancha exterieur" />
+        </div>
+      </div>
+
+      <div>
+        <SectionTitle>Accessibilite et acces</SectionTitle>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <ToggleChip active={f.hasElevator} onClick={() => set({ hasElevator: !f.hasElevator })} label="Ascenseur" sub="Acces sans escaliers" />
+          <ToggleChip active={f.isAccessible} onClick={() => set({ isAccessible: !f.isAccessible })} label="Accessible PMR" sub="Fauteuil roulant, mobilite reduite" />
+          <ToggleChip active={f.selfCheckIn} onClick={() => set({ selfCheckIn: !f.selfCheckIn })} label="Arrivee autonome" sub="Boite a cles, digicode, serrure" />
+          <ToggleChip active={f.parkingSecured} onClick={() => set({ parkingSecured: !f.parkingSecured })} label="Parking" sub="Place de stationnement incluse" />
         </div>
       </div>
 
       <div>
         <SectionTitle>Regles du logement</SectionTitle>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <ToggleChip active={f.petsAllowed} onClick={() => set({ petsAllowed: !f.petsAllowed })} label="Animaux acceptes" sub="Chiens, chats..." />
+          <ToggleChip active={f.smokingAllowed} onClick={() => set({ smokingAllowed: !f.smokingAllowed })} label="Fumeurs acceptes" sub="Fumer autorise a l'interieur" />
+          <ToggleChip active={f.childrenAllowed} onClick={() => set({ childrenAllowed: !f.childrenAllowed })} label="Enfants bienvenus" sub="Adapte aux familles" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StudioFilters({
+  f,
+  set,
+}: {
+  f: CategoryFiltersState;
+  set: (patch: Partial<CategoryFiltersState>) => void;
+}) {
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div>
+        <SectionTitle>Configuration du studio</SectionTitle>
+        <div className="rounded-2xl border border-gray-100 bg-gray-50/80 px-4 py-1">
+          <CounterRow label="Lits / couchages" sub="Canape-lit, mezzanine..." value={f.minBeds} onChange={(v) => set({ minBeds: v })} />
+          <CounterRow label="Salles de bain" sub="Salle d'eau ou salle de bain" value={f.minBathrooms} onChange={(v) => set({ minBathrooms: v })} />
+        </div>
+      </div>
+
+      <div>
+        <SectionTitle>Equipements essentiels</SectionTitle>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <ToggleChip active={f.hasWifi} onClick={() => set({ hasWifi: !f.hasWifi })} label="Wi-Fi" sub="Connexion internet incluse" />
+          <ToggleChip active={f.hasKitchen} onClick={() => set({ hasKitchen: !f.hasKitchen })} label="Kitchenette" sub="Plaque, frigo, micro-ondes" />
+          <ToggleChip active={f.hasAC} onClick={() => set({ hasAC: !f.hasAC })} label="Climatisation" sub="Air conditionne" />
+          <ToggleChip active={f.hasHeating} onClick={() => set({ hasHeating: !f.hasHeating })} label="Chauffage" sub="Chauffage central ou electrique" />
+          <ToggleChip active={f.hasTV} onClick={() => set({ hasTV: !f.hasTV })} label="Television" sub="TV ecran plat ou connectee" />
+          <ToggleChip active={f.hasWasher} onClick={() => set({ hasWasher: !f.hasWasher })} label="Lave-linge" sub="Machine a laver disponible" />
+        </div>
+      </div>
+
+      <div>
+        <SectionTitle>Confort et exterieur</SectionTitle>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <ToggleChip active={f.hasTerrace} onClick={() => set({ hasTerrace: !f.hasTerrace })} label="Balcon / terrasse" sub="Espace exterieur privatif" />
+          <ToggleChip active={f.hasSpa} onClick={() => set({ hasSpa: !f.hasSpa })} label="Baignoire" sub="Baignoire dans la salle de bain" />
+          <ToggleChip active={f.hasElevator} onClick={() => set({ hasElevator: !f.hasElevator })} label="Ascenseur" sub="Acces sans escaliers" />
+          <ToggleChip active={f.selfCheckIn} onClick={() => set({ selfCheckIn: !f.selfCheckIn })} label="Arrivee autonome" sub="Boite a cles, digicode" />
+        </div>
+      </div>
+
+      <div>
+        <SectionTitle>Regles</SectionTitle>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <ToggleChip active={f.petsAllowed} onClick={() => set({ petsAllowed: !f.petsAllowed })} label="Animaux acceptes" sub="Chiens, chats..." />
+          <ToggleChip active={f.smokingAllowed} onClick={() => set({ smokingAllowed: !f.smokingAllowed })} label="Fumeurs acceptes" sub="Fumer autorise a l'interieur" />
+          <ToggleChip active={f.childrenAllowed} onClick={() => set({ childrenAllowed: !f.childrenAllowed })} label="Enfants bienvenus" sub="Adapte aux familles" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RoomFilters({
+  f,
+  set,
+}: {
+  f: CategoryFiltersState;
+  set: (patch: Partial<CategoryFiltersState>) => void;
+}) {
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div>
+        <SectionTitle>Type de chambre</SectionTitle>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { v: "PRIVATE_ROOM",  l: "Chambre privee", s: "Votre chambre, espaces communs partages" },
+            { v: "SHARED_ROOM",   l: "Chambre partagee", s: "Dortoir ou chambre a plusieurs" },
+          ].map(({ v, l, s }) => (
+            <ToggleChip key={v} active={f.spaceSubtype === v} onClick={() => set({ spaceSubtype: f.spaceSubtype === v ? "" : v })} label={l} sub={s} />
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <SectionTitle>Couchages</SectionTitle>
+        <div className="rounded-2xl border border-gray-100 bg-gray-50/80 px-4 py-1">
+          <CounterRow label="Lits" sub="Nombre de couchages dans la chambre" value={f.minBeds} onChange={(v) => set({ minBeds: v })} />
+        </div>
+      </div>
+
+      <div>
+        <SectionTitle>Equipements de la chambre</SectionTitle>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <ToggleChip active={f.hasWifi} onClick={() => set({ hasWifi: !f.hasWifi })} label="Wi-Fi" sub="Connexion internet incluse" />
+          <ToggleChip active={f.hasAC} onClick={() => set({ hasAC: !f.hasAC })} label="Climatisation" sub="Air conditionne" />
+          <ToggleChip active={f.hasHeating} onClick={() => set({ hasHeating: !f.hasHeating })} label="Chauffage" sub="Chauffage dans la chambre" />
+          <ToggleChip active={f.hasTV} onClick={() => set({ hasTV: !f.hasTV })} label="Television" sub="TV dans la chambre" />
+        </div>
+      </div>
+
+      <div>
+        <SectionTitle>Confort et acces</SectionTitle>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <ToggleChip active={f.hasSpa} onClick={() => set({ hasSpa: !f.hasSpa })} label="Salle de bain privee" sub="Non partagee avec d'autres" />
+          <ToggleChip active={f.hasKitchen} onClick={() => set({ hasKitchen: !f.hasKitchen })} label="Acces cuisine" sub="Cuisine partagee ou privee" />
+          <ToggleChip active={f.hasTerrace} onClick={() => set({ hasTerrace: !f.hasTerrace })} label="Balcon / vue" sub="Espace exterieur ou belle vue" />
+          <ToggleChip active={f.selfCheckIn} onClick={() => set({ selfCheckIn: !f.selfCheckIn })} label="Arrivee autonome" sub="Boite a cles, digicode" />
+        </div>
+      </div>
+
+      <div>
+        <SectionTitle>Regles</SectionTitle>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           <ToggleChip active={f.petsAllowed} onClick={() => set({ petsAllowed: !f.petsAllowed })} label="Animaux acceptes" sub="Chiens, chats..." />
           <ToggleChip active={f.smokingAllowed} onClick={() => set({ smokingAllowed: !f.smokingAllowed })} label="Fumeurs acceptes" sub="Fumer autorise a l'interieur" />
         </div>
@@ -257,29 +419,92 @@ function OfficeFilters({
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <SectionTitle>Postes de travail</SectionTitle>
+        <SectionTitle>Espace de travail</SectionTitle>
         <div className="rounded-2xl border border-gray-100 bg-gray-50/80 px-4 py-1">
           <CounterRow label="Bureaux / postes" sub="Nombre minimum de places assises" value={f.minDesks} onChange={(v) => set({ minDesks: v })} />
-          <CounterRow label="Salles de bain" sub="Toilettes et sanitaires" value={f.minBathrooms} onChange={(v) => set({ minBathrooms: v })} />
+          <CounterRow label="Salles de reunion" sub="Salles privees disponibles" value={f.minBedrooms} onChange={(v) => set({ minBedrooms: v })} />
+          <CounterRow label="Sanitaires" sub="Toilettes et salles d'eau" value={f.minBathrooms} onChange={(v) => set({ minBathrooms: v })} />
         </div>
       </div>
 
       <div>
         <SectionTitle>Equipements bureautiques</SectionTitle>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <ToggleChip active={f.hasHighSpeedInternet} onClick={() => set({ hasHighSpeedInternet: !f.hasHighSpeedInternet })} label="Internet haut debit" sub="Fibre ou connexion rapide" />
           <ToggleChip active={f.hasProjector} onClick={() => set({ hasProjector: !f.hasProjector })} label="Projecteur / ecran" sub="Presentations et reunions" />
           <ToggleChip active={f.hasWhiteboard} onClick={() => set({ hasWhiteboard: !f.hasWhiteboard })} label="Tableau blanc" sub="Brainstorming et schemas" />
           <ToggleChip active={f.hasVideoConf} onClick={() => set({ hasVideoConf: !f.hasVideoConf })} label="Visioconference" sub="Camera, micro, ecran" />
-          <ToggleChip active={f.hasKitchen} onClick={() => set({ hasKitchen: !f.hasKitchen })} label="Cuisine / cafe" sub="Espace pause et boissons" />
-          <ToggleChip active={f.hasReception} onClick={() => set({ hasReception: !f.hasReception })} label="Accueil / reception" sub="Hall d'entree avec accueil" />
+          <ToggleChip active={f.hasPrinter} onClick={() => set({ hasPrinter: !f.hasPrinter })} label="Imprimante / scanner" sub="Impression sur place" />
+          <ToggleChip active={f.hasConferencePhone} onClick={() => set({ hasConferencePhone: !f.hasConferencePhone })} label="Telephone conference" sub="Appels mains libres" />
         </div>
       </div>
 
       <div>
-        <SectionTitle>Connectivite</SectionTitle>
-        <div className="grid grid-cols-2 gap-2">
-          <ToggleChip active={f.hasPool} onClick={() => set({ hasPool: !f.hasPool })} label="Wi-Fi haut debit" sub="Fibre ou connexion rapide" />
-          <ToggleChip active={f.hasTerrace} onClick={() => set({ hasTerrace: !f.hasTerrace })} label="Imprimante / scanner" sub="Impression sur place" />
+        <SectionTitle>Services et confort</SectionTitle>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <ToggleChip active={f.hasKitchen} onClick={() => set({ hasKitchen: !f.hasKitchen })} label="Cuisine / cafe" sub="Espace pause et boissons" />
+          <ToggleChip active={f.hasReception} onClick={() => set({ hasReception: !f.hasReception })} label="Accueil / reception" sub="Hall d'entree avec accueil" />
+          <ToggleChip active={f.hasAC} onClick={() => set({ hasAC: !f.hasAC })} label="Climatisation" sub="Air conditionne" />
+          <ToggleChip active={f.hasElevator} onClick={() => set({ hasElevator: !f.hasElevator })} label="Ascenseur" sub="Acces sans escaliers" />
+          <ToggleChip active={f.isAccessible} onClick={() => set({ isAccessible: !f.isAccessible })} label="Accessible PMR" sub="Fauteuil roulant, mobilite reduite" />
+          <ToggleChip active={f.parkingSecured} onClick={() => set({ parkingSecured: !f.parkingSecured })} label="Parking inclus" sub="Places de stationnement" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CoworkingFilters({
+  f,
+  set,
+}: {
+  f: CategoryFiltersState;
+  set: (patch: Partial<CategoryFiltersState>) => void;
+}) {
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div>
+        <SectionTitle>Type d&apos;espace coworking</SectionTitle>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { v: "OPEN_SPACE",    l: "Open space", s: "Bureau partage en espace ouvert" },
+            { v: "PRIVATE_ROOM",  l: "Bureau prive", s: "Bureau ferme pour vous ou votre equipe" },
+            { v: "SHARED_ROOM",   l: "Poste nomade", s: "Place flexible, premier arrive" },
+          ].map(({ v, l, s }) => (
+            <ToggleChip key={v} active={f.spaceSubtype === v} onClick={() => set({ spaceSubtype: f.spaceSubtype === v ? "" : v })} label={l} sub={s} />
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <SectionTitle>Capacite</SectionTitle>
+        <div className="rounded-2xl border border-gray-100 bg-gray-50/80 px-4 py-1">
+          <CounterRow label="Postes de travail" sub="Nombre minimum de places" value={f.minDesks} onChange={(v) => set({ minDesks: v })} />
+        </div>
+      </div>
+
+      <div>
+        <SectionTitle>Equipements</SectionTitle>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <ToggleChip active={f.hasHighSpeedInternet} onClick={() => set({ hasHighSpeedInternet: !f.hasHighSpeedInternet })} label="Internet haut debit" sub="Fibre ou connexion rapide" />
+          <ToggleChip active={f.hasPrinter} onClick={() => set({ hasPrinter: !f.hasPrinter })} label="Imprimante / scanner" sub="Impression et scan disponibles" />
+          <ToggleChip active={f.hasVideoConf} onClick={() => set({ hasVideoConf: !f.hasVideoConf })} label="Salles de visio" sub="Cabines d'appel ou salles" />
+          <ToggleChip active={f.hasWhiteboard} onClick={() => set({ hasWhiteboard: !f.hasWhiteboard })} label="Tableau blanc" sub="Espaces de brainstorming" />
+          <ToggleChip active={f.hasConferencePhone} onClick={() => set({ hasConferencePhone: !f.hasConferencePhone })} label="Telephone conference" sub="Appels mains libres" />
+        </div>
+      </div>
+
+      <div>
+        <SectionTitle>Services et confort</SectionTitle>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <ToggleChip active={f.hasKitchen} onClick={() => set({ hasKitchen: !f.hasKitchen })} label="Cuisine / cafe" sub="Espace detente et boissons" />
+          <ToggleChip active={f.hasReception} onClick={() => set({ hasReception: !f.hasReception })} label="Accueil / concierge" sub="Service d'accueil sur place" />
+          <ToggleChip active={f.hasAC} onClick={() => set({ hasAC: !f.hasAC })} label="Climatisation" sub="Air conditionne" />
+          <ToggleChip active={f.hasElevator} onClick={() => set({ hasElevator: !f.hasElevator })} label="Ascenseur" sub="Acces sans escaliers" />
+          <ToggleChip active={f.isAccessible} onClick={() => set({ isAccessible: !f.isAccessible })} label="Accessible PMR" sub="Fauteuil roulant, mobilite reduite" />
+          <ToggleChip active={f.parkingSecured} onClick={() => set({ parkingSecured: !f.parkingSecured })} label="Parking" sub="Places de stationnement" />
+          <ToggleChip active={f.hasTerrace} onClick={() => set({ hasTerrace: !f.hasTerrace })} label="Terrasse / rooftop" sub="Espace exterieur detente" />
+          <ToggleChip active={f.petsAllowed} onClick={() => set({ petsAllowed: !f.petsAllowed })} label="Pet-friendly" sub="Animaux acceptes dans l'espace" />
         </div>
       </div>
     </div>
@@ -309,9 +534,20 @@ function MeetingFilters({
           <ToggleChip active={f.hasProjector} onClick={() => set({ hasProjector: !f.hasProjector })} label="Projecteur / ecran" sub="Grand ecran ou videoprojecteur" />
           <ToggleChip active={f.hasWhiteboard} onClick={() => set({ hasWhiteboard: !f.hasWhiteboard })} label="Tableau blanc" sub="Marqueurs fournis" />
           <ToggleChip active={f.hasVideoConf} onClick={() => set({ hasVideoConf: !f.hasVideoConf })} label="Visioconference" sub="Webcam, micro, haut-parleur" />
-          <ToggleChip active={f.hasKitchen} onClick={() => set({ hasKitchen: !f.hasKitchen })} label="Cafe / collations" sub="Machine a cafe, eau, snacks" />
+          <ToggleChip active={f.hasConferencePhone} onClick={() => set({ hasConferencePhone: !f.hasConferencePhone })} label="Telephone conference" sub="Appels mains libres" />
+          <ToggleChip active={f.hasHighSpeedInternet} onClick={() => set({ hasHighSpeedInternet: !f.hasHighSpeedInternet })} label="Internet haut debit" sub="Fibre ou connexion rapide" />
           <ToggleChip active={f.hasSoundproofing} onClick={() => set({ hasSoundproofing: !f.hasSoundproofing })} label="Insonorisation" sub="Salle calme et isolee" />
+        </div>
+      </div>
+
+      <div>
+        <SectionTitle>Services et confort</SectionTitle>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <ToggleChip active={f.hasKitchen} onClick={() => set({ hasKitchen: !f.hasKitchen })} label="Cafe / collations" sub="Machine a cafe, eau, snacks" />
           <ToggleChip active={f.hasReception} onClick={() => set({ hasReception: !f.hasReception })} label="Accueil visiteurs" sub="Reception et orientation" />
+          <ToggleChip active={f.hasAC} onClick={() => set({ hasAC: !f.hasAC })} label="Climatisation" sub="Air conditionne" />
+          <ToggleChip active={f.isAccessible} onClick={() => set({ isAccessible: !f.isAccessible })} label="Accessible PMR" sub="Fauteuil roulant, mobilite reduite" />
+          <ToggleChip active={f.parkingSecured} onClick={() => set({ parkingSecured: !f.parkingSecured })} label="Parking" sub="Places de stationnement" />
         </div>
       </div>
     </div>
@@ -345,6 +581,18 @@ function EventFilters({
           <ToggleChip active={f.hasVideoConf} onClick={() => set({ hasVideoConf: !f.hasVideoConf })} label="Diffusion live" sub="Streaming et captation video" />
           <ToggleChip active={f.hasSoundproofing} onClick={() => set({ hasSoundproofing: !f.hasSoundproofing })} label="Insonorisation" sub="Isolation phonique" />
           <ToggleChip active={f.hasReception} onClick={() => set({ hasReception: !f.hasReception })} label="Vestiaire / accueil" sub="Espace d'accueil invites" />
+        </div>
+      </div>
+
+      <div>
+        <SectionTitle>Services et confort</SectionTitle>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <ToggleChip active={f.hasAC} onClick={() => set({ hasAC: !f.hasAC })} label="Climatisation" sub="Air conditionne" />
+          <ToggleChip active={f.hasElevator} onClick={() => set({ hasElevator: !f.hasElevator })} label="Ascenseur" sub="Acces sans escaliers" />
+          <ToggleChip active={f.isAccessible} onClick={() => set({ isAccessible: !f.isAccessible })} label="Accessible PMR" sub="Fauteuil roulant, mobilite reduite" />
+          <ToggleChip active={f.parkingSecured} onClick={() => set({ parkingSecured: !f.parkingSecured })} label="Parking" sub="Places de stationnement" />
+          <ToggleChip active={f.eventsAllowed} onClick={() => set({ eventsAllowed: !f.eventsAllowed })} label="Evenements autorises" sub="Fetes, mariages, concerts..." />
+          <ToggleChip active={f.childrenAllowed} onClick={() => set({ childrenAllowed: !f.childrenAllowed })} label="Enfants bienvenus" sub="Adapte aux familles" />
         </div>
       </div>
     </div>
@@ -392,11 +640,68 @@ function ParkingFilters({
       </div>
 
       <div>
-        <SectionTitle>Caracteristiques du parking</SectionTitle>
+        <SectionTitle>Type de parking</SectionTitle>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { v: "OUTDOOR",   l: "Exterieur", s: "Place en plein air" },
+            { v: "UNDERGROUND", l: "Souterrain", s: "Parking en sous-sol" },
+            { v: "MULTI_STORY", l: "En etage", s: "Parking a etages" },
+          ].map(({ v, l, s }) => (
+            <ToggleChip key={v} active={f.spaceSubtype === v} onClick={() => set({ spaceSubtype: f.spaceSubtype === v ? "" : v })} label={l} sub={s} />
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <SectionTitle>Caracteristiques</SectionTitle>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           <ToggleChip active={f.parkingCovered} onClick={() => set({ parkingCovered: !f.parkingCovered })} label="Couvert" sub="A l'abri des intemperies" />
           <ToggleChip active={f.parkingSecured} onClick={() => set({ parkingSecured: !f.parkingSecured })} label="Securise / garde" sub="Cameras, badge, gardien" />
           <ToggleChip active={f.hasEVCharger} onClick={() => set({ hasEVCharger: !f.hasEVCharger })} label="Borne electrique" sub="Recharge vehicule electrique" />
+          <ToggleChip active={f.hasLighting} onClick={() => set({ hasLighting: !f.hasLighting })} label="Eclaire" sub="Eclairage permanent la nuit" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GarageFilters({
+  f,
+  set,
+}: {
+  f: CategoryFiltersState;
+  set: (patch: Partial<CategoryFiltersState>) => void;
+}) {
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div>
+        <SectionTitle>Type d&apos;utilisation</SectionTitle>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { v: "VEHICLE_STORAGE", l: "Stockage vehicule", s: "Voiture, moto, velo" },
+            { v: "WORKSHOP",        l: "Atelier / bricolage", s: "Espace de travail manuel" },
+            { v: "MIXED",           l: "Mixte", s: "Stockage + espace de travail" },
+          ].map(({ v, l, s }) => (
+            <ToggleChip key={v} active={f.spaceSubtype === v} onClick={() => set({ spaceSubtype: f.spaceSubtype === v ? "" : v })} label={l} sub={s} />
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <SectionTitle>Dimensions et capacite</SectionTitle>
+        <div className="rounded-2xl border border-gray-100 bg-gray-50/80 px-4 py-1">
+          <CounterRow label="Surface (m2)" sub="Superficie minimum du garage" value={f.minStorageSize} onChange={(v) => set({ minStorageSize: v })} max={500} />
+          <CounterRow label="Vehicules" sub="Nombre de vehicules stockables" value={f.minParkingSpaces} onChange={(v) => set({ minParkingSpaces: v })} min={1} max={10} />
+        </div>
+      </div>
+
+      <div>
+        <SectionTitle>Caracteristiques</SectionTitle>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <ToggleChip active={f.parkingSecured} onClick={() => set({ parkingSecured: !f.parkingSecured })} label="Securise" sub="Serrure, alarme, cameras" />
+          <ToggleChip active={f.hasEVCharger} onClick={() => set({ hasEVCharger: !f.hasEVCharger })} label="Prise electrique" sub="Alimentation pour outils ou recharge" />
+          <ToggleChip active={f.hasLighting} onClick={() => set({ hasLighting: !f.hasLighting })} label="Eclaire" sub="Eclairage interieur" />
+          <ToggleChip active={f.storageClimatized} onClick={() => set({ storageClimatized: !f.storageClimatized })} label="Isole / chauffe" sub="Protection contre le froid" />
         </div>
       </div>
     </div>
@@ -452,18 +757,26 @@ export default function CategoryFilters({ filters, onChange }: CategoryFiltersPr
 
   const specificFilters = () => {
     const t = filters.spaceType;
-    if (t === "HOUSE" || t === "APARTMENT" || t === "ROOM")
+    if (t === "HOUSE" || t === "APARTMENT")
       return <ResidentialFilters f={filters} set={onChange} />;
-    if (t === "OFFICE" || t === "COWORKING" || t === "STUDIO")
+    if (t === "ROOM")
+      return <RoomFilters f={filters} set={onChange} />;
+    if (t === "STUDIO")
+      return <StudioFilters f={filters} set={onChange} />;
+    if (t === "OFFICE")
       return <OfficeFilters f={filters} set={onChange} />;
+    if (t === "COWORKING")
+      return <CoworkingFilters f={filters} set={onChange} />;
     if (t === "MEETING_ROOM")
       return <MeetingFilters f={filters} set={onChange} />;
     if (t === "EVENT_SPACE")
       return <EventFilters f={filters} set={onChange} />;
     if (t === "RECORDING_STUDIO")
       return <RecordingFilters f={filters} set={onChange} />;
-    if (t === "PARKING" || t === "GARAGE")
+    if (t === "PARKING")
       return <ParkingFilters f={filters} set={onChange} />;
+    if (t === "GARAGE")
+      return <GarageFilters f={filters} set={onChange} />;
     if (t === "STORAGE")
       return <StorageFilters f={filters} set={onChange} />;
     return null;

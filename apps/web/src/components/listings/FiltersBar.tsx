@@ -506,17 +506,31 @@ export default function FiltersBar(props: FiltersBarProps) {
     catFilters.hasSpa,
     catFilters.petsAllowed,
     catFilters.smokingAllowed,
+    catFilters.hasWifi,
+    catFilters.hasAC,
+    catFilters.hasHeating,
+    catFilters.hasTV,
+    catFilters.hasWasher,
+    catFilters.hasElevator,
+    catFilters.isAccessible,
+    catFilters.hasBBQ,
+    catFilters.selfCheckIn,
+    catFilters.childrenAllowed,
     catFilters.minDesks > 0,
     catFilters.hasProjector,
     catFilters.hasWhiteboard,
     catFilters.hasVideoConf,
     catFilters.hasKitchen,
     catFilters.hasReception,
+    catFilters.hasPrinter,
+    catFilters.hasHighSpeedInternet,
+    catFilters.hasConferencePhone,
     catFilters.minCapacity > 0,
     catFilters.hasCatering,
     catFilters.hasStage,
     catFilters.hasSoundSystem,
     catFilters.hasLighting,
+    catFilters.eventsAllowed,
     catFilters.hasSoundproofing,
     catFilters.hasGreenScreen,
     catFilters.hasMixingDesk,
@@ -1000,6 +1014,20 @@ export default function FiltersBar(props: FiltersBarProps) {
               {catFilters.hasEVCharger && <input type="hidden" name="hasEVCharger" value="1" />}
               {catFilters.storageClimatized && <input type="hidden" name="storageClimatized" value="1" />}
               {catFilters.storageSecured && <input type="hidden" name="storageSecured" value="1" />}
+              {catFilters.hasWifi && <input type="hidden" name="hasWifi" value="1" />}
+              {catFilters.hasAC && <input type="hidden" name="hasAC" value="1" />}
+              {catFilters.hasHeating && <input type="hidden" name="hasHeating" value="1" />}
+              {catFilters.hasTV && <input type="hidden" name="hasTV" value="1" />}
+              {catFilters.hasWasher && <input type="hidden" name="hasWasher" value="1" />}
+              {catFilters.hasElevator && <input type="hidden" name="hasElevator" value="1" />}
+              {catFilters.isAccessible && <input type="hidden" name="isAccessible" value="1" />}
+              {catFilters.hasBBQ && <input type="hidden" name="hasBBQ" value="1" />}
+              {catFilters.selfCheckIn && <input type="hidden" name="selfCheckIn" value="1" />}
+              {catFilters.childrenAllowed && <input type="hidden" name="childrenAllowed" value="1" />}
+              {catFilters.hasPrinter && <input type="hidden" name="hasPrinter" value="1" />}
+              {catFilters.hasHighSpeedInternet && <input type="hidden" name="hasHighSpeedInternet" value="1" />}
+              {catFilters.hasConferencePhone && <input type="hidden" name="hasConferencePhone" value="1" />}
+              {catFilters.eventsAllowed && <input type="hidden" name="eventsAllowed" value="1" />}
               {fInstantBook && <input type="hidden" name="instantBook" value="1" />}
 
               {/* Footer */}
