@@ -64,7 +64,7 @@ export default function RegisterScreen() {
     >
       <View style={styles.topBar}>
         <View style={styles.swipeHandle} />
-        <TouchableOpacity style={styles.closeBtn} onPress={() => router.dismiss()}>
+        <TouchableOpacity style={styles.closeBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}>
           <Text style={styles.closeBtnText}>✕</Text>
         </TouchableOpacity>
       </View>

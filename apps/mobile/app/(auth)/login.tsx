@@ -32,10 +32,10 @@ export default function LoginScreen() {
       if (result.requires2FA) {
         router.push({ pathname: "/(auth)/2fa", params: { tempToken: (result as any).tempToken } });
       } else {
-        router.dismiss();
+        router.replace("/(tabs)");
       }
     } catch (err: any) {
-      Alert.alert("Erreur", err.response?.data?.error || "Email ou mot de passe incorrect");
+      Alert.alert("Erreur", err.response?.data?.error || err.message || "Email ou mot de passe incorrect");
     } finally {
       setLoading(false);
     }
@@ -50,7 +50,7 @@ export default function LoginScreen() {
       {/* Barre de swipe + croix */}
       <View style={styles.topBar}>
         <View style={styles.swipeHandle} />
-        <TouchableOpacity style={styles.closeBtn} onPress={() => router.dismiss()}>
+        <TouchableOpacity style={styles.closeBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)")}>
           <Text style={styles.closeBtnText}>✕</Text>
         </TouchableOpacity>
       </View>
